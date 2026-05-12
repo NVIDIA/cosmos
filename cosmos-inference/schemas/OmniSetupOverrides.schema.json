@@ -1,0 +1,1014 @@
+{
+  "$defs": {
+    "CheckpointDirHf": {
+      "additionalProperties": false,
+      "description": "Config for checkpoint directory on Hugging Face.",
+      "properties": {
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        },
+        "repository": {
+          "title": "Repository",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        },
+        "subdirectory": {
+          "default": "",
+          "title": "Subdirectory",
+          "type": "string"
+        },
+        "include": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Include",
+          "type": "array"
+        },
+        "exclude": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude",
+          "type": "array"
+        }
+      },
+      "required": [
+        "repository",
+        "revision"
+      ],
+      "title": "CheckpointDirHf",
+      "type": "object"
+    },
+    "CheckpointType": {
+      "description": "Checkpoint type.",
+      "enum": [
+        "hf",
+        "dcp"
+      ],
+      "title": "CheckpointType",
+      "type": "string"
+    },
+    "ConfigFileType": {
+      "description": "Config file type.",
+      "enum": [
+        "module",
+        "yaml",
+        "json"
+      ],
+      "title": "ConfigFileType",
+      "type": "string"
+    },
+    "ModelMode": {
+      "enum": [
+        "text2image",
+        "text2video",
+        "image2image",
+        "image2video",
+        "video2video",
+        "forward_dynamics",
+        "inverse_dynamics",
+        "policy"
+      ],
+      "title": "ModelMode",
+      "type": "string"
+    },
+    "NegativeMetadataMode": {
+      "enum": [
+        "none",
+        "same",
+        "inverse"
+      ],
+      "title": "NegativeMetadataMode",
+      "type": "string"
+    },
+    "OmniSampleOverrides": {
+      "additionalProperties": false,
+      "properties": {
+        "action_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to action JSON file. Required for forward_dynamics mode.",
+          "title": "Action Path"
+        },
+        "domain_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Action domain name passed to get_domain_id().",
+          "title": "Domain Name"
+        },
+        "image_size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Target image height in pixels (aspect-ratio-preserving resize).",
+          "title": "Image Size"
+        },
+        "action_chunk_size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Number of action steps to predict.",
+          "title": "Action Chunk Size"
+        },
+        "raw_action_dim": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dimension of the raw action data. Required when action_path is not provided.",
+          "title": "Raw Action Dim"
+        },
+        "vision_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path or URL to conditioning image/video.",
+          "title": "Vision Path"
+        },
+        "condition_frame_indexes_vision": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Latent frame indices to condition on. Defaults to [0] for image, [0, 1] for video.",
+          "title": "Condition Frame Indexes Vision"
+        },
+        "resolution": {
+          "anyOf": [
+            {
+              "enum": [
+                "256",
+                "480",
+                "720",
+                "1080"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Vision resolution.\n\nDefaults to model config resolution.",
+          "title": "Resolution"
+        },
+        "aspect_ratio": {
+          "anyOf": [
+            {
+              "enum": [
+                "1,1",
+                "4,3",
+                "3,4",
+                "16,9",
+                "9,16"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Vision aspect ratio. When None, image_edit preserves the input image's native\naspect ratio; all other modes default to 16:9.",
+          "title": "Aspect Ratio"
+        },
+        "fps": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Vision frames per second. Recommended range [10, 30]; quality may be degraded outside of this range.",
+          "title": "Fps"
+        },
+        "num_frames": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Number of vision frames.\n\nRange by resolution: 256p: [24, 400], 480p: [24, 300], 720p: [24, 200].\nImage-only resolutions (e.g. 1080p) require num_frames=1.",
+          "title": "Num Frames"
+        },
+        "video_save_quality": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Quality of the saved video (0-10).",
+          "title": "Video Save Quality"
+        },
+        "image_save_quality": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Quality of the saved image (0-100).",
+          "title": "Image Save Quality"
+        },
+        "prompt_path": {
+          "anyOf": [
+            {
+              "format": "file-path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to a .txt file containing the prompt. Only one of 'prompt' or 'prompt_path' should be provided.",
+          "title": "Prompt Path"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Text prompt for generation. Only one of 'prompt' or 'prompt_path' should be provided.",
+          "title": "Prompt"
+        },
+        "negative_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Negative prompt - describing what you don't want in the generated video.",
+          "title": "Negative Prompt"
+        },
+        "duration_template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Template string for appending duration/fps to prompt. Use {duration} and {fps} placeholders.",
+          "title": "Duration Template"
+        },
+        "resolution_template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Template string for appending resolution to prompt. Use {height} and {width} placeholders.",
+          "title": "Resolution Template"
+        },
+        "negative_metadata_mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NegativeMetadataMode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Negative prompt metadata mode: 'none', 'same', or 'inverse'."
+        },
+        "inverse_duration_template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Inverse template for duration/fps metadata in the negative prompt.",
+          "title": "Inverse Duration Template"
+        },
+        "inverse_resolution_template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Inverse template for resolution metadata in the negative prompt.",
+          "title": "Inverse Resolution Template"
+        },
+        "negative_prompt_keep_metadata": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Compatibility flag. If True and mode is 'none', mode is promoted to 'same'.",
+          "title": "Negative Prompt Keep Metadata"
+        },
+        "model_mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelMode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Generation modality. When omitted, the VFM modality is inferred from ``vision_path`` and\n``num_frames``; action modes must be set explicitly."
+        },
+        "num_steps": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Number of steps for the diffusion model.",
+          "title": "Num Steps"
+        },
+        "guidance": {
+          "anyOf": [
+            {
+              "maximum": 7,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Guidance scale for the diffusion model.",
+          "title": "Guidance"
+        },
+        "guidance_interval": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "minimum": 0,
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Guidance interval for the diffusion model.",
+          "title": "Guidance Interval"
+        },
+        "normalize_cfg": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "If True, normalize the CFG output.",
+          "title": "Normalize Cfg"
+        },
+        "shift": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Shift in the UniPC sampler. Ignored when sampler='edm'.",
+          "title": "Shift"
+        },
+        "sigma_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum sigma for the EDM sampler. Ignored when sampler='unipc'.",
+          "title": "Sigma Max"
+        },
+        "output_dir": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Output directory.",
+          "title": "Output Dir"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Model name.",
+          "title": "Model"
+        },
+        "extra": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Extra arguments.",
+          "title": "Extra"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name of the sample.",
+          "title": "Name"
+        },
+        "num_outputs": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Number of outputs to generate per sample.",
+          "title": "Num Outputs"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Seed for the random number generator.",
+          "title": "Seed"
+        },
+        "tensors_file": {
+          "anyOf": [
+            {
+              "format": "file-path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to data tensors file.",
+          "title": "Tensors File"
+        },
+        "pickle_file": {
+          "anyOf": [
+            {
+              "format": "file-path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to data pickle file.",
+          "title": "Pickle File"
+        },
+        "defaults_file": {
+          "anyOf": [
+            {
+              "format": "file-path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to a JSON file of per-modality default sample fields. Overrides the built-in defaults.",
+          "title": "Defaults File"
+        }
+      },
+      "title": "OmniSampleOverrides",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "guardrails": {
+      "default": false,
+      "description": "Enable guardrails.",
+      "title": "Guardrails",
+      "type": "boolean"
+    },
+    "offload_guardrail_models": {
+      "default": false,
+      "description": "Offload guardrail models to CPU.",
+      "title": "Offload Guardrail Models",
+      "type": "boolean"
+    },
+    "parallelism_preset": {
+      "default": "latency",
+      "description": "Preset for automatic sharding.",
+      "enum": [
+        "throughput",
+        "latency"
+      ],
+      "title": "Parallelism Preset",
+      "type": "string"
+    },
+    "device_memory_utilization": {
+      "default": 0.75,
+      "description": "Fraction of device memory to use for model weights.\n\nUsed for automatic sharding.",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Device Memory Utilization",
+      "type": "number"
+    },
+    "dp_replicate_size": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Dp Replicate Size",
+      "type": "integer"
+    },
+    "dp_shard_size": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Dp Shard Size",
+      "type": "integer"
+    },
+    "tp_size": {
+      "default": 1,
+      "minimum": 0,
+      "title": "Tp Size",
+      "type": "integer"
+    },
+    "cp_size": {
+      "anyOf": [
+        {
+          "maximum": 8,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "const": 0,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Cp Size"
+    },
+    "cfgp_size": {
+      "anyOf": [
+        {
+          "maximum": 2,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "const": 0,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Cfgp Size"
+    },
+    "use_torch_compile": {
+      "default": true,
+      "description": "Whether to use torch compile.",
+      "title": "Use Torch Compile",
+      "type": "boolean"
+    },
+    "use_cuda_graphs": {
+      "default": false,
+      "title": "Use Cuda Graphs",
+      "type": "boolean"
+    },
+    "compiled_region": {
+      "default": "all",
+      "enum": [
+        "all",
+        "language"
+      ],
+      "title": "Compiled Region",
+      "type": "string"
+    },
+    "compile_dynamic": {
+      "default": true,
+      "description": "Compile with symbolic-shape kernels (maps to ``torch.compile(dynamic=...)``).\n\nDefaults to ``True`` for backward compatibility with training, which can\nsee varying shapes across batches.  Setting to ``False`` produces faster\nkernels when the shapes are stable (e.g. single-prompt AR inference), at\nthe cost of a recompile on shape change.",
+      "title": "Compile Dynamic",
+      "type": "boolean"
+    },
+    "use_separate_pipeline_vision_decode_gpu": {
+      "default": false,
+      "description": "Whether to place pipeline vision decode on a spare local GPU when one is available.",
+      "title": "Use Separate Pipeline Vision Decode Gpu",
+      "type": "boolean"
+    },
+    "config_file": {
+      "default": "cosmos3/_src/vfm/configs/base/config.py",
+      "description": "Hydra config store module, Hydra config yaml file, or Hugging Face model json file.",
+      "title": "Config File",
+      "type": "string"
+    },
+    "config_file_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ConfigFileType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Hydra config file type."
+    },
+    "experiment": {
+      "default": "",
+      "description": "Hydra experiment name.",
+      "title": "Experiment",
+      "type": "string"
+    },
+    "experiment_overrides": {
+      "description": "Hydra experiment overrides.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Experiment Overrides",
+      "type": "array"
+    },
+    "checkpoint_path": {
+      "description": "Model name or path.\n\n* Model name: Cosmos3-Nano\n* Local path: /path/to/checkpoint",
+      "title": "Checkpoint Path",
+      "type": "string"
+    },
+    "checkpoint_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CheckpointType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Checkpoint type."
+    },
+    "model_memory_bytes": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Approximate model size in bytes.",
+      "title": "Model Memory Bytes"
+    },
+    "checkpoint_hf": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CheckpointDirHf"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Hugging Face checkpoint directory."
+    },
+    "credential_path": {
+      "default": "credentials/gcp_checkpoint.secret",
+      "description": "Path to S3 credentials file for remote checkpoint loading.",
+      "title": "Credential Path",
+      "type": "string"
+    },
+    "use_ema_weights": {
+      "default": true,
+      "description": "If True, use EMA weights. Otherwise, use regular weights.",
+      "title": "Use Ema Weights",
+      "type": "boolean"
+    },
+    "checkpoint_cache_dir": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Directory for caching S3 checkpoints.",
+      "title": "Checkpoint Cache Dir"
+    },
+    "output_dir": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Output directory.",
+      "title": "Output Dir"
+    },
+    "keep_going": {
+      "default": false,
+      "description": "If True, catch and log errors instead of raising them.",
+      "title": "Keep Going",
+      "type": "boolean"
+    },
+    "skip_invalid_samples": {
+      "default": false,
+      "description": "If True, skip samples whose modality (e.g. action, sound) is not supported by the\nloaded model and emit a ``status='skip'`` output instead of raising. Useful for tests\nand examples that exercise multiple modalities against checkpoints with varying support.",
+      "title": "Skip Invalid Samples",
+      "type": "boolean"
+    },
+    "debug": {
+      "default": false,
+      "description": "If True, enable debug outputs.",
+      "title": "Debug",
+      "type": "boolean"
+    },
+    "profile": {
+      "default": false,
+      "description": "Run profiler and save report to output directory.",
+      "title": "Profile",
+      "type": "boolean"
+    },
+    "benchmark": {
+      "default": false,
+      "description": "If set, measures and reports inference runtime (disables tqdm).",
+      "title": "Benchmark",
+      "type": "boolean"
+    },
+    "warmup": {
+      "default": 0,
+      "description": "Number of warmup generations before each sample.",
+      "minimum": 0,
+      "title": "Warmup",
+      "type": "integer"
+    },
+    "max_model_len": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Maximum total tokens per batch.  When set, samples are packed into\nbatches by token count.",
+      "title": "Max Model Len"
+    },
+    "max_num_seqs": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": 1,
+      "description": "Maximum number of sequences per batch.  When set, samples are packed into\nbatches by number of sequences.",
+      "title": "Max Num Seqs"
+    },
+    "variant": {
+      "const": "omni",
+      "default": "omni",
+      "description": "Discriminator.",
+      "title": "Variant",
+      "type": "string"
+    },
+    "sample_overrides": {
+      "$ref": "#/$defs/OmniSampleOverrides",
+      "default": {
+        "action_path": null,
+        "domain_name": null,
+        "image_size": null,
+        "action_chunk_size": null,
+        "raw_action_dim": null,
+        "vision_path": null,
+        "condition_frame_indexes_vision": null,
+        "resolution": null,
+        "aspect_ratio": null,
+        "fps": null,
+        "num_frames": null,
+        "video_save_quality": null,
+        "image_save_quality": null,
+        "prompt_path": null,
+        "prompt": null,
+        "negative_prompt": null,
+        "duration_template": null,
+        "resolution_template": null,
+        "negative_metadata_mode": null,
+        "inverse_duration_template": null,
+        "inverse_resolution_template": null,
+        "negative_prompt_keep_metadata": null,
+        "model_mode": null,
+        "num_steps": null,
+        "guidance": null,
+        "guidance_interval": null,
+        "normalize_cfg": null,
+        "shift": null,
+        "sigma_max": null,
+        "output_dir": null,
+        "model": null,
+        "extra": null,
+        "name": null,
+        "num_outputs": null,
+        "seed": null,
+        "tensors_file": null,
+        "pickle_file": null,
+        "defaults_file": null
+      }
+    },
+    "model_size": {
+      "anyOf": [
+        {
+          "enum": [
+            "0.6B",
+            "2B",
+            "8B",
+            "30B-A3B",
+            "32B",
+            "235B-A22B"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Size"
+    },
+    "sampler": {
+      "default": "unipc",
+      "enum": [
+        "unipc",
+        "edm"
+      ],
+      "title": "Sampler",
+      "type": "string"
+    }
+  },
+  "required": [
+    "checkpoint_path"
+  ],
+  "title": "OmniSetupOverrides",
+  "type": "object"
+}

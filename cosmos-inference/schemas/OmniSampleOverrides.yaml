@@ -1,0 +1,98 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Number of action steps to predict.
+action_chunk_size: null
+# Path to action JSON file. Required for forward_dynamics mode.
+action_path: null
+# Vision aspect ratio. When None, image_edit preserves the input image's native
+# aspect ratio; all other modes default to 16:9.
+aspect_ratio: null
+# Latent frame indices to condition on. Defaults to [0] for image, [0, 1] for video.
+condition_frame_indexes_vision: null
+# Path to a JSON file of per-modality default sample fields. Overrides the built-in defaults.
+defaults_file: null
+# Action domain name passed to get_domain_id().
+domain_name: null
+# Template string for appending duration/fps to prompt. Use {duration} and {fps} placeholders.
+duration_template: null
+# Extra arguments.
+extra: null
+# Vision frames per second. Recommended range [10, 30]; quality may be degraded outside of this range.
+fps: null
+# Guidance scale for the diffusion model.
+guidance: null
+# Guidance interval for the diffusion model.
+guidance_interval: null
+# Quality of the saved image (0-100).
+image_save_quality: null
+# Target image height in pixels (aspect-ratio-preserving resize).
+image_size: null
+# Inverse template for duration/fps metadata in the negative prompt.
+inverse_duration_template: null
+# Inverse template for resolution metadata in the negative prompt.
+inverse_resolution_template: null
+# Model name.
+model: null
+# Generation modality. When omitted, the VFM modality is inferred from ``vision_path`` and
+# ``num_frames``; action modes must be set explicitly.
+model_mode: null
+# Name of the sample.
+name: null
+# Negative prompt metadata mode: 'none', 'same', or 'inverse'.
+negative_metadata_mode: null
+# Negative prompt - describing what you don't want in the generated video.
+negative_prompt: null
+# Compatibility flag. If True and mode is 'none', mode is promoted to 'same'.
+negative_prompt_keep_metadata: null
+# If True, normalize the CFG output.
+normalize_cfg: null
+# Number of vision frames.
+#
+# Range by resolution: 256p: [24, 400], 480p: [24, 300], 720p: [24, 200].
+# Image-only resolutions (e.g. 1080p) require num_frames=1.
+num_frames: null
+# Number of outputs to generate per sample.
+num_outputs: null
+# Number of steps for the diffusion model.
+num_steps: null
+# Output directory.
+output_dir: null
+# Path to data pickle file.
+pickle_file: null
+# Text prompt for generation. Only one of 'prompt' or 'prompt_path' should be provided.
+prompt: null
+# Path to a .txt file containing the prompt. Only one of 'prompt' or 'prompt_path' should be provided.
+prompt_path: null
+# Dimension of the raw action data. Required when action_path is not provided.
+raw_action_dim: null
+# Vision resolution.
+#
+# Defaults to model config resolution.
+resolution: null
+# Template string for appending resolution to prompt. Use {height} and {width} placeholders.
+resolution_template: null
+# Seed for the random number generator.
+seed: null
+# Shift in the UniPC sampler. Ignored when sampler='edm'.
+shift: null
+# Maximum sigma for the EDM sampler. Ignored when sampler='unipc'.
+sigma_max: null
+# Path to data tensors file.
+tensors_file: null
+# Quality of the saved video (0-10).
+video_save_quality: null
+# Path or URL to conditioning image/video.
+vision_path: null

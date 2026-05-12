@@ -1,0 +1,25 @@
+*.lock linguist-generated=true
+tests/data/** linguist-generated=true
+ATTRIBUTIONS.md linguist-generated=true
+
+assets/** filter=lfs diff=lfs merge=lfs -text
+
+# Video files
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.avi filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.mkv filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+
+# Audio files
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+*.aac filter=lfs diff=lfs merge=lfs -text
+
+# Image files
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.tiff filter=lfs diff=lfs merge=lfs -text
+*.bmp filter=lfs diff=lfs merge=lfs -text

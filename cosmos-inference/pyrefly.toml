@@ -1,0 +1,108 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+project-includes = [
+    "cosmos3/",
+]
+project-excludes = [
+    "packages/",
+]
+infer-with-first-use = false
+ignore-missing-source = false
+search-path = [ "./" ]
+
+ignore-missing-imports = [
+    "cloudpickle.*",
+    "cloudpickle",
+    "flash_attn_3.*",
+    "flash_attn_3",
+    "launcher.*",
+    "launcher",
+    "librosa",
+    "librosa.*",
+    "soundfile.*",
+    "soundfile",
+    "transformer_engine_torch.*",
+    "transformer_engine_torch",
+    "wordfreq.*",
+    "wordfreq",
+]
+
+[errors]
+annotation-mismatch=false
+assert-type=true
+bad-argument-count=false
+bad-argument-type=false
+bad-assignment=false
+bad-class-definition=false
+bad-context-manager=false
+bad-function-definition=false
+bad-index=false
+bad-instantiation=false
+bad-keyword-argument=false
+bad-match=true
+bad-override=false
+bad-param-name-override=false
+bad-return=false
+bad-specialization=false
+bad-typed-dict=false
+bad-typed-dict-key=false
+bad-unpacking=false
+deprecated=false
+implicit-any=false
+implicit-import=false
+implicitly-defined-attribute=false
+inconsistent-inheritance=false
+inconsistent-overload=false
+internal-error=false
+invalid-annotation=false
+invalid-argument=false
+invalid-decorator=false
+invalid-inheritance=false
+invalid-literal=false
+invalid-overload=false
+invalid-param-spec=false
+invalid-self-type=false
+invalid-super-call=false
+invalid-syntax=false
+invalid-type-alias=false
+invalid-type-var=false
+invalid-type-var-tuple=false
+invalid-yield=false
+missing-argument=false
+missing-attribute=false
+missing-import=true
+missing-module-attribute=true
+missing-source=true
+no-access=false
+no-matching-overload=false
+not-async=false
+not-a-type=false
+not-callable=false
+not-iterable=false
+parse-error=true
+protocol-implicitly-defined-attribute=false
+read-only=false
+redundant-cast=true
+redundant-condition=true
+reveal-type=true
+unbound-name=false
+unexpected-keyword=false
+unexpected-positional-argument=false
+unknown-name=false
+unsupported-delete=true
+unsupported=false
+unsupported-operation=false
+unused-coroutine=true

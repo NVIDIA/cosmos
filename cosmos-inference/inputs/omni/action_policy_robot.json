@@ -1,0 +1,19 @@
+{
+    "model_mode": "policy",
+    "vision_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/bridge_0.mp4",
+    "image_size": 480,
+    "fps": 5,
+    "prompt": "Put the pot to the left of the purple item. This video is captured from a first-person perspective looking at the scene.",
+    "num_steps": 30,
+    "guidance": 1.0,
+    "shift": 5.0,
+    "seed": 0,
+    "action_chunk_size": 16,
+    "raw_action_dim": 10,
+    "domain_name": "bridge_orig_lerobot",
+    "extra": {
+        "golden_psnr_min": 14.0,
+        "golden_mse_max": 0.05,
+        "golden_action_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/bridge_0.json"
+    }
+}
