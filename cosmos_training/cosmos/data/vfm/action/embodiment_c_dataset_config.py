@@ -1,0 +1,150 @@
+"""Default data roots for Embodiment C datasets."""
+
+from __future__ import annotations
+
+DEFAULT_OFFSHELF_GRIPPER_ROOT = "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/EmbodimentCWorld_20260208/agibot-offshelf"
+DEFAULT_CUSTOM_GRIPPER_ROOT = "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/EmbodimentCWorld_20260208/agibot-custom"
+
+OFFSHELF_GRIPPER_SUBPATHS = (
+    # 20251016_500h/gripper
+    "20251016_500h/gripper/task_1018",
+    "20251016_500h/gripper/task_1173",
+    "20251016_500h/gripper/task_1174",
+    "20251016_500h/gripper/task_1183",
+    "20251016_500h/gripper/task_1185",
+    "20251016_500h/gripper/task_1187",
+    "20251016_500h/gripper/task_1189",
+    "20251016_500h/gripper/task_1237",
+    "20251016_500h/gripper/task_1245",
+    "20251016_500h/gripper/task_1251",
+    "20251016_500h/gripper/task_1252",
+    "20251016_500h/gripper/task_1259",
+    "20251016_500h/gripper/task_1286",
+    "20251016_500h/gripper/task_797",
+    "20251016_500h/gripper/task_798",
+    "20251016_500h/gripper/task_799",
+    "20251016_500h/gripper/task_800",
+    "20251016_500h/gripper/task_809",
+    "20251016_500h/gripper/task_812",
+    "20251016_500h/gripper/task_813",
+    "20251016_500h/gripper/task_815",
+    "20251016_500h/gripper/task_827",
+    "20251016_500h/gripper/task_828",
+    "20251016_500h/gripper/task_841",
+    "20251016_500h/gripper/task_857",
+    "20251016_500h/gripper/task_869",
+    "20251016_500h/gripper/task_876",
+    "20251016_500h/gripper/task_893",
+    "20251016_500h/gripper/task_901",
+    "20251016_500h/gripper/task_903",
+    "20251016_500h/gripper/task_954",
+    "20251016_500h/gripper/task_957",
+    "20251016_500h/gripper/task_964",
+    "20251016_500h/gripper/task_968",
+    # 20251031_500h/gripper
+    "20251031_500h/gripper/task_1018",
+    "20251031_500h/gripper/task_1174",
+    "20251031_500h/gripper/task_1183",
+    "20251031_500h/gripper/task_1185",
+    "20251031_500h/gripper/task_1237",
+    "20251031_500h/gripper/task_1251",
+    "20251031_500h/gripper/task_1286",
+    "20251031_500h/gripper/task_1288",
+    "20251031_500h/gripper/task_1292",
+    "20251031_500h/gripper/task_1293",
+    "20251031_500h/gripper/task_1296",
+    "20251031_500h/gripper/task_1298",
+    "20251031_500h/gripper/task_1299",
+    "20251031_500h/gripper/task_1307",
+    "20251031_500h/gripper/task_1310",
+    "20251031_500h/gripper/task_1313",
+    "20251031_500h/gripper/task_1314",
+    "20251031_500h/gripper/task_1326",
+    "20251031_500h/gripper/task_1331",
+    "20251031_500h/gripper/task_1366",
+    "20251031_500h/gripper/task_1368",
+    "20251031_500h/gripper/task_1370",
+    "20251031_500h/gripper/task_1371",
+    "20251031_500h/gripper/task_1372",
+    "20251031_500h/gripper/task_1389",
+    "20251031_500h/gripper/task_1390",
+    "20251031_500h/gripper/task_1405",
+    "20251031_500h/gripper/task_1425",
+    "20251031_500h/gripper/task_1430",
+    "20251031_500h/gripper/task_1432",
+    "20251031_500h/gripper/task_1439",
+    "20251031_500h/gripper/task_1448",
+    "20251031_500h/gripper/task_1450",
+    "20251031_500h/gripper/task_1452",
+    "20251031_500h/gripper/task_1453",
+    "20251031_500h/gripper/task_1479",
+    "20251031_500h/gripper/task_1487",
+    "20251031_500h/gripper/task_1491",
+)
+
+# Custom gripper tasks with extended 94-dim state. These require
+# EmbodimentCGripperExtDataset because their arm, head, waist, and gripper state
+# offsets differ from the standard gripper layout.
+DEFAULT_CUSTOM_GRIPPER_EXT_ROOT = (
+    # 20251113_330h
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251113_330h/2025110304/gripper/task_3578",
+    # 20251218_561h
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120301/gripper/task_3529",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120301/gripper/task_3545",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120301/gripper/task_3547",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120401/gripper/task_3529",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120401/gripper/task_3545",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120501/gripper/task_3529",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120501/gripper/task_3545",
+)
+
+_CUSTOM_GRIPPER_TASK_ROOTS = (
+    # 20251113_330h
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251113_330h/2025111101/gripper/task_2156",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251113_330h/2025111101/gripper/task_3578",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251113_330h/2025111102/gripper/task_2156",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251113_330h/2025111102/gripper/task_3578",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251113_330h/2025111104/gripper/task_3800",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251113_330h/2025111201/gripper/task_4102",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251113_330h/2025111202/gripper/task_4102",
+    # 20251218_561h
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120301/gripper/task_3719",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120301/gripper/task_3800",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120301/gripper/task_4392",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120401/gripper/task_3800",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120401/gripper/task_4392",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120505/gripper/task_3800",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120505/gripper/task_4392",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120801/gripper/task_3798",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025120901/gripper/task_3798",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025121001/gripper/task_3798",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025121101/gripper/task_3798",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20251218_561h/2025121201/gripper/task_3798",
+    # 20260205_260h
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_1183",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_1185",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_1187",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_797",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_798",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_799",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_809",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_812",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_813",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_815",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_827",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_828",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_841",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_857",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_869",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_876",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_893",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_901",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_954",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_957",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_964",
+    f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/20260205_260h/task_968",
+)
+
+CUSTOM_GRIPPER_SUBPATHS = tuple(
+    root.removeprefix(f"{DEFAULT_CUSTOM_GRIPPER_ROOT}/") for root in _CUSTOM_GRIPPER_TASK_ROOTS
+)
