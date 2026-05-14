@@ -1,5 +1,5 @@
 {
-    "action_mode": "policy",
+    "model_mode": "policy",
     "vision_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/bridge_0.mp4",
     "image_size": 480,
     "fps": 5,

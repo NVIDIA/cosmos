@@ -1,15 +1,5 @@
 {
   "$defs": {
-    "ActionMode": {
-      "enum": [
-        "policy",
-        "forward_dynamics",
-        "inverse_dynamics",
-        "image2video"
-      ],
-      "title": "ActionMode",
-      "type": "string"
-    },
     "CheckpointDirHf": {
       "additionalProperties": false,
       "description": "Config for checkpoint directory on Hugging Face.",
@@ -75,6 +65,20 @@
       "title": "ConfigFileType",
       "type": "string"
     },
+    "ModelMode": {
+      "enum": [
+        "text2image",
+        "text2video",
+        "image2image",
+        "image2video",
+        "video2video",
+        "forward_dynamics",
+        "inverse_dynamics",
+        "policy"
+      ],
+      "title": "ModelMode",
+      "type": "string"
+    },
     "NegativeMetadataMode": {
       "enum": [
         "none",
@@ -87,18 +91,6 @@
     "OmniSampleOverrides": {
       "additionalProperties": false,
       "properties": {
-        "action_mode": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ActionMode"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Action mode. When set, activates Action batch construction."
-        },
         "action_path": {
           "anyOf": [
             {
@@ -409,6 +401,18 @@
           "default": null,
           "description": "Compatibility flag. If True and mode is 'none', mode is promoted to 'same'.",
           "title": "Negative Prompt Keep Metadata"
+        },
+        "model_mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelMode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Generation modality. When omitted, the VFM modality is inferred from ``vision_path`` and\n``num_frames``; action modes must be set explicitly."
         },
         "num_steps": {
           "anyOf": [
@@ -863,6 +867,12 @@
       "title": "Keep Going",
       "type": "boolean"
     },
+    "skip_invalid_samples": {
+      "default": false,
+      "description": "If True, skip samples whose modality (e.g. action, sound) is not supported by the\nloaded model and emit a ``status='skip'`` output instead of raising. Useful for tests\nand examples that exercise multiple modalities against checkpoints with varying support.",
+      "title": "Skip Invalid Samples",
+      "type": "boolean"
+    },
     "debug": {
       "default": false,
       "description": "If True, enable debug outputs.",
@@ -926,7 +936,6 @@
     "sample_overrides": {
       "$ref": "#/$defs/OmniSampleOverrides",
       "default": {
-        "action_mode": null,
         "action_path": null,
         "domain_name": null,
         "image_size": null,
@@ -949,6 +958,7 @@
         "inverse_duration_template": null,
         "inverse_resolution_template": null,
         "negative_prompt_keep_metadata": null,
+        "model_mode": null,
         "num_steps": null,
         "guidance": null,
         "guidance_interval": null,

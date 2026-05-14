@@ -1,13 +1,17 @@
 {
   "$defs": {
-    "ActionMode": {
+    "ModelMode": {
       "enum": [
-        "policy",
+        "text2image",
+        "text2video",
+        "image2image",
+        "image2video",
+        "video2video",
         "forward_dynamics",
         "inverse_dynamics",
-        "image2video"
+        "policy"
       ],
-      "title": "ActionMode",
+      "title": "ModelMode",
       "type": "string"
     },
     "NegativeMetadataMode": {
@@ -22,18 +26,6 @@
   },
   "additionalProperties": false,
   "properties": {
-    "action_mode": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/ActionMode"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Action mode. When set, activates Action batch construction."
-    },
     "action_path": {
       "anyOf": [
         {
@@ -344,6 +336,18 @@
       "default": null,
       "description": "Compatibility flag. If True and mode is 'none', mode is promoted to 'same'.",
       "title": "Negative Prompt Keep Metadata"
+    },
+    "model_mode": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ModelMode"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Generation modality. When omitted, the VFM modality is inferred from ``vision_path`` and\n``num_frames``; action modes must be set explicitly."
     },
     "num_steps": {
       "anyOf": [

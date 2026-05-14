@@ -68,10 +68,11 @@ python -m cosmos3.scripts.inference \
 
 General sample arguments:
 
-| Argument | Description                                    |
-| -------- | ---------------------------------------------- |
-| `name`   | Output subfolder name (inside `--output-dir`). |
-| `seed`   | Random seed for reproducibility.               |
+| Argument     | Description                                                                                                                                                                                                                                                                                                           |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_mode` | Generation modality. One of `text2image`, `text2video`, `image2image`, `image2video`, `video2video`, `forward_dynamics`, `inverse_dynamics`, `policy`. Also selects the matching default preset. When omitted, the VFM modality is inferred from `vision_path` and `num_frames`; action modes must be set explicitly. |
+| `name`       | Output subfolder name (inside `--output-dir`).                                                                                                                                                                                                                                                                        |
+| `seed`       | Random seed for reproducibility.                                                                                                                                                                                                                                                                                      |
 
 ### Condition
 
@@ -99,11 +100,11 @@ Provide an image or video via `vision_path`.
 
 #### Action
 
-Action inference is enabled by setting `action_mode` in the sample argument file. The examples live in [`inputs/omni/`](../inputs/omni/).
+Action inference is enabled by setting `model_mode` to one of the action tasks in the sample argument file. The examples live in [`inputs/omni/`](../inputs/omni/).
 
 | Argument            | Description                                                                                                                               |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `action_mode`       | Selects the action task: `forward_dynamics`, `inverse_dynamics`, or `policy`. This also selects the matching default preset.              |
+| `model_mode`        | Selects the action task: `forward_dynamics`, `inverse_dynamics`, or `policy`. This also selects the matching default preset.              |
 | `vision_path`       | Observation image or video. URLs are downloaded into the sample output's `inputs/` directory before generation.                           |
 | `prompt`            | Text instruction or scene/task description used as the action sample caption.                                                             |
 | `domain_name`       | Domain name passed to the action domain registry, such as `libero` or `av`. Use the domain used by the checkpoint's action training data. |

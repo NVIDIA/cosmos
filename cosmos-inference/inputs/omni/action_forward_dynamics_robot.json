@@ -1,5 +1,5 @@
 {
-    "action_mode": "forward_dynamics",
+    "model_mode": "forward_dynamics",
     "vision_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/bridge_0.mp4",
     "action_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/bridge_0.json",
     "image_size": 480,

@@ -1,5 +1,5 @@
 {
-    "action_mode": "forward_dynamics",
+    "model_mode": "forward_dynamics",
     "vision_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/mountain_720.png",
     "action_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/camera_action_44.json",
     "image_size": 480,

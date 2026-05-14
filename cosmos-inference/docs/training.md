@@ -20,6 +20,8 @@ ______________________________________________________________________
   - [Run inference with trained checkpoint](#run-inference-with-trained-checkpoint)
     - [Result Comparison](#result-comparison)
   - [Export checkpoint to Hugging Face safetensors](#export-checkpoint-to-hugging-face-safetensors)
+- [Evaluation](#evaluation)
+  - [Run evaluation with trained checkpoint](#run-evaluation-with-trained-checkpoint)
 - [Outputs](#outputs)
 - [Video Captioning for Training Data Processing](#video-captioning-for-training-data-processing)
   - [Server setup](#server-setup)
@@ -34,6 +36,7 @@ Fine-tune a pre-trained Cosmos3 model on your own video dataset using supervised
 
 1. **Training** (4 steps): prepare data, prepare the checkpoint, prepare the config, and launch distributed training with `torchrun`.
 2. **Inference** (2 steps): run inference with the trained checkpoint, and optionally export it to Hugging Face safetensors.
+3. **Evaluation** (1 step): run evaluation with the trained checkpoint. Currently supported modalities are Forward Dynamics, Inverse Dynamics, and Policy.
 
 This guide was tested on the following environments:
 
@@ -172,7 +175,7 @@ CHECKPOINT_PATH=outputs/train/job/checkpoints/$CHECKPOINT_ITER
 Run Text2Video (T2V), Image2Video (I2V), and Video2Video (V2V) inference for a single clip with the output checkpoint:
 
 ```shell
-torchrun --nproc-per-node=8 -m cosmos3.scripts.inference \
+COSMOS_TRAINING=1 torchrun --nproc-per-node=8 -m cosmos3.scripts.inference \
     --parallelism-preset=latency \
     -i "$DATASET_PATH/val/inference_prompt*/episode_049683_clip000.json" \
     -o outputs/train_inference \
@@ -226,6 +229,30 @@ torchrun -m cosmos3.scripts.export_model \
   -o outputs/train/model
 ```
 
+## Evaluation
+
+Supported modalities: Forward Dynamics, Inverse Dynamics, Policy.
+
+`cosmos3.scripts.eval` scores checkpoints on a held-out dataset — `psnr` for predicted video, `action_mse` for predicted action.
+
+### Run evaluation with trained checkpoint
+
+```shell
+torchrun --nproc-per-node=8 -m cosmos3.scripts.eval \
+    -o outputs/train_eval \
+    --checkpoint-path $CHECKPOINT_PATH \
+    --config-file outputs/train/config.yaml \
+    --root-override /path/to/eval/dataset
+```
+
+- `--config-file` reuses the training dataloader (`val` split, falling back to `dataloader_train`).
+- `--root-override` swaps the dataset's baked-in `root` for a local path. Alternatives: `--gcs-root-override <s3-uri>` + `--cache-dir` to download, or `--dataset <name>` to pick one entry from a multi-dataset config.
+- `--model-mode` defaults to `joint` (every entry evaluated under all three modes); pass a single mode (e.g. `forward_dynamics`) to evaluate only that mode.
+- `--num-samples N` caps the number of dataset entries evaluated; `--sample-stride K` evaluates every K-th entry (defaults to `1`, i.e. every entry).
+- For a quick debug run, shrink the workload with `--num-samples N`, `--sample-stride K`, or `--model-mode <single mode>`.
+- Per-sample scores land in `outputs/train_eval/<dataset>/<mode>/<id>/metrics.json`; rank-0 aggregate is `outputs/train_eval/metrics_aggregate.json`.
+- Optional flags: `--no-compute-metrics` (generation only), `--benchmark` (per-stage timings), `--debug` (raw tensors + pickled debug data).
+
 ## Outputs
 
 The training output directory contains:
@@ -238,13 +265,15 @@ The training output directory contains:
         1. `iter_<iter>/`: DCP checkpoints saved every `{checkpoint.save_iter}` iterations.
     1. `<callback_name>/`: Callback outputs.
 
-| Artifact                                                | Path                                     |
-| ------------------------------------------------------- | ---------------------------------------- |
-| Example dataset                                         | `$DATASET_PATH`                          |
-| Base checkpoint (DCP)                                   | `$BASE_CHECKPOINT_PATH`                  |
-| Trained checkpoint (DCP)                                | `outputs/train/job/checkpoints/iter_<N>` |
-| Trained checkpoint (Hugging Face safetensors, optional) | `outputs/train/model`                    |
-| Inference video from trained model                      | `outputs/train_inference`                |
+| Artifact                                                  | Path                                            |
+| --------------------------------------------------------- | ----------------------------------------------- |
+| Example dataset                                           | `$DATASET_PATH`                                 |
+| Base checkpoint (DCP)                                     | `$BASE_CHECKPOINT_PATH`                         |
+| Trained checkpoint (DCP)                                  | `outputs/train/job/checkpoints/iter_<N>`        |
+| Trained checkpoint (Hugging Face safetensors, optional)   | `outputs/train/model`                           |
+| Inference video from trained model                        | `outputs/train_inference`                       |
+| Action evaluation per-sample outputs (action checkpoints) | `outputs/train_eval/<dataset>/<mode>/<id>/`     |
+| Action evaluation aggregate metrics (action checkpoints)  | `outputs/train_eval/metrics_aggregate.json`     |
 
 ______________________________________________________________________
 

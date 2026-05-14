@@ -1,5 +1,5 @@
 {
-    "action_mode": "inverse_dynamics",
+    "model_mode": "inverse_dynamics",
     "vision_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/av_vision_25_73d01c91-51f0-46cf-9b76-5682a76fb349.mp4",
     "image_size": 480,
     "fps": 10,

@@ -73,8 +73,6 @@ profile: false
 sample_overrides:
   # Number of action steps to predict.
   action_chunk_size: null
-  # Action mode. When set, activates Action batch construction.
-  action_mode: null
   # Path to action JSON file. Required for forward_dynamics mode.
   action_path: null
   # Vision aspect ratio. When None, image_edit preserves the input image's native
@@ -106,6 +104,9 @@ sample_overrides:
   inverse_resolution_template: null
   # Model name.
   model: null
+  # Generation modality. When omitted, the VFM modality is inferred from ``vision_path`` and
+  # ``num_frames``; action modes must be set explicitly.
+  model_mode: null
   # Name of the sample.
   name: null
   # Negative prompt metadata mode: 'none', 'same', or 'inverse'.
@@ -154,6 +155,10 @@ sample_overrides:
   # Path or URL to conditioning image/video.
   vision_path: null
 sampler: unipc
+# If True, skip samples whose modality (e.g. action, sound) is not supported by the
+# loaded model and emit a ``status='skip'`` output instead of raising. Useful for tests
+# and examples that exercise multiple modalities against checkpoints with varying support.
+skip_invalid_samples: false
 tp_size: 1
 use_cuda_graphs: false
 # If True, use EMA weights. Otherwise, use regular weights.

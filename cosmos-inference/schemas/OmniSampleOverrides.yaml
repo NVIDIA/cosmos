@@ -15,8 +15,6 @@
 
 # Number of action steps to predict.
 action_chunk_size: null
-# Action mode. When set, activates Action batch construction.
-action_mode: null
 # Path to action JSON file. Required for forward_dynamics mode.
 action_path: null
 # Vision aspect ratio. When None, image_edit preserves the input image's native
@@ -48,6 +46,9 @@ inverse_duration_template: null
 inverse_resolution_template: null
 # Model name.
 model: null
+# Generation modality. When omitted, the VFM modality is inferred from ``vision_path`` and
+# ``num_frames``; action modes must be set explicitly.
+model_mode: null
 # Name of the sample.
 name: null
 # Negative prompt metadata mode: 'none', 'same', or 'inverse'.
