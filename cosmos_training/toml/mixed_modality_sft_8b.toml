@@ -1,0 +1,69 @@
+
+[job]
+# output_dir = ${IMAGINAIRE_OUTPUT_ROOT}/${job.project}/${job.group}/${job.name}
+#project = "cosmos3_vfm"                       # W&B project
+#group = "debug"                               # W&B group
+#name = "mixed_modality_sft_8b"                # W&B run name
+wandb_mode = "disabled"
+
+[train]
+max_iter = 2
+logging_iter = 1
+
+# optimizer
+#optm_name = "FusedAdam"
+#optm_fused = true
+#optm_init_lr = 1e-5
+#optm_end_lr = 1e-6
+#optm_weight_decay = 0.05
+#optm_betas = [0.9, 0.99]
+#optm_grad_norm_clip = 1.0
+
+# scheduler
+#optm_warmup_steps = 2000
+#optm_decay_type = "cosine"                    # "cosine" | "linear"
+
+# precision
+#param_dtype = "bfloat16"
+#master_dtype = "float32"
+#fsdp_reduce_dtype = "float32"
+#fsdp_offload = false
+#fsdp_reshard_after_forward = "default"
+
+# compile
+#compile = true
+
+# batch
+#global_batch_per_dp = 1
+
+# misc
+run_validation = false
+upload_reproducible_setup = false
+
+
+[train.train_policy]
+experiment = "mixed_modality_sft_8b"
+#mini_batch = 1
+#dataloader_pool_size = 16
+
+[train.ckpt]
+#enable_checkpoint = true
+#checkpoint_storage = "gcp"
+#save_freq = 2000
+#save_mode = "async"
+load_path = "/nfs/sw/sw_aidot/users/pzeren/Cosmos-prerelease/workdir/cosmos_opensource/midtrain"
+
+[policy]
+#model_name_or_path = ""
+#model_safetensor_path = ""
+#model_max_length = 16000
+#model_gradient_checkpointing = true
+
+
+[policy.parallelism]
+dp_shard_size = 4
+#dp_replicate_size = -1
+
+
+[logging]
+#logger = ["console", "wandb"]

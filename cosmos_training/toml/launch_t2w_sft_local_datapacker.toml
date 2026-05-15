@@ -1,0 +1,90 @@
+# Mirror of launch_t2w_sft_local_datapacker.sh, expressed as an interface TOML.
+# Paired with: --config=configs/base/config.py  (variant=vfm-base)
+#
+# Every active entry is set to the Hydra-resolved default for the
+# t2w_sft_8b_local_datapacker experiment (verified via --dryrun parity).
+# Commented entries are either: (a) "n/a in vfm-base" (no mapping → would WARN
+# if activated), (b) a SKU swap whose current value isn't a scalar match for
+# the comment, or (c) a placeholder (e.g. job.name = ${now:...}).
+#
+# Per-user runtime paths + entries with no interface-schema mapping flow
+# through the CLI tail (see launch_t2w_sft_local_datapacker_toml.sh):
+#   model.config.tokenizer.vae_path=<path>
+#   model.config.tokenizer.bucket_name=""
+#   model.config.tokenizer.object_store_credential_path_pretrained=""
+#   checkpoint.load_from_object_store.enabled=false
+#   checkpoint.save_to_object_store.enabled=false
+#   model.config.joint_attn_implementation=flex
+#   model.config.vlm_config.tokenizer.config_variant=hf
+#   model.config.vlm_config.pretrained_weights.enabled=false
+#   dataloader_train.data_source.num_video_frames=61
+#   dataloader_train.data_source.jsonl_paths=[<path>]
+
+[job]
+# output_dir = ${IMAGINAIRE_OUTPUT_ROOT}/${job.project}/${job.group}/${job.name}
+project = "cosmos3_vfm"                           # hydra: job.project
+group = "debug"                                   # hydra: job.group
+#name = "${now:...}"                              # hydra: job.name (timestamp placeholder)
+wandb_mode = "disabled"                           # hydra: job.wandb_mode
+
+[train]
+max_iter = 10                                     # hydra: trainer.max_iter
+logging_iter = 1                                  # hydra: trainer.logging_iter
+
+# optimizer
+#optm_name = "AdamW"                              # hydra: optimizer (SKU swap; current SKU not a scalar match)
+optm_fused = true                                 # hydra: optimizer.fused
+#optm_init_lr = 2e-5                              # n/a in vfm-base
+#optm_end_lr = 0                                  # n/a in vfm-base
+optm_weight_decay = 0.0001                        # hydra: optimizer.weight_decay
+optm_betas = [0.9, 0.95]                          # hydra: optimizer.betas
+optm_grad_norm_clip = 0.1                         # hydra: trainer.callbacks.grad_clip.clip_norm
+
+# scheduler
+optm_warmup_steps = 200                           # hydra: scheduler.warm_up_steps (wrapped as [200])
+#optm_decay_type = "cosine"                       # n/a in vfm-base
+
+# precision
+param_dtype = "bfloat16"                          # hydra: model.config.parallelism.precision
+#master_dtype = "float32"                         # n/a in vfm-base
+#fsdp_reduce_dtype = "float32"                    # n/a in vfm-base
+#fsdp_offload = false                             # n/a in vfm-base
+#fsdp_reshard_after_forward = "default"           # n/a in vfm-base
+
+# compile
+compile = false                                   # hydra: model.config.parallelism.use_torch_compile
+
+# batch
+#global_batch_per_dp = 1                          # n/a in vfm-base
+
+# misc
+run_validation = false                            # hydra: trainer.run_validation
+upload_reproducible_setup = false                 # hydra: upload_reproducible_setup
+
+
+[train.train_policy]
+experiment = "t2w_sft_8b_local_datapacker"        # hydra: experiment
+mini_batch = 1                                    # hydra: trainer.grad_accum_iter
+
+[train.ckpt]
+enable_checkpoint = false                         # hydra: ckpt_type (false → dummy)
+checkpoint_storage = "local"                      # hydra: checkpoint (storage SKU = local)
+save_freq = 100                                   # hydra: checkpoint.save_iter
+save_mode = "async"                               # hydra: checkpoint.dcp_async_mode_enabled (async → true)
+load_path = "/lustre/fsw/portfolios/cosmos/users/yangyangt/midtrain"  # hydra: checkpoint.load_path
+
+[policy]
+model_name_or_path = "Qwen/Qwen3-VL-8B-Instruct"  # hydra: model.config.vlm_config.model_name
+#model_safetensor_path = ""                       # hydra: model.config.vlm_config.checkpoint_path (current=None, "" would diverge)
+#model_max_length = 16000                         # n/a in vfm-base
+model_gradient_checkpointing = true               # hydra: model.config.parallelism.use_activation_checkpointing
+
+
+[policy.parallelism]
+dp_shard_size = -1                                # hydra: model.config.parallelism.data_parallel_shard_degree
+dp_replicate_size = 1                             # hydra: model.config.parallelism.data_parallel_replicate_degree
+cp_size = 1                                       # hydra: model.config.parallelism.context_parallel_shard_degree
+
+
+[logging]
+#logger = ["console", "wandb"]                    # hydra: trainer.callbacks.wandb (no-op SKIP when "wandb" present)

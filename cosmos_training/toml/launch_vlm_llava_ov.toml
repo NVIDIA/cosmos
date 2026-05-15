@@ -1,0 +1,87 @@
+# Mirror of launch_vlm_llava_ov.sh, expressed as an interface TOML.
+# Paired with: --config=configs/base/vlm/config.py  (variant=vfm-vlm)
+#
+# Every active entry is set to the Hydra-resolved default for the
+# pre_exp012_llava_ov_datapacker experiment (verified via --dryrun parity).
+# Commented entries are either: (a) a None resolved default that would
+# diverge if set to a non-None comment value (e.g. optimizer.config.name=None),
+# (b) a SKU swap whose current value isn't a scalar match for the comment, or
+# (c) a placeholder (e.g. job.name = ${now:...}).
+#
+# Per-user runtime paths + entries with no interface-schema mapping flow
+# through the CLI tail (see launch_vlm_llava_ov_toml.sh). Note that
+# model.config.policy.backbone.model_name has no shallow `policy.*` mapping
+# (the closest, policy.model_name_or_path, targets a different Hydra key):
+#   model.config.policy.backbone.model_name=<path>
+#   checkpoint.load_from_object_store.enabled=false
+#   checkpoint.save_to_object_store.enabled=false
+
+[job]
+# output_dir = ${IMAGINAIRE_OUTPUT_ROOT}/${job.project}/${job.group}/${job.name}
+project = "cosmos_reason2"                        # hydra: job.project
+group = "vlm_llava_ov_demo"                       # hydra: job.group
+#name = "${now:...}"                              # hydra: job.name (timestamp placeholder)
+wandb_mode = "disabled"                           # hydra: job.wandb_mode
+
+[train]
+max_iter = 10                                     # hydra: trainer.max_iter
+logging_iter = 1                                  # hydra: trainer.logging_iter
+
+# optimizer
+#optm_name = "AdamW"                              # hydra: optimizer.config.name (current=None)
+#optm_fused = true                                # hydra: optimizer.config.fused (current=None)
+#optm_init_lr = 1e-5                              # hydra: optimizer.config.init_lr (current=None)
+#optm_end_lr = 1e-6                               # hydra: optimizer.config.end_lr (current=None)
+#optm_weight_decay = 0.05                         # hydra: optimizer.config.weight_decay (current=None)
+#optm_betas = [0.9, 0.99]                         # hydra: optimizer.config.betas (current=None)
+optm_grad_norm_clip = 1.0                         # hydra: trainer.callbacks.grad_clip.clip_norm
+
+# scheduler
+#optm_warmup_steps = 2000                         # hydra: scheduler.warmup_iters (current=None)
+#optm_decay_type = "cosine"                       # hydra: scheduler (SKU swap)
+
+# precision
+param_dtype = "bfloat16"                          # hydra: {policy,model.config.policy}.parallelism.precision
+master_dtype = "float32"                          # hydra: train.master_dtype
+fsdp_reduce_dtype = "float32"                     # hydra: train.fsdp_reduce_dtype
+fsdp_offload = false                              # hydra: train.fsdp_offload
+fsdp_reshard_after_forward = "default"            # hydra: train.fsdp_reshard_after_forward
+
+# compile
+compile = false                                   # hydra: {policy,model.config.policy}.parallelism.use_torch_compile
+
+# batch
+global_batch_per_dp = 1                           # hydra: train.train_batch_per_replica
+
+# misc
+run_validation = false                            # hydra: trainer.run_validation
+upload_reproducible_setup = false                 # hydra: upload_reproducible_setup
+
+
+[train.train_policy]
+experiment = "pre_exp012_llava_ov_datapacker"     # hydra: experiment
+mini_batch = 1                                    # hydra: data_setting.max_batch_size
+dataloader_pool_size = 16                         # hydra: dataloader_train.pool_size
+
+[train.ckpt]
+enable_checkpoint = false                         # hydra: ckpt_type (false → dummy)
+#checkpoint_storage = "gcp"                       # hydra: checkpoint (SKU swap; current SKU not a scalar match)
+save_freq = 100000                                # hydra: checkpoint.save_iter
+save_mode = "async"                               # hydra: checkpoint.dcp_async_mode_enabled (async → true)
+#load_path = ""                                   # hydra: checkpoint.load_path (current="" — leave commented)
+
+[policy]
+#model_name_or_path = ""                          # hydra: model.config.policy.model_name_or_path (current=None, "" would diverge)
+#model_safetensor_path = ""                       # hydra: model.config.policy.pretrain_weights_path_{vlm,llm,vit} (current=None)
+model_max_length = 16000                          # hydra: model.config.policy.model_max_length
+model_gradient_checkpointing = true               # hydra: model.config.policy.parallelism.use_activation_checkpointing
+
+
+[policy.parallelism]
+dp_shard_size = 4                                 # hydra: model.config.policy.parallelism.data_parallel_shard_degree
+dp_replicate_size = -1                            # hydra: model.config.policy.parallelism.data_parallel_replicate_degree
+cp_size = 1                                       # hydra: model.config.policy.parallelism.context_parallel_shard_degree
+
+
+[logging]
+#logger = ["console", "wandb"]                    # hydra: trainer.callbacks.wandb (no-op SKIP when "wandb" present)

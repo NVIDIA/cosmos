@@ -18,11 +18,12 @@ import functools
 import importlib
 import json
 import os
+import tomllib
 from collections.abc import Callable as Callable2
 from collections.abc import Mapping, Sequence
 from dataclasses import fields, is_dataclass
 from types import UnionType
-from typing import Any, List, Optional, TypeVar, Union, get_args, get_origin
+from typing import Any, List, Literal, Optional, TypeVar, Union, get_args, get_origin
 
 import attrs
 import torch
@@ -46,6 +47,19 @@ def from_yaml(path: str | None = None, clazz: type | None = None, file_like_or_s
             return from_dict(yaml.safe_load(in_f), clazz=clazz)
     elif file_like_or_str:
         return from_dict(yaml.safe_load(file_like_or_str), clazz=clazz)
+    else:
+        raise ValueError("expected file_like_or_str or path to not be None")
+
+
+def from_toml(path: str | None = None, clazz: type | None = None, file_like_or_str=None) -> T:
+    if path:
+        assert os.path.exists(path), f"{path} does not exist"
+        with open(path, "rb") as in_f:
+            return from_dict(tomllib.load(in_f), clazz=clazz)
+    elif file_like_or_str:
+        if isinstance(file_like_or_str, (bytes, bytearray)):
+            return from_dict(tomllib.loads(file_like_or_str.decode("utf-8")), clazz=clazz)
+        return from_dict(tomllib.loads(file_like_or_str), clazz=clazz)
     else:
         raise ValueError("expected file_like_or_str or path to not be None")
 
@@ -400,6 +414,13 @@ def _from_dict_value(
     elif field_type in (int, float, str, bool):
         return x
     elif field_type is type(None) or field_type == Any:  # no typing
+        return x
+    elif origin is Literal:
+        allowed = get_args(field_type)
+        if x not in allowed:
+            raise TypeError(
+                f"value {x!r} not in {field_type} (allowed={allowed}, field={field_name})"
+            )
         return x
     else:
         raise TypeError(

@@ -27,6 +27,7 @@ from cosmos.utils import distributed
 from cosmos.utils.context_managers import data_loader_init, distributed_init, model_init
 from cosmos.utils.launch import log_reproducible_setup
 from cosmos.utils.training_telemetry import telemetry
+from scripts.interface_toml import translate_interface_toml
 
 # ---------------------------------------------------------------------------
 # --deterministic: mirrors launch_vfm.sh determinism settings.
@@ -185,11 +186,30 @@ def launch(config: Config, args: argparse.Namespace) -> None:
 
 
 if __name__ == "__main__":
-    # Usage: torchrun --nproc_per_node=1 -m scripts.train --config=projects/<project>/configs/config.py
+    # Usage:
+    #   torchrun --nproc_per_node=1 -m scripts.train --config=configs/base/config.py
+    #   torchrun --nproc_per_node=1 -m scripts.train --config=.../config.py --toml=interface.toml
+    # When --config and --toml are both given, --toml is treated as the flat
+    # interface.toml schema (see toml/vfm_example.toml).
+    # scripts/interface_toml.py translates it into Hydra overrides; the variant
+    # (vfm-vlm vs vfm-base) is inferred from the --config path. When --toml is
+    # alone, it must be a full structured TOML (root _target_ etc.).
 
     # Get the config file from the input arguments.
     parser = argparse.ArgumentParser(description="Training")
-    parser.add_argument("--config", help="Path to the config file", required=False)
+    parser.add_argument(
+        "--config",
+        help="Path to base config (.py/.yaml/.toml). With --toml this is the Hydra base.",
+        required=False,
+    )
+    parser.add_argument(
+        "--toml",
+        help=(
+            "TOML path. Alone: full structured TOML config. With --config: interface.toml "
+            "translated to Hydra overrides via scripts/interface_toml.py."
+        ),
+        required=False,
+    )
     parser.add_argument(
         "opts",
         help="""
@@ -230,7 +250,18 @@ For python-based LazyConfig, use "path.key=value".
     if args.deterministic:
         _setup_deterministic_env_and_backends()
 
-    config = load_config(args.config, args.opts)
+    if args.config and args.toml:
+        config_path = args.config
+        interface_overrides = translate_interface_toml(args.toml, args.config)
+        args.opts = list(args.opts or []) + interface_overrides
+    elif args.toml:
+        config_path = args.toml
+    elif args.config:
+        config_path = args.config
+    else:
+        parser.error("Provide --config and/or --toml.")
+
+    config = load_config(config_path, args.opts)
 
     if args.dryrun:
         logging.info(
