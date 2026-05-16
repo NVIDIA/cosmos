@@ -91,6 +91,8 @@ For a per-subpackage tour with descriptions, see [`docs/code_structure.md`](./do
 | [cosmos-inference/docs/prompting.md](./cosmos-inference/docs/prompting.md)               | Prompt engineering, upsampling with vLLM.   |
 | [cosmos-inference/docs/faq.md](./cosmos-inference/docs/faq.md)                           | Inference-side FAQ and troubleshooting.     |
 
+Inference-side agent skills (codebase navigation, env troubleshooting, inference, post-training, setup) live in [`cosmos-inference/.agents/skills/`](./cosmos-inference/.agents/skills) and [`cosmos-inference/.claude/skills/`](./cosmos-inference/.claude/skills); they activate when working inside the `cosmos-inference/` subtree.
+
 ## Common Tasks
 
 ### Training
