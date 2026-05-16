@@ -78,7 +78,7 @@ See [Training](./docs/training.md) for multi-GPU / multi-node launches and the f
 
 - [Code Structure](./docs/code_structure.md) — repository layout and a tour of each `cosmos/` subpackage.
 - [FAQ](./docs/faq.md) — troubleshooting OOM, NCCL hangs, slow training, and environment variables.
-- [AGENTS.md](./cosmos-inference/AGENTS.md) — contributor-facing guidance for AI agents working in this repo.
+- [AGENTS.md](./AGENTS.md) — contributor-facing guidance for AI agents working in this repo.
 
 ## Inference
 

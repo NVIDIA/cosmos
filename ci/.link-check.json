@@ -1,0 +1,10 @@
+{
+    "ignorePatterns": [
+        {
+            "pattern": "localhost"
+        },
+        {
+            "pattern": "^https://github-production-user-asset"
+        }
+    ]
+}
