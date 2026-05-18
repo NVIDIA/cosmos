@@ -64,7 +64,7 @@ from cosmos.utils.training_telemetry import telemetry
 
 ### Context managers
 
-They are defined in [context_managers.py](./context_managers.py) and are called by higher-level context managers that also wrap other telemetry code (one-logger and timers), defined in [../context_managers.py](../context_managers.py). They are as follows:
+They are defined in [../context_managers.py](../context_managers.py) and wrap telemetry code (timers and NVTX marks). They are as follows:
 
 * `data_loader_init`: can be used to wrap code that initializes the data loader
 * `model_init`: can be used to wrap code that initializes a model
