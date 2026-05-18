@@ -329,12 +329,12 @@ explicit = true
 
 [tool.hatch.build.targets.sdist]
 packages = [
-  "cosmos",
+  "cosmos_training/cosmos",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = [
-  "cosmos",
+  "cosmos_training/cosmos",
 ]
 exclude = [
   "*_test.py",

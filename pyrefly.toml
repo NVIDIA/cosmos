@@ -14,14 +14,14 @@
 # limitations under the License.
 
 project-includes = [
-    "cosmos/",
+    "cosmos_training/cosmos/",
 ]
 project-excludes = [
     "packages/",
 ]
 infer-with-first-use = false
 ignore-missing-source = false
-search-path = [ "./" ]
+search-path = [ "./cosmos_training/" ]
 
 ignore-missing-imports = [
     "cloudpickle.*",
