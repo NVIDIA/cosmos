@@ -1,0 +1,213 @@
+_target_: projects.cosmos3.vfm.datasets.action.umi_dataset.UMISingleTrajDataset
+
+root: null
+
+name: ???
+mode: policy
+image_size: 256
+
+robot_num: 1
+down_sample_steps: 3 # 60 fps -> 20 fps
+
+include_episode_num: -1 # To specify how many episodes to include. -1 means using all episodes.
+include_episode_indices: [] # If not empty, will override used_episode_ratio
+used_episode_ratio: 0.99 # How many episodes are used for training
+history_padding_length: 0
+future_padding_length: 16
+starting_percentile_max: 1.0
+starting_percentile_min: 0.0
+index_pool_size_per_episode: -1 # Use all indices
+seed: 0
+use_relative_pose: true # UMI uses relative pose
+relative_pose_mode: frame_wise # When changing this to anchored, please also update the normalizer_dir
+use_relative_gripper_width: false # UMI dataset usually does not have intential gripper recovery actions
+# Using relative gripper width often leads to gripper width out of distribution which can be seen in the camera
+normalizer_sample_num: -1
+
+
+# If relative_pose_mode == "anchored", use the following normalizer
+# normalizer_dir: uva_umi_single_task_anchored_normalizer.json
+
+# If relative_pose_mode == "frame_wise", use the following normalizer
+# normalizer_dir: uva_umi_single_task_frame_wise_normalizer.json
+normalizer_dir: uva_umi_single_task_frame_wise_normalizer.json
+
+repeat_dataset_num: 20 # How many times to repeat the dataset. This will avoid the dataset being consumed too fast and the reload time being too long.
+
+
+apply_image_augmentation_in_cpu: true
+use_grasp_state_repr: false
+eef_z_offset: -0.10 # set the eef pose to be 0.10m behind the gripper position. This is to align with the wrist settings in egocentric datasets. For different gripper designs, this offset might need to be adjusted.
+use_eef_pose: false # If true, use the eef pose for the action. Please specify it in the dataset kwargs when calling `get_umi_dataset`
+
+source_data_meta:
+  camera0_rgb:
+    include_indices: ${eval:"ListConfig(list(range(0, 17)))"}
+    shape: [224, 224, 3]
+
+  robot0_eef_pos:
+    # include_indices: ${eval:"ListConfig(list(range(-1, 17)))"}
+    # 1 frame into the past, 16 frames into the future. 0 is the current frame
+    # obs: relative pose of [-1] wrt to [0]
+    # action: relative pose of [1:17] wrt to [0]
+    include_indices: ${eval:"ListConfig(list(range(0, 17)))"}
+    shape: [3]
+
+  robot0_eef_rot_axis_angle:
+    # include_indices: ${eval:"ListConfig(list(range(-1, 17)))"}
+    include_indices: ${eval:"ListConfig(list(range(0, 17)))"}
+    shape: [3]
+
+  robot0_gripper_width:
+    # include_indices: ${eval:"ListConfig(list(range(0, 17)))"}
+    # Only use absolute width so no need to calculate relative values
+    # obs: absolute width of [0]
+    # action: absolute width of [1:17]
+    include_indices: ${eval:"ListConfig(list(range(1, 17)))"} # Not include the current gripper width
+    shape: [1]
+
+
+
+output_data_meta:
+  video:
+    name: video
+    data_type: image
+    length: 17
+    normalizer: identity
+    augmentation:
+      - name: RandomCrop
+        size: [208, 208]
+        p: 0.3
+      - name: Resize
+        size: [256, 256]
+        antialias: True
+      - name: ColorJitter
+        brightness: 0.3
+        contrast: 0.4
+        saturation: 0.5
+        hue: 0.08
+        p: 0.8
+      - name: RandomSharpness
+        sharpness: 2
+        p: 0.3
+      - name: RandomAutoContrast
+        p: 0.3
+      - name: RandomGrayscale
+        p: 0.2
+      - name: RandomGaussianBlur
+        kernel_size: [5, 5]
+        sigma: [0.1, 2.0]
+        p: 0.3
+    shape: [3, 256, 256]
+    source_entry_names:
+      - camera0_rgb
+
+  camera_poses: # This is actually the TCP pose: the middle point of the gripper tip
+    name: camera_poses
+    data_type: low_dim
+    # length: 17 # 1 history relative camera pose (velocity)
+    length: 16 # Don't include history camera pose
+    # normalizer: range # Normalize to [-1, 1]
+    normalizer: clamped_range
+    augmentation: []
+    shape: [9]
+    source_entry_names:
+      - robot0_eef_pos
+      - robot0_eef_rot_axis_angle
+
+  eef_commands:
+    name: eef_commands
+    data_type: low_dim
+    # length: 17 # 1 history eef command (gripper width)
+    length: 16 # Don't include history eef command
+    normalizer: clamped_range # Normalize to [-1, 1]
+    augmentation: []
+    shape: [1]
+    source_entry_names:
+      - robot0_gripper_width
+
+  eef_poses:
+    name: eef_poses
+    data_type: low_dim
+    # length: 17 # 1 history relative camera pose (velocity)
+    length: 16 # Don't include history camera pose
+    # normalizer: range # Normalize to [-1, 1]
+    normalizer: clamped_range
+    augmentation: []
+    shape: [9]
+    source_entry_names:
+      - robot0_eef_pos
+      - robot0_eef_rot_axis_angle
+
+  grasp_states:
+    name: grasp_states
+    data_type: low_dim
+    # length: 17 # 1 history eef command (gripper width)
+    length: 16 # Don't include history eef command
+    normalizer: clamped_range # Normalize to [-1, 1]
+    augmentation: []
+    shape: [6]
+    source_entry_names:
+      - robot0_gripper_width
+
+val_output_data_meta:
+  video:
+    name: video
+    data_type: image
+    length: 17
+    normalizer: identity
+    augmentation:
+      - name: Resize
+        size: [256, 256]
+        antialias: True
+    shape: [3, 256, 256]
+    source_entry_names:
+      - camera0_rgb
+
+  camera_poses: # This is actually the TCP pose: the middle point of the gripper tip
+    name: camera_poses
+    data_type: low_dim
+    # length: 17 # 1 history relative camera pose (velocity)
+    length: 16 # Don't include history camera pose
+    # normalizer: range # Normalize to [-1, 1]
+    normalizer: clamped_range
+    augmentation: []
+    shape: [9]
+    source_entry_names:
+      - robot0_eef_pos
+      - robot0_eef_rot_axis_angle
+
+  eef_commands:
+    name: eef_commands
+    data_type: low_dim
+    # length: 17 # 1 history eef command (gripper width)
+    length: 16 # Don't include history eef command
+    normalizer: clamped_range # Normalize to [-1, 1]
+    augmentation: []
+    shape: [1]
+    source_entry_names:
+      - robot0_gripper_width
+
+  eef_poses:
+    name: eef_poses
+    data_type: low_dim
+    # length: 17 # 1 history relative camera pose (velocity)
+    length: 16 # Don't include history camera pose
+    # normalizer: range # Normalize to [-1, 1]
+    normalizer: clamped_range
+    augmentation: []
+    shape: [9]
+    source_entry_names:
+      - robot0_eef_pos
+      - robot0_eef_rot_axis_angle
+
+  grasp_states:
+    name: grasp_states
+    data_type: low_dim
+    # length: 17 # 1 history eef command (gripper width)
+    length: 16 # Don't include history eef command
+    normalizer: clamped_range # Normalize to [-1, 1]
+    augmentation: []
+    shape: [6]
+    source_entry_names:
+      - robot0_gripper_width

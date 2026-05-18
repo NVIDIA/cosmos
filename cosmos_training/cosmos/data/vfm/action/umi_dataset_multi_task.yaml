@@ -1,0 +1,171 @@
+defaults:
+  - umi_dataset
+  - _self_
+
+_target_: projects.cosmos3.vfm.datasets.action.umi_dataset.MultiTaskDataset
+
+sub_dataset_target: projects.cosmos3.vfm.datasets.action.umi_dataset.UMISingleTrajDataset
+
+eager_load: false
+
+name: umi_multi_tasks
+
+normalizer_dir: uva_umi_single_task_frame_wise_normalizer.json
+
+dataset_configs:
+  data_scaling_law/mouse_arrangement_0:
+    sample_ratio: 0.0
+  data_scaling_law/mouse_arrangement_1:
+    sample_ratio: 0.0
+  data_scaling_law/towel_folding_0:
+    sample_ratio: 0.0
+  data_scaling_law/unplug_charger:
+    sample_ratio: 0.0
+  data_scaling_law/water_pouring_0:
+    sample_ratio: 0.0
+  data_scaling_law/water_pouring_1:
+    sample_ratio: 0.0
+  umi/cup_arrangement_0:
+    sample_ratio: 0.0
+  umi/cup_arrangement_1:
+    sample_ratio: 0.0
+  umi/dynamic_tossing_0:
+    sample_ratio: 0.0
+  maniwav/bagle_flipping_0:
+    sample_ratio: 0.0
+  maniwav/bagle_flipping_1:
+    sample_ratio: 0.0
+  maniwav/dice_pouring_0:
+    sample_ratio: 0.0
+  maniwav/whiteboard_wiping_0:
+    sample_ratio: 0.0
+  maniwav/wire_strapping_0:
+    sample_ratio: 0.0
+
+  ## MV-UMI uses negative gripper action - looks like relative action
+  # mv_umi/bottles_rack_insertion_0:
+  #   sample_ratio: 0.0
+  # mv_umi/markers_placement_0:
+  #   sample_ratio: 0.0
+  # mv_umi/markers_placement_raw_0:
+  #   sample_ratio: 0.0
+
+  ## Touch in the Wild uses a different gripper scale. Will be fixed in the next UMI dataset version
+  # touch_in_the_wild/fluid_transfer_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067 # touch_in_the_wild uses a shorter gripper design: it is 0.033m shorter than the default gripper
+  # touch_in_the_wild/hex_key_insertion_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/moving_cup_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/moving_tape_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/peg_insertion_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/pencil_insertion_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/test_tube_collection_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/tossing_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/whiteboard_erasing_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/whiteboard_erasing_1:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+  # touch_in_the_wild/writing_0:
+  #   sample_ratio: 0.0
+  #   eef_z_offset: -0.067
+
+  umi_on_legs/kettlebell_pushing_0:
+    sample_ratio: 0.0
+  umi_on_legs/tennis_ball_tossing_0:
+    sample_ratio: 0.0
+  vitamin/articulated_object_manipulation_0:
+    sample_ratio: 0.0
+  vitamin/dynamic_peg_insertion_0:
+    sample_ratio: 0.0
+  vitamin/orange_placement_0:
+    sample_ratio: 0.0
+  vitamin/scissor_hanging_0:
+    sample_ratio: 0.0
+  vitamin/sponge_insertion_0:
+    sample_ratio: 0.0
+  vitamin/test_tube_reorientation_0:
+    sample_ratio: 0.0
+  FastUMI/clean_table:
+    sample_ratio: 0.0
+    num_shards: 5
+  FastUMI/close_ricecooker:
+    sample_ratio: 0.0
+    num_shards: 1
+  FastUMI/cover_beef:
+    sample_ratio: 0.0
+    num_shards: 11
+  FastUMI/fold_towel:
+    sample_ratio: 0.0
+    num_shards: 7
+  FastUMI/hotdog_in_rice_cooker:
+    sample_ratio: 0.0
+    num_shards: 2
+  FastUMI/hotdog_in_roaster:
+    sample_ratio: 0.0
+    num_shards: 10
+  FastUMI/open_container:
+    sample_ratio: 0.0
+    num_shards: 7
+  FastUMI/open_drawer:
+    sample_ratio: 0.0
+    num_shards: 17
+  FastUMI/open_ricecooker:
+    sample_ratio: 0.0
+    num_shards: 5
+  FastUMI/open_roaster:
+    sample_ratio: 0.0
+    num_shards: 10
+  FastUMI/open_suitcase:
+    sample_ratio: 0.0
+    num_shards: 1
+  FastUMI/pick_bear:
+    sample_ratio: 0.0
+    num_shards: 11
+  FastUMI/pick_bread:
+    sample_ratio: 0.0
+    num_shards: 10
+  FastUMI/pick_cup:
+    sample_ratio: 0.0
+    num_shards: 18
+  FastUMI/pick_lid:
+    sample_ratio: 0.0
+    num_shards: 10
+  FastUMI/pick_pen:
+    sample_ratio: 0.0
+    num_shards: 12
+  FastUMI/place_plate:
+    sample_ratio: 0.0
+    num_shards: 10
+  FastUMI/place_pot:
+    sample_ratio: 0.0
+    num_shards: 6
+  FastUMI/pour_coke:
+    sample_ratio: 0.0
+    num_shards: 10
+  FastUMI/rearrange_coke:
+    sample_ratio: 0.0
+    num_shards: 10
+  FastUMI/sweep_trash:
+    sample_ratio: 0.0
+    num_shards: 11
+  FastUMI/tossing:
+    sample_ratio: 0.0
+  FastUMI/unplug_charger:
+    sample_ratio: 0.0
+    num_shards: 10
