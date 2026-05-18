@@ -74,7 +74,7 @@ from typing import Annotated, TypeAlias
 import pydantic
 from typing_extensions import Self, override
 
-from cosmos3._src.imaginaire.flags import EXPERIMENTAL_CHECKPOINTS, INTERNAL
+from cosmos3._src.imaginaire.flags import EXPERIMENTAL_CHECKPOINTS, INTERNAL, StrEnum
 from cosmos3._src.imaginaire.utils import log
 
 HF_VERSION = "1.13.0"
@@ -176,11 +176,22 @@ def _hf_download(cmd_args: list[str]) -> str:
     return json.loads(output.stdout)["path"]
 
 
+class RepositoryType(StrEnum):
+    """Repository type."""
+
+    MODEL = "model"
+    """Model repository."""
+    DATASET = "dataset"
+    """Dataset repository."""
+
+
 class _CheckpointHf(_CheckpointUri, ABC):
     """Config for checkpoint on Hugging Face."""
 
     repository: str
     """Repository id (organization/repository)."""
+    repository_type: RepositoryType = RepositoryType.MODEL
+    """Repository type."""
     revision: str
     """Git revision id which can be a branch name, a tag, or a commit hash."""
 
@@ -209,7 +220,7 @@ class CheckpointFileHf(_CheckpointHf):
         cmd_args = [
             self.repository,
             "--repo-type",
-            "model",
+            self.repository_type.value,
             "--revision",
             self.revision,
             self.filename,
@@ -248,7 +259,7 @@ class CheckpointDirHf(_CheckpointHf):
         cmd_args = [
             self.repository,
             "--repo-type",
-            "model",
+            self.repository_type.value,
             "--revision",
             self.revision,
         ]

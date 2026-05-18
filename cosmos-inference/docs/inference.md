@@ -8,20 +8,13 @@ ______________________________________________________________________
 
 **Table of Contents**
 
-- [Setup Arguments](#setup-arguments)
-  - [Parallelism](#parallelism)
+- [Parallelism Arguments](#parallelism-arguments)
 - [Sample Arguments](#sample-arguments)
-  - [Condition](#condition)
-    - [Text](#text)
-    - [Vision (Image/Video)](#vision-imagevideo)
-    - [Action](#action)
-  - [Generation](#generation)
-    - [Vision (Image/Video)](#vision-imagevideo-1)
-    - [Action](#action-1)
-- [Action Inference](#action-inference)
-  - [Action Modes](#action-modes)
-  - [Action Configuration](#action-configuration)
-- [Default Values](#default-values)
+  - [Text](#text)
+  - [Vision (Image/Video)](#vision-imagevideo)
+  - [Action](#action)
+    - [Action Modes](#action-modes)
+    - [Action Configuration](#action-configuration)
   - [Custom Defaults](#custom-defaults)
 - [Schema Reference](#schema-reference)
 - [Troubleshooting](#troubleshooting)
@@ -35,145 +28,96 @@ ______________________________________________________________________
 
 <!--TOC-->
 
-This guide applies to the following:
+Prerequisites:
 
-- [Offline Batch Inference](../README.md#offline-batch-inference)
-- [Online Inference](./inference_online.md)
+- [Setup](../README.md#setup)
+- [Environment Variables](./environment_variables.md)
 
-## Setup Arguments
+For example commands, see [README](../README.md#inference).
 
-### Parallelism
+Arguments:
 
-| Parallelism | Arguments                         | Description                                                                                                    |
-| ----------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Latency     | `--parallelism-preset=latency`    | Generates each sample as fast as possible by spreading work across GPUs. Use for interactive or real-time use. |
-| Throughput  | `--parallelism-preset=throughput` | Generates many samples in parallel, one per GPU. Use for large batch jobs.                                     |
+- `-i`, `--input-files`: Path to the sample argument file(s) (JSON, JSONL, YAML). Accepts quoted glob patterns (e.g. `"inputs/*.json"`).
+- `-o`, `--output-dir`: Output directory.
+
+Outputs:
+
+- `<sample_name>/`
+  - `sample_args.json`: Sample arguments.
+  - `sample_outputs.json`: Generation status, action (if enabled).
+  - `vision.jpg`, `vision.mp4`: Vision output (if enabled).
+
+To see all available arguments:
+
+```shell
+python -m cosmos3.scripts.inference --help
+```
+
+## Parallelism Arguments
+
+- `--parallelism-preset`
+  - `latency`: Generate each sample as fast as possible by spreading work across GPUs. Used for real-time jobs.
+  - `throughput`: Generate many samples in parallel, one per GPU. Used for batch jobs.
+- `--max-num-seqs`: Batch size per GPU.
 
 ## Sample Arguments
 
-Each inference run takes one or more **sample argument files** (JSON, JSONL, or YAML) that describe what to generate:
+Sample arguments are read from multiple sources (in priority order):
 
-```shell
-python -m cosmos3.scripts.inference \
-    -i "inputs/omni/t2i.json" \
-    -o outputs/omni_nano \
-    --checkpoint-path Cosmos3-Nano \
-    --seed=0
-```
+- CLI overrides (e.g. `--model-mode=text2video`): Overrides for all samples.
+- Input files (e.g. `--input-files "inputs/omni/*t2i*.json"`): Single sample per input.
+- Defaults: `cosmos3/defaults/<model_mode>`: Defaults for all samples.
 
-| CLI Argument          | Description                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------- |
-| `-i`, `--input-files` | Path to the sample argument file(s). Accepts glob patterns (e.g. `inputs/*.json`). |
-| `-o`, `--output-dir`  | Output directory.                                                                  |
+For debugging, the full set of sample arguments is saved to `<output_dir>/<sample_name>/sample_args.json`.
 
-General sample arguments:
+Common arguments:
 
-| Argument     | Description                                                                                                                                                                                                                                                                                                           |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `model_mode` | Generation modality. One of `text2image`, `text2video`, `image2image`, `image2video`, `video2video`, `forward_dynamics`, `inverse_dynamics`, `policy`. Also selects the matching default preset. When omitted, the VFM modality is inferred from `vision_path` and `num_frames`; action modes must be set explicitly. |
-| `name`       | Output subfolder name (inside `--output-dir`).                                                                                                                                                                                                                                                                        |
-| `seed`       | Random seed for reproducibility.                                                                                                                                                                                                                                                                                      |
+- `model_mode`: Generation modality. See [Modalities](../README.md#modalities) for all options.
+- `seed`: Random seed for reproducibility.
 
-### Condition
+**Note:** Condition file paths are relative to the input file.
 
-Condition fields control the inputs to generation. Paths are relative to the input file.
+### Text
 
-#### Text
+- `prompt`: Inline text prompt.
 
-Provide a text prompt inline via `prompt`, or point to a `.txt` file via `prompt_path`. If both are provided, `prompt` takes precedence. See [inputs/omni/t2v.json](../inputs/omni/t2v.json) for an example.
+### Vision (Image/Video)
 
-| Argument          | Description                                                      |
-| ----------------- | ---------------------------------------------------------------- |
-| `prompt`          | Inline text prompt.                                              |
-| `prompt_path`     | Path to a `.txt` file with the prompt (alternative to `prompt`). |
-| `negative_prompt` | Describes what to avoid in the output.                           |
+Common arguments:
 
-#### Vision (Image/Video)
+- `fps`: Condition and output frames per second.
+- `resolution` (`"256"`, `"480"`, `"720"`): Condition and output resolution (height in pixels).
+- `aspect_ratio` (`1,1`, `4,3`, `"3,4`, `16,9`, `9,16`): Condition and output aspect ratio. Defaults to `16,9`.
 
-Provide an image or video via `vision_path`.
+Condition arguments:
 
-| Argument      | Description                                         |
-| ------------- | --------------------------------------------------- |
-| `vision_path` | Path to an image or video file (local path or URL). |
+- `vision_path`: Path to an image or video file (local path or URL).
 
-- Image conditioning: see [inputs/omni/i2v.json](../inputs/omni/i2v.json)
+Generation arguments:
 
-#### Action
-
-Action inference is enabled by setting `model_mode` to one of the action tasks in the sample argument file. The examples live in [`inputs/omni/`](../inputs/omni/).
-
-| Argument            | Description                                                                                                                               |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `model_mode`        | Selects the action task: `forward_dynamics`, `inverse_dynamics`, or `policy`. This also selects the matching default preset.              |
-| `vision_path`       | Observation image or video. URLs are downloaded into the sample output's `inputs/` directory before generation.                           |
-| `prompt`            | Text instruction or scene/task description used as the action sample caption.                                                             |
-| `domain_name`       | Domain name passed to the action domain registry, such as `libero` or `av`. Use the domain used by the checkpoint's action training data. |
-| `image_size`        | Action input resize bucket. The value is passed as the action media resolution bucket; examples use `256` for LIBERO and `480` for AV.    |
-| `fps`               | Conditioning FPS and output video FPS.                                                                                                    |
-| `action_chunk_size` | Number of action steps in the chunk. The action media loader reads at most `action_chunk_size + 1` observation frames.                    |
-| `action_path`       | JSON action sequence. Required for `forward_dynamics`; each row is one action step and each column is one raw action dimension.           |
-| `raw_action_dim`    | Raw action width to return for generated actions. Required for `inverse_dynamics` and `policy`.                                           |
-
-`action_path` files are plain JSON arrays with shape `action_chunk_size x raw_action_dim`, for example `[[...], [...], ...]`.
-
-For example, [`inputs/omni/action_forward_dynamics_robot.json`](../inputs/omni/action_forward_dynamics_robot.json) conditions on an observation image, a task prompt, and an action JSON to generate a future rollout. [`inputs/omni/action_inverse_dynamics_av.json`](../inputs/omni/action_inverse_dynamics_av.json) conditions on a video and predicts an action sequence with `raw_action_dim`.
-
-### Generation
-
-#### Vision (Image/Video)
+- `num_frames`: Number of output frames. `1` = image; `≥24` = video.
 
 Outputs `vision.jpg` or `vision.mp4` depending on `num_frames`.
 
-| Argument       | Type                                                  | Description                                          |
-| -------------- | ----------------------------------------------------- | ---------------------------------------------------- |
-| `num_frames`   | `int`                                                 | Number of output frames. `1` = image; `≥24` = video. |
-| `fps`          | `int`                                                 | Frames per second.                                   |
-| `resolution`   | `"256"` \| `"480"` \| `"720"`                         | Output resolution (height in pixels).                |
-| `aspect_ratio` | `"1,1"` \| `"4,3"` \| `"3,4"` \| `"16,9"` \| `"9,16"` | Output aspect ratio. Defaults to `16:9`.             |
+### Action
 
-#### Action
+Common arguments:
 
-Action samples still write the generated visual output as `vision.mp4` in each sample subdirectory. When the model returns predicted actions, `sample_outputs.json` also contains `outputs[0].content.action` as a JSON list of action rows.
+- `action_chunk_size`: Number of action steps in the chunk. The action media loader reads at most `action_chunk_size + 1` observation frames.
+- `domain_name`: Domain name passed to the action domain registry, such as `libero` or `av`.
 
-Use `--debug` to save raw generated tensors in `output.safetensors` and non-tensor debug data in `output.pickle`.
+Condition arguments:
 
-Typical action output layout:
+- `action_path`: JSON action sequence. Required for `forward_dynamics`; each row is one action step and each column is one raw action dimension.
+- `image_size`: Action input resize bucket. The value is passed as the action media resolution bucket; examples use `256` for LIBERO and `480` for AV.
 
-```text
-outputs/omni_nano/action_forward_dynamics_robot/
-+-- inputs/
-+-- sample_args.json
-+-- sample_outputs.json
-+-- vision.mp4
-```
+Generation arguments:
 
-## Action Inference
+- `raw_action_dim`: Raw action width to return for generated actions. Required for `inverse_dynamics` and `policy`.
 
-Run one action sample:
+The action output is written to `sample_outputs.json`.
 
-```shell
-python -m cosmos3.scripts.inference \
-    -i inputs/omni/action_forward_dynamics_robot.json \
-    -o outputs/omni_nano \
-    --checkpoint-path Cosmos3-Nano\
-    --seed=0
-```
-
-Run the bundled forward dynamics examples:
-
-```shell
-python -m cosmos3.scripts.inference \
-    -i "inputs/omni/action_forward_dynamics_*.json" \
-    -o outputs/omni_nano \
-    --checkpoint-path Cosmos3-Nano \
-    --seed=0
-```
-
-For standalone `policy` or `inverse_dynamics` runs, include `raw_action_dim` in the sample JSON.
-
-For S3 or other DCP checkpoints, use the same checkpoint arguments as regular inference, for example `--credential-path`, `--checkpoint-cache-dir`, `--config-file`, and `--experiment` when they are needed by the checkpoint.
-
-### Action Modes
+#### Action Modes
 
 | Mode               | Inputs                                                | Outputs                                                                     | Required action fields |
 | ------------------ | ----------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------- |
@@ -181,33 +125,11 @@ For S3 or other DCP checkpoints, use the same checkpoint arguments as regular in
 | `inverse_dynamics` | Observation video, text prompt                        | Predicted action sequence in `sample_outputs.json`                          | `raw_action_dim`       |
 | `policy`           | Current observation image/video, text prompt          | Predicted action sequence, and any visual output returned by the checkpoint | `raw_action_dim`       |
 
-### Action Configuration
+#### Action Configuration
 
 The action sample fields control input preprocessing and action tensor shape. `action_chunk_size` should match the chunk length used by the checkpoint. `image_size` should match the action training/evaluation resolution bucket. `domain_name` must be compatible with the checkpoint's action domain registry.
 
 Action tensors are padded to `model.config.max_action_dim` before generation. Set it with `--experiment_overrides "[model.config.max_action_dim=<D>]"` when the checkpoint config does not already define the desired padded width. Use a value greater than or equal to the raw action width in `action_path` or `raw_action_dim`.
-
-## Default Values
-
-Each modality ships with a built-in preset that supplies sampling parameters (`num_steps`, `guidance`, `shift`, ...), negative prompts, and output settings. These presets are applied automatically. Any field you set in your sample argument file takes precedence over the preset.
-
-The built-in presets live in the package under `cosmos3/defaults/`:
-
-| Modality       | Preset File                                                                                         |
-| -------------- | --------------------------------------------------------------------------------------------------- |
-| Text-to-Image  | [`cosmos3/defaults/text2image/sample_args.json`](../cosmos3/defaults/text2image/sample_args.json)   |
-| Text-to-Video  | [`cosmos3/defaults/text2video/sample_args.json`](../cosmos3/defaults/text2video/sample_args.json)   |
-| Image-to-Video | [`cosmos3/defaults/image2video/sample_args.json`](../cosmos3/defaults/image2video/sample_args.json) |
-
-Action presets use the same sample argument format:
-
-| Modality         | Preset File                                                                                                   |
-| ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| Forward Dynamics | [`cosmos3/defaults/forward_dynamics/sample_args.json`](../cosmos3/defaults/forward_dynamics/sample_args.json) |
-| Inverse Dynamics | [`cosmos3/defaults/inverse_dynamics/sample_args.json`](../cosmos3/defaults/inverse_dynamics/sample_args.json) |
-| Policy           | [`cosmos3/defaults/policy/sample_args.json`](../cosmos3/defaults/policy/sample_args.json)                     |
-
-> **Tip:** Only the parameters listed in `python -m cosmos3.scripts.inference --help` are recommended to change. The remaining fields in the preset files are internal and may break generation if altered.
 
 ### Custom Defaults
 
@@ -226,12 +148,10 @@ The custom defaults file has the same format as the built-in presets. Fields you
 
 The `schemas/` directory contains auto-generated reference files listing every available argument with types, constraints, and descriptions. These files are the authoritative reference for field names and valid values.
 
-| File                                                                                    | Description                                                      |
-| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| [`schemas/OmniSampleOverrides.yaml`](../schemas/OmniSampleOverrides.yaml)               | All sample arguments with default values and inline comments.    |
-| [`schemas/OmniSampleOverrides.schema.json`](../schemas/OmniSampleOverrides.schema.json) | JSON Schema with types, enums, and validation constraints.       |
-| [`schemas/OmniSetupOverrides.yaml`](../schemas/OmniSetupOverrides.yaml)                 | All setup/CLI arguments with default values and inline comments. |
-| [`schemas/OmniSetupOverrides.schema.json`](../schemas/OmniSetupOverrides.schema.json)   | JSON Schema with types, enums, and validation constraints.       |
+- [`OmniSetupOverrides.yaml`](../schemas/OmniSetupOverrides.yaml): All setup/CLI arguments with default values and inline comments.
+- [`OmniSetupOverrides.schema.json`](../schemas/OmniSetupOverrides.schema.json): JSON Schema with types, enums, and validation constraints.
+- [`OmniSampleOverrides.yaml`](../schemas/OmniSampleOverrides.yaml): All sample arguments with default values and inline comments.
+- [`OmniSampleOverrides.schema.json`](../schemas/OmniSampleOverrides.schema.json): JSON Schema with types, enums, and validation constraints.
 
 ## Troubleshooting
 

@@ -19,7 +19,7 @@ Monitors whether the MoE router is staying healthy over the course of training.
 A healthy router distributes tokens reasonably evenly, keeps all experts alive,
 and remains uncertain enough (high entropy) that it is still learning to route.
 
-Three metrics are tracked per layer, per tower (und / gen):
+Five metrics are tracked per layer, per tower (und / gen):
 
   Dead Expert Rate
   ----------------
@@ -47,17 +47,68 @@ Three metrics are tracked per layer, per tower (und / gen):
   high (> ~0.7) so the router continues to explore. A sudden drop signals
   routing collapse.
 
+  Soft-vs-Hard Effective Experts (normalized)
+  -------------------------------------------
+  Soft and hard effective experts separate what the router *considers* (full
+  probability distribution, before dispatch) from what top-k dispatch *actually
+  uses* (empirical token-to-expert assignment, after dispatch). Both are
+  expressed as a fraction of N, so they sit on the same axis as
+  router_entropy_normalized. Their lower bounds differ slightly:
+    soft_eff_normalized is bounded in [1/N, 1].
+    hard_eff_normalized is bounded in [K/N, 1] — top-K dispatch always engages
+      at least K experts in aggregate (the floor case is when every token
+      picks the same K-expert subset).
+
+      soft_eff_normalized = mean_t exp(H(p_t)) / N
+        Average per-token router perplexity, divided by N. Asks: what fraction
+        of experts is the router *considering* on a typical token? Computed
+        as sum_per_token_soft_eff / total_tokens / N. Note: the unnormalized
+        numerator is NOT exp of the mean entropy — by Jensen,
+        mean_t exp(H_t) >= exp(mean_t H_t), and the gap matters when
+        per-token entropies are heterogeneous.
+
+      hard_eff_normalized = exp(H(f)) / N
+        where f_i is the empirical fraction of *expert assignments* (not
+        tokens) that went to expert i: f_i = tokens_per_expert_i / (T * K).
+        Perplexity of the buffer-wide dispatch distribution, divided by N.
+        Asks: what fraction of experts is top-k *actually* engaging across the
+        buffer? A smoother sibling of LIF: where LIF watches the busiest
+        expert, hard_eff watches the spread of the whole load distribution.
+
+  Interpretation (high/low refer to values close to 1 vs close to 1/N):
+
+      high soft_eff, high hard_eff
+        Router considers many experts; top-k dispatch also uses many experts.
+        Broadly healthy routing.
+      low  soft_eff, low  hard_eff
+        Router is confident or collapsed in probability space; dispatch is
+        also concentrated. Entropy, LIF, and hard usage all agree that
+        routing is narrow.
+      high soft_eff, low  hard_eff
+        Router distribution is broad, but top-k dispatch is concentrated —
+        the "hidden top-k concentration" case where entropy can look healthy
+        while LIF and co-activation are high.
+      low  soft_eff, high hard_eff
+        Less common: each token has a sharp router distribution, but
+        different tokens choose different experts. Per-token confidence with
+        buffer-wide diversity.
+
 Buffer ownership
 ----------------
   This callback is fully self-contained: it reads and resets its own dedicated
-  buffers (stability_tokens_per_expert, stability_total_tokens, sum_token_entropy).
-  It does not depend on ExpertHeatmap's reset cycle.
+  buffers (stability_tokens_per_expert, stability_total_tokens, sum_token_entropy,
+  sum_per_token_soft_eff). It does not depend on ExpertHeatmap's reset cycle.
 """
 
 import math
 
 # Fraction of uniform fair-share below which an expert is considered "dead" (e.g. 0.1 → < 10% of K/N).
 DEAD_EXPERT_THRESHOLD_MULTIPLIER = 0.1
+
+# Smoothing added inside log() to avoid log(0) for experts that received zero
+# tokens in the current buffer window. Matches the constant used inside the
+# MoE block when accumulating router entropy.
+ENTROPY_EPSILON = 1e-9
 
 import torch
 import wandb
@@ -70,6 +121,50 @@ from cosmos3._src.imaginaire.utils import distributed
 from cosmos3._src.vfm.models.vlm.qwen3_vl_moe.qwen3_vl_moe import Qwen3VLMoeTextSparseMoeBlock
 
 
+def _effective_experts(
+    sum_per_token_soft_eff: torch.Tensor,
+    total_tokens: torch.Tensor,
+    tokens_per_expert: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Compute (soft_eff, hard_eff) from already-reduced stability buffers.
+
+    Extracted as a pure-tensor function so it can be unit-tested without
+    instantiating any MoE module or distributed state.
+
+    Args:
+        sum_per_token_soft_eff: 0-d or [1] tensor holding sum_t exp(H(p_t))
+            accumulated across the buffer window.
+        total_tokens: 0-d or [1] tensor holding the number of tokens seen
+            since the last reset.
+        tokens_per_expert: [N] tensor of per-expert token counts over the
+            same buffer window.
+
+    Returns:
+        soft_eff: scalar tensor, mean_t exp(H(p_t)) in [1, N].
+        hard_eff: scalar tensor, exp(H(f)) over the empirical dispatch
+            distribution f_i = tokens_per_expert_i / sum_i tokens_per_expert_i.
+            Bounded in [K, N] (not [1, N]) because top-K dispatch always
+            engages at least K experts in aggregate.
+
+    Note on hard_eff normalization:
+        tokens_per_expert is a histogram over the K top-k slots per token, so
+        it sums to T * K rather than T. We must divide by its own sum (== T*K)
+        to get a true probability distribution before taking entropy.
+        Dividing by total_tokens (== T) instead would give a vector summing to
+        K, producing exp(H) values up to (N/K)^K — orders of magnitude beyond
+        the intended [K, N] range.
+    """
+    total = total_tokens.float().clamp(min=1)
+    soft_eff = (sum_per_token_soft_eff.float() / total).squeeze()
+
+    total_assignments = tokens_per_expert.sum().float().clamp(min=1)
+    f_i = (tokens_per_expert.float() / total_assignments).clamp(min=ENTROPY_EPSILON)
+    hard_entropy = -(f_i * f_i.log()).sum()
+    hard_eff = hard_entropy.exp()
+
+    return soft_eff, hard_eff
+
+
 def compute_moe_stability_metrics(vfm: torch.nn.Module) -> dict[str, dict]:
     """
     Compute per-layer MoE stability metrics for both towers.
@@ -80,10 +175,12 @@ def compute_moe_stability_metrics(vfm: torch.nn.Module) -> dict[str, dict]:
     always refer to the correct transformer layer regardless of MoE sparsity pattern.
 
     Returns a dict: tower -> {
-        "layer_indices":            list[int]          — actual model layer positions
-        "dead_expert_rate":         Tensor[num_moe_layers]
-        "lif":                      Tensor[num_moe_layers]
-        "router_entropy_normalized":Tensor[num_moe_layers]
+        "layer_indices":             list[int]                — actual model layer positions
+        "dead_expert_rate":          Tensor[num_moe_layers]
+        "lif":                       Tensor[num_moe_layers]
+        "router_entropy_normalized": Tensor[num_moe_layers]
+        "soft_eff_normalized":       Tensor[num_moe_layers]   — mean_t exp(H(p_t)) / N,  in [1/N, 1]
+        "hard_eff_normalized":       Tensor[num_moe_layers]   — exp(H(f)) / N,           in [1/N, 1]
     }
     """
     with torch.no_grad():
@@ -104,7 +201,12 @@ def compute_moe_stability_metrics(vfm: torch.nn.Module) -> dict[str, dict]:
 
         results: dict[str, dict] = {}
         for tower in ["und", "gen"]:
-            layer_indices, dead_rates, lifs, entropies = [], [], [], []
+            layer_indices: list[int] = []
+            dead_rates: list[torch.Tensor] = []
+            lifs: list[torch.Tensor] = []
+            entropies: list[torch.Tensor] = []
+            soft_effs_norm: list[torch.Tensor] = []
+            hard_effs_norm: list[torch.Tensor] = []
 
             for layer_idx in range(num_layers):
                 layer_module = vfm.language_model.model.layers[layer_idx]
@@ -118,6 +220,7 @@ def compute_moe_stability_metrics(vfm: torch.nn.Module) -> dict[str, dict]:
                 total_tokens_per_expert = _allreduce(mlp_module.get_stability_tokens_per_expert(reset=True))
                 total_tokens = _allreduce(mlp_module.get_stability_total_tokens(reset=True))
                 sum_token_entropy = _allreduce(mlp_module.get_sum_token_entropy(reset=True))
+                sum_per_token_soft_eff = _allreduce(mlp_module.get_sum_per_token_soft_eff(reset=True))
 
                 n = mlp_module.num_experts
                 total = total_tokens.float().clamp(min=1)
@@ -137,12 +240,22 @@ def compute_moe_stability_metrics(vfm: torch.nn.Module) -> dict[str, dict]:
                 # squeeze() collapses the [1] buffer shape to a 0-d scalar.
                 entropies.append((sum_token_entropy.float() / total / math.log(n)).squeeze())
 
+                soft_eff, hard_eff = _effective_experts(
+                    sum_per_token_soft_eff=sum_per_token_soft_eff,
+                    total_tokens=total_tokens,
+                    tokens_per_expert=total_tokens_per_expert,
+                )
+                soft_effs_norm.append(soft_eff / n)
+                hard_effs_norm.append(hard_eff / n)
+
             if layer_indices:
                 results[tower] = {
                     "layer_indices": layer_indices,
                     "dead_expert_rate": torch.stack(dead_rates),
                     "lif": torch.stack(lifs),
                     "router_entropy_normalized": torch.stack(entropies),
+                    "soft_eff_normalized": torch.stack(soft_effs_norm),
+                    "hard_eff_normalized": torch.stack(hard_effs_norm),
                 }
 
     return results
@@ -155,9 +268,11 @@ class MoEStabilityCallback(EveryN):
     What it captures
     ----------------
     Whether the MoE router remains in a healthy, balanced state over training.
-    The three metrics collectively answer: are all experts still being used
-    (dead_expert_rate), is load spread evenly (lif), and is the router still
-    making uncertain, exploratory decisions (router_entropy_normalized)?
+    The metrics collectively answer: are all experts still being used
+    (dead_expert_rate), is load spread evenly (lif), is the router still
+    making uncertain, exploratory decisions (router_entropy_normalized), and
+    do the experts the router considers (soft_eff) match the experts top-k
+    dispatch actually engages (hard_eff)?
 
     W&B layout
     ----------
@@ -165,10 +280,15 @@ class MoEStabilityCallback(EveryN):
       - moe_stability/<metric>/<tower>/layer_NNN  — per model layer time series
       - moe_stability/<metric>/<tower>/mean|max   — summary across all MoE layers
 
+    Metrics logged: dead_expert_rate, lif, router_entropy_normalized,
+    soft_eff_normalized, hard_eff_normalized.
+
     Typical healthy ranges:
       dead_expert_rate  → 0 (any sustained non-zero value is a concern)
       lif               → <= 1.3 (alarm at > 3.0)
       router_entropy_normalized → > 0.7 (collapse if it drops sharply)
+      soft_eff_normalized, hard_eff_normalized → high; a large gap between
+        them (e.g. soft high, hard low) indicates hidden top-k concentration
 
     Args:
         every_n (int): Logging interval in training steps.

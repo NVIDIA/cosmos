@@ -6,10 +6,15 @@
 
 - Breaking changes
 
+## 1.2.2 (May 14, 2026)
+
+- New features
+  - Add [action policy closed-loop evaluation](./docs/action_policy_closed_loop_eval.md).
+
 ## 1.2.1 (May 08, 2026)
 
 - New features
-  - Add action policy post-training (SFT). See `docs/training.md` for usage.
+  - Add [action policy post-training (SFT)](./docs/training.md).
 
 ## 1.2.0 (May 05, 2026)
 
@@ -25,4 +30,4 @@
 ## 1.1.0 (April 29, 2026)
 
 - New features
-  - Add Post-Training (Supervised Fine-Tuning). See `docs/training.md` for usage.
+  - Add [Post-Training (Supervised Fine-Tuning)](./docs/training.md).

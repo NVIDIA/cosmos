@@ -388,8 +388,6 @@ class VideoResize:
         if resolution is None:
             resolution = get_vision_data_resolution((h, w))
 
-        self._log_shapes(data_dict, when="before")
-
         if self.keep_aspect_ratio:
             target_w, target_h = find_closest_target_size(h, w, resolution)
         else:
@@ -397,7 +395,6 @@ class VideoResize:
             target_h = int(resolution)
         reflection_pad_to_target(data_dict, self.pad_keys, self.keep_aspect_ratio, target_w, target_h)
 
-        self._log_shapes(data_dict, when="after ")
         return data_dict
 
     def _log_shapes(self, data_dict: dict, when: str) -> None:

@@ -13,6 +13,10 @@
           "title": "Repository",
           "type": "string"
         },
+        "repository_type": {
+          "$ref": "#/$defs/RepositoryType",
+          "default": "model"
+        },
         "revision": {
           "title": "Revision",
           "type": "string"
@@ -187,6 +191,23 @@
           "default": null,
           "description": "Latent frame indices to condition on. Defaults to [0] for image, [0, 1] for video.",
           "title": "Condition Frame Indexes Vision"
+        },
+        "condition_video_keep": {
+          "anyOf": [
+            {
+              "enum": [
+                "first",
+                "last"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether to take the first or last ``max_frames`` of the conditioning\nvideo when it is longer than needed. Defaults to ``\"first\"``. No effect\non image conditioning.",
+          "title": "Condition Video Keep"
         },
         "resolution": {
           "anyOf": [
@@ -633,6 +654,15 @@
       },
       "title": "OmniSampleOverrides",
       "type": "object"
+    },
+    "RepositoryType": {
+      "description": "Repository type.",
+      "enum": [
+        "model",
+        "dataset"
+      ],
+      "title": "RepositoryType",
+      "type": "string"
     }
   },
   "additionalProperties": false,
@@ -943,6 +973,7 @@
         "raw_action_dim": null,
         "vision_path": null,
         "condition_frame_indexes_vision": null,
+        "condition_video_keep": null,
         "resolution": null,
         "aspect_ratio": null,
         "fps": null,

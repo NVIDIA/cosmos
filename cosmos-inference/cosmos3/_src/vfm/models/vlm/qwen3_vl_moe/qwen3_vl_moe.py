@@ -142,6 +142,19 @@ class Qwen3VLMoeTextSparseMoeBlock(nn.Module):
             torch.zeros(1, dtype=torch.float64),
             persistent=False,
         )
+        # Sum of per-token soft-effective-experts exp(H(p_t)) across all tokens
+        # seen since the last reset. Divided by stability_total_tokens in the
+        # callback to get mean_t exp(H(p_t)), the average per-token perplexity
+        # of the router. Note: this is NOT exp of the mean entropy — by Jensen,
+        # mean_t exp(H_t) >= exp(mean_t H_t), and the difference matters when
+        # per-token entropies are heterogeneous (e.g. mix of sharp and broad
+        # router distributions). Owned and reset by MoEStabilityCallback.
+        # float64 to avoid precision loss when accumulating over many steps.
+        self.register_buffer(
+            "sum_per_token_soft_eff",
+            torch.zeros(1, dtype=torch.float64),
+            persistent=False,
+        )
 
         # ── Specialization tracking ───────────────────────────────────────────────
         # N×N symmetric matrix counting how often each expert pair (i, j) appears
@@ -182,6 +195,11 @@ class Qwen3VLMoeTextSparseMoeBlock(nn.Module):
             routing_weights * torch.log(routing_weights + ENTROPY_EPSILON), dim=-1
         )  # [num_tokens]
         self.sum_token_entropy.add_(token_entropy.sum().to(torch.float64))
+        # Per-token soft effective experts = exp(H(p_t)), bounded in [1, N].
+        # We accumulate the sum here (not the mean) so the callback can compute
+        # mean_t exp(H_t) over any reset window. Kept separate from
+        # sum_token_entropy because exp(mean H) != mean exp(H) in general.
+        self.sum_per_token_soft_eff.add_(token_entropy.exp().sum().to(torch.float64))
 
         # ── Co-activation counting ────────────────────────────────────────────
         # For every ordered pair (k1, k2) of top-K slots with k1 < k2, find the
@@ -306,6 +324,13 @@ class Qwen3VLMoeTextSparseMoeBlock(nn.Module):
                 self.sum_token_entropy.zero_()
             return val
 
+    def get_sum_per_token_soft_eff(self, reset: bool = True) -> torch.Tensor:
+        with torch.no_grad():
+            val = self.sum_per_token_soft_eff.detach().clone()
+            if reset:
+                self.sum_per_token_soft_eff.zero_()
+            return val
+
     def get_coactivation_counts(self, reset: bool = True) -> torch.Tensor:
         with torch.no_grad():
             val = self.coactivation_counts.detach().clone()
@@ -336,6 +361,11 @@ class Qwen3VLMoeTextSparseMoeBlock(nn.Module):
         )
         self.register_buffer(
             "sum_token_entropy",
+            torch.zeros(1, dtype=torch.float64, device=buffer_device),
+            persistent=False,
+        )
+        self.register_buffer(
+            "sum_per_token_soft_eff",
             torch.zeros(1, dtype=torch.float64, device=buffer_device),
             persistent=False,
         )

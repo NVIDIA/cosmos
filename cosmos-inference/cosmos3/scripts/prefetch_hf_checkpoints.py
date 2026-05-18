@@ -29,6 +29,11 @@ def prefetch_all() -> None:
     for cfg in itertools.chain(_CHECKPOINTS_EXPERIMENTAL.values(), _CHECKPOINTS_EA.values()):
         cfg.hf.download()
 
+    from cosmos3.common.checkpoints import _DATASETS_EA, _DATASETS_EXPERIMENTAL
+
+    for cfg in itertools.chain(_DATASETS_EXPERIMENTAL.values(), _DATASETS_EA.values()):
+        cfg.hf.download()
+
     from cosmos3._src.imaginaire.utils.checkpoint_db import _CHECKPOINTS
 
     for cfg in _CHECKPOINTS.values():

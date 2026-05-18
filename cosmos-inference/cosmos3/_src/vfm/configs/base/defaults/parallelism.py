@@ -22,8 +22,6 @@ descriptive field names here to the short ParallelDims constructor kwargs
 happens at the read site (see vfm/models/{omni_mot_model,vlm_model}.py).
 """
 
-from typing import Literal
-
 import attrs
 
 
@@ -31,7 +29,7 @@ import attrs
 class ParallelismConfig:
     # Activation checkpointing is used to reduce the memory usage of the model.
     # The outputs of each layer are checkpointed, the intermediate results are not saved.
-    use_activation_checkpointing: bool = False
+    use_activation_checkpointing: bool = True
 
     # Torch compile is used to compile the model for faster training.
     use_torch_compile: bool = False
@@ -42,7 +40,10 @@ class ParallelismConfig:
     # Whether the entire Cosmos3 VFM network is compiled, or only a specific region is compiled.
     # Use "language" to compile only individual layers in the MOT model.
     # Use "all" to compile the the MOT model, as well as encode/decode functions.
-    compiled_region: Literal["all", "language"] = "language"
+    compiled_region: str = attrs.field(
+        default="language",
+        validator=attrs.validators.in_({"all", "language"}),
+    )
 
     # Whether torch.compile should generate symbolic-shape (dynamic) kernels
     # (maps to ``torch.compile(dynamic=...)``).  Defaults to True for training,

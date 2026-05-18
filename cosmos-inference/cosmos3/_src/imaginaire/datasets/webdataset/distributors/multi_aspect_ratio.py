@@ -22,6 +22,7 @@ import time
 from collections import defaultdict
 from copy import deepcopy
 
+import torch
 from webdataset.pytorch import IterableDataset
 from webdataset.utils import pytorch_worker_info
 
@@ -69,6 +70,7 @@ class ShardlistMultiAspectRatio(IterableDataset):
             log.info("ShardListWithResumes init")
         self.epoch = 0
         self.start_index = 0
+        self._iter_epoch = 0
         self.shuffle = shuffle
         self.split_by_node = split_by_node
         self.split_by_worker = split_by_worker
@@ -111,6 +113,10 @@ class ShardlistMultiAspectRatio(IterableDataset):
                 raise ValueError("aspect_ratio should be specified in dataset_info when using multi aspect distributor")
             aspect_ratio = dset_info.opts["aspect_ratio"]
             url_aspect_split[aspect_ratio].append(url)
+
+        # In deterministic mode, sort keys so rank-to-AR assignment is independent of URL ordering.
+        if torch.are_deterministic_algorithms_enabled():
+            url_aspect_split = dict(sorted(url_aspect_split.items()))
 
         aspect_ratio_with_most_elems = -1
         aspect_ratio_with_least_elems = -1
@@ -264,9 +270,14 @@ class ShardlistMultiAspectRatio(IterableDataset):
         url_list = self.obtain_url_list()
 
         if self.is_infinite_loader:
+            rank, _, worker_id, num_workers = pytorch_worker_info()
             while True:
-                cur_time = time.time_ns()
-                random.Random(cur_time).shuffle(url_list)
+                if torch.are_deterministic_algorithms_enabled():
+                    seed = self._iter_epoch * 65536 + rank * num_workers + worker_id
+                else:
+                    seed = time.time_ns()
+                random.Random(seed).shuffle(url_list)
+                self._iter_epoch += 1
                 for url in url_list:
                     yield dict(url=url)
         else:

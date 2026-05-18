@@ -22,16 +22,27 @@ from transformers import Qwen3VLForConditionalGeneration
 logger = logging.getLogger(__name__)
 
 _DROP_PATTERNS: tuple[str, ...] = (
+    # Generation
     r"_moe_gen",
     r"^llm2vae\.",
     r"^vae2llm\.",
     r"^time_embedder\.",
+    # Sound
+    r"^llm2sound\.",
+    r"^sound2llm\.",
+    r"^sound_modality_embed$",
+    # Action
+    r"^llm2action\.",
+    r"^action2llm\.",
+    r"^action_modality_embed$",
 )
-"""Generation-tower drop patterns (regex, matched via `re.search`)."""
+"""Drop patterns (regex, matched via `re.search`)."""
 
 _KEY_MAPPING: dict[str, str] = {
     # Flat Qwen3 -> nested HF Qwen3-VL. Negative lookahead skips already-nested keys.
     r"^model\.(?!language_model\.)(.+)$": r"model.language_model.\1",
+    # Flat Qwen3-VL vision component -> nested HF Qwen3-VL.
+    r"^(blocks\.|merger\.|patch_embed\.|pos_embed\.|deepstack_merger_list\.)(.*)$": r"model.visual.\1\2",
 }
 
 
@@ -39,8 +50,6 @@ class Cosmos3ForConditionalGeneration(Qwen3VLForConditionalGeneration):
     # Drop-pattern keys don't match any model parameter after rename -- the
     # loader skips them; these patterns silence the resulting warning.
     _keys_to_ignore_on_load_unexpected = list(_DROP_PATTERNS)
-    # Drop once a future checkpoint ships `model.visual.*`.
-    _keys_to_ignore_on_load_missing = [r"^model\.visual\."]
 
     @classmethod
     def from_pretrained(cls, *args, **kwargs):

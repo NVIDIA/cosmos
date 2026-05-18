@@ -1658,7 +1658,7 @@ wheels = [
 
 [[package]]
 name = "cosmos3"
-version = "1.2.1"
+version = "1.2.2"
 source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
@@ -1708,6 +1708,7 @@ train = [
     { name = "boto3" },
     { name = "botocore" },
     { name = "datasets" },
+    { name = "diffusers-cosmos3" },
     { name = "dists-pytorch" },
     { name = "einx" },
     { name = "fastparquet" },
@@ -1931,6 +1932,7 @@ requires-dist = [
     { name = "cattrs" },
     { name = "datasets", marker = "extra == 'train'" },
     { name = "diffusers" },
+    { name = "diffusers-cosmos3", marker = "extra == 'train'", editable = "packages/diffusers-cosmos3" },
     { name = "dists-pytorch", marker = "extra == 'train'" },
     { name = "einops" },
     { name = "einx", marker = "extra == 'train'" },
@@ -2703,6 +2705,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/58/3b/01d0ff800b811c5ad
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/55/586a3a2b9c95f371c9c3cb048c3cac15aedcce8d6d53ebd6bbc46860722d/diffusers-0.37.0-py3-none-any.whl", hash = "sha256:7eab74bf896974250b5e1027cae813aba1004f02d97c9b44891b83713386aa08", size = 5000449, upload-time = "2026-03-05T14:58:37.361Z" },
 ]
+
+[[package]]
+name = "diffusers-cosmos3"
+version = "0.1.0"
+source = { editable = "packages/diffusers-cosmos3" }
+dependencies = [
+    { name = "diffusers" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "diffusers", specifier = ">=0.37.0" }]
 
 [[package]]
 name = "dill"

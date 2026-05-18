@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-torchrun $TORCHRUN_ARGS -m cosmos3.scripts.inference \
+COSMOS_TRAINING=1 torchrun $TORCHRUN_ARGS -m cosmos3.scripts.inference \
     -i "$INPUT_DIR/interactive/*.json" \
     -o $OUTPUT_DIR/inference \
     --checkpoint-path eae30a62-7633-466c-976f-47f5a90c843f \

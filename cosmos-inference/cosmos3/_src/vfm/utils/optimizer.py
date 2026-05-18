@@ -14,19 +14,23 @@
 # limitations under the License.
 
 import collections
-import functools
-import itertools
-import math
-from typing import Any, Optional
+import copy
+from typing import Any, Iterator, NamedTuple
 
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig, ListConfig, OmegaConf
 from torch.distributed.checkpoint.state_dict import StateDictOptions, get_optimizer_state_dict, set_optimizer_state_dict
 from torch.distributed.checkpoint.stateful import Stateful
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim.lr_scheduler import LambdaLR, LRScheduler
 
+from cosmos3._src.imaginaire.functional.lr_scheduler import LambdaLinearScheduler, LambdaWarmUpCosineScheduler
 from cosmos3._src.imaginaire.utils import log
+
+
+class ParamMetadata(NamedTuple):
+    lr: float
+    enable_weight_decay: bool
 
 
 def _convert_omegaconf_to_python(obj: Any) -> Any:
@@ -45,6 +49,21 @@ def _optimizer_cls(
     optimizer_type: str,
     **optimizer_kwargs: Any,
 ) -> torch.optim.Optimizer:
+    """Dispatch to the requested optimizer class with the right kwargs.
+
+    Supported ``optimizer_type`` values (case-insensitive):
+
+    - ``"adam"`` / ``"adamw"``: forwarded to ``torch.optim.Adam`` /
+      ``torch.optim.AdamW``.  ``fused`` (if present in ``optimizer_kwargs``)
+      flows through and selects the fused CUDA kernel.
+    - ``"fusedadam"``: NVIDIA's :class:`projects.cosmos3.vfm.utils.fused_adam.FusedAdam`.
+      It is fused by construction and rejects a ``fused`` kwarg, so any
+      ``fused`` entry is popped before instantiation.  We also force
+      ``capturable=True`` and ``master_weights=True`` because those are the
+      only settings exercised in our distributed training stack.
+
+    Raises ``NotImplementedError`` for any other ``optimizer_type``.
+    """
     if optimizer_type.lower() == "adam":
         optimizer = torch.optim.Adam(params, **optimizer_kwargs)
     elif optimizer_type.lower() == "adamw":
@@ -52,375 +71,528 @@ def _optimizer_cls(
     elif optimizer_type.lower() == "fusedadam":
         from cosmos3._src.vfm.utils.fused_adam import FusedAdam
 
-        optimizer = FusedAdam(params, capturable=True, master_weights=True, **optimizer_kwargs)
+        # FusedAdam is fused by construction and does not accept a ``fused`` kwarg.
+        optimizer_kwargs.pop("fused", None)
+        # Force ``capturable`` / ``master_weights`` on -- the only configuration
+        # exercised in our distributed-training stack.  Overwrite in-place
+        # rather than passing as positional keywords, otherwise a caller that
+        # also sets either flag would trigger a duplicate-kwarg ``TypeError``.
+        optimizer_kwargs["capturable"] = True
+        optimizer_kwargs["master_weights"] = True
+        optimizer = FusedAdam(params, **optimizer_kwargs)
     else:
         raise NotImplementedError(f"Optimizer {optimizer_type} not found.")
     return optimizer
 
 
-def _filter_params(net: nn.Module, keys_to_select: list[str] = []) -> list[nn.Parameter]:
-    """
-    Filter the parameters of the network based on the keys to select.
-    For the parameters that are not in the keys_to_select, we set requires_grad to False.
-    """
-    total_params = sum(1 for _, _ in net.named_parameters())
-    param_dict = {pn: p for pn, p in net.named_parameters() if p.requires_grad}
-    params_filtered = []
-
-    if len(keys_to_select) > 0:
-        for pn, p in param_dict.items():
-            if any([key_to_select in pn for key_to_select in keys_to_select]):
-                params_filtered.append(p)
-            else:
-                p.requires_grad = False
-    else:
-        params_filtered = list(param_dict.values())
-
-    log.info(
-        f"Total parameters: {total_params}, "
-        f"trainable parameters: {len(params_filtered)}, "
-        f"frozen parameters: {total_params - len(params_filtered)}, "
-        f"unselected parameters: {len(param_dict) - len(params_filtered)}"
-    )
-    return params_filtered
-
-
-def _build_optimizer_param_groups(
-    net: nn.Module,
+def _build_params_with_metadata(
+    model: nn.Module,
     keys_to_select: list[str],
     lr_multipliers: dict[str, float],
     base_lr: float,
     disable_weight_decay_for_1d_params: bool,
-) -> list[dict[str, Any]]:
-    """Build optimizer parameter groups after applying selection and grouping rules.
+) -> list[tuple[nn.Parameter, ParamMetadata]]:
+    """Filter trainable parameters and tag each with its effective LR and weight-decay flag.
 
-    Parameters not matching ``keys_to_select`` are frozen by setting
-    ``requires_grad=False``. Selected parameters are grouped by matching
-    ``lr_multipliers`` pattern and each group receives ``base_lr * multiplier``.
-    If ``disable_weight_decay_for_1d_params`` is true, each LR group is split
-    into weight-decay and no-weight-decay groups; one-dimensional parameters,
-    such as norm weights and biases, are assigned ``weight_decay=0.0``.
+    Walks ``model.named_parameters()`` once and produces one
+    ``(param, ParamMetadata)`` entry per parameter that survives the
+    ``keys_to_select`` filter and belong to regular model.  Has the side
+    effect of freezing (``requires_grad=False``) every parameter that
+    does NOT match ``keys_to_select`` when that list is non-empty.
+
+    Selection rule:
+        - If ``keys_to_select`` is empty, every parameter is kept.
+        - Otherwise, a parameter is kept iff its dotted name contains at least
+          one entry of ``keys_to_select`` as a substring.
+
+    Effective LR:
+        ``ParamMetadata.lr = base_lr * matched_multiplier`` where
+        ``matched_multiplier`` is the value associated with the first
+        ``lr_multipliers`` pattern whose key occurs as a substring in the
+        parameter name (iteration order of the dict is significant); defaults
+        to ``1.0`` if no pattern matches.
+
+    Weight-decay flag:
+        ``ParamMetadata.enable_weight_decay`` is ``False`` exactly when
+        ``disable_weight_decay_for_1d_params`` is True AND the parameter has
+        fewer than two dimensions (the standard heuristic for norm weights,
+        biases, and other 1-D tensors).  Otherwise it is ``True``.  The flag is
+        consumed downstream by :func:`_build_optimizer_internal`, which
+        materializes the ``weight_decay=0.0`` override on the corresponding
+        param group.
+
+    Args:
+        model: Module whose ``named_parameters()`` to scan.  Only parameters
+            under the ``net.`` subtree are considered; EMA-network parameters
+            (``net_ema.*``) are intentionally skipped.
+        keys_to_select: Substrings used to allowlist parameter names.  Empty
+            list = train everything.
+        lr_multipliers: Ordered mapping from name-substring to LR multiplier.
+            First match wins per parameter.
+        base_lr: Base learning rate; each parameter's effective LR is
+            ``base_lr * matched_multiplier``.
+        disable_weight_decay_for_1d_params: When ``True``, 1-D parameters are
+            tagged ``enable_weight_decay=False``.
+
+    Returns:
+        List of ``(nn.Parameter, ParamMetadata)`` pairs covering every kept
+        parameter.  Frozen parameters are not included.
     """
-    total_params = sum(1 for _ in net.parameters())
-    param_dict = {pn: p for pn, p in net.named_parameters() if p.requires_grad}
+    # Optimize only the regular ``net.`` subtree; the sibling ``net_ema``
+    # subtree is intentionally skipped.  Materialize once so we can ``len()``
+    # the total below -- ``named_parameters()`` is a generator.
+    net_params = dict(model.net.named_parameters())
+    param_dict = {pn: p for pn, p in net_params.items() if p.requires_grad}
 
-    multiplier_groups: dict[float, list[nn.Parameter]] = collections.defaultdict(list)
+    params_with_metadata: list[tuple[nn.Parameter, ParamMetadata]] = []
 
     for pn, p in param_dict.items():
         if len(keys_to_select) > 0 and not any(key in pn for key in keys_to_select):
             p.requires_grad = False
             continue
+
+        # Find the matching multiplier for the parameter.
         matched_mult = 1.0
         for pattern, mult in lr_multipliers.items():
             if pattern in pn:
                 matched_mult = mult
                 break
-        multiplier_groups[matched_mult].append(p)
 
-    trainable = sum(len(g) for g in multiplier_groups.values())
+        if disable_weight_decay_for_1d_params and p.dim() < 2:
+            enable_weight_decay = False
+        else:
+            enable_weight_decay = True
+
+        params_with_metadata.append(
+            (
+                p,
+                ParamMetadata(
+                    lr=base_lr * matched_mult,
+                    enable_weight_decay=enable_weight_decay,
+                ),
+            )
+        )
+
     log.info(
-        f"Total parameters: {total_params}, "
-        f"trainable parameters: {trainable}, "
-        f"frozen parameters: {total_params - trainable}, "
-        f"unselected parameters: {len(param_dict) - trainable}"
+        f"Total tensors: {len(net_params)}, "
+        f"trainable tensors: {len(param_dict)}, "
+        f"selected tensors: {len(params_with_metadata)}"
     )
 
-    optimizer_param_groups: list[dict[str, Any]] = []
-    for mult, params in sorted(multiplier_groups.items()):
-        if not params:
-            continue
+    return params_with_metadata
 
-        lr = base_lr * mult
-        if disable_weight_decay_for_1d_params:
-            decay_params = [p for p in params if p.dim() >= 2]
-            no_decay_params = [p for p in params if p.dim() < 2]
-            param_groups: list[dict[str, Any]] = []
-            if decay_params:
-                param_groups.append({"params": decay_params, "lr": lr})
-            if no_decay_params:
-                param_groups.append({"params": no_decay_params, "lr": lr, "weight_decay": 0.0})
-        else:
-            param_groups = [{"params": params, "lr": lr}]
 
-        optimizer_param_groups.extend(param_groups)
-        num_tensors_with_weight_decay = sum(
-            len(group["params"]) for group in param_groups if group.get("weight_decay") != 0.0
-        )
-        num_tensors_without_weight_decay = sum(
-            len(group["params"]) for group in param_groups if group.get("weight_decay") == 0.0
-        )
+def _build_optimizer_internal(
+    params_with_metadata: list[tuple[nn.Parameter, ParamMetadata]],
+    optimizer_type: str,
+    **optimizer_kwargs: Any,
+) -> torch.optim.Optimizer:
+    """Bucket per-parameter metadata into PyTorch param groups and instantiate the optimizer.
+
+    Parameters sharing the same ``ParamMetadata`` (i.e. identical effective LR
+    *and* identical weight-decay enablement) are collapsed into a single
+    ``torch.optim`` param group.  Each resulting group carries an explicit
+    ``"lr"``; groups whose metadata has ``enable_weight_decay=False`` also
+    receive an explicit ``"weight_decay": 0.0`` override that suppresses the
+    optimizer-wide ``weight_decay`` kwarg for those parameters only.
+
+    Args:
+        params_with_metadata: Output of :func:`_build_params_with_metadata` —
+            one ``(param, ParamMetadata)`` entry per trainable parameter.
+        optimizer_type: Optimizer kind string accepted by :func:`_optimizer_cls`
+            (``"adam"``, ``"adamw"``, or ``"fusedadam"``).
+        **optimizer_kwargs: Forwarded to the optimizer constructor.  ``"lr"`` is
+            ignored at the group level (each group sets its own LR) but must
+            still be present because PyTorch optimizers require a default.
+
+    Returns:
+        A ``torch.optim.Optimizer`` configured with one param group per distinct
+        ``ParamMetadata`` value found in ``params_with_metadata``.
+    """
+    params_by_metadata: dict[ParamMetadata, list[nn.Parameter]] = collections.defaultdict(list)
+    for param, metadata in params_with_metadata:
+        params_by_metadata[metadata].append(param)
+
+    param_groups: list[dict[str, Any]] = []
+    for metadata, params in sorted(params_by_metadata.items()):
         log.info(
-            f"Param group (lr_mult={mult}x): "
-            f"{len(params)} tensors, "
-            f"{sum(p.numel() for p in params)} parameters, "
-            f"lr={lr}, "
-            f"num_tensors_with_weight_decay={num_tensors_with_weight_decay}, "
-            f"num_tensors_without_weight_decay={num_tensors_without_weight_decay}, "
-            f"disable_weight_decay_for_1d_params={disable_weight_decay_for_1d_params}"
+            f"Param group (lr={metadata.lr}, WD={metadata.enable_weight_decay}): "
+            f"{len(params):,} tensors, {sum(p.numel() for p in params):,} elements"
         )
 
-    return optimizer_param_groups
+        param_group: dict[str, Any] = {"params": params, "lr": metadata.lr}
+        if not metadata.enable_weight_decay:
+            param_group["weight_decay"] = 0.0
+        param_groups.append(param_group)
+
+    return _optimizer_cls(param_groups, optimizer_type, **optimizer_kwargs)
+
+
+class OptimizersContainer(Stateful):
+    """
+    Utility for calling step/zero_grad on multiple optimizers, and
+    saving/loading optimizer state_dict at checkpoint.
+    """
+
+    def __init__(
+        self,
+        model: nn.Module,
+        optimizer_type: str,
+        **optimizer_kwargs: Any,
+    ) -> None:
+        """Build per-device-mesh optimizers and expose them as a single Stateful container.
+
+        Parameters are first filtered + tagged with metadata via
+        :func:`_build_params_with_metadata` and then sub-grouped by
+        ``param.device_mesh.mesh_dim_names`` (or ``"default"`` when no mesh is
+        attached).  One ``torch.optim`` instance is created per resulting mesh
+        bucket so fused kernels see only same-mesh DTensors — required for
+        FSDP2-aware optimizer state-dict resharding.
+
+        Args:
+            model: Model to build the optimizer(s) for.  ``model.parameters()``
+                provides the parameter universe and is also passed through to
+                ``get_optimizer_state_dict`` / ``set_optimizer_state_dict`` for
+                checkpointing.
+            optimizer_type: Optimizer kind string accepted by
+                :func:`_optimizer_cls` (``"adam"``, ``"adamw"``, ``"fusedadam"``).
+            **optimizer_kwargs: Forwarded to the optimizer constructor, with the
+                following container-level kwargs intercepted first:
+
+                - ``fused`` (required): Must be truthy. Forwarded to
+                  ``torch.optim.AdamW`` / ``Adam`` so they use the fused CUDA
+                  kernel; ignored for ``"fusedadam"`` which is fused by
+                  construction.  Eager optimizers are not supported.
+                - ``lr`` (required): Base learning rate.  Each param group's
+                  effective LR is ``lr * matched_multiplier``; ``lr`` is still
+                  required because PyTorch optimizers expect a default.
+                - ``keys_to_select`` (optional, default ``[]``): List of
+                  substrings; only params whose names contain at least one are
+                  trained.  Empty list = train every parameter.
+                - ``lr_multipliers`` (optional, default ``{}``): Ordered dict
+                  mapping param-name substrings to LR multipliers.  First match
+                  wins; unmatched selected params use multiplier ``1.0``.
+                - ``disable_weight_decay_for_1d_params`` (optional, default
+                  ``False``): When true, parameters with ``dim() < 2`` (norm
+                  weights, biases, etc.) get ``weight_decay=0.0`` in their
+                  param group regardless of the optimizer-wide ``weight_decay``.
+        """
+        self.model = model
+        self.optimizers: list[torch.optim.Optimizer] = []
+
+        # Pop only the container-level kwargs.  ``fused`` and ``lr`` are
+        # intentionally NOT popped: ``fused`` must flow through to
+        # ``torch.optim.AdamW`` / ``Adam`` so the fused CUDA kernel is actually
+        # selected, and ``lr`` is needed both here (as the base for per-group
+        # multipliers) and by the underlying optimizer (as the group-level
+        # default).
+        keys_to_select = optimizer_kwargs.pop("keys_to_select", [])
+        lr_multipliers: dict[str, float] = optimizer_kwargs.pop("lr_multipliers", {})
+        disable_weight_decay_for_1d_params = optimizer_kwargs.pop("disable_weight_decay_for_1d_params", False)
+
+        if not optimizer_kwargs.get("fused", False):
+            raise ValueError("Optimizers with fused=False are not supported; pass fused=True in optimizer_kwargs.")
+        if "lr" not in optimizer_kwargs:
+            raise ValueError("`lr` is required in optimizer_kwargs (used as the base for per-group LR multipliers).")
+
+        base_lr = optimizer_kwargs["lr"]
+        params_with_metadata = _build_params_with_metadata(
+            model,
+            keys_to_select=keys_to_select,
+            lr_multipliers=lr_multipliers,
+            base_lr=base_lr,
+            disable_weight_decay_for_1d_params=disable_weight_decay_for_1d_params,
+        )
+
+        # Sub-group by device mesh so fused optimizers operate on same-mesh params.
+        mesh_groups: dict[str, list[tuple[nn.Parameter, ParamMetadata]]] = collections.defaultdict(list)
+        for param, metadata in params_with_metadata:
+            if hasattr(param, "device_mesh"):
+                # ``mesh_dim_names`` is ``tuple[str, ...] | None`` on DeviceMesh —
+                # fall back to ``default`` when names weren't assigned.
+                names = param.device_mesh.mesh_dim_names
+                mesh_key = "-".join(names) if names else "default"
+            else:
+                mesh_key = "default"
+            mesh_groups[mesh_key].append((param, metadata))
+
+        # Create one optimizer per mesh, each with per-LR,weight-decay param groups.
+        for mesh_key, mesh_params in mesh_groups.items():
+            log.info(f"Building optimizer for mesh '{mesh_key}'")
+            optimizer = _build_optimizer_internal(
+                mesh_params,
+                optimizer_type,
+                **optimizer_kwargs,
+            )
+            self.optimizers.append(optimizer)
+
+        log.info(f"Created {len(self.optimizers)} optimizers")
+
+    def __iter__(self) -> Iterator[torch.optim.Optimizer]:
+        return iter(self.optimizers)
+
+    def __len__(self) -> int:
+        return len(self.optimizers)
+
+    def step(self) -> None:
+        for optimizer in self.optimizers:
+            optimizer.step()
+
+    def zero_grad(self, set_to_none: bool = True) -> None:
+        # Default matches ``torch.optim.Optimizer.zero_grad`` (set_to_none=True
+        # since PyTorch 1.7); zero-in-place is strictly slower and uses extra
+        # memory, so callers must opt-in explicitly.
+        for optimizer in self.optimizers:
+            optimizer.zero_grad(set_to_none=set_to_none)
+
+    def state_dict(self) -> dict[str, Any]:
+        return get_optimizer_state_dict(
+            model=self.model,
+            optimizers=self.optimizers,
+            options=StateDictOptions(flatten_optimizer_state_dict=True),
+        )
+
+    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
+        set_optimizer_state_dict(
+            model=self.model,
+            optimizers=self.optimizers,
+            optim_state_dict=state_dict,
+            options=StateDictOptions(flatten_optimizer_state_dict=True),
+        )
 
 
 def build_optimizer(
     model: nn.Module,
     optimizer_type: str,
     **optimizer_kwargs: Any,
-) -> torch.optim.Optimizer:
-    """Build an optimizer for a model.
+) -> "OptimizersContainer":
+    """Build an :class:`OptimizersContainer` for a model.
+
+    Returns the container — NOT a raw ``torch.optim.Optimizer`` — because the
+    underlying implementation creates one optimizer per device mesh.  Callers
+    that need PyTorch ``param_groups`` must iterate ``container.optimizers``.
+
+    Before instantiation, every kwarg is normalized via
+    :func:`_convert_omegaconf_to_python` so that OmegaConf containers
+    (``ListConfig`` / ``DictConfig``) become plain Python types — PyTorch's
+    checkpoint utilities ``_copy_state_dict`` does not handle OmegaConf types.
 
     Args:
-        model: The model to build an optimizer for.
-        optimizer_type: The type of optimizer to build.
-        **optimizer_kwargs: Additional keyword arguments to pass to the optimizer.
-            lr_multipliers: Optional dict mapping parameter name patterns to LR
-                multipliers. E.g. ``{"sound2llm": 5.0, "llm2sound": 5.0}`` gives those
-                params 5x the base LR. Unmatched selected params use multiplier 1.0.
-            disable_weight_decay_for_1d_params: If true, one-dimensional parameters
-                such as norm weights and biases use weight_decay=0.0. Defaults to
-                false to preserve the historical optimizer behavior.
+        model: The model to build an optimizer for.  Trainable-parameter
+            selection happens inside the container; parameters not matched by
+            ``keys_to_select`` (when non-empty) are frozen as a side effect.
+        optimizer_type: Optimizer kind string accepted by :func:`_optimizer_cls`
+            (``"adam"``, ``"adamw"``, or ``"fusedadam"``).
+        **optimizer_kwargs: Forwarded to :class:`OptimizersContainer`, which
+            intercepts a few container-level kwargs and forwards the rest to
+            the underlying ``torch.optim`` constructor.  Container-level kwargs:
+
+            - ``fused`` (required, truthy): Use the fused CUDA kernel.  Eager
+              optimizers are intentionally not supported.
+            - ``lr`` (required): Base learning rate.  Each param group's
+              effective LR is ``lr * matched_multiplier``.
+            - ``keys_to_select`` (optional, default ``[]``): Substrings used to
+              allowlist parameter names; empty list = train everything.
+            - ``lr_multipliers`` (optional, default ``{}``): Ordered dict
+              mapping parameter-name substrings to LR multipliers.  E.g.
+              ``{"sound2llm": 5.0, "llm2sound": 5.0}`` gives those params 5x
+              the base LR.  First match wins; unmatched selected params use
+              multiplier ``1.0``.
+            - ``disable_weight_decay_for_1d_params`` (optional, default
+              ``False``): If true, one-dimensional parameters such as norm
+              weights and biases get ``weight_decay=0.0`` in their param group
+              regardless of the optimizer-wide ``weight_decay``.
 
     Returns:
-        A torch.optim.Optimizer.
+        An :class:`OptimizersContainer` wrapping one ``torch.optim.Optimizer``
+        per device mesh discovered on the model's parameters.
     """
     # Convert OmegaConf types to plain Python types to avoid issues with checkpoint saving.
     # PyTorch's _copy_state_dict doesn't handle OmegaConf types like ListConfig.
     optimizer_kwargs = {k: _convert_omegaconf_to_python(v) for k, v in optimizer_kwargs.items()}
-
-    fused = optimizer_kwargs.pop("fused", False)
-    assert fused, "Optimizers with fused=False are not supported."
-    keys_to_select = optimizer_kwargs.pop("keys_to_select", [])
-    lr_multipliers: dict[str, float] = optimizer_kwargs.pop("lr_multipliers", {})
-    disable_weight_decay_for_1d_params = optimizer_kwargs.pop("disable_weight_decay_for_1d_params", False)
-
-    base_lr = optimizer_kwargs["lr"]
-    optimizer_param_groups = _build_optimizer_param_groups(
-        model,
-        keys_to_select,
-        lr_multipliers,
-        base_lr,
-        disable_weight_decay_for_1d_params,
-    )
-    return _optimizer_cls(optimizer_param_groups, optimizer_type, **optimizer_kwargs)
+    return OptimizersContainer(model, optimizer_type, **optimizer_kwargs)
 
 
-class OptimizersContainer(Stateful):
-    """Util for calling step/zero_grad on multiple optimizers needed for virtual pipeline stages
-    and saving/loading optimizer state_dict at checkpoint.
+def _lr_scheduler_cls(
+    lr_scheduler_type: str,
+    **lr_scheduler_kwargs: Any,
+) -> LambdaLinearScheduler | LambdaWarmUpCosineScheduler:
+    """Instantiate a lambda-style scheduler whose ``.schedule(step)`` returns an LR multiplier.
+
+    Both returned classes expose a ``schedule(step) -> float`` callable that
+    :class:`LRSchedulersContainer` wraps with ``torch.optim.lr_scheduler.LambdaLR``
+    to drive each optimizer's param-group LRs.  ``lr_scheduler_type`` matching is
+    case-insensitive; valid values are ``"lambdalinear"`` (linear decay) and
+    ``"lambdacosine"`` (warmup + cosine decay).  Any other value raises
+    ``NotImplementedError``.  All remaining ``**lr_scheduler_kwargs`` are
+    forwarded verbatim to the underlying scheduler constructor (e.g.
+    ``warm_up_steps``, ``cycle_lengths``, ``f_start``, ``f_max``, ``f_min``,
+    ``verbosity_interval``).
     """
+    if lr_scheduler_type.lower() == "lambdalinear":
+        lr_scheduler = LambdaLinearScheduler(**lr_scheduler_kwargs)
+    elif lr_scheduler_type.lower() == "lambdacosine":
+        lr_scheduler = LambdaWarmUpCosineScheduler(**lr_scheduler_kwargs)
+    else:
+        raise NotImplementedError(f"LR Scheduler {lr_scheduler_type} not found.")
+    return lr_scheduler
+
+
+class LRSchedulersContainer(Stateful):
+    """Wraps one ``torch.optim.lr_scheduler.LambdaLR`` per inner optimizer.
+
+    Mirrors the structure of :class:`OptimizersContainer`: one scheduler is
+    created per element of an ``OptimizersContainer`` (i.e. one per device
+    mesh), and ``step()`` / ``state_dict()`` / ``load_state_dict()`` fan out
+    over them.  All schedulers share the same underlying lambda
+    (``lr_scheduler.schedule``), so they advance in lock-step but multiply each
+    of their optimizer's per-group ``base_lr`` values independently.
+
+    Note:
+        Subclasses must keep the ``step``, ``state_dict``, and
+        ``load_state_dict`` signatures compatible with
+        ``torch.optim.lr_scheduler.LRScheduler`` so that downstream training
+        and checkpoint code can treat the container as a drop-in scheduler.
+
+    Checkpoint format:
+        ``LambdaLR.state_dict`` contains both scalar fields (``last_epoch``,
+        ``_step_count``, ``verbose``, ``_get_lr_called_within_step`` — all
+        identical across schedulers because they step in lock-step) and
+        per-param-group lists (``base_lrs``, ``_last_lr``, ``lr_lambdas`` —
+        whose length and values depend on the underlying optimizer's
+        ``param_groups``).
+
+        When ``len(self.schedulers) == 1`` (the common single-mesh case),
+        :meth:`state_dict` returns scheduler-0's dict verbatim.  This matches
+        the historical on-disk shape, so single-scheduler checkpoints written
+        by earlier versions of this class continue to round-trip.
+
+        When ``len(self.schedulers) > 1`` (heterogeneous mesh case), the
+        per-scheduler list fields differ in length and content across
+        schedulers.  :meth:`state_dict` augments scheduler-0's dict with a
+        ``"schedulers"`` entry — a ``list[dict]`` of per-scheduler
+        ``LambdaLR.state_dict`` values — so each scheduler's
+        ``base_lrs`` / ``_last_lr`` / ``lr_lambdas`` are persisted and
+        restored without corruption.
+
+    Args:
+        optimizers: The optimizer container to drive.  Each inner optimizer
+            gets its own ``LambdaLR`` instance sharing the same schedule
+            lambda.
+    """
+
+    schedulers: list[LRScheduler]
 
     def __init__(
         self,
-        model_parts: list[nn.Module],
-        optimizer_type: str,
-        **optimizer_kwargs: Any,
+        optimizers: OptimizersContainer,
+        lr_scheduler_type: str,
+        **lr_scheduler_kwargs: Any,
     ) -> None:
-        self.model_parts = model_parts
-        self.optimizers = [[] for _ in self.model_parts]
+        if len(optimizers) == 0:
+            raise ValueError("Must have at least one optimizer to create LRScheduler")
+        lr_scheduler = _lr_scheduler_cls(lr_scheduler_type, **lr_scheduler_kwargs)
 
-        fused = optimizer_kwargs.pop("fused", False)
-        keys_to_select = optimizer_kwargs.pop("keys_to_select", [])
+        self.schedulers = [LambdaLR(optimizer, lr_scheduler.schedule) for optimizer in optimizers]
+        log.info(f"Created {len(self.schedulers)} schedulers")
 
-        for model_id, model in enumerate(self.model_parts):
-            filtered_params = _filter_params(model, keys_to_select)
+    def __iter__(self) -> Iterator[LRScheduler]:
+        return iter(self.schedulers)
 
-            if fused:
-                # Group the parameters by device mesh to do optimizer fusion.
-                parameters_by_mesh = collections.defaultdict(list)
-                for p in filtered_params:
-                    device_mesh = p.device_mesh if hasattr(p, "device_mesh") else "default"
-                    parameters_by_mesh[device_mesh].append(p)
-                for params in parameters_by_mesh.values():
-                    optimizer = _optimizer_cls(params, optimizer_type, **optimizer_kwargs)
-                    self.optimizers[model_id].append(optimizer)
-            else:
-                for p in filtered_params:
-                    optimizer = _optimizer_cls([p], optimizer_type, **optimizer_kwargs)
-                    self.optimizers[model_id].append(optimizer)
-
-    def __iter__(self) -> torch.optim.Optimizer:
-        return iter(itertools.chain(*self.optimizers))
-
-    def step(self) -> None:
-        for optimizer in itertools.chain(*self.optimizers):
-            optimizer.step()
-
-    def zero_grad(self, set_to_none: bool = False) -> None:
-        for optimizer in itertools.chain(*self.optimizers):
-            optimizer.zero_grad(set_to_none=set_to_none)
-
-    def state_dict(self) -> dict[str, Any]:
-        sd = {}
-        for model, optimizers in zip(self.model_parts, self.optimizers):
-            sd.update(
-                get_optimizer_state_dict(
-                    model=model,
-                    optimizers=optimizers,
-                    options=StateDictOptions(flatten_optimizer_state_dict=True),
-                )
-            )
-        return sd
-
-    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
-        for model, optimizers in zip(self.model_parts, self.optimizers):
-            set_optimizer_state_dict(
-                model=model,
-                optimizers=optimizers,
-                optim_state_dict=state_dict,
-                options=StateDictOptions(flatten_optimizer_state_dict=True),
-            )
-
-
-# consider split between PP and non-PP
-def build_optimizers(
-    model_parts: list[nn.Module],
-    optimizer_type: str,
-    **optimizer_kwargs: dict[str, Any],
-) -> OptimizersContainer:
-    """Wrap one optimizer per model part in an OptimizersContainer which provides a single
-    step() and zero_grad() method for all the child optimizers.
-    """
-    return OptimizersContainer(model_parts, optimizer_type, **optimizer_kwargs)
-
-
-class SchedulersContainer(Stateful):
-    """Util for calling step on multiple learning rate schedulers needed for virtual pipeline stages"""
-
-    def __init__(self, optimizers: OptimizersContainer, lr_lambda) -> None:
-        self.schedulers = []
-        for optimizer in optimizers:
-            self.schedulers.append(LambdaLR(optimizer, lr_lambda=lr_lambda))
+    def __len__(self) -> int:
+        return len(self.schedulers)
 
     def step(self) -> None:
         for scheduler in self.schedulers:
             scheduler.step()
 
     def state_dict(self) -> dict[str, Any]:
-        # Currently, we have one scheduler per optimizer. However, when using MultiSchedule PP or optimizer-in-backward,
-        # there are multiple optimizers and schedulers, but the scheduler state_dict remains the same for all.
-        # Therefore, we only save the first one and later load it for all.
-        assert len(self.schedulers) > 0, "Must have at least one scheduler to save state_dict"
-        return self.schedulers[0].state_dict()
+        # Single-scheduler: return the legacy shape verbatim so existing
+        # on-disk checkpoints continue to round-trip with strict_resume=True.
+        # Multi-scheduler: also persist per-scheduler state so heterogeneous
+        # param-group structures (different base_lrs / _last_lr lengths) are
+        # captured without corrupting one scheduler with another's data.
+        state_dict = self.schedulers[0].state_dict()
+        if len(self.schedulers) > 1:
+            state_dict["schedulers"] = [scheduler.state_dict() for scheduler in self.schedulers]
+        return state_dict
 
     def load_state_dict(self, state_dict: dict[str, Any]) -> None:
-        # Load the same state_dict for all schedulers. The key value we're concerned with in scheduler.state_dict() is `last_epoch`,
-        # which is an integer that will be automatically copied. As long as `training.steps` and `training.warmup_iters` remain
-        # unchanged when resuming from a checkpoint, this approach is safe. We call `.copy()` here to ensure extra safety.
-        last_epoch = state_dict["last_epoch"]  # Extract last known epoch
-        _step_count = state_dict["_step_count"]
-        log.info(f"Resuming schedulers by stepping them to last_epoch: {last_epoch}; _step_count: {_step_count}")
+        # Inverse of ``state_dict``: presence of ``"schedulers"`` implies the
+        # multi-scheduler shape and *exactly* matches ``len(self.schedulers)``;
+        # absence implies the single-scheduler shape.  ``state_dict`` is always
+        # produced by ``self.state_dict()`` on either the same or a compatible
+        # container, so a mismatch is a real config drift, not a recoverable
+        # path — raise with an actionable message.
+        per_scheduler_states = state_dict.get("schedulers")
+        if per_scheduler_states is None:
+            if len(self.schedulers) != 1:
+                raise ValueError(
+                    f"LRSchedulersContainer.load_state_dict: checkpoint holds a single "
+                    f"scheduler's state, but this container has {len(self.schedulers)}. "
+                    "Resume from a checkpoint saved with a matching number of schedulers, "
+                    "or add the scheduler to `checkpoint.keys_not_to_resume` to start "
+                    "scheduler state fresh."
+                )
+            self.schedulers[0].load_state_dict(copy.deepcopy(state_dict))
+            return
 
-        # Manually step all schedulers to match the saved state -- this is a workaround for the inherited issue in the state dict saving (only saved the first scheduler)
-        # But we have different learning rate for each scheduler, so we need to step them separately instead of loading the state dict
-        # The benefit of this approach is that we can resume from a checkpoint even if the learning rate is changed
-        for idx, scheduler in enumerate(self.schedulers):
-            for step in range(_step_count):
-                scheduler.step()  # Step forward to match previous training state
-            log.info(f"Scheduler {idx + 1}/{len(self.schedulers)} stepped {_step_count} times.")
-            log.info(f"Updated learning rate: {scheduler.get_last_lr()}")
+        if len(per_scheduler_states) != len(self.schedulers):
+            raise ValueError(
+                f"LRSchedulersContainer.load_state_dict: checkpoint has state for "
+                f"{len(per_scheduler_states)} schedulers, but this container has "
+                f"{len(self.schedulers)}. Resume from a checkpoint with a matching number "
+                "of schedulers, or add the scheduler to `checkpoint.keys_not_to_resume` to "
+                "start scheduler state fresh."
+            )
+        for scheduler, sub_state in zip(self.schedulers, per_scheduler_states):
+            # Deepcopy so nested mutable values (lists) are not aliased across
+            # schedulers after ``LambdaLR.__dict__.update``.
+            scheduler.load_state_dict(copy.deepcopy(sub_state))
 
-    def get_last_lr(self) -> list[float]:
-        return [scheduler.get_last_lr() for scheduler in self.schedulers]
+    def get_last_lr(self) -> list[float | torch.Tensor]:
+        # Concatenate the per-optimizer ``get_last_lr()`` lists.  Each
+        # underlying scheduler reports one entry per param group, and
+        # different optimizers (one per device mesh) may carry distinct
+        # ``base_lr`` values via ``lr_multipliers``, so the full snapshot
+        # requires aggregating across schedulers.
+        return [lr for scheduler in self.schedulers for lr in scheduler.get_last_lr()]
 
-
-def linear_warmup_linear_decay(warmup_iters: int, decay_steps: int, current_step: int) -> float:
-    """Computes linear warmup followed by linear decay.
-    Per LambdaLR requirement, this is accomplished by returning
-    a multiplicative factor to adjust the learning rate to
-    create the desired schedule.
-    """
-    if current_step < warmup_iters:
-        # linear warmup
-        # 0-indexed step, hence + 1 adjustments
-        current_step += 1
-        curr_adjustment = float(current_step / (warmup_iters + 1))
-
-    else:
-        # linear decay
-        normalized_step = decay_steps - (current_step - warmup_iters)
-        curr_adjustment = 1 - (decay_steps - normalized_step) / decay_steps
-
-    return curr_adjustment
-
-
-def linear_warmup(warmup_iters: int, current_step: int) -> float:
-    """Computes linear warmup only
-    Per LambdaLR requirement, this is accomplished by returning
-    a multiplicative factor to adjust the learning rate to
-    create the desired schedule.
-    """
-    if current_step < warmup_iters:
-        # linear warmup
-        # 0-indexed step, hence + 1 adjustments
-        current_step += 1
-        curr_adjustment = float(current_step / (warmup_iters + 1))
-    else:
-        curr_adjustment = 1
-
-    return curr_adjustment
+    def get_lr(self) -> list[float | torch.Tensor]:
+        # Same aggregation as ``get_last_lr``; see comment there.
+        return [lr for scheduler in self.schedulers for lr in scheduler.get_lr()]
 
 
-def linear_warmup_cosine_cooldown(
-    warmup_iters: int, cooldown_steps: int, current_step: int, base_lr: float, init_lr: float, end_lr: float
-) -> float:
-    """This scheduler will warmup the learning rate from init_lr to base_lr for warmup_iters,
-    then decay the learning rate from base_lr to end_lr for cooldown_steps. After cooldown_steps + warmup_iters,
-    the learning rate will be set to end_lr.
-    Per LambdaLR requirement, this is accomplished by returning
-    a multiplicative factor to adjust the learning rate to
-    create the desired schedule.
+def build_lr_scheduler(
+    optimizer: OptimizersContainer,
+    lr_scheduler_type: str,
+    **lr_scheduler_kwargs: Any,
+) -> LRSchedulersContainer:
+    """Create an :class:`LRSchedulersContainer` for the given optimizer container.
+
+    Thin factory used by Hydra/LazyConfig scheduler registrations (see
+    ``projects/cosmos3/vfm/configs/base/defaults/optimizer.py``).  At
+    instantiation time, ``optimizer`` is supplied by the model's
+    ``init_optimizer_scheduler`` hook via
+    ``lazy_instantiate(scheduler_config, optimizer=optimizer)``.
+
+    Note:
+        Callers who need different scheduler behavior can subclass
+        :class:`LRSchedulersContainer` and write their own factory; pointing
+        the Hydra ``_target_`` at that factory swaps it in.
 
     Args:
-        warmup_iters (int): The number of steps to warmup the learning rate.
-        cooldown_steps (int): The number of steps to decay the learning rate.
-        current_step (int): The current step.
-        base_lr (float): The base learning rate.
-        init_lr (float): The initial learning rate before warmup.
-        end_lr (float): The final learning rate after cooldown.
+        optimizer: The optimizer container the scheduler should drive.  One
+            :class:`torch.optim.lr_scheduler.LambdaLR` will be built per
+            element of this container.
+        lr_scheduler_type: Scheduler kind accepted by :func:`_lr_scheduler_cls`
+            — ``"lambdalinear"`` or ``"lambdacosine"`` (case-insensitive).
+        **lr_scheduler_kwargs: Forwarded verbatim to the underlying lambda
+            scheduler constructor (e.g. ``warm_up_steps``, ``cycle_lengths``,
+            ``f_start``, ``f_max``, ``f_min``, ``verbosity_interval``).
 
     Returns:
-        float: The multiplicative factor to adjust the learning rate.
+        An :class:`LRSchedulersContainer` wrapping one ``LambdaLR`` per inner
+        optimizer.
     """
-    total_steps = warmup_iters + cooldown_steps
-
-    # Normalize
-    init_multiplier = init_lr / base_lr
-    end_multiplier = end_lr / base_lr
-    if current_step <= warmup_iters:
-        progress = float(current_step / warmup_iters)
-        return init_multiplier + (1.0 - init_multiplier) * progress
-    elif current_step <= total_steps:
-        progress = (current_step - warmup_iters) / cooldown_steps
-        return end_multiplier + 0.5 * (1.0 - end_multiplier) * (1 + math.cos(math.pi * progress))
-    else:
-        return end_multiplier
-
-
-def build_lr_schedulers(
-    optimizers: OptimizersContainer,
-    name: str,
-    lr: float,
-    warmup_iters: int,
-    lr_decay_iters: Optional[int] = None,
-    init_lr: Optional[float] = None,
-    end_lr: Optional[float] = None,
-) -> SchedulersContainer:
-    decay_steps = float(max(1, lr_decay_iters - warmup_iters)) if lr_decay_iters is not None else None
-    if name == "warmup_cosine_lr":
-        assert init_lr is not None and end_lr is not None, "init_lr and end_lr must be provided for warmup_cosine_lr"
-        assert lr_decay_iters is not None, "lr_decay_iters must be provided for warmup_cosine_lr"
-        lr_lambda = functools.partial(
-            linear_warmup_cosine_cooldown,
-            warmup_iters,
-            decay_steps,
-            base_lr=lr,
-            init_lr=init_lr,
-            end_lr=end_lr,
-        )
-    elif name == "lambdalinear":
-        assert lr_decay_iters is not None, "lr_decay_iters must be provided for lambdalinear"
-        lr_lambda = functools.partial(linear_warmup_linear_decay, warmup_iters, decay_steps)
-    else:
-        lr_lambda = functools.partial(linear_warmup, warmup_iters)
-
-    return SchedulersContainer(optimizers, lr_lambda)
+    return LRSchedulersContainer(optimizer, lr_scheduler_type, **lr_scheduler_kwargs)

@@ -62,6 +62,6 @@ Action inference uses SO(3) pose representations.
 
 | Conditioning       | Output Video                                                                                                                                   |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Camera conditioned | <video src="https://github.com/user-attachments/assets/b8687a88-0403-43a5-b6c0-3e136c20617b" width="600" controls autoplay loop muted></video> |
 | Camera conditioned | <video src="https://github.com/user-attachments/assets/b9b3e46e-4da5-4804-8d1f-f7f8ba31bf90" width="600" controls autoplay loop muted></video> |
+| Action conditioned | <video src="https://github.com/user-attachments/assets/be612603-607a-43b0-ac12-dde5bf673ea5" width="600" controls autoplay loop muted></video> |
 | Action conditioned | <video src="https://github.com/user-attachments/assets/0629dfe0-c457-4196-8fcb-ca0419ca828c" width="600" controls autoplay loop muted></video> |

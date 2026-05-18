@@ -23,8 +23,6 @@ import torch
 
 from cosmos3._src.imaginaire.datasets.webdataset.augmentors.augmentor import Augmentor
 from cosmos3._src.imaginaire.lazy_config import instantiate as lazy_instantiate
-from cosmos3._src.vfm.datasets.sequence_packing import add_special_tokens
-from cosmos3._src.vfm.models.vlm.qwen3_vl.utils import tokenize_caption
 
 _MAX_NUM_TOKENS = 4096
 
@@ -37,10 +35,7 @@ class TextTokenizerTransform(Augmentor):
         self.cfg_dropout_rate = self.args["cfg_dropout_rate"]
         self.use_system_prompt = self.args.get("use_system_prompt", False)
 
-        # Initialize the text tokenizer
-        vlm_tokenizer = lazy_instantiate(tokenizer_config)
-        vlm_tokenizer, _ = add_special_tokens(vlm_tokenizer)
-        self.vlm_tokenizer = vlm_tokenizer
+        self._processor = lazy_instantiate(tokenizer_config)
 
     def __call__(self, data_dict: dict) -> dict:
         input_caption = data_dict[self.input_keys[0]]
@@ -56,9 +51,9 @@ class TextTokenizerTransform(Augmentor):
             if random.random() < self.cfg_dropout_rate:
                 input_caption = ""
                 data_dict[self.input_keys[0]] = input_caption
-        text_ids = tokenize_caption(
+
+        text_ids = self._processor.tokenize_text(
             input_caption,
-            self.vlm_tokenizer,
             is_video=False,
             use_system_prompt=self.use_system_prompt,
         )
@@ -78,30 +73,6 @@ _SYSTEM_PROMPTS = {
 }
 
 
-def _tokenize_caption_with_system_prompt(caption: str, tokenizer: object, system_prompt: str) -> list[int]:
-    """Tokenize a caption with a task-specific system prompt (editing or transfer).
-
-    Args:
-        caption: The instruction or caption text.
-        tokenizer: The Qwen2 tokenizer (must support ``apply_chat_template``).
-        system_prompt: System prompt for the conversation (e.g. editing or transfer).
-
-    Returns:
-        List of token IDs.
-    """
-    conversations = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": caption},
-    ]
-    tokenizer_output = tokenizer.apply_chat_template(
-        conversations,
-        tokenize=True,
-        add_generation_prompt=True,
-        add_vision_id=False,
-    )
-    return tokenizer_output
-
-
 class TextTokenizerTransformForEditing(Augmentor):
     """Tokenizer augmentor for interleaved tasks: image editing or transfer (control-conditioned generation).
 
@@ -116,16 +87,14 @@ class TextTokenizerTransformForEditing(Augmentor):
         task = self.args.get("task", "editing")
         self._system_prompt = _SYSTEM_PROMPTS.get(task, _SYSTEM_PROMPTS["editing"])
 
-        vlm_tokenizer = lazy_instantiate(tokenizer_config)
-        vlm_tokenizer, _ = add_special_tokens(vlm_tokenizer)
-        self.vlm_tokenizer = vlm_tokenizer
+        self._processor = lazy_instantiate(tokenizer_config)
 
     def __call__(self, data_dict: dict) -> dict | None:
         input_caption = data_dict.get(self.input_keys[0], "")
         if self.cfg_dropout_rate > 0 and random.random() < self.cfg_dropout_rate:
             input_caption = ""
             data_dict[self.input_keys[0]] = input_caption
-        text_ids = _tokenize_caption_with_system_prompt(input_caption, self.vlm_tokenizer, self._system_prompt)
+        text_ids = self._processor.tokenize_text(input_caption, system_prompt=self._system_prompt)
         data_dict[self.output_keys[0]] = torch.tensor(text_ids)  # [N_tokens]
         return data_dict
 

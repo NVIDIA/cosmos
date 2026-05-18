@@ -25,7 +25,6 @@ import torch.distributed as dist
 from einops import rearrange
 from torch.distributed._composable.fsdp import FSDPModule
 from torch.nn.modules.module import _IncompatibleKeys
-from torch.nn.utils.clip_grad import clip_grad_norm_
 
 from cosmos3._src.imaginaire.flags import DEVICE, TRAINING, Device
 from cosmos3._src.imaginaire.lazy_config import LazyDict
@@ -34,6 +33,8 @@ from cosmos3._src.imaginaire.model import ImaginaireModel
 from cosmos3._src.imaginaire.utils import log, misc
 from cosmos3._src.imaginaire.utils.count_params import count_params
 from cosmos3._src.imaginaire.utils.timer import Timer
+from cosmos3._src.vfm.algorithm.loss.flow_matching import compute_flow_matching_loss
+from cosmos3._src.vfm.algorithm.loss.load_balancing import compute_load_balancing_loss
 from cosmos3._src.vfm.configs.base.defaults.model_config import OmniMoTModelConfig
 from cosmos3._src.vfm.datasets.sequence_packing import (
     PackedSequence,
@@ -54,9 +55,9 @@ from cosmos3._src.vfm.models.utils.data_and_condition import (
     GenerationDataClean,
     GenerationDataNoised,
     _expand_per_sample_to_per_vision_item,
+    build_dense_sound_schedule,
     unwrap_and_densify,
 )
-from cosmos3._src.vfm.models.utils.load_balancing_loss import compute_load_balancing_loss
 from cosmos3._src.vfm.models.utils.memory import MemoryState
 from cosmos3._src.vfm.models.utils.safetensors_loader import load_language_model as load_language_model_safetensors
 from cosmos3._src.vfm.models.vlm.qwen3_vl.utils import tokenize_caption
@@ -65,13 +66,6 @@ from cosmos3._src.vfm.utils.data_utils import get_vision_data_resolution
 from cosmos3._src.vfm.utils.dtensor_helper import DTensorFastEmaModelUpdater
 from cosmos3._src.vfm.utils.model_weights_stats import WeightTrainingStat
 from cosmos3._src.vfm.utils.parallelism import ParallelDims
-
-# Optional dependency for LoRA training
-try:
-    from peft import LoraConfig, inject_adapter_in_model
-except ImportError:
-    LoraConfig = None
-    inject_adapter_in_model = None
 
 
 class OmniMoTModel(ImaginaireModel):
@@ -128,7 +122,8 @@ class OmniMoTModel(ImaginaireModel):
         """
         # 1. Text tokenizer
         self.vlm_config = self.config.vlm_config
-        vlm_tokenizer = lazy_instantiate(self.vlm_config.tokenizer)
+        _vlm_proc = lazy_instantiate(self.vlm_config.tokenizer)
+        vlm_tokenizer = _vlm_proc.tokenizer
         vlm_tokenizer, special_tokens = add_special_tokens(vlm_tokenizer)
         self.vlm_tokenizer = vlm_tokenizer
 
@@ -205,6 +200,18 @@ class OmniMoTModel(ImaginaireModel):
             )
             net.pad_for_cuda_graphs = self.config.parallelism.use_cuda_graphs
 
+            # Inject LoRA BEFORE FSDP wrap, while still on meta device. The
+            # injector must see unsharded Linear shapes; injecting post-FSDP causes
+            # lora_B to be created at the per-rank shard size and crashes at
+            # forward time. See `OmniMoTModel.add_lora` for details.
+            if getattr(self.config, "lora_enabled", False):
+                net = self.add_lora(
+                    net,
+                    lora_rank=self.config.lora_rank,
+                    lora_alpha=self.config.lora_alpha,
+                    lora_target_modules=self.config.lora_target_modules,
+                )
+
         self.install_attention_dispatch(net)
 
         net = parallelize_vfm_network(
@@ -221,6 +228,8 @@ class OmniMoTModel(ImaginaireModel):
                 # meta), since they are only for checkpoint conversion and smoke
                 # tests.
                 net.init_weights(buffer_device=DEVICE)
+                if getattr(self.config, "lora_enabled", False):
+                    self._init_lora_weights_post_materialization(net)
 
         return net
 
@@ -420,11 +429,9 @@ class OmniMoTModel(ImaginaireModel):
             optimizer (torch.optim.Optimizer): The model optimizer.
             scheduler (torch.optim.lr_scheduler.LRScheduler): The optimization scheduler.
         """
-        from cosmos3._src.imaginaire.utils.optim_instantiate import get_base_scheduler
 
-        optimizer = lazy_instantiate(optimizer_config, model=self.net)
-        scheduler = get_base_scheduler(optimizer, self, scheduler_config)
-
+        optimizer = lazy_instantiate(optimizer_config, model=self)
+        scheduler = lazy_instantiate(scheduler_config, optimizer=optimizer)
         return optimizer, scheduler
 
     def _derive_include_end_of_generation_token(self) -> bool:
@@ -623,6 +630,7 @@ class OmniMoTModel(ImaginaireModel):
             resolutions=data_resolutions,
             num_vision_latent_frames=num_vision_latent_frames,
             num_tokens=num_tokens_per_sample,
+            iteration=iteration,
         )  # [B, T_vis] each
 
         # Optional independent action schedule (sampled from rectified_flow_action with
@@ -638,12 +646,30 @@ class OmniMoTModel(ImaginaireModel):
         rf_cfg = self.config.rectified_flow_training_config
         action_sample_indices = [i for i, plan in enumerate(sequence_plans) if plan.has_action]
         if rf_cfg.independent_action_schedule and action_sample_indices:
-            ts_full, sg_full = self._get_train_noise_level_action(batch_size=gen_data_clean.batch_size)  # [B, 1] each
+            ts_full, sg_full = self._get_train_noise_level_action(
+                batch_size=gen_data_clean.batch_size, iteration=iteration
+            )  # [B, 1] each
             idx = torch.tensor(action_sample_indices, dtype=torch.long)  # [n_action]
             timesteps_action = ts_full[idx]  # [n_action, 1]
             sigmas_action = sg_full[idx]  # [n_action, 1]
         else:
             timesteps_action, sigmas_action = (None, None)
+
+        # Optional independent sound schedule: sample a scalar sound sigma per batch
+        # slot, then reindex to the dense audio-bearing subset.
+        sound_sample_indices = [i for i, plan in enumerate(sequence_plans) if getattr(plan, "has_sound", False)]
+        if getattr(rf_cfg, "independent_sound_schedule", False) and sound_sample_indices:
+            ts_sound_full, sg_sound_full = self._get_train_noise_level_sound(
+                batch_size=gen_data_clean.batch_size
+            )  # [B,1] each
+            timesteps_sound, sigmas_sound = build_dense_sound_schedule(
+                sequence_plans,
+                gen_data_clean.x0_tokens_sound,
+                ts_sound_full,
+                sg_sound_full,
+            )  # [n_sound,1], [n_sound,1]
+        else:
+            timesteps_sound, sigmas_sound = (None, None)
 
         # Broadcast timesteps/sigmas across CP group to ensure consistency
         if self.parallel_dims is not None and self.parallel_dims.cp_enabled:
@@ -659,6 +685,22 @@ class OmniMoTModel(ImaginaireModel):
                 sigmas_action = sigmas_action.contiguous()
                 torch.distributed.broadcast(timesteps_action, src=global_src_rank, group=cp_group)
                 torch.distributed.broadcast(sigmas_action, src=global_src_rank, group=cp_group)
+            if sigmas_sound is not None:
+                timesteps_sound = timesteps_sound.contiguous()  # [n_sound,1]
+                sigmas_sound = sigmas_sound.contiguous()  # [n_sound,1]
+                torch.distributed.broadcast(timesteps_sound, src=global_src_rank, group=cp_group)
+                torch.distributed.broadcast(sigmas_sound, src=global_src_rank, group=cp_group)
+
+        if timesteps_sound is None:
+            # Sound tensors are dense over audio-bearing samples, while the vision timestep/sigma schedule
+            # is indexed by original batch position. Reindex here so mixed audio/no-audio batches use each
+            # sound sample's own schedule for noising and loss weighting.
+            timesteps_sound, sigmas_sound = build_dense_sound_schedule(
+                sequence_plans,
+                gen_data_clean.x0_tokens_sound,
+                timesteps_vision,
+                sigmas_vision,
+            )  # [n_sound,T_vis] or None, [n_sound,T_vis] or None
 
         packed_sequence = self._pack_input_sequence(
             sequence_plans,
@@ -685,6 +727,26 @@ class OmniMoTModel(ImaginaireModel):
             else:
                 timesteps_action, sigmas_action = (None, None)
 
+        # Under independent_sound_schedule, overwrite the vision-based sound timestep the packer
+        # injected with the sound timestep, so the denoiser's sound timestep embedding matches
+        # the sigma used to noise sound tokens.
+        if (
+            getattr(rf_cfg, "independent_sound_schedule", False)
+            and timesteps_sound is not None
+            and packed_sequence.sound is not None
+        ):
+            sound_has_noisy_tokens = any(nfi.numel() > 0 for nfi in packed_sequence.sound.noisy_frame_indexes)
+            if sound_has_noisy_tokens:
+                sample_ts = timesteps_sound.squeeze(1).cpu()  # [n_sound]
+                packed_sequence.sound.timesteps = torch.cat(
+                    [
+                        sample_ts[i : i + 1].expand(nfi.numel())
+                        for i, nfi in enumerate(packed_sequence.sound.noisy_frame_indexes)
+                    ]
+                ).to(dtype=torch.float32)  # [N_sound_noisy]
+            else:
+                timesteps_sound, sigmas_sound = (None, None)
+
         # For image editing (multi-item vision), expand per-sample timesteps/sigmas to
         # per-vision-item so downstream noise/loss indexing matches the flat x0_tokens_vision
         # list. No-op when num_vision_items_per_sample is None (standard T2I/T2V/policy cases).
@@ -701,7 +763,12 @@ class OmniMoTModel(ImaginaireModel):
 
         # Flow matching/diffusion forward process: noise the input signal with the sampled noise level
         gen_data_noised = self._add_noise_to_input(
-            gen_data_clean, packed_sequence, sigmas_vision, sigmas_action=sigmas_action
+            gen_data_clean,
+            packed_sequence,
+            sigmas_vision,
+            sigmas_action=sigmas_action,
+            sigmas_sound=sigmas_sound,
+            iteration=iteration,
         )
         self._replace_clean_with_noised(packed_sequence, gen_data_noised)
 
@@ -725,6 +792,7 @@ class OmniMoTModel(ImaginaireModel):
             timesteps=timesteps_vision,
             is_image_batch=gen_data_clean.is_image_batch,
             timesteps_action=timesteps_action,
+            timesteps_sound=timesteps_sound,
         )
 
         # Pixel-space video shapes for VAE FLOPs estimation in callbacks (e.g. MFU).
@@ -767,6 +835,8 @@ class OmniMoTModel(ImaginaireModel):
         }
         if sigmas_action is not None:
             output_batch["sigma_action"] = sigmas_action  # [n_action, 1] — dense over action-bearing samples
+        if getattr(rf_cfg, "independent_sound_schedule", False) and sigmas_sound is not None:
+            output_batch["sigma_sound"] = sigmas_sound  # [n_sound, 1] — dense over sound-bearing samples
 
         return output_batch, loss
 
@@ -809,41 +879,17 @@ class OmniMoTModel(ImaginaireModel):
                 - Flow matching loss (or dummy loss for gradient consistency).
                 - Per-instance loss (or dummy loss for gradient consistency).
         """
-        if not has_valid_tokens:
-            # Dummy loss to maintain backward graph consistency across ranks
-            dummy_loss = 0.0 * sum(p.sum() for p in pred)
-            return dummy_loss, dummy_loss.unsqueeze(0)  # make per-instance loss 1-D
-
-        # condition_mask[i] is T-first with trailing singletons: [T,1,1] vision, [T,1] action.
-        # tw_i gets the same shape so w(σ_t) broadcasts element-wise over non-T dims.
-        per_instance_losses = []
-        per_instance_weighted_losses = []
-
-        for i in range(len(pred)):
-            T_i = condition_mask[i].shape[0]
-            sqerr_i = (pred[i] - target[i]) ** 2  # vision:[C,T,H,W]  action/sound:[T,D]
-            noisy_mask_i = 1.0 - condition_mask[i]  # vision:[T,1,1]  action/sound:[T,1]
-            if raw_action_dim is not None and raw_action_dim[i] is not None:
-                sqerr_i = sqerr_i[:, : raw_action_dim[i]]
-            if normalize_by_active:
-                active_count = (noisy_mask_i.sum() * (sqerr_i.numel() // noisy_mask_i.numel())).clamp(min=1)
-                per_instance_losses.append((sqerr_i * noisy_mask_i).sum() / active_count)  # []
-            else:
-                per_instance_losses.append((sqerr_i * noisy_mask_i).mean())  # []
-
-            ts_i = timesteps[i, :T_i] if timesteps.dim() > 1 else timesteps[i]  # DF:[T_i]  TF:[1]
-            tw_i = rectified_flow.train_time_weight(ts_i, self.tensor_kwargs_fp32)  # DF:[T_i]  TF:[1]
-            tw_i = tw_i.reshape(-1, *([1] * (condition_mask[i].ndim - 1)))  # vision:[T_i,1,1]  action/sound:[T_i,1]
-            if normalize_by_active:
-                per_instance_weighted_losses.append((sqerr_i * tw_i * noisy_mask_i).sum() / active_count)
-            else:
-                per_instance_weighted_losses.append((sqerr_i * tw_i * noisy_mask_i).mean())
-
-        per_instance_loss = torch.stack(per_instance_losses)  # [B]
-        per_instance_weighted_loss = torch.stack(per_instance_weighted_losses)  # [B]
-        return (
-            per_instance_weighted_loss.mean(),  # []
-            per_instance_loss,  # [B]
+        return compute_flow_matching_loss(
+            pred=pred,
+            target=target,
+            condition_mask=condition_mask,
+            timesteps=timesteps,
+            has_valid_tokens=has_valid_tokens,
+            rectified_flow=rectified_flow,
+            tensor_kwargs_fp32=self.tensor_kwargs_fp32,
+            loss_scale=loss_scale,
+            raw_action_dim=raw_action_dim,
+            normalize_by_active=normalize_by_active,
         )
 
     def _compute_losses(
@@ -854,6 +900,7 @@ class OmniMoTModel(ImaginaireModel):
         timesteps: torch.Tensor,
         is_image_batch: bool,
         timesteps_action: torch.Tensor | None = None,
+        timesteps_sound: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Compute flow matching loss and auxiliary load balancing losses.
 
@@ -861,11 +908,16 @@ class OmniMoTModel(ImaginaireModel):
         time-weighting — dense over action-bearing samples, matching ``data_batch_packed.action.*``.
         When None, action reuses ``timesteps`` (vision timesteps, legacy behavior). Set by
         ``training_step`` under ``independent_action_schedule=True``.
+
+        ``timesteps_sound`` is an optional dense sound timestep tensor, matching
+        ``data_batch_packed.sound.*``. When None, sound reuses ``timesteps``.
         """
         total_loss = 0.0
         losses_dict = {}
         # ts_action shape: vision fallback [B_items, T_vis] (legacy) or [n_action, 1] (independent).
-        ts_action = timesteps if timesteps_action is None else timesteps_action
+        ts_action = timesteps if timesteps_action is None else timesteps_action  # [B_items,T_vis] or [n_action,1]
+        # ts_sound shape: vision fallback [B_items,T_vis] or dense sound schedule [n_sound,...].
+        ts_sound = timesteps if timesteps_sound is None else timesteps_sound  # [B_items,T_vis] or [n_sound,...]
 
         rf_cfg = self.config.rectified_flow_training_config
         normalize_by_active = rf_cfg.normalize_loss_by_active
@@ -937,7 +989,7 @@ class OmniMoTModel(ImaginaireModel):
                     pred=out_net["preds_sound"],
                     target=gen_data_noised.vt_target_sound,
                     condition_mask=[m.T for m in data_batch_packed.sound.condition_mask],
-                    timesteps=timesteps,
+                    timesteps=ts_sound,
                     has_valid_tokens=has_noisy_tokens(data_batch_packed.sound),
                     rectified_flow=self.rectified_flow_sound,
                     normalize_by_active=normalize_by_active,
@@ -1015,6 +1067,7 @@ class OmniMoTModel(ImaginaireModel):
         num_vision_latent_frames: list[int],
         resolutions: list[str] | str | None = None,
         num_tokens: list[int] | None = None,
+        iteration: int | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Sample the rectified flow interpolation coefficient (timesteps), optionally adjust the sampled
@@ -1092,12 +1145,16 @@ class OmniMoTModel(ImaginaireModel):
             # sequences are unused (sliced away in _add_noise_to_input).
             T_max = max(num_vision_latent_frames)
             t_raw = (
-                rectified_flow.sample_train_time(batch_size * T_max)
+                rectified_flow.sample_train_time(batch_size * T_max, iteration=iteration)
                 .to(**self.tensor_kwargs_fp32)
                 .reshape(batch_size, T_max)
             )  # [B,T_max]
         else:
-            t_raw = rectified_flow.sample_train_time(batch_size).to(**self.tensor_kwargs_fp32).unsqueeze(1)  # [B,1]
+            t_raw = (
+                rectified_flow.sample_train_time(batch_size, iteration=iteration)
+                .to(**self.tensor_kwargs_fp32)
+                .unsqueeze(1)
+            )  # [B,1]
 
         # Apply shift and scale: t_raw ∈ [0,1] → timesteps ∈ [0,max_timestep]
         # shifts.unsqueeze(1) → [B,1], broadcasts with both [B,1] (base/TF) and [B,T_max] (DF)
@@ -1138,7 +1195,9 @@ class OmniMoTModel(ImaginaireModel):
 
         return timesteps
 
-    def _get_train_noise_level_action(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
+    def _get_train_noise_level_action(
+        self, batch_size: int, iteration: int | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Sample ``(timesteps, sigmas)`` of shape ``[batch_size, 1]`` from ``rectified_flow_action``.
 
         This helper is locally-scoped: it just draws ``batch_size`` independent σ values and
@@ -1175,12 +1234,52 @@ class OmniMoTModel(ImaginaireModel):
                 f"Got shift={rf_cfg.shift!r}."
             )
 
-        t_raw = rf.sample_train_time(batch_size).to(**self.tensor_kwargs_fp32).unsqueeze(1)  # [B,1]
+        t_raw = (
+            rf.sample_train_time(batch_size, iteration=iteration).to(**self.tensor_kwargs_fp32).unsqueeze(1)
+        )  # [B,1]
         t = 1 - t_raw  # [B,1]
         shifts_2d = torch.full((batch_size, 1), shift_val, dtype=torch.float32, device=t_raw.device)  # [B,1]
         timesteps = shifts_2d * t / (1 + (shifts_2d - 1) * t) * max_timestep  # [B,1]
 
         if rf_cfg.use_high_sigma_strategy_action:
+            timesteps = self._apply_high_noise_strategy(timesteps, max_timestep)  # [B,1]
+
+        sigmas = timesteps / max_timestep  # [B,1]
+        return timesteps, sigmas
+
+    def _get_train_noise_level_sound(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
+        """Sample ``(timesteps, sigmas)`` of shape ``[batch_size, 1]`` from ``rectified_flow_sound``.
+
+        Sound uses a shared scalar sigma per audio-bearing sample, then training_step
+        reindexes the full-batch samples to the dense sound tensor list.
+        """
+        rf_cfg = self.config.rectified_flow_training_config
+        rf = self.rectified_flow_sound
+        max_timestep = rf.noise_scheduler.config.num_train_timesteps  # int
+
+        # Resolve shift. shift_sound, when provided, must be an int.
+        if rf_cfg.shift_sound is not None:
+            if not isinstance(rf_cfg.shift_sound, int):
+                raise ValueError(
+                    f"shift_sound must be an int; got {type(rf_cfg.shift_sound).__name__}. "
+                    "Dict-keyed per-resolution shifts are vision-only."
+                )
+            shift_val = rf_cfg.shift_sound  # int
+        elif isinstance(rf_cfg.shift, int):
+            shift_val = rf_cfg.shift  # inherit the global int shift
+        else:
+            raise ValueError(
+                "shift_sound=None requires the global `shift` to be an int. When `shift` is a "
+                f"dict (multi-resolution vision training), set shift_sound explicitly as an int. "
+                f"Got shift={rf_cfg.shift!r}."
+            )
+
+        t_raw = rf.sample_train_time(batch_size).to(**self.tensor_kwargs_fp32).unsqueeze(1)  # [B,1]
+        t = 1 - t_raw  # [B,1]
+        shifts_2d = torch.full((batch_size, 1), shift_val, dtype=torch.float32, device=t_raw.device)  # [B,1]
+        timesteps = shifts_2d * t / (1 + (shifts_2d - 1) * t) * max_timestep  # [B,1]
+
+        if rf_cfg.use_high_sigma_strategy_sound:
             timesteps = self._apply_high_noise_strategy(timesteps, max_timestep)  # [B,1]
 
         sigmas = timesteps / max_timestep  # [B,1]
@@ -1192,6 +1291,8 @@ class OmniMoTModel(ImaginaireModel):
         packed_sequence: PackedSequence,
         sigmas: torch.Tensor,
         sigmas_action: torch.Tensor | None = None,
+        sigmas_sound: torch.Tensor | None = None,
+        iteration: int | None = None,
     ) -> GenerationDataNoised:
         """
         Diffusion / Flow matching forward process: apply noise of given noise level (sigmas) to input data.
@@ -1209,6 +1310,8 @@ class OmniMoTModel(ImaginaireModel):
                 action-bearing samples, matching ``packed_sequence.action.*``. When None, action
                 reuses ``sigmas`` (vision σ, legacy behavior). Set by ``training_step`` when
                 ``independent_action_schedule=True``.
+            sigmas_sound: Optional dense sound sigma tensor matching ``packed_sequence.sound.*``.
+                When None, sound reuses ``sigmas``.
 
         Returns:
             GenerationDataNoised: A dataclass containing the noise, noisy data (xt), and velocity field (vt).
@@ -1216,11 +1319,27 @@ class OmniMoTModel(ImaginaireModel):
         # Action sigma defaults to the shared vision sigma (legacy behavior).
         # Legacy (sigmas_action=None): vision σ of shape [B_items, T_vis].
         # Independent (sigmas_action provided): dense action σ of shape [n_action, 1].
-        sigmas_for_action = sigmas if sigmas_action is None else sigmas_action
+        sigmas_for_action = sigmas if sigmas_action is None else sigmas_action  # [B_items,T_vis] or [n_action,1]
+        # Sound uses a dense view of the per-sample vision schedule so mixed audio/no-audio
+        # batches do not index full-batch sigmas with dense sound positions.
+        sigmas_for_sound = sigmas if sigmas_sound is None else sigmas_sound  # [B_items,T_vis] or [n_sound,...]
+
+        # Seeded noise generator (deterministic mode only): keyed on (iteration, rank) so
+        # noise is identical across independent runs. Built on the same CUDA device as
+        # tensor_kwargs_fp32 so we can fuse it into a single torch.randn call below
+        # (no extra CPU alloc + H2D copy). Offset +32768 keeps this seed distinct from
+        # the sigma seed in sample_train_time. When noise_gen is None, torch.randn
+        # falls back to the default CUDA RNG, matching prior non-deterministic behavior.
+        noise_gen: torch.Generator | None = None
+        if iteration is not None and torch.are_deterministic_algorithms_enabled():
+            rank = torch.distributed.get_rank() if torch.distributed.is_initialized() else 0
+            noise_gen = torch.Generator(device=self.tensor_kwargs_fp32["device"])
+            noise_gen.manual_seed(iteration * 65536 + rank + 32768)
+
         # Vision
         x0_vision = gen_data_clean.x0_tokens_vision  # list of [C,T,H,W]
         epsilon_vision = [
-            torch.randn(x0_vision_i.size(), **self.tensor_kwargs_fp32) for x0_vision_i in x0_vision
+            torch.randn(x0_vision_i.size(), generator=noise_gen, **self.tensor_kwargs_fp32) for x0_vision_i in x0_vision
         ]  # list of [C,T,H,W]
 
         # Derive noisy mask (1 for noised, 0 for clean) for sigmas computation
@@ -1283,7 +1402,8 @@ class OmniMoTModel(ImaginaireModel):
                 ]  # list of [T,action_dim]
             else:
                 epsilon_action = [
-                    torch.randn(x0_action_i.size(), **self.tensor_kwargs_fp32) for x0_action_i in x0_action
+                    torch.randn(x0_action_i.size(), generator=noise_gen, **self.tensor_kwargs_fp32)
+                    for x0_action_i in x0_action
                 ]  # list of [T,action_dim]
                 # Conditioning action timesteps are zeroed via (1 - condition_mask) in all modes (base/TF/DF).
                 # Action timesteps are aligned 1-to-1 with video latent frames, not RGB frames.
@@ -1319,13 +1439,16 @@ class OmniMoTModel(ImaginaireModel):
                 "Sound condition mask required when sound tokens exist"
             )
             sound_batch_size = len(packed_sequence.sound.condition_mask)
-            epsilon_sound = [torch.randn(x0_i.size(), **self.tensor_kwargs_fp32) for x0_i in x0_sound]
+            epsilon_sound = [
+                torch.randn(x0_i.size(), generator=noise_gen, **self.tensor_kwargs_fp32) for x0_i in x0_sound
+            ]
             # Conditioning frames are zeroed via (1 - condition_mask) in all modes (base/TF/DF).
             # view(-1,1)[:T_sound].T: for base/TF sigmas[i] is (1,) → (1,1) → no-op → (1,1);
             # for DF sigmas[i] is (T_max,) → (T_max,1) → (T_sound,1) → (1,T_sound).
             # condition_mask[i] shape [T_sound,1]; .T gives [1,T_sound]; result broadcasts with x0 [C,T_sound].
             sigmas_sound = [
-                sigmas[i].view(-1, 1)[: x0_sound[i].shape[1]].T * (1.0 - packed_sequence.sound.condition_mask[i].T)
+                sigmas_for_sound[i].view(-1, 1)[: x0_sound[i].shape[1]].T
+                * (1.0 - packed_sequence.sound.condition_mask[i].T)
                 for i in range(sound_batch_size)
             ]
             xt_sound, vt_sound = self.rectified_flow_sound.get_interpolation(epsilon_sound, x0_sound, sigmas_sound)
@@ -2538,12 +2661,36 @@ class OmniMoTModel(ImaginaireModel):
         list).  This method:
 
         1. Unwraps inner lists: ``[[t], [None], [t]]`` -> ``[t, None, t]``
-        2. Filters out None entries: ``[t, None, t]`` -> ``[t, t]``
-        3. Moves tensors to the model device.
-        4. Sets ``data_batch["sound"]`` to ``None`` if no valid sound data remains.
+        2. Clears ``sequence_plan.has_sound`` for samples whose sound is ``None``
+           (kept aligned by ``custom_collate_fn`` preserving ``None`` placeholders).
+        3. Filters out None entries: ``[t, None, t]`` -> ``[t, t]``
+        4. Moves tensors to the model device.
+        5. Sets ``data_batch["sound"]`` to ``None`` if no valid sound data remains.
+
+        Alignment invariant: ``custom_collate_fn`` keeps the ``"sound"`` key
+        as a list with ``None`` placeholders for samples that lack audio (e.g.
+        audio-extraction failures), so the unwrapped ``raw_state_sound`` is
+        1:1 with ``sequence_plan``.  ``SoundSequencePlanBuilder`` already sets
+        each plan's ``has_sound`` according to that sample's actual sound
+        presence, so clearing flags for ``None`` slots here is just defensive.
         """
         raw_state_sound = data_batch.get("sound", None)
+        sequence_plans = data_batch.get("sequence_plan", None)
+        sound_enabled = self.tokenizer_sound_gen is not None
+
+        def _disable_sound_on_plans() -> None:
+            if isinstance(sequence_plans, list):
+                for plan in sequence_plans:
+                    if hasattr(plan, "has_sound"):
+                        plan.has_sound = False
+                        plan.condition_frame_indexes_sound = []
+
         if not isinstance(raw_state_sound, list) or len(raw_state_sound) == 0:
+            # No sound entries at all (image-only batches, or every sample
+            # came from a non-audio stream).  Defensively clear has_sound on
+            # any plan that somehow has it set so packing does not look up
+            # missing tensors.
+            _disable_sound_on_plans()
             data_batch["sound"] = None
             return
 
@@ -2551,10 +2698,51 @@ class OmniMoTModel(ImaginaireModel):
         if isinstance(raw_state_sound[0], list):
             raw_state_sound = [item[0] if isinstance(item, list) else item for item in raw_state_sound]
 
-        # Filter out None entries (samples without audio) and move to device
-        raw_state_sound = [s.to(self.tensor_kwargs["device"]) for s in raw_state_sound if s is not None]
+        if not sound_enabled:
+            # Model is not configured for sound generation: drop tensors and
+            # clear any has_sound flags so packing skips the sound path.
+            _disable_sound_on_plans()
+            data_batch["sound"] = None
+            return
+
+        if isinstance(sequence_plans, list):
+            if len(sequence_plans) == len(raw_state_sound):
+                # Expected path: 1:1 alignment between plans and per-sample
+                # sound slots.  Clear has_sound where the per-sample tensor
+                # is None so sequence_packing's idx_sound counter stays in
+                # sync with the filtered dense list.
+                for plan, sound in zip(sequence_plans, raw_state_sound, strict=True):
+                    if hasattr(plan, "has_sound") and sound is None:
+                        plan.has_sound = False
+                        plan.condition_frame_indexes_sound = []
+            else:
+                # Length mismatch can only happen if some upstream code path
+                # (e.g. a stale collate that drops "sound" when any sample is
+                # None) leaves the dense list shorter than the plans.  Without
+                # 1:1 alignment we cannot safely associate tensors with plans,
+                # so we conservatively disable sound for the whole batch.
+                # This trades a small amount of training signal for guaranteed
+                # correctness — better than silently feeding sound from one
+                # sample into another sample's plan.
+                log.warning(
+                    f"Sound/plan length mismatch ({len(sequence_plans)} plans vs "
+                    f"{len(raw_state_sound)} sound entries). Disabling sound for "
+                    "this batch.  Check that custom_collate_fn preserves the "
+                    "'sound' key with None placeholders."
+                )
+                _disable_sound_on_plans()
+                data_batch["sound"] = None
+                return
+
+        # Filter out None entries (samples without audio) and move to device.
+        # After the alignment step above, the remaining dense list has the
+        # same cardinality as plans with has_sound=True.
+        raw_state_sound = [
+            s.to(self.tensor_kwargs["device"]) for s in raw_state_sound if s is not None
+        ]  # list of [C,T_audio]
 
         if len(raw_state_sound) == 0:
+            _disable_sound_on_plans()
             data_batch["sound"] = None
         else:
             data_batch["sound"] = raw_state_sound
@@ -2812,104 +3000,29 @@ class OmniMoTModel(ImaginaireModel):
                 if context is not None:
                     log.info(f"{context}: Restored training weights")
 
-    def clip_grad_norm_(
-        self,
-        max_norm: float,
-        norm_type: float = 2.0,
-        error_if_nonfinite: bool = False,
-        foreach: Optional[bool] = None,
-    ):
-        return clip_grad_norm_(
-            self.net.parameters(),
-            max_norm,
-            norm_type=norm_type,
-            error_if_nonfinite=error_if_nonfinite,
-            foreach=foreach,
-        )
-
     def add_lora(
         self,
         network: torch.nn.Module,
-        lora_rank: int = 4,
-        lora_alpha: int = 4,
-        lora_target_modules: str = "q_proj,k_proj,v_proj,output_proj,mlp.layer1,mlp.layer2",
-        init_lora_weights: bool = True,
-    ) -> None:
-        """Add LoRA (Low-Rank Adaptation) adapters to `self.net`.
+        lora_rank: int,
+        lora_alpha: int,
+        lora_target_modules: str,
+    ) -> torch.nn.Module:
+        """Pre-FSDP LoRA injection — see :func:`inject_lora_pre_fsdp` for details."""
+        from cosmos3._src.vfm.utils.lora import inject_lora_pre_fsdp
 
-        This function injects LoRA adapters into specified modules of the network,
-        enabling parameter-efficient fine-tuning by training only a small number
-        of additional parameters.
-
-        Args:
-            lora_rank: The rank of the LoRA adaptation matrices. Higher rank allows
-                      more expressiveness but uses more parameters (default: 4)
-            lora_alpha: Scaling parameter for LoRA. Controls the magnitude of the
-                       LoRA adaptation (default: 4)
-            lora_target_modules: Comma-separated string of module names to target
-                               for LoRA adaptation (default: attention and MLP layers)
-            init_lora_weights: Whether to initialize LoRA weights properly (default: True)
-
-        Raises:
-            ImportError: If PEFT library is not installed
-            ValueError: If invalid parameters are provided
-            RuntimeError: If LoRA injection fails
-        """
-        assert network is not None, "Network is not initialized"
-        if LoraConfig is None or inject_adapter_in_model is None:
-            raise ImportError("PEFT library is required for LoRA training. Please install it with: pip install peft")
-
-        # Validate parameters
-        if lora_rank <= 0:
-            raise ValueError(f"LoRA rank must be positive, got {lora_rank}")
-        if lora_alpha <= 0:
-            raise ValueError(f"LoRA alpha must be positive, got {lora_alpha}")
-
-        target_modules_list = [module.strip() for module in lora_target_modules.split(",")]
-        if not target_modules_list:
-            raise ValueError("LoRA target_modules cannot be empty")
-
-        # Validate target modules exist in model
-        model_module_names = set(name for name, _ in network.named_modules())
-        invalid_modules = []
-        for target_module in target_modules_list:
-            # Check if any module contains this target pattern
-            if not any(target_module in module_name for module_name in model_module_names):
-                invalid_modules.append(target_module)
-
-        if invalid_modules:
-            log.warning(f"Target modules not found in model: {invalid_modules}")
-
-        # Add LoRA to model
         self.lora_alpha = lora_alpha
-
-        log.info(f"Adding LoRA adapters: rank={lora_rank}, alpha={lora_alpha}, targets={target_modules_list}")
-
-        lora_config = LoraConfig(
-            r=lora_rank,
+        return inject_lora_pre_fsdp(
+            network,
+            lora_rank=lora_rank,
             lora_alpha=lora_alpha,
-            init_lora_weights=init_lora_weights,
-            target_modules=target_modules_list,
+            lora_target_modules=lora_target_modules,
         )
 
-        try:
-            network = inject_adapter_in_model(lora_config, network)
-        except Exception as e:
-            raise RuntimeError(f"Failed to inject LoRA adapters into model: {e}") from e
+    def _init_lora_weights_post_materialization(self, network: torch.nn.Module) -> None:
+        """Post-materialization LoRA init — see :func:`init_lora_weights_post_materialization`."""
+        from cosmos3._src.vfm.utils.lora import init_lora_weights_post_materialization
 
-        # Count and log LoRA parameters
-        lora_params = 0
-        total_params = 0
-        for name, param in network.named_parameters():
-            total_params += param.numel()
-            if param.requires_grad:
-                lora_params += param.numel()
-                # Upcast LoRA parameters into fp32
-                param.data = param.to(torch.float32)
-
-        log.info(
-            f"LoRA injection successful: {lora_params:,} trainable parameters out of {total_params:,} total ({100 * lora_params / total_params:.3f}%)"
-        )
+        init_lora_weights_post_materialization(network)
 
 
 def _broadcast_seed(seed: list[int], group: dist.ProcessGroup, rank: int) -> list[int]:

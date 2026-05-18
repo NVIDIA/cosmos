@@ -23,19 +23,20 @@ init_script(
 
 import contextlib
 import os
+import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
 import hydra
 import omegaconf
 import pydantic
+import torch
 import tyro
 
 from cosmos3.common.args import ResolvedFilePath, ResolvedPath, tyro_cli
 from cosmos3.common.checkpoints import register_checkpoints
 from cosmos3.common.config import (
     ROOT_DIR,
-    TYPE_KEY,
     deserialize_config_dict,
     serialize_config,
     structure_config,
@@ -71,6 +72,8 @@ class Args(pydantic.BaseModel):
 
     dry_run: bool = False
     """Dry run (no training)."""
+    resume: bool = False
+    """Resume training from the latest checkpoint."""
 
 
 def _get_config_overrides(args: Args, config_dict: dict) -> list[str]:
@@ -90,6 +93,7 @@ def _get_config_overrides(args: Args, config_dict: dict) -> list[str]:
                 [
                     "model.config.vlm_config.model_instance.config.num_hidden_layers=2",
                     "model.config.vlm_config.model_instance.config.num_window_layers=2",
+                    "model.config.vlm_config.load_pretrained=false",
                 ]
             )
     return overrides
@@ -113,7 +117,7 @@ def train(args: Args) -> None:
     # Finalize config
     omegaconf.OmegaConf.save(config_omegaconf, args.output_dir / "config_raw.yaml")
     omegaconf.OmegaConf.resolve(config_omegaconf)
-    config: "Config" = structure_config(config_omegaconf, config_omegaconf[TYPE_KEY])
+    config: "Config" = structure_config(config_omegaconf)
     config.validate()
     config.freeze()  # type: ignore
     serialize_config(config, args.output_dir / "config.yaml")
@@ -130,11 +134,14 @@ def train(args: Args) -> None:
     if is_rank0():
         # Symlink job directory
         job_dir = _get_job_dir(config)
+        if not args.resume and job_dir.exists():
+            shutil.rmtree(job_dir)
         job_dir.mkdir(parents=True, exist_ok=True)
         if (args.output_dir / "job").exists():
             os.remove(args.output_dir / "job")
         os.symlink(job_dir, args.output_dir / "job")
         log.info(f"Job directory: {job_dir}")
+    torch.distributed.barrier()
 
     if args.dry_run:
         return

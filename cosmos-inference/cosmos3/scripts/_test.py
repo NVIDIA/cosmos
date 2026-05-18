@@ -25,7 +25,6 @@ _TEST_DIR = _CURRENT_DIR / "_test"
 _script_configs: list[ScriptConfig] = [
     ScriptConfig(
         script=_TEST_DIR / "convert_model_to_dcp.sh",
-        training=True,
     ),
 ]
 

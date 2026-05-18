@@ -18,33 +18,33 @@ import importlib
 from hydra.core.config_store import ConfigStore
 
 from cosmos3._src.imaginaire.lazy_config import LazyCall as L
-from cosmos3._src.vfm.datasets.vlm.joint_dataset_dynamic_batch_webloader import (
-    JointDatasetDynamicBatchingWebLoader,
-)
-from cosmos3._src.vfm.processors import build_processor
-from projects.cosmos3.vlm.datasets.augmentors.bytes_to_media import BytesToMedia
-from projects.cosmos3.vlm.datasets.augmentors.filter_output_key import FilterOutputKey
-from projects.cosmos3.vlm.datasets.augmentors.filter_seq_length import FilterSeqLength
-from projects.cosmos3.vlm.datasets.augmentors.floating_number_format import FloatingNumberFormat
-from projects.cosmos3.vlm.datasets.augmentors.format_describe_anything import FormatDescribeAnything
-from projects.cosmos3.vlm.datasets.augmentors.prompt_format import PromptFormat
-from projects.cosmos3.vlm.datasets.augmentors.shuffle_text_media_order import ShuffleTextMediaOrder
-from projects.cosmos3.vlm.datasets.augmentors.timestamp import TimeStamp
-from projects.cosmos3.vlm.datasets.augmentors.timestamp_with_subject_tracking import (
+from cosmos3._src.vfm.datasets.augmentors.vlm.bytes_to_media import BytesToMedia
+from cosmos3._src.vfm.datasets.augmentors.vlm.filter_output_key import FilterOutputKey
+from cosmos3._src.vfm.datasets.augmentors.vlm.filter_seq_length import FilterSeqLength
+from cosmos3._src.vfm.datasets.augmentors.vlm.floating_number_format import FloatingNumberFormat
+from cosmos3._src.vfm.datasets.augmentors.vlm.format_describe_anything import FormatDescribeAnything
+from cosmos3._src.vfm.datasets.augmentors.vlm.prompt_format import PromptFormat
+from cosmos3._src.vfm.datasets.augmentors.vlm.shuffle_text_media_order import ShuffleTextMediaOrder
+from cosmos3._src.vfm.datasets.augmentors.vlm.timestamp import TimeStamp
+from cosmos3._src.vfm.datasets.augmentors.vlm.timestamp_with_subject_tracking import (
     TimeStampWithSubjectTracking,
 )
-from projects.cosmos3.vlm.datasets.augmentors.timestamp_without_augment_message import (
+from cosmos3._src.vfm.datasets.augmentors.vlm.timestamp_without_augment_message import (
     TimeStampWithoutAugmentMessage,
 )
-from projects.cosmos3.vlm.datasets.augmentors.timestamp_without_end_time import TimeStampWithoutEndTime
-from projects.cosmos3.vlm.datasets.augmentors.tokenize_data import TokenizeData
-from projects.cosmos3.vlm.datasets.collate_fn import custom_collate
-from projects.cosmos3.vlm.datasets.dataset_provider_sft import get_vlm_dataset
-from projects.cosmos3.vlm.datasets.distributor_with_weight import (
+from cosmos3._src.vfm.datasets.augmentors.vlm.timestamp_without_end_time import TimeStampWithoutEndTime
+from cosmos3._src.vfm.datasets.augmentors.vlm.tokenize_data import TokenizeData
+from cosmos3._src.vfm.datasets.vlm.collate_fn import custom_collate
+from cosmos3._src.vfm.datasets.vlm.dataset_provider_sft import get_vlm_dataset
+from cosmos3._src.vfm.datasets.vlm.distributor_with_weight import (
     NoReplaceShardlistBasic,
     WeightedShardlistBasic,
 )
-from projects.cosmos3.vlm.datasets.joint_dataloader import IterativeJointDataLoader
+from cosmos3._src.vfm.datasets.vlm.joint_dataloader import IterativeJointDataLoader
+from cosmos3._src.vfm.datasets.vlm.joint_dataset_dynamic_batch_webloader import (
+    JointDatasetDynamicBatchingWebLoader,
+)
+from cosmos3._src.vfm.processors import build_processor_lazy
 
 
 def create_distributor_config(
@@ -203,7 +203,7 @@ def create_data_augmentor_config():
     }
 
 
-processor = L(build_processor)(
+processor = L(build_processor_lazy)(
     tokenizer_type="${model.config.policy.model_name_or_path}",
     credentials="${checkpoint.load_from_object_store.credentials}",
     bucket="${checkpoint.load_from_object_store.bucket}",
@@ -268,7 +268,7 @@ def create_dataloader_config(
 
     Args:
         data_module: Full dotted path to the data weight dict, e.g.
-            "projects.cosmos3.vlm.datasets.data_sources_nanov2.data_weight.stage_1.data_weight_repeat".
+            "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_nanov2.data_weight.stage_1.data_weight_repeat".
             The module should export DATAINFO, url_to_category, and the named weight dict.
         split: Dataset split ("train" or "val").
         distributor_split: Distributor split for train/val sharding.
@@ -311,54 +311,54 @@ def register_data_weighted_url():
     # joint_v01_cr1_understanding_eagle_sft_s3
     # joint_v01_cr1_understanding_eagle_sft_neb_eu
     for dataset_id, data_module in {
-        "01": "projects.cosmos3.vlm.datasets.data_sources_reason1.data_weight.understanding_only.data_weight_default",  # 01_reason1_understanding_only_default_s3
-        "02": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.sft_full.data_weight_default",  # 02_eagle_sft_full_default_s3
-        "03": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.grounding_2d_v1_1.data_weight_default",  # 03_eagle_grounding_2d_v1_1_default_s3
-        "04": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.grounding_2d_v1_2.data_weight_default",  # 04_eagle_grounding_2d_v1_2_default_s3
-        "05": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.cr1_eagle_sft.data_weight_full_5v5",  # 05_joint_cr1_eagle_sft_full_5v5_s3
-        "06": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.cr1_eagle_sft.data_weight_2d_5v5",  # 06_joint_cr1_eagle_sft_2d_5v5_s3
-        "07": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.pretrain.data_weight_default",  # 07_eagle_pretrain_default_s3
-        "08": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_default",  # 08_eagle_sft_full_mul_repeat_default_s3
-        "09": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_debug",  # 09_eagle_sft_full_mul_repeat_debug_s3
-        "10": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.cr1_eagle_sft.data_weight_full_5v5_mul_repeat",  # 10_joint_cr1_eagle_sft_full_5v5_mul_repeat_s3
-        "11": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_single",  # 11_eagle_sft_full_mul_repeat_single_s3
-        "12": "projects.cosmos3.vlm.datasets.data_sources_reason1.data_weight.understanding_only.data_weight_default",  # 12_reason1_understanding_only_default_s3
-        "13": "projects.cosmos3.vlm.datasets.data_sources_reason1.data_weight.reason1p0_1p1.data_weight_mix_5v5",  # 13_reason1p0_1p1_mix_5v5_s3
-        "14": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason1_2.data_weight_mix_5v5v5",  # 14_joint_reason1_2_mix_5v5v5_s3
-        "15": "projects.cosmos3.vlm.datasets.data_sources_reason1.data_weight.reason1p0_1p1.data_weight_debug_tl",  # 15_reason1_reason1p0_1p1_debug_tl_s3
-        "16": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason1_2.data_weight_mix_all_zero",  # 16_joint_reason1_2_mix_all_zero_s3
-        "17": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_only_vatex_subset",  # 17_eagle_sft_full_mul_repeat_only_vatex_subset_s3
-        "18": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason1_2.data_weight_understand",  # 18_joint_reason1_2_data_weight_understand
-        "19": "projects.cosmos3.vlm.datasets.data_sources_reason1.data_weight.reason1p0_1p1_721.data_weight_mix_5v5",  # 19_reason1_reason1p0_1p1_721_mix_5v5_s3
-        "20": "projects.cosmos3.vlm.datasets.data_sources_reason1.data_weight.reason1p0_1p1_721.data_weight_debug_2dvlm",  # 20_reason1_reason1p0_1p1_721_debug_2dvlm_s3
-        "21": "projects.cosmos3.vlm.datasets.data_sources_reason1.data_weight.reason1p0_1p1_721.data_weight_debug_av",  # 21_reason1_reason1p0_1p1_721_debug_av_s3
-        "22": "projects.cosmos3.vlm.datasets.data_sources_reason1.data_weight.reason1p0_1p1_721.data_weight_no_rft",  # 22_reason1_reason1p0_1p1_721_no_rft_s3
-        "23": "projects.cosmos3.vlm.datasets.data_sources_reason2.data_weight.reason2.data_weight_all_zero",  # 23_reason2_reason2_all_zero_s3
+        "01": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason1.data_weight.understanding_only.data_weight_default",  # 01_reason1_understanding_only_default_s3
+        "02": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.sft_full.data_weight_default",  # 02_eagle_sft_full_default_s3
+        "03": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.grounding_2d_v1_1.data_weight_default",  # 03_eagle_grounding_2d_v1_1_default_s3
+        "04": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.grounding_2d_v1_2.data_weight_default",  # 04_eagle_grounding_2d_v1_2_default_s3
+        "05": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.cr1_eagle_sft.data_weight_full_5v5",  # 05_joint_cr1_eagle_sft_full_5v5_s3
+        "06": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.cr1_eagle_sft.data_weight_2d_5v5",  # 06_joint_cr1_eagle_sft_2d_5v5_s3
+        "07": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.pretrain.data_weight_default",  # 07_eagle_pretrain_default_s3
+        "08": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_default",  # 08_eagle_sft_full_mul_repeat_default_s3
+        "09": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_debug",  # 09_eagle_sft_full_mul_repeat_debug_s3
+        "10": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.cr1_eagle_sft.data_weight_full_5v5_mul_repeat",  # 10_joint_cr1_eagle_sft_full_5v5_mul_repeat_s3
+        "11": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_single",  # 11_eagle_sft_full_mul_repeat_single_s3
+        "12": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason1.data_weight.understanding_only.data_weight_default",  # 12_reason1_understanding_only_default_s3
+        "13": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason1.data_weight.reason1p0_1p1.data_weight_mix_5v5",  # 13_reason1p0_1p1_mix_5v5_s3
+        "14": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason1_2.data_weight_mix_5v5v5",  # 14_joint_reason1_2_mix_5v5v5_s3
+        "15": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason1.data_weight.reason1p0_1p1.data_weight_debug_tl",  # 15_reason1_reason1p0_1p1_debug_tl_s3
+        "16": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason1_2.data_weight_mix_all_zero",  # 16_joint_reason1_2_mix_all_zero_s3
+        "17": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_only_vatex_subset",  # 17_eagle_sft_full_mul_repeat_only_vatex_subset_s3
+        "18": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason1_2.data_weight_understand",  # 18_joint_reason1_2_data_weight_understand
+        "19": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason1.data_weight.reason1p0_1p1_721.data_weight_mix_5v5",  # 19_reason1_reason1p0_1p1_721_mix_5v5_s3
+        "20": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason1.data_weight.reason1p0_1p1_721.data_weight_debug_2dvlm",  # 20_reason1_reason1p0_1p1_721_debug_2dvlm_s3
+        "21": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason1.data_weight.reason1p0_1p1_721.data_weight_debug_av",  # 21_reason1_reason1p0_1p1_721_debug_av_s3
+        "22": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason1.data_weight.reason1p0_1p1_721.data_weight_no_rft",  # 22_reason1_reason1p0_1p1_721_no_rft_s3
+        "23": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_reason2.data_weight.reason2.data_weight_all_zero",  # 23_reason2_reason2_all_zero_s3
         # 24: Reason 2 data count 5% of total
-        "24": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason1p0_1p1_2_721.data_weight_mix_475v475v005",  # 24_joint_reason1p0_1p1_2_721_mix_475v475v005_s3
-        "25": "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.grounding_2d_v1_1.data_weight_no_robospatial",  # 25_eagle_grounding_2d_v1_1_no_robospatial_s3
+        "24": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason1p0_1p1_2_721.data_weight_mix_475v475v005",  # 24_joint_reason1p0_1p1_2_721_mix_475v475v005_s3
+        "25": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.grounding_2d_v1_1.data_weight_no_robospatial",  # 25_eagle_grounding_2d_v1_1_no_robospatial_s3
         # via exploration
-        "26": "projects.cosmos3.vlm.datasets.data_sources_via.data_weight.default.data_weight_spatial_suc_only",  # 26_via_default_spatial_suc_only_s3
-        "27": "projects.cosmos3.vlm.datasets.data_sources_via.data_weight.default.data_weight_spatial_suc_only_round4",  # 27_via_default_spatial_suc_only_round4_s3
-        "28": "projects.cosmos3.vlm.datasets.data_sources_via.data_weight.default.data_weight_90_suc_only_round2",  #
-        "29": "projects.cosmos3.vlm.datasets.data_sources_via.data_weight.default.data_weight_all_zeros",  # 29_via_default_all_zeros_s3
+        "26": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_via.data_weight.default.data_weight_spatial_suc_only",  # 26_via_default_spatial_suc_only_s3
+        "27": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_via.data_weight.default.data_weight_spatial_suc_only_round4",  # 27_via_default_spatial_suc_only_round4_s3
+        "28": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_via.data_weight.default.data_weight_90_suc_only_round2",  #
+        "29": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_via.data_weight.default.data_weight_all_zeros",  # 29_via_default_all_zeros_s3
         # reason2 release
-        "54": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason2_release.data_weight_joint",  # 54_joint_reason2_release_joint_s3
-        "55": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason2_release.data_weight_with_recaption",  # 55_joint_reason2_release_joint_with_recaption_s3
-        "56": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason2_release.data_weight_with_recaption_wo_human",  # 56_joint_reason2_release_joint_with_recaption_wo_human_s3
-        "57": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason2p0_2p1.data_weight_joint",  # 57_joint_reason2p0_2p1_joint_s3
-        "101": "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason2_release.data_weight_debug_recaption",  # 101_joint_reason2_release_debug_recaption_s3
+        "54": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason2_release.data_weight_joint",  # 54_joint_reason2_release_joint_s3
+        "55": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason2_release.data_weight_with_recaption",  # 55_joint_reason2_release_joint_with_recaption_s3
+        "56": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason2_release.data_weight_with_recaption_wo_human",  # 56_joint_reason2_release_joint_with_recaption_wo_human_s3
+        "57": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason2p0_2p1.data_weight_joint",  # 57_joint_reason2p0_2p1_joint_s3
+        "101": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason2_release.data_weight_debug_recaption",  # 101_joint_reason2_release_debug_recaption_s3
         # # taxonomy distillation
-        # "100": "projects.cosmos3.vlm.datasets.data_sources_taxonomy_distill.data_weight.taxonomy_distill.data_weight_default",  # 100_taxonomy_distill_taxonomy_distill_default_s3
+        # "100": "cosmos3._src.vfm.datasets.data_sources.vlm_taxonomy_distill.data_weight.taxonomy_distill.data_weight_default",  # 100_taxonomy_distill_taxonomy_distill_default_s3
         # # interleave document scoring distillation
-        # "102": "projects.cosmos3.vlm.datasets.data_sources_interleave_scoring.data_weight.interleave_scoring.data_weight_default",  # 102_interleave_scoring_interleave_scoring_default_s3
+        # "102": "cosmos3._src.vfm.datasets.data_sources.vlm_interleave_scoring.data_weight.interleave_scoring.data_weight_default",  # 102_interleave_scoring_interleave_scoring_default_s3
         # video taxonomy distillation
-        "103": "projects.cosmos3.vlm.datasets.data_sources_video_taxonomy.data_weight.video_taxonomy.data_weight_default",  # 103_video_taxonomy_video_taxonomy_default_s3
+        "103": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_video_taxonomy.data_weight.video_taxonomy.data_weight_default",  # 103_video_taxonomy_video_taxonomy_default_s3
         # nanov2 pre/post-training
-        "200": "projects.cosmos3.vlm.datasets.data_sources_nanov2.data_weight.stage_1_0218_34m_uniform_pretrain.data_weight_repeat",  # 200_nanov2_stage_1_0218_34m_uniform_pretrain_repeat_s3_vlmdb
-        "201": "projects.cosmos3.vlm.datasets.data_sources_nanov2.data_weight.stage_1_0218_34m_uniform_posttrain.data_weight_repeat",  # 201_nanov2_stage_1_0218_34m_uniform_posttrain_repeat_s3_vlmdb
+        "200": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_nanov2.data_weight.stage_1_0218_34m_uniform_pretrain.data_weight_repeat",  # 200_nanov2_stage_1_0218_34m_uniform_pretrain_repeat_s3_vlmdb
+        "201": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_nanov2.data_weight.stage_1_0218_34m_uniform_posttrain.data_weight_repeat",  # 201_nanov2_stage_1_0218_34m_uniform_posttrain_repeat_s3_vlmdb
         # Data ablation configs (below is a dummy example, do not uncomment)
-        "202": "projects.cosmos3.vlm.datasets.data_sources_nanov2.data_weight.new_category_data_mixture.data_weight_repeat",  # 202_nanov2_new_category_data_mixture_repeat_s3_vlmdb
+        "202": "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_nanov2.data_weight.new_category_data_mixture.data_weight_repeat",  # 202_nanov2_new_category_data_mixture_repeat_s3_vlmdb
     }.items():
         data_source_name = data_module.split("data_sources_")[-1].split(".")[0]
         dataset_file_name = data_module.split(".")[-2]
@@ -413,21 +413,21 @@ def register_data_weighted_url_with_text():
         "m01": {
             "with_visual": (
                 5,
-                "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_default",
+                "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_default",
             ),
             "text_only": (
                 1,
-                "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_text_only",
+                "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_text_only",
             ),
         },  # m01_visual_5_mix_text_1__eagle_sft_full_mul_repeat_default_s3
         "m02": {
             "with_visual": (
                 5,
-                "projects.cosmos3.vlm.datasets.data_sources_joint.data_weight.reason2p0_2p1.data_weight_joint",
+                "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_joint.data_weight.reason2p0_2p1.data_weight_joint",
             ),
             "text_only": (
                 1,
-                "projects.cosmos3.vlm.datasets.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_text_only",
+                "cosmos3._src.vfm.datasets.data_sources.vlm.data_sources_eagle.data_weight.sft_full_mul_repeat.data_weight_text_only",
             ),
         },  # m02_visual_5_mix_text_1__joint_reason2p0_2p1_joint_s3
     }.items():
@@ -520,25 +520,27 @@ def register_data_weighted_url_with_text():
 
 
 def register_data_recipe():
-    from projects.cosmos3.vlm.datasets.recipe_dataloader import VLMRecipeDataLoader
+    from cosmos3._src.vfm.datasets.vlm.recipe_dataloader import VLMRecipeDataLoader
 
     cs = ConfigStore.instance()
     # This will register recipe-based dataloaders using VLMRecipeDataLoader.
     # Recipe names and storage types are stored in the PostgreSQL recipe database.
     # Registered configs:
     #   cosmos_reason2_s3_vlmdb
-    for recipe_name, storage_type in [
-        ("cosmos_reason2_s3_vlmdb", "s3_vlmdb"),  # cosmos_reason2_s3_vlmdb_recipe
+    for recipe_name, storage_type, config_name in [
+        ("cosmos_reason2_s3_vlmdb", "s3_vlmdb", "cosmos_reason2_s3_vlmdb_recipe"),
         (
             "nemotron_nanov2_stage_1_0218_34m_uniform_pretrain_s3_vlmdb",
             "s3_vlmdb",
-        ),  # nemotron_nanov2_stage_1_0218_34m_uniform_s3_vlmdb__v1_recipe
+            "nemotron_nanov2_stage_1_0218_34m_uniform_pretrain_s3_vlmdb_recipe",
+        ),
         (
             "nemotron_nanov2_stage_1_0218_34m_uniform_posttrain_s3_vlmdb",
             "s3_vlmdb",
-        ),  # nemotron_nanov2_stage_1_0218_34m_uniform_posttrain_s3_vlmdb__v1_recipe
+            "nemotron_nanov2_stage_1_0218_34m_uniform_posttrain_s3_vlmdb_recipe",
+        ),
+        ("cosmos3_pai_postrain_3M_v6", "gcp", "cosmos3_pai_postrain_3M_v6_gcp_recipe"),
     ]:
-        config_name = f"{recipe_name.replace('/', '__')}_recipe"
         for distributor_split in ["train", "val"]:
             cs.store(
                 group=f"data_{distributor_split}",

@@ -1,0 +1,15 @@
+{
+    "model_mode": "forward_dynamics",
+    "vision_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/av_vision_25_73d01c91-51f0-46cf-9b76-5682a76fb349.mp4",
+    "action_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/action/av_action_25.json",
+    "image_size": 480,
+    "fps": 10,
+    "prompt": "You are an autonomous vehicle planning system. This video is captured from a first-person perspective looking at the scene.",
+    "num_steps": 30,
+    "guidance": 1.0,
+    "shift": 5.0,
+    "seed": 0,
+    "action_chunk_size": 60,
+    "domain_name": "av",
+    "extra": {"golden_psnr_min": 14.0}
+}

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -23,7 +22,21 @@ import filelock
 from boto3.s3.transfer import TransferConfig
 from loguru import logger as log
 
+from cosmos3._src.imaginaire.flags import INTERNAL
+from cosmos3._src.imaginaire.utils.easy_io.backends.auto_auth import json_load_auth, open_auth
+
 _LOCK_TIMEOUT_SECONDS = 1800  # 30 minutes
+
+
+def _load_s3_credentials(credential_path: str) -> dict:
+    """Resolve S3 credentials from file or PROD_* env vars.
+
+    Mirrors cosmos3._src.imaginaire.utils.easy_io.backends.boto3_client.Boto3Client so callers honor
+    CI/OSS env-var auth (e.g. PROD_GCP_CHECKPOINT_*) instead of crashing with
+    FileNotFoundError when ``credentials/*.secret`` is absent on disk.
+    """
+    with open_auth(credential_path, "r") as f:
+        return json_load_auth(f)
 
 
 def parallel_download_s3_prefix_to_dir(
@@ -42,7 +55,7 @@ def parallel_download_s3_prefix_to_dir(
     """
     os.makedirs(dest_dir, exist_ok=True)
 
-    s3 = boto3.client("s3", **json.load(open(credential_path, "r")))
+    s3 = boto3.client("s3", **_load_s3_credentials(credential_path))
 
     # List all objects under prefix (paginated)
     paginator = s3.get_paginator("list_objects_v2")
@@ -133,7 +146,7 @@ def s3_dir_exists(bucket, prefix, credentials):
     Returns:
         bool: True if the prefix exists, False otherwise.
     """
-    s3 = boto3.client("s3", **json.load(open(credentials, "r")))
+    s3 = boto3.client("s3", **_load_s3_credentials(credentials))
     # Make sure prefix ends with "/" to represent a "directory"
     if not prefix.endswith("/"):
         prefix += "/"
@@ -205,6 +218,20 @@ def maybe_download_hf_model_from_s3(
             f"No S3 credentials/bucket configured, trying to download from HuggingFace Hub for {model_name_or_path}"
         )
         return _download_from_hf_hub(model_name_or_path, include_model_weights)
+
+    # In OSS/CI mode (not INTERNAL), route registered tokenizer/HF URIs through the
+    # checkpoint registry so the HF Hub fallback runs without ever opening the S3
+    # credential file. Mirrors the legacy download_tokenizer_files behavior on main.
+    if not INTERNAL:
+        from cosmos3._src.imaginaire.utils.checkpoint_db import CheckpointConfig, sanitize_uri
+
+        s3_uri = f"s3://{bucket}/{s3_prefix}"
+        if CheckpointConfig.maybe_from_uri(sanitize_uri(s3_uri)) is not None:
+            from cosmos3._src.imaginaire.utils.checkpoint_db import download_checkpoint_v2
+
+            local_path = download_checkpoint_v2(s3_uri)
+            if "://" not in local_path:
+                return local_path
 
     if not s3_dir_exists(bucket, s3_prefix, credentials):
         if require_s3_exists:

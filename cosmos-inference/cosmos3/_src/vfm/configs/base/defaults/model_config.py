@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-from typing import Any, Literal
+from typing import Any
 
 import attrs
 
@@ -125,6 +125,14 @@ class RectifiedFlowTrainingConfig:
     shift_action: int | None = None  # must be int; None → inherit `shift` (which must also be int)
     use_high_sigma_strategy_action: bool = False
 
+    # Independent noise schedule for sound. When False (default), sound shares the vision
+    # sigma schedule, reindexed to the dense audio-bearing subset. When True, sound samples
+    # its own scalar sigma per sample ([B,1]) from `rectified_flow_sound` using `shift_sound`
+    # and `use_high_sigma_strategy_sound`.
+    independent_sound_schedule: bool = False
+    shift_sound: int | None = None  # must be int; None → inherit `shift` (which must also be int)
+    use_high_sigma_strategy_sound: bool = False
+
     # When True, per-instance flow-matching loss is normalized by the count of
     # active (noisy) elements rather than all elements — preserves sum/active_count
     # semantics so conditioning-heavy samples (e.g. I2V, forward_dynamics, diffusion
@@ -171,6 +179,16 @@ class OmniMoTModelConfig(ModelConfig):
     net: LazyDict = None
     ema: EMAConfig = EMAConfig()
     parallelism: ParallelismConfig = ParallelismConfig()
+
+    # LoRA (parameter-efficient fine-tuning). When `lora_enabled=True`,
+    # `OmniMoTModel.build_net` injects custom LoRA adapters BEFORE FSDP wrap on
+    # the meta-device network, then re-initializes lora_A/lora_B after
+    # to_empty + init_weights. Pair with `optimizer.keys_to_select=["lora_"]`
+    # and `checkpoint.keys_to_skip_loading=[..., "lora_"]`.
+    lora_enabled: bool = False
+    lora_rank: int = 16
+    lora_alpha: int = 32
+    lora_target_modules: str = "q_proj_moe_gen,k_proj_moe_gen,v_proj_moe_gen,o_proj_moe_gen"
 
     # Rectified flow configs
     rectified_flow_training_config: RectifiedFlowTrainingConfig = RectifiedFlowTrainingConfig()
@@ -250,7 +268,10 @@ class OmniMoTModelConfig(ModelConfig):
     # "teacher_forcing":  all frames noised with shared σ; clean history via cross-attention
     # "diffusion_forcing": each latent frame gets independent σ ~ Uniform[0,1]
     # "teacher_forcing_dcm": replayed teacher-forcing discrete-time consistency distillation
-    causal_training_strategy: Literal["none", "teacher_forcing", "diffusion_forcing", "teacher_forcing_dcm"] = "none"
+    causal_training_strategy: str = attrs.field(
+        default="none",
+        validator=attrs.validators.in_({"none", "teacher_forcing", "diffusion_forcing", "teacher_forcing_dcm"}),
+    )
 
     # Load balancing loss config.
     lbl: LBLConfig = LBLConfig()

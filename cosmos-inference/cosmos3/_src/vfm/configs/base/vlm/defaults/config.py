@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, List, Literal
+from typing import Any, List
 
 import attrs
 
@@ -36,15 +36,23 @@ class DataSetting:
     qwen_max_video_token_length: int = 8192
     qwen_max_image_token_length: int = 8192
     qwen_target_fps: float = 4.0
-    text_chat_order: Literal["text_end", "text_start", "random"] = "text_end"
-    temporal_localization_output_format: Literal[
-        "dense_video_caption", "temporal_localization", "temporal_caption", "random"
-    ] = "random"
+    text_chat_order: str = attrs.field(
+        default="text_end",
+        validator=attrs.validators.in_({"text_end", "text_start", "random"}),
+    )
+    temporal_localization_output_format: str = attrs.field(
+        default="random",
+        validator=attrs.validators.in_({"dense_video_caption", "temporal_localization", "temporal_caption", "random"}),
+    )
     temporal_localization_fps: float = 1.0
     # For packed dataset
     max_batch_size: int = 1
     max_tokens: int = 16000
-    distributor_type: Literal["with_replace", "no_replace"] = "with_replace"
+    # "with_replace" (WeightedShardlistBasic) or "no_replace" (NoReplaceShardlistBasic).
+    distributor_type: str = attrs.field(
+        default="with_replace",
+        validator=attrs.validators.in_({"with_replace", "no_replace"}),
+    )
     distributor_seed: int = 1993
     webdataset_detshuffle: bool = False
     num_data_workers: int = 8

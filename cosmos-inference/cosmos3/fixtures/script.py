@@ -59,11 +59,6 @@ class ScriptConfig(pydantic.BaseModel):
     golden_psnr: pydantic.PositiveFloat = 14.0
     """Golden comparison PSNR threshold in dB."""
 
-    training: bool = False
-    """Enable training features."""
-    internal: bool = False
-    """Enable internal (nvidia-only) features."""
-
     before_script: Callable[["ScriptRunner"], None] | None = None
     """Function to run before the script."""
     after_script: Callable[["ScriptRunner"], None] | None = None
@@ -136,9 +131,12 @@ class ScriptRunner:
         num_gpus = os.environ["NUM_GPUS"]
         master_port = get_free_port()
         env = dict(os.environ)
+        # Ensure reproducibility
+        env = {k: v for k, v in os.environ.items() if not k.startswith("COSMOS_")}
         env |= {
-            "COSMOS_INTERNAL": "1" if cfg.internal else "0",
-            "COSMOS_TRAINING": "1" if cfg.training or cfg.internal else "0",
+            "COSMOS_INTERNAL": "0",
+            # Disable S3 checkpoints
+            "IMAGINAIRE_CACHE_DIR": "/invalid",
             "INPUT_DIR": f"{self.tmp_input_dir if cfg.use_tmp_input_dir else self.input_dir}",
             "OUTPUT_DIR": f"{self.output_dir}",
             "TMP_DIR": f"{self.tmp_path}/tmp",
@@ -171,11 +169,6 @@ class ScriptRunner:
                 ]
             ),
         }
-        if not cfg.internal:
-            # Disable S3 checkpoints
-            env |= {
-                "IMAGINAIRE_CACHE_DIR": "/invalid",
-            }
         return env
 
     def get_env(self, cfg: ScriptConfig, level: int) -> dict[str, str]:

@@ -25,9 +25,10 @@ from cosmos3._src.imaginaire.lazy_config import LazyCall as L
 from cosmos3._src.imaginaire.utils.callback import WandBCallback
 from cosmos3._src.vfm.callbacks.dataloader_state import DataLoaderStateCallback
 from cosmos3._src.vfm.callbacks.dataloading_monitor import DetailedDataLoadingSpeedMonitor
+from cosmos3._src.vfm.callbacks.grad_clip import GradClip
 from cosmos3._src.vfm.callbacks.hf_export import HFExportCallback
+from cosmos3._src.vfm.callbacks.learning_rate_logger import LearningRateLogger
 from cosmos3._src.vfm.callbacks.low_precision import LowPrecisionCallback
-from cosmos3._src.vfm.callbacks.vlm.grad_clip import GradClip
 from cosmos3._src.vfm.configs.base.defaults.callbacks import JOB_MONITOR_CALLBACKS
 from projects.cosmos3.vlm.callbacks.data_stats import DataStatsCallback
 from projects.cosmos3.vlm.callbacks.iter_speed import IterSpeed
@@ -59,7 +60,8 @@ def register_callbacks():
             every_n=100,
             save_s3="${upload_reproducible_setup}",
         ),
-        grad_clip=L(GradClip)(clip_norm=1.0),  # use model
+        grad_clip=L(GradClip)(clip_norm=1.0, force_finite=False),  # use model
+        learning_rate_logger=L(LearningRateLogger)(every_n=10),
         low_precision=L(LowPrecisionCallback)(
             update_iter=1,
             config=PLACEHOLDER,

@@ -13,19 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Cosmos3-Test
-subdirectory="5d561d7d-080f-45cb-a455-920d444e40cc"
-CHECKPOINT_PATH=$(uvx hf@$HF_VERSION download \
-    --repo-type model nvidia/Cosmos3-Experimental \
-    --revision 844eb561ec6a8d6a917aec463464cdd594d5e965 \
-    --include "$subdirectory/*" \
-    --quiet)/$subdirectory
-
 # HF -> DCP
 # Use temporary directory, since output is large.
 CUDA_VISIBLE_DEVICES= python -m cosmos3.scripts.convert_model_to_dcp \
     -o $TMP_DIR/checkpoint \
-    --checkpoint-path $CHECKPOINT_PATH
+    --checkpoint-path Cosmos3-Nano
 
 # DCP -> HF
 # Use temporary directory, since output is large.

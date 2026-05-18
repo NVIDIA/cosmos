@@ -17,7 +17,11 @@
 
 from cosmos3.common.init import init_script, is_rank0
 
-init_script()
+init_script(
+    env={
+        "COSMOS_TRAINING": "1",
+    }
+)
 
 import json
 
@@ -27,6 +31,7 @@ import tyro
 
 from cosmos3.args import OmniSetupOverrides
 from cosmos3.common.args import SampleOutputs, SetupOverrides, tyro_cli
+from cosmos3.common.checkpoints import register_checkpoints
 from cosmos3.common.init import init_output_dir
 from cosmos3.dataset import DatasetArgs, create_dataset
 from cosmos3.scripts.eval_utils import aggregate_metrics, compute_sample_metrics, extract_gt_action, extract_gt_video
@@ -36,9 +41,9 @@ from cosmos3._src.imaginaire.utils import log
 class EvalArgs(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra="forbid", use_attribute_docstrings=True)
 
-    setup: SetupOverrides = OmniSetupOverrides.model_construct()
+    setup: tyro.conf.OmitArgPrefixes[SetupOverrides] = OmniSetupOverrides.model_construct()
     """Model and parallelism configuration."""
-    dataset: DatasetArgs = DatasetArgs()
+    dataset: DatasetArgs = DatasetArgs.model_construct()
     """Dataset loading configuration."""
     compute_metrics: bool = True
     """Compute per-sample metrics and write metrics.json sidecars + metrics_aggregate.json."""
@@ -53,6 +58,7 @@ def eval_dataset(args: EvalArgs) -> list[SampleOutputs]:
     init_output_dir(setup.output_dir)
     log.debug(f"{args.__class__.__name__}({args})")
 
+    register_checkpoints()
     samples = create_dataset(
         args.dataset,
         config_args=setup,
@@ -107,15 +113,7 @@ def eval_dataset(args: EvalArgs) -> list[SampleOutputs]:
 
 
 def main() -> None:
-    args = tyro_cli(
-        EvalArgs,
-        description=__doc__,
-        config=(
-            tyro.conf.OmitArgPrefixes,
-            tyro.conf.CascadeSubcommandArgs,
-            tyro.conf.OmitSubcommandPrefixes,
-        ),
-    )
+    args = tyro_cli(EvalArgs, description=__doc__)
     eval_dataset(args)
 
 

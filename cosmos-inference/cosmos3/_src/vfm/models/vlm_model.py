@@ -22,7 +22,7 @@ Config usage (in vfm/configs/base/vlm/config.py):
 Phase 0 — bootstrap via the legacy VLM init path, ParallelDims, and async_safe_ce.
 Phase 1 — ParallelDims switches to vfm/utils/parallelism.py.
 Phase 2 — legacy init replaced by direct HFModel path (_init_vlm); async_safe_ce
-           replaced by vfm/utils/loss.py::cross_entropy_loss.
+           replaced by vfm/algorithm/loss/cross_entropy.py::cross_entropy_loss.
 Phase 3 — init_flash_attn_meta ported to vfm/utils/flash_attn.py;
            config unified under vfm/configs/base/vlm/config.py.
 """
@@ -38,10 +38,10 @@ import torch.nn as nn
 from cosmos3._src.imaginaire.lazy_config import instantiate
 from cosmos3._src.imaginaire.model import ImaginaireModel
 from cosmos3._src.imaginaire.utils import log
+from cosmos3._src.vfm.algorithm.loss.cross_entropy import cross_entropy_loss
 from cosmos3._src.vfm.configs.base.defaults.model_config import VLMModelConfig
 from cosmos3._src.vfm.models.hf_model import HFModel
 from cosmos3._src.vfm.models.parallelize_vlm import parallelize
-from cosmos3._src.vfm.utils.loss import cross_entropy_loss
 from cosmos3._src.vfm.utils.parallelism import ParallelDims
 from projects.cosmos3.vlm.utils.constant import IGNORE_INDEX
 from projects.cosmos3.vlm.utils.create_position_ids import get_position_ids

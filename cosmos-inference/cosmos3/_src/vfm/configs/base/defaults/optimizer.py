@@ -17,12 +17,10 @@
 Copied from https://gitlab-master.nvidia.com/dir/imaginaire4/-/blob/d0921eb675d1251e73c4b19acdd78e6ad936ae3b/projects/cosmos/reason2/configs/base/defaults/optimizer.py without changes
 """
 
-from cosmos3._src.imaginaire.configs.lr_scheduler import LambdaLinearSchedulerConfig
-from cosmos3._src.imaginaire.functional.lr_scheduler import LambdaWarmUpCosineScheduler
 from cosmos3._src.imaginaire.lazy_config import PLACEHOLDER
 from cosmos3._src.imaginaire.lazy_config import LazyCall as L
 from cosmos3._src.imaginaire.utils.config_helper import ConfigStore
-from cosmos3._src.vfm.utils.optimizer import build_optimizer
+from cosmos3._src.vfm.utils.optimizer import build_lr_scheduler, build_optimizer
 
 optimizer_kwargs = dict(
     # Learning rate for the optimizer.
@@ -43,6 +41,15 @@ optimizer_kwargs = dict(
     # Whether to disable weight decay for one-dimensional params such as norm weights and biases.
     # Default is False to preserve historical optimizer behavior.
     disable_weight_decay_for_1d_params=False,
+)
+
+lr_scheduler_kwargs = dict(
+    warm_up_steps=[2000],
+    f_min=[0.0],
+    f_max=[1.0],
+    f_start=[0.0],
+    cycle_lengths=[100000],
+    verbosity_interval=0,
 )
 
 
@@ -72,18 +79,34 @@ def register_optimizer():
 
 def register_scheduler():
     cs = ConfigStore.instance()
-    cs.store(group="scheduler", package="scheduler", name="lambdalinear", node=LambdaLinearSchedulerConfig)
+    cs.store(
+        group="scheduler",
+        package="scheduler",
+        name="lambdalinear",
+        node=L(build_lr_scheduler)(
+            optimizer=PLACEHOLDER,
+            lr_scheduler_type="LambdaLinear",
+            warm_up_steps=[1000],
+            cycle_lengths=[10000000000000],
+            f_start=[1.0e-6],
+            f_max=[1.0],
+            f_min=[1.0],
+        ),
+    )
+
     # Cosine scheduler that works with any optimizer (including fusedadamw)
     cs.store(
         group="scheduler",
         package="scheduler",
         name="lambdacosine",
-        node=L(LambdaWarmUpCosineScheduler)(
+        node=L(build_lr_scheduler)(
+            optimizer=PLACEHOLDER,
+            lr_scheduler_type="LambdaCosine",
             warm_up_steps=[2000],
-            f_min=[0.0],
-            f_max=[1.0],
-            f_start=[0.0],
             cycle_lengths=[100000],
+            f_start=[0.0],
+            f_max=[1.0],
+            f_min=[0.0],
             verbosity_interval=0,
         ),
     )

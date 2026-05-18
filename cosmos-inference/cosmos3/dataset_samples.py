@@ -16,6 +16,7 @@
 """Lazy dataset sample iterators for map-style and iterable-style datasets."""
 
 import itertools
+import json
 from collections.abc import Iterable, Iterator
 from typing import Any, Callable
 
@@ -43,6 +44,27 @@ def _collate_sample(sample: dict) -> dict:
             except TypeError:
                 result[key] = [val]
     return result
+
+
+def _normalize_caption(raw_sample: dict) -> str:
+    """Normalize ``ai_caption`` to a string in-place and return it.
+
+    JSON-dict captions (from ``ActionPromptJsonFormatter``) are serialized
+    so collation, batch merging, and the model input treat them identically
+    to plain-text captions, matching the training side's
+    ``TextTokenizerTransform``.
+
+    Raises:
+        TypeError: If ``ai_caption`` is present and is neither ``str`` nor
+            ``dict``.
+    """
+    caption = raw_sample.get("ai_caption", "")
+    if isinstance(caption, dict):
+        caption = json.dumps(caption)
+        raw_sample["ai_caption"] = caption
+    elif not isinstance(caption, str):
+        raise TypeError(f"ai_caption must be str or dict, got {type(caption).__name__}")
+    return caption
 
 
 class _BaseSamples(Iterable[Sample]):
@@ -84,12 +106,13 @@ class _BaseSamples(Iterable[Sample]):
 
         if self._transform is not None:
             raw_sample = self._transform(raw_sample, resolution=resolution)
+        prompt = _normalize_caption(raw_sample)
         sample_data = _collate_sample(raw_sample)
 
         sample_name = f"{self._dataset_name}/{mode}/{sample_idx}" if self._dataset_name else f"{mode}/{sample_idx}"
         sample_args = OmniSampleOverrides(
             name=sample_name,
-            prompt=sample_data.get("ai_caption", [""])[0],
+            prompt=prompt,
             resolution=resolution,  # type: ignore
             raw_action_dim=sample_data.get("raw_action_dim", [None])[0],
         )

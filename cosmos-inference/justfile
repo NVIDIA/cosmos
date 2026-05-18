@@ -36,7 +36,7 @@ _python-install:
 setup: _python-install
 
 _uv-sync *args:
-  uv sync --all-extras --group={{cuda_name}} {{args}}
+  uv sync --all-extras --group={{cuda_name}}-train {{args}}
 
 # Install the repository
 install *args: setup (_uv-sync '--reinstall' args)
@@ -60,8 +60,12 @@ pyrefly *args: _uv-sync
   # TODO: Enable
   # uv run --no-sync pyrefly check -c pyrefly-src.toml --output-format=min-text {{args}}
 
+# Export config schemas from Python types
+export-schemas *args: _uv-sync
+  uv run --no-sync python -m {{module_name}}.scripts.export_schemas -o schemas {{args}}
+
 # Run linting and formatting
-lint: pre-commit
+lint: export-schemas pre-commit
 
 python_env_tmp := '''
 venv_dir="$(mktemp -d)"

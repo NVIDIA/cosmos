@@ -108,7 +108,7 @@ JOB_MONITOR_CALLBACKS = dict(
 
 OPTIMIZATION_CALLBACKS = dict(
     skip_nan_step=L(SkipNaNStep)(max_consecutive_nan=100),
-    grad_clip=L(GradClip)(clip_norm=1.0),  # use model, not supported yet
+    grad_clip=L(GradClip)(clip_norm=1.0, track_per_modality=True),  # image/video grad-norm split
     low_precision=L(LowPrecisionCallback)(update_iter=1, config=PLACEHOLDER, trainer=PLACEHOLDER),  # use model
 )
 

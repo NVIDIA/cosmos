@@ -13,20 +13,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Multi-rank weight loading utility for distributed model weight loading.
-This module provides a utility class to handle multi-rank loading of model weights
-from safetensors files, distributing the I/O workload across multiple ranks and
-broadcasting tensors to all ranks.
+"""Distributed safetensors loading and HF→Cosmos3 weight conversion.
 
-Borrowed from cosmos_rl.utils.parallelism.MultiRankWeightLoader with modifications
-for loading from S3 / GCS and support for Cosmos3 VFM models.
+Layered API
+-----------
+
+Three layers of functionality, lowest first:
+
+1. **Multi-rank checkpoint I/O** — :class:`MultiRankCheckpointLoader` distributes
+   safetensors file reads across the FSDP ``dp_shard`` ranks and then
+   broadcasts each tensor to every rank.  It is checkpoint-format-agnostic:
+   it just yields ``(name, tensor)`` pairs from the raw HF state dict.
+
+2. **Name / weight conversion** — Per-family converters translate raw HF
+   parameter names (and optionally shard the tensor along FSDP / EP axes)
+   into the Cosmos3 VFM layout:
+
+   - :func:`convert_weight_from_qwen3_hf`         — Qwen3 VL / LLM (dense + MoE).
+   - :func:`convert_weight_from_nemotron_vl_hf`   — Nemotron-3 Dense VL (hybrid 56-block layout).
+   - :func:`convert_weight_from_nemotron_llm_hf`  — Nemotron-3 pure LLM.
+
+   For the generic VLM path, :func:`_make_name_converter` consumes the model's
+   ``_checkpoint_conversion_mapping`` (transformers v4) or falls back to
+   suffix-lookup against the model's own state dict (transformers v5).
+
+3. **High-level loaders** — Composing the above:
+
+   - :func:`load_language_model` — loads HF text-tower weights into the MoT
+     language model.  Auto-detects the checkpoint format
+     (:func:`detect_vlm_checkpoint_format`).
+   - :func:`load_vlm_model` — generic loader for HF VLM checkpoints into an
+     FSDP-wrapped ``HFModel``; honors a skip-pattern overlay and the
+     ``fsdp_offload`` mode.
+
+Borrowed from cosmos_rl's ``MultiRankWeightLoader`` (renamed to
+``MultiRankCheckpointLoader`` here) with modifications for loading from
+S3 / GCS and support for Cosmos3 VFM models.
 https://github.com/nvidia-cosmos/cosmos-rl/blob/main/cosmos_rl/utils/multi_rank_weight_loader.py
 """
 
+import os
 import re
 import time
-from typing import Iterator
+from collections.abc import Callable, Iterator
 
 import torch
 import torch.distributed as dist
@@ -40,7 +69,10 @@ from cosmos3._src.imaginaire.utils.easy_io import easy_io
 from cosmos3._src.vfm.utils.parallelism import ParallelDims
 
 # Prefixes stripped when matching checkpoint keys to model state-dict keys.
-# Order matters: longest first so we get the shortest tail (most specific match).
+# Order matters: longest first.  For each model key, the longest matching
+# prefix is stripped (yielding the most specific tail) before we record it
+# in the lookup table.  The trailing empty string acts as a default that
+# leaves keys without any known prefix unchanged.
 # Ref: cosmos-rl cosmos_rl/policy/model/hf_models/__init__.py:465-472.
 _VLM_KEY_PREFIXES: tuple[str, ...] = (
     "model.language_model.model.",
@@ -50,6 +82,112 @@ _VLM_KEY_PREFIXES: tuple[str, ...] = (
     "model.",
     "",
 )
+
+_HF_URI_PREFIX = "hf://"
+
+
+def _looks_like_hf_repo_id(checkpoint_path: str) -> bool:
+    """Return True for unambiguous bare Hugging Face repo IDs.
+
+    Explicit ``hf://`` paths are handled separately.  For bare paths, require the
+    common ``namespace/repo`` shape so local relative paths such as ``ckpt`` are
+    not silently treated as Hub repos.
+    """
+    if os.path.exists(os.path.expanduser(checkpoint_path)):
+        return False
+    if checkpoint_path.startswith(("/", "./", "../", "~")):
+        return False
+    if "://" in checkpoint_path:
+        return False
+    return re.fullmatch(r"[\w.-]+/[\w.-]+", checkpoint_path) is not None
+
+
+def _download_hf_checkpoint(checkpoint_path: str) -> str:
+    """Download safetensors from Hugging Face Hub and return the local snapshot path."""
+    from huggingface_hub import snapshot_download
+
+    repo_id = checkpoint_path.removeprefix(_HF_URI_PREFIX)
+    hf_home = os.environ.get("HF_HOME")
+    cache_dir = os.path.join(hf_home, "hub") if hf_home else None
+    token = os.environ.get("HF_TOKEN")
+    log.info(f"Resolving Hugging Face checkpoint: {repo_id}", rank0_only=False)
+    local_path = snapshot_download(
+        repo_id=repo_id,
+        token=token,
+        cache_dir=cache_dir,
+        allow_patterns=["*.safetensors", "*.safetensors.index.json"],
+    )
+    log.info(f"Resolved Hugging Face checkpoint {repo_id} to {local_path}", rank0_only=False)
+    return local_path
+
+
+def _is_hf_checkpoint_candidate(checkpoint_path: str) -> bool:
+    return checkpoint_path.startswith(_HF_URI_PREFIX) or _looks_like_hf_repo_id(checkpoint_path)
+
+
+def _make_backend_args(checkpoint_path: str, credential_path: str | None) -> dict[str, str | None] | None:
+    if checkpoint_path.startswith("s3://"):
+        return {
+            "backend": "s3",
+            "s3_credential_path": credential_path,
+        }
+    return None
+
+
+def _list_safetensors_files(
+    checkpoint_path: str,
+    backend_args: dict[str, str | None] | None,
+) -> list[str]:
+    return list(
+        easy_io.list_dir_or_file(
+            checkpoint_path,
+            list_dir=False,
+            list_file=True,
+            suffix="safetensors",
+            recursive=False,
+            backend_args=backend_args,
+        )
+    )
+
+
+def _get_local_rank_and_size(device_mesh: DeviceMesh) -> tuple[int, int]:
+    """Get the local rank and size of a device mesh.
+
+    Args:
+        device_mesh: The device mesh to get the attributes from.
+
+    Returns:
+        A tuple of (local rank, size).
+    """
+    return device_mesh.get_local_rank(), device_mesh.size()
+
+
+def _shard_tensor_on_fsdp_mesh(
+    tensor: torch.Tensor,
+    parallel_dims: ParallelDims | None,
+) -> torch.Tensor:
+    """Slice ``tensor`` along dim 0 according to the FSDP ``dp_shard`` mesh.
+
+    Returns the rank-local shard when ``dp_shard`` is enabled, otherwise the
+    full tensor (made contiguous).  Requires that ``tensor.shape[0]`` is
+    divisible by ``dp_shard_size`` — this is a hard requirement of the even-
+    split semantics; uneven splits should go through :func:`_shard_first_dim`.
+
+    Args:
+        tensor: The tensor to shard.
+        parallel_dims: Parallel dims object, or None for single-rank.
+
+    Returns:
+        Contiguous rank-local shard (or full tensor if dp_shard is disabled).
+    """
+    if parallel_dims is None or not parallel_dims.dp_shard_enabled:
+        return tensor.contiguous()
+
+    fsdp_rank, fsdp_size = _get_local_rank_and_size(parallel_dims.dp_shard_mesh)
+    if tensor.shape[0] % fsdp_size != 0:
+        raise ValueError(f"Shard shape {tensor.shape} is not divisible by dp_shard_size {fsdp_size} on dim 0")
+    shard = tensor.chunk(chunks=fsdp_size, dim=0)[fsdp_rank]
+    return shard.contiguous()
 
 
 def _get_dp_shard_mesh(parallel_dims: ParallelDims | None) -> DeviceMesh | None:
@@ -68,11 +206,13 @@ def _get_dp_shard_mesh(parallel_dims: ParallelDims | None) -> DeviceMesh | None:
 
 
 def _build_model_key_by_tail(state_dict: dict) -> dict[str, str]:
-    """Build a tail → model_key lookup table for suffix-based key matching.
+    """Build a ``tail → model_key`` lookup table for suffix-based key matching.
 
-    For each model key, find the longest matching prefix in ``_VLM_KEY_PREFIXES``
-    and record ``(tail -> model_key)``.  Empty prefix is always a match — a key
-    with no known prefix becomes its own tail.
+    For each model key, strip the longest matching prefix in
+    ``_VLM_KEY_PREFIXES`` and record ``tail -> model_key``.  The longest
+    prefix yields the shortest, most specific tail.  The trailing empty
+    prefix in ``_VLM_KEY_PREFIXES`` ensures keys with no known prefix map
+    to themselves as their own tail.
     """
     table: dict[str, str] = {}
     for model_key in state_dict:
@@ -112,14 +252,17 @@ def _is_moe_vlm(model: torch.nn.Module) -> bool:
 def _make_name_converter(
     state_dict: dict,
     hf_conv_map: dict[str, str] | None,
-):
+) -> Callable[[str], str]:
     """Return a callable that maps checkpoint keys to model keys.
 
     Two strategies, matching cosmos-rl's flow:
     1. If ``hf_conv_map`` is non-empty (transformers v4 pre-computed pattern
-       mapping), apply each pattern/replacement as a regex substitution.
-    2. Otherwise (transformers v5 or no map), use a direct-match / suffix-lookup
-       fallback against the model's own state-dict keys.
+       mapping), apply each pattern/replacement as a regex substitution and
+       return on the first match (no further fallback).
+    2. Otherwise (transformers v5 or no map), use a direct-match against the
+       model's state dict, then a longest-prefix-stripped suffix lookup
+       through ``_VLM_KEY_PREFIXES``.  Names that match nothing are returned
+       unchanged (the caller is responsible for filtering / raising).
     """
     model_key_by_tail = _build_model_key_by_tail(state_dict)
 
@@ -142,10 +285,20 @@ def _make_name_converter(
 
 
 class MultiRankCheckpointLoader:
-    """Utility class for multi-rank loading of model weights from safetensors files.
+    """Multi-rank loader for model weights stored as safetensors files.
 
-    Borrowed from cosmos_rl.utils.parallelism.MultiRankWeightLoader with modifications
-    for loading from S3 / GCS and support for Cosmos3 VFM models.
+    Files in the checkpoint directory are statically partitioned across the
+    ranks of the ``dp_shard`` sub-mesh by ``file_idx % world_size``.  Each
+    rank reads its assigned files locally and the per-tensor data is later
+    broadcast (via :meth:`broadcast_tensor`) so every rank ends up with the
+    full tensor before sharding.
+
+    When constructed with ``dp_shard_mesh=None`` the loader degrades to a
+    single-rank fallback: ``world_size = 1``, every rank reads every file,
+    and broadcasts are no-ops.
+
+    Renamed from cosmos-rl's ``MultiRankWeightLoader`` and extended to load
+    from S3 / GCS via easy_io and to support Cosmos3 VFM models.
     https://github.com/nvidia-cosmos/cosmos-rl/blob/main/cosmos_rl/utils/multi_rank_weight_loader.py
     """
 
@@ -164,10 +317,7 @@ class MultiRankCheckpointLoader:
     # Mapping from integer to dtype for broadcasting
     INT_TO_DTYPE = {v: k for k, v in DTYPE_TO_INT.items()}
 
-    def __init__(
-        self,
-        dp_shard_mesh: DeviceMesh | None,
-    ):
+    def __init__(self, dp_shard_mesh: DeviceMesh | None):
         """Initialize the multi-rank weight loader.
 
         Args:
@@ -188,7 +338,7 @@ class MultiRankCheckpointLoader:
     def load_files_parallel(
         self,
         checkpoint_path: str,
-        credential_path: str,
+        credential_path: str | None,
         loading_device: torch.device,
     ) -> tuple[
         dict[str, torch.Tensor],
@@ -199,7 +349,10 @@ class MultiRankCheckpointLoader:
         Load safetensors files in parallel across ranks.
 
         Args:
-            checkpoint_path: Path to the model directory.
+            checkpoint_path: Path to the model directory. Local paths and S3
+                URIs are tried first; if no safetensors are found, explicit
+                ``hf://org/model`` Hub URIs and bare ``org/model`` repo IDs
+                fall back to Hugging Face.
             credential_path: Path to the credential file for S3/GCS.
             loading_device: Device to load tensors on.
 
@@ -213,26 +366,66 @@ class MultiRankCheckpointLoader:
         rank_tensor_metadata = {}  # {tensor_name: (shape, dtype)} for this rank
         weights_of_ckpt_names = set()
 
-        if checkpoint_path.startswith("s3://"):
-            backend_args = {
-                "backend": "s3",
-                "s3_credential_path": credential_path,
-            }
-        else:
-            backend_args = None
+        backend_args = _make_backend_args(checkpoint_path, credential_path)
 
         log.info(f"Loading safetensors files from: {checkpoint_path}", rank0_only=False)
         log.info(f"Credential path: {credential_path}", rank0_only=False)
-        for file_idx, file_path in enumerate(
-            easy_io.list_dir_or_file(
-                checkpoint_path,
-                list_dir=False,
-                list_file=True,
-                suffix="safetensors",
-                recursive=False,
-                backend_args=backend_args,
-            )
-        ):
+        list_error: Exception | None = None
+        if checkpoint_path.startswith(_HF_URI_PREFIX):
+            safetensors_files: list[str] = []
+        else:
+            try:
+                safetensors_files = _list_safetensors_files(checkpoint_path, backend_args)
+            except Exception as exc:
+                if not _is_hf_checkpoint_candidate(checkpoint_path):
+                    raise
+                list_error = exc
+                safetensors_files = []
+
+        if not safetensors_files:
+            if _is_hf_checkpoint_candidate(checkpoint_path):
+                original_checkpoint_path = checkpoint_path
+                # Multi-rank: serialize the actual download through global rank 0
+                # so we don't race on the shared HF cache. snapshot_download's
+                # per-blob locks are unreliable on NFS/lustre under concurrent
+                # access, and hitting HF from N ranks simultaneously also risks
+                # rate-limiting; without this gate the snapshot dir can end up
+                # with only config.json and the listing below fails.
+                #
+                # We do NOT need N downloads + N barriers. The Slurm job mounts
+                # one shared HF cache (HF_HOME), so once rank 0 finishes the
+                # download all other ranks share that cache. The second call to
+                # _download_hf_checkpoint() on non-zero ranks therefore hits the
+                # populated cache and just resolves the local snapshot path
+                # (snapshot_download is idempotent on cache hits — no re-download,
+                # no network). Two barriers total:
+                #   1. After rank 0's actual download — others wait so they see
+                #      a complete cache before resolving.
+                #   2. After non-zero ranks' cache-hit path resolution — keeps
+                #      ranks aligned before subsequent collective ops below.
+                if dist.is_initialized() and dist.get_world_size() > 1:
+                    if dist.get_rank() == 0:
+                        checkpoint_path = _download_hf_checkpoint(checkpoint_path)
+                    dist.barrier()
+                    if dist.get_rank() != 0:
+                        checkpoint_path = _download_hf_checkpoint(checkpoint_path)
+                    dist.barrier()
+                else:
+                    checkpoint_path = _download_hf_checkpoint(checkpoint_path)
+                backend_args = None
+                log.info(
+                    "No local/S3 safetensors found; falling back to Hugging Face checkpoint "
+                    f"{original_checkpoint_path} -> {checkpoint_path}",
+                    rank0_only=False,
+                )
+                safetensors_files = _list_safetensors_files(checkpoint_path, backend_args)
+            elif list_error is not None:
+                raise list_error
+
+        if not safetensors_files:
+            raise FileNotFoundError(f"No .safetensors files found in checkpoint path: {checkpoint_path}")
+
+        for file_idx, file_path in enumerate(safetensors_files):
             file_rank = file_idx % self.world_size
             if self.rank == file_rank:
                 log.info(f"Loading safetensors file: {file_path}", rank0_only=False)
@@ -241,7 +434,10 @@ class MultiRankCheckpointLoader:
                 weights_data = easy_io.get(full_path, backend_args=backend_args)
                 state_dict = load_safetensors(weights_data)
                 for name, tensor in state_dict.items():
-                    # Apply name converter if provided
+                    # Names are stored RAW here; per-checkpoint name
+                    # conversion (see _make_name_converter / the
+                    # convert_weight_from_*_hf functions) is applied later
+                    # by the caller after broadcast.
                     weights_of_ckpt_names.add(name)
                     rank_tensors[name] = tensor.to(device=loading_device)
                     rank_tensor_metadata[name] = (
@@ -282,14 +478,16 @@ class MultiRankCheckpointLoader:
             all_tensor_to_rank_dicts: list[dict[str, int] | None] = [None] * self.world_size
             dist.all_gather_object(all_tensor_to_rank_dicts, local_tensor_to_rank, group=self.group)
 
-            # Merge all dicts to create global mapping
+            # Merge all dicts into a global ``tensor_name -> rank`` map.
+            # Duplicates aren't expected (each tensor lives in exactly one
+            # file, which is owned by exactly one rank), but if they do
+            # occur the lowest rank wins.
             tensor_to_rank_map = {}
             for rank_idx, tensor_dict in enumerate(all_tensor_to_rank_dicts):
                 if tensor_dict is not None:
-                    for tensor_name, _ in tensor_dict.items():
+                    for tensor_name in tensor_dict:
                         if tensor_name not in tensor_to_rank_map:
                             tensor_to_rank_map[tensor_name] = rank_idx
-                        # If duplicate, keep the first one (shouldn't happen, but just in case)
         else:
             all_tensor_names = weights_of_ckpt_names
             tensor_to_rank_map = {name: 0 for name in rank_tensors.keys()}
@@ -403,99 +601,80 @@ class MultiRankCheckpointLoader:
             yield name, tensor
 
 
-def convert_weight_from_hf(
+def convert_weight_from_qwen3_hf(
     tensor: torch.Tensor,
     name: str,
     parallel_dims: ParallelDims | None,
 ) -> tuple[str | None, torch.Tensor | None]:
-    """
-    Convert weight from HF to Cosmos3 VFM format. This operation does a slice
-    operation on the tensor to convert the tensor to the current DP shard.
+    """Map Qwen3 VL / LLM HF weights to the Cosmos3 VFM layout and shard them.
+
+    Steps:
+
+    1. Strip the ``model.language_model.`` prefix (so keys from the VL
+       checkpoint variant collapse onto the LLM key namespace).
+    2. Classify the resulting ``dest_name`` against two allowlists:
+
+       - **used_patterns** — embeddings, norms, attention/MLP projections,
+         fused ``mlp.experts.{gate_up_proj,down_proj}``, and
+         ``mlp.gate.weight``.  Matching keys are kept.
+       - **discarded_patterns** — currently just ``model.visual.*`` (the
+         vision tower is loaded separately).  Matching keys are dropped
+         and the function returns ``(None, None)``.
+
+       A key that matches neither raises :class:`ValueError`.
+    3. Shard kept tensors along dim 0 on the FSDP ``dp_shard`` mesh via
+       :func:`_shard_tensor_on_fsdp_mesh`.  Expert parallelism is **not**
+       handled here — fused expert tensors flow through the same FSDP
+       sharding as the rest, which is correct only for ``ep == 1``; the
+       moe-mesh sharding path will need to be added back when EP support
+       lands.
 
     Args:
-        tensor: The tensor to convert from HF to Cosmos3 VFM format.
-        name: The name of the tensor.
-        parallel_dims: The parallel dimensions to use for the conversion.
+        tensor: Raw HF tensor.
+        name: HF parameter name (with ``model.`` / ``model.language_model.``
+            prefix as it appears in the safetensors checkpoint).
+        parallel_dims: Parallel dims; ``None`` skips sharding.
 
     Returns:
-        A tuple of (name, tensor) where name is the name of the tensor in the
-        Cosmos3 VFM format and tensor is the tensor in the Cosmos3 VFM format.
-        If the tensor is not supported, return None for both name and tensor.
+        Tuple ``(dest_name, sharded_tensor)`` in the Cosmos3 layout, or
+        ``(None, None)`` if the tensor is intentionally discarded.
     """
     dest_name = name.replace("model.language_model.", "model.")
 
-    if dest_name in [
-        "lm_head.weight",
-        "model.embed_tokens.weight",
-        "model.norm.weight",
-    ]:
-        shard = tensor
-    elif (
-        match := re.search(
-            r"layers\.(\d+)\.(input_layernorm|post_attention_layernorm)\.weight",
-            dest_name,
-        )
-    ) is not None:
-        shard = tensor
-    elif (
-        match := re.search(
-            r"layers\.(\d+)\.self_attn\.(q_norm|k_norm|v_norm)\.weight",
-            dest_name,
-        )
-    ) is not None:
-        shard = tensor
-    elif (
-        match := re.search(
-            r"layers\.(\d+)\.self_attn\.(q_proj|k_proj|v_proj|o_proj)\.weight",
-            dest_name,
-        )
-    ) is not None:
-        shard = tensor
-    elif (
-        match := re.search(
-            r"layers\.(\d+)\.mlp\.(gate_proj|up_proj|down_proj)\.weight",
-            dest_name,
-        )
-    ) is not None:
-        # Dense Qwen3 VL model.
-        shard = tensor
-    elif (
-        match := re.search(
-            r"layers\.(\d+)\.mlp\.experts\.(gate_up_proj|down_proj)",
-            dest_name,
-        )
-    ) is not None:
-        # MoE Qwen3 VL model.
-        shard = tensor
-    elif (match := re.search(r"layers\.(\d+)\.mlp\.gate\.weight", dest_name)) is not None:
-        # MoE Qwen3 VL model.
-        shard = tensor
-    elif (match := re.search(r"model.visual", dest_name)) is not None:
-        # Don't load visual weights.
-        return None, None
-    else:
+    used_patterns = [
+        r"^lm_head\.weight$",
+        r"^model\.embed_tokens\.weight$",
+        r"^model\.norm\.weight$",
+        r"^model\.layers\.(\d+)\.(input_layernorm|post_attention_layernorm)\.weight$",
+        r"^model\.layers\.(\d+)\.self_attn\.(q_norm|k_norm|v_norm)\.weight$",
+        r"^model\.layers\.(\d+)\.self_attn\.(q_proj|k_proj|v_proj|o_proj)\.weight$",
+        r"^model\.layers\.(\d+)\.mlp\.(gate_proj|up_proj|down_proj)\.weight$",
+        r"^model\.layers\.(\d+)\.mlp\.experts\.(gate_up_proj|down_proj)$",
+        r"^model\.layers\.(\d+)\.mlp\.gate\.weight$",
+    ]
+
+    discarded_patterns = [
+        r"^model\.visual\.",
+    ]
+
+    def _is_used_pattern(dest_name: str) -> bool:
+        for used_pattern in used_patterns:
+            if re.search(used_pattern, dest_name) is not None:
+                return True
+
+        for discarded_pattern in discarded_patterns:
+            if re.search(discarded_pattern, dest_name) is not None:
+                return False
+
         raise ValueError(f"Unexpected weight found in checkpoint: {dest_name}")
 
-    return dest_name, _shard_tensor_first_dim(shard, _get_dp_shard_mesh(parallel_dims))
+    if _is_used_pattern(dest_name):
+        return dest_name, _shard_tensor_on_fsdp_mesh(tensor, parallel_dims)
+
+    return None, None
 
 
-def _shard_tensor_first_dim(
-    shard: torch.Tensor,
-    dp_shard_mesh: DeviceMesh | None,
-) -> torch.Tensor:
-    if dp_shard_mesh is not None:
-        dp_shard_rank = dp_shard_mesh.get_local_rank()
-        dp_shard_size = dp_shard_mesh.size()
-    else:
-        dp_shard_rank = 0
-        dp_shard_size = 1
-    shard = shard.contiguous()
-    if shard.shape[0] % dp_shard_size != 0:
-        raise ValueError(f"Shard shape {shard.shape} is not divisible by dp_shard_size {dp_shard_size}")
-    return shard.tensor_split(dp_shard_size, dim=0)[dp_shard_rank].contiguous()
-
-
-def convert_weight_from_nemotron_hf(
+def convert_weight_from_nemotron_vl_hf(
     tensor: torch.Tensor,
     name: str,
     parallel_dims: ParallelDims | None,
@@ -582,7 +761,7 @@ def convert_weight_from_nemotron_hf(
     if dest_name is None:
         raise ValueError(f"Unexpected Nemotron checkpoint tensor: {name}")
 
-    return dest_name, _shard_tensor_first_dim(tensor, _get_dp_shard_mesh(parallel_dims))
+    return dest_name, _shard_tensor_on_fsdp_mesh(tensor, parallel_dims)
 
 
 def convert_weight_from_nemotron_llm_hf(
@@ -623,7 +802,7 @@ def convert_weight_from_nemotron_llm_hf(
     else:
         raise ValueError(f"Unexpected Nemotron LLM checkpoint tensor: {name}")
 
-    return dest_name, _shard_tensor_first_dim(tensor, _get_dp_shard_mesh(parallel_dims))
+    return dest_name, _shard_tensor_on_fsdp_mesh(tensor, parallel_dims)
 
 
 def _shard_first_dim(tensor: torch.Tensor, world_size: int, rank: int) -> torch.Tensor:
@@ -647,7 +826,22 @@ def _shard_first_dim(tensor: torch.Tensor, world_size: int, rank: int) -> torch.
 
 
 def detect_vlm_checkpoint_format(all_tensor_names: set[str]) -> str:
-    """Detect checkpoint layout: Nemotron VLM hybrid, Nemotron LLM, or Qwen3-style."""
+    """Detect the checkpoint family from its tensor key set.
+
+    Detection rules (first match wins):
+
+    - ``"nemotron_3_dense_vl"`` — any key shaped like
+      ``model.language_model.layers.*.mixer.q_proj.*``.  This is the hybrid
+      56-block layout where attention and MLP live in alternating blocks
+      under ``mixer.``.
+    - ``"nemotron_3_llm"`` — checkpoints that expose
+      ``model.embeddings.weight`` (Nemotron's pure LLM key for the input
+      embedding; Qwen3 uses ``model.embed_tokens.weight``).
+    - ``"qwen3"`` — default; covers Qwen3 VL and Qwen3 LLM (dense and MoE).
+
+    The resulting tag is consumed by :func:`load_language_model` to dispatch
+    to the matching ``convert_weight_from_*_hf`` converter.
+    """
     for n in all_tensor_names:
         if "model.language_model.layers." in n and ".mixer.q_proj" in n:
             return "nemotron_3_dense_vl"
@@ -659,7 +853,7 @@ def detect_vlm_checkpoint_format(all_tensor_names: set[str]) -> str:
 def load_language_model(
     model: torch.nn.Module,
     checkpoint_path: str,
-    credential_path: str,
+    credential_path: str | None,
     parallel_dims: ParallelDims | None,
     checkpoint_format: str | None = None,
 ) -> set[str]:
@@ -669,13 +863,17 @@ def load_language_model(
 
     Args:
         model: The language model to load weights into.
-        checkpoint_path: Path to checkpoint containing .safetensors files.
-        credential_path: Path to S3 credentials
-        parallel_dims: The parallel dimensions to use for parallel loading. If None, the loading is done in a single rank.
+        checkpoint_path: Path to checkpoint containing .safetensors files. Local
+            paths and S3 URIs are tried first; if no safetensors are found,
+            explicit ``hf://org/model`` Hub URIs and bare ``org/model`` repo IDs
+            fall back to Hugging Face.
+        credential_path: Path to S3 credentials, or None for local/HF.
+        parallel_dims: ParallelDims object to use for parallel loading.
+            If None, the loading is done in a single rank.
         checkpoint_format: ``"qwen3"``, ``"nemotron_3_dense_vl"``, ``"nemotron_3_llm"``, or None to auto-detect.
 
     Returns:
-        Set of weight keys that were loaded into the model.
+        Set of model state-dict keys successfully loaded from the checkpoint.
     """
     if not INTERNAL:
         from cosmos3._src.imaginaire.utils.checkpoint_db import download_checkpoint, sanitize_uri
@@ -683,7 +881,7 @@ def load_language_model(
         checkpoint_path = download_checkpoint(sanitize_uri(checkpoint_path))
 
     start_time = time.time()
-    log.info(f"Loading language model weights in safetensors format from: {checkpoint_path}")
+    log.info(f"load_language_model: loading weights from {checkpoint_path}")
 
     lm_state_dict = {}
     for name, tensor in model.state_dict().items():
@@ -710,7 +908,7 @@ def load_language_model(
     log.info(f"Language model checkpoint format: {resolved_format}", rank0_only=False)
 
     # Step 3: Process each tensor
-    weight_keys_loaded = set()
+    keys_loaded = set()
     for name, tensor in loader.iterate_tensors(
         all_tensor_names,
         tensor_to_rank_map,
@@ -719,7 +917,7 @@ def load_language_model(
         device="cuda",
     ):
         if resolved_format == "nemotron_3_dense_vl":
-            dest_name, dest_weight = convert_weight_from_nemotron_hf(
+            dest_name, dest_weight = convert_weight_from_nemotron_vl_hf(
                 tensor=tensor,
                 name=name,
                 parallel_dims=parallel_dims,
@@ -730,12 +928,15 @@ def load_language_model(
                 name=name,
                 parallel_dims=parallel_dims,
             )
-        else:
-            dest_name, dest_weight = convert_weight_from_hf(
+        elif resolved_format == "qwen3":
+            dest_name, dest_weight = convert_weight_from_qwen3_hf(
                 tensor=tensor,
                 name=name,
                 parallel_dims=parallel_dims,
             )
+        else:
+            raise ValueError(f"Unexpected checkpoint format: {resolved_format}")
+
         if dest_name is None:
             # This is due to the visual weights of VLM models.
             continue
@@ -764,7 +965,7 @@ def load_language_model(
         with torch.no_grad():
             local_view.data.copy_(dest_weight)
 
-        weight_keys_loaded.add(dest_name)
+        keys_loaded.add(dest_name)
 
     # Perform more error checking to ensure the checkpoint is valid. If the keys are missing,
     # then the missing keys should be from the generation pathway. All keys from the
@@ -774,16 +975,21 @@ def load_language_model(
     # `tie_word_embeddings` being set to True in the configs. For the 0.6B LLM, 8B and 32B dense
     # VLMs, and the 30B and 235B MoE VLMs, the `lm_head.weight` key is present in the
     # checkpoint.
-    weight_keys_missing = set(lm_state_dict.keys()) - weight_keys_loaded
-    for weight_key_missing in weight_keys_missing:
-        if "_moe_gen" not in weight_key_missing:
-            log.info(f"Missing weight not found in checkpoint: {weight_key_missing}")
-            if "lm_head.weight" not in weight_key_missing:
-                raise ValueError(f"Missing weight not found in checkpoint: {weight_key_missing}.")
+    keys_missing = set(lm_state_dict.keys()) - keys_loaded
+    tie = getattr(model.config, "tie_word_embeddings", False)
+    real_keys_missing = {k for k in keys_missing if not ("_moe_gen" in k or (tie and "lm_head.weight" in k))}
+    if real_keys_missing:
+        raise ValueError(
+            f"load_language_model: {len(real_keys_missing)} required model "
+            f"parameter(s) not found in checkpoint '{checkpoint_path}'. "
+            f"First up to 10: {sorted(real_keys_missing)[:10]}"
+        )
 
-    log.info(f"Successfully loaded language model from {checkpoint_path}")
-    log.info(f"Time taken to load language model: {time.time() - start_time} seconds")
-    return weight_keys_loaded
+    log.info(
+        f"load_language_model: successfully loaded {len(keys_loaded)} tensors "
+        f"from {checkpoint_path} in {time.time() - start_time:.1f}s"
+    )
+    return keys_loaded
 
 
 def load_vlm_model(
@@ -795,6 +1001,10 @@ def load_vlm_model(
     extra_skip_patterns: list[str] | None = None,
 ) -> set[str]:
     """Load a HF VLM checkpoint (safetensors) into an FSDP-wrapped HFModel.
+
+    Local paths and S3 URIs are tried first; if no safetensors are found,
+    explicit ``hf://org/model`` Hub URIs and bare ``org/model`` repo IDs fall
+    back to Hugging Face.
 
     Both ``tensor_names_to_skip`` and ``extra_skip_patterns`` are lists of
     regex patterns applied to the RESOLVED model key (post-name_converter).
@@ -948,6 +1158,7 @@ def load_vlm_model(
 
     # Phase 6: completeness check with tied-embedding AND skip-list tolerance.
     missing = set(vlm_state_dict) - keys_loaded - skipped_model_keys
+
     # Also tolerate missing model keys that match a skip pattern directly —
     # handles the case where the ckpt doesn't contain the key at all, so the
     # Phase 5 loop never saw it and skipped_model_keys didn't accumulate it.
@@ -955,10 +1166,10 @@ def load_vlm_model(
     tie = getattr(model.config, "tie_word_embeddings", False)
     real_missing = {k for k in missing if not (tie and "lm_head.weight" in k)}
     if real_missing:
-        sample = sorted(real_missing)[:10]
         raise ValueError(
-            f"load_vlm_model: {len(real_missing)} required model parameter(s) not "
-            f"found in checkpoint '{checkpoint_path}'. First up to 10: {sample}"
+            f"load_vlm_model: {len(real_missing)} required model parameter(s) "
+            f"not found in checkpoint '{checkpoint_path}'. First up to 10: "
+            f"{sorted(real_missing)[:10]}"
         )
     log.info(
         f"load_vlm_model: loaded {len(keys_loaded)} tensors from {checkpoint_path} in {time.time() - start_time:.1f}s"

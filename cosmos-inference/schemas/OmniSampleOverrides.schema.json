@@ -123,6 +123,23 @@
       "description": "Latent frame indices to condition on. Defaults to [0] for image, [0, 1] for video.",
       "title": "Condition Frame Indexes Vision"
     },
+    "condition_video_keep": {
+      "anyOf": [
+        {
+          "enum": [
+            "first",
+            "last"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Whether to take the first or last ``max_frames`` of the conditioning\nvideo when it is longer than needed. Defaults to ``\"first\"``. No effect\non image conditioning.",
+      "title": "Condition Video Keep"
+    },
     "resolution": {
       "anyOf": [
         {

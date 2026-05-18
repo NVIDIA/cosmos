@@ -24,6 +24,7 @@ import random
 import time
 from datetime import datetime
 
+import torch
 from webdataset.utils import pytorch_worker_info
 
 from cosmos3._src.imaginaire.datasets.webdataset.config.schema import TarSample
@@ -128,8 +129,12 @@ class WeightedShardlistMultiAspectRatio(ShardlistMultiAspectRatio):
 
         if self.is_infinite_loader:
             rank, world_size, worker_id, num_workers = pytorch_worker_info()
-            # One RNG per worker, seeded once
-            worker_seed = (rank * num_workers + worker_id) + int(time.time() * 10000)
+            # In deterministic mode seed by (_iter_epoch, rank, worker_id); otherwise time-based.
+            if torch.are_deterministic_algorithms_enabled():
+                worker_seed = self._iter_epoch * 65536 + rank * num_workers + worker_id
+            else:
+                worker_seed = (rank * num_workers + worker_id) + int(time.time() * 10000)
+            self._iter_epoch += 1
             rng = random.Random(worker_seed)
 
             # Build a flat list of tar files with per-tar weights.

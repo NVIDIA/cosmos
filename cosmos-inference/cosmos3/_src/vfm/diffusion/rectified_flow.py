@@ -16,31 +16,10 @@
 from typing import Callable
 
 import torch
+import torch.distributed
 from diffusers import FlowMatchEulerDiscreteScheduler
 
-
-class TrainTimeWeight:
-    def __init__(
-        self,
-        noise_scheduler,
-        weight: str = "uniform",
-    ):
-        # Map reweighting -> uniform to support inference for existing checkpoints.
-        if weight == "reweighting":
-            weight = "uniform"
-
-        self.weight = weight
-        self.noise_scheduler = noise_scheduler
-
-        assert self.weight == "uniform", "Only uniform loss weight is supported in RF"
-
-    def __call__(self, t, tensor_kwargs) -> torch.Tensor:  # t: [B], returns [B]
-        if self.weight == "uniform":
-            wts = torch.ones_like(t)  # [B]
-        else:
-            raise NotImplementedError(f"Time weight '{self.weight}' is not implemented.")
-
-        return wts
+from cosmos3._src.vfm.algorithm.loss.time_weight import TrainTimeWeight
 
 
 class TrainTimeSampler:
@@ -58,6 +37,7 @@ class TrainTimeSampler:
         batch_size: int,
         device: torch.device = torch.device("cpu"),
         dtype: torch.dtype = torch.float32,
+        generator: torch.Generator | None = None,
     ) -> torch.Tensor:
         """
         Sample time tensor for training
@@ -66,11 +46,11 @@ class TrainTimeSampler:
             torch.Tensor: Time tensor, shape (batch_size,)
         """
         if self.distribution == "uniform":
-            t = torch.rand((batch_size,)).to(device=device, dtype=dtype)  # [B]
+            t = torch.rand((batch_size,), generator=generator).to(device=device, dtype=dtype)  # [B]
         elif self.distribution == "logitnormal":
-            t = torch.sigmoid(torch.randn((batch_size,))).to(device=device, dtype=dtype)  # [B]
+            t = torch.sigmoid(torch.randn((batch_size,), generator=generator)).to(device=device, dtype=dtype)  # [B]
         elif self.distribution == "waver":
-            u = torch.rand((batch_size,), dtype=torch.float32)  # [B]
+            u = torch.rand((batch_size,), dtype=torch.float32, generator=generator)  # [B]
             t = 1.0 - u - self._WAVER_MODE_S * (torch.cos(torch.pi / 2.0 * u) ** 2 - 1 + u)  # [B]
             t = t.to(device=device, dtype=dtype)  # [B]
         else:
@@ -118,15 +98,26 @@ class RectifiedFlow:
         self.device = torch.device(device) if isinstance(device, str) else device
         self.dtype = torch.dtype(dtype) if isinstance(dtype, str) else dtype
 
-    def sample_train_time(self, batch_size: int):
+    def sample_train_time(self, batch_size: int, iteration: int | None = None) -> torch.Tensor:
         r"""This method calls the `TrainTimeSampler` to sample training times.
+
+        Args:
+            batch_size: Number of time values to sample.
+            iteration: When provided, sampling uses a local generator seeded from
+                ``(iteration, rank)`` so results are identical across independent runs
+                regardless of prior global RNG state.
 
         Returns:
             t (`torch.Tensor`):
                 A tensor of sampled training times with shape `(batch_size,)`,
                 matching the class specified `device` and `dtype`.
         """
-        time = self.train_time_sampler(batch_size, device=self.device, dtype=self.dtype)
+        generator = None
+        if iteration is not None and torch.are_deterministic_algorithms_enabled():
+            rank = torch.distributed.get_rank() if torch.distributed.is_initialized() else 0
+            generator = torch.Generator()
+            generator.manual_seed(iteration * 65536 + rank)
+        time = self.train_time_sampler(batch_size, device=self.device, dtype=self.dtype, generator=generator)
         return time
 
     def get_discrete_timestamp(self, u, tensor_kwargs):

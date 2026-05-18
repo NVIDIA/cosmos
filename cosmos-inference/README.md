@@ -6,18 +6,18 @@
 
 # Cosmos3
 
-## User Guide
-
 - [Gallery](./docs/gallery.md)
 - [Quickstart](#setup)
-- [Setup](./docs/setup.md): Installation, environment, checkpoints
-- [Prompting](./docs/prompting.md): Prompt engineering, upsampling
-- [Inference](./docs/inference.md): Sample arguments, default values, offline batch inference
-  - [Online Inference](./docs/inference_online.md): Online serving, web UI
-  - [Action Policy Closed-Loop Evaluation on LIBERO](./docs/action_policy_closed_loop_eval.md): Action policy server/client setup and LIBERO evaluation. The client setup clones and installs the external [Lifelong-Robot-Learning/LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) simulator package.
-- [Training](./docs/training.md): Post-Training (Supervised Fine-Tuning)
-- [FAQ](./docs/faq.md): FAQ, tips, troubleshooting
-- [AGENTS.md](./AGENTS.md): AI agent entry point — start here for quick codebase orientation
+- [Setup](./docs/setup.md)
+- [Prompting](./docs/prompting.md)
+- [Inference](./docs/inference.md)
+- [Post-Training (Supervised Fine-Tuning)](./docs/training.md)
+  - [JSONL Dataset](./docs/dataset_jsonl.md)
+  - [Action Policy Closed-Loop Evaluation on LIBERO](./docs/action_policy_closed_loop_eval.md)
+- Reference
+  - [Environment Variables](./docs/environment_variables.md)
+  - [FAQ](./docs/faq.md)
+  - [AGENTS.md](./AGENTS.md)
 
 ## Overview
 
@@ -40,10 +40,6 @@ One model, many capabilities:
 
 - **Video Backbone**: Evaluate and benchmark the model’s task understanding and review its architecture to inform codebase decisions.
 
-### Modalities Supported
-
-- Text2Image (t2i), Text2Video (t2v), Image2Video (i2v)
-
 ### Base Model Specifications
 
 | Spec             | Value                                                                      |
@@ -62,7 +58,7 @@ For more details and alternative installation methods, see [Setup](./docs/setup.
 Install system dependencies:
 
 ```shell
-sudo apt-get update && sudo apt-get install -y --no-install-recommends curl ffmpeg libx11-dev tree wget
+sudo apt-get install -y --no-install-recommends curl ffmpeg libx11-dev tree wget
 ```
 
 Install the package with `uv`:
@@ -74,13 +70,11 @@ source .venv/bin/activate && export LD_LIBRARY_PATH=
 
 ## Prompting
 
-For prompting guidance, see [Prompting](./docs/prompting.md).
+See [Prompting](./docs/prompting.md).
 
 ## Inference
 
 For more details, see [Inference](./docs/inference.md).
-
-### Offline Batch Inference
 
 Generate a single sample with 1 GPU:
 
@@ -106,32 +100,32 @@ torchrun --nproc-per-node=8 -m cosmos3.scripts.inference \
 
 **Note:** The progress bar only prints on rank 0.
 
-### Models
-
-| Model         | Arguments                         |
-| ------------- | --------------------------------- |
-| Cosmos3-Nano  | `--checkpoint-path=Cosmos3-Nano`  |
-| Cosmos3-Super | `--checkpoint-path=Cosmos3-Super` |
-
-### Modalities
-
-| Modality         | Example                                                                                            |
-| ---------------- | -------------------------------------------------------------------------------------------------- |
-| Text2Image       | [`-i "inputs/omni/t2i.json"`](inputs/omni/t2i.json)                                                |
-| Text2Video       | [`-i "inputs/omni/t2v.json"`](inputs/omni/t2v.json)                                                |
-| Image2Video      | [`-i "inputs/omni/i2v.json"`](inputs/omni/i2v.json)                                                |
-| Forward Dynamics | [`-i "inputs/omni/action_forward_dynamics*.json"`](inputs/omni/action_forward_dynamics_robot.json) |
-| Inverse Dynamics | [`-i "inputs/omni/action_inverse_dynamics*.json"`](inputs/omni/action_inverse_dynamics_av.json)    |
-| Policy           | [`-i "inputs/omni/action_policy*.json"`](inputs/omni/action_policy_robot.json)                     |
-
-To generate all examples, use `-i "inputs/omni/*.json"`.
-
-For more information regarding action inference, please see [Action Inference](./docs/inference.md#action-inference).
-
-### CLI Reference
-
 To see all available arguments:
 
 ```shell
 python -m cosmos3.scripts.inference --help
 ```
+
+### Models
+
+| Model         | Arguments                         | Modalities                          |
+| ------------- | --------------------------------- | ----------------------------------- |
+| Cosmos3-Nano  | `--checkpoint-path=Cosmos3-Nano`  | All                                 |
+| Cosmos3-Super | `--checkpoint-path=Cosmos3-Super` | Text2Image, Text2Video, Image2Video |
+
+### Modalities
+
+| Modality           | Example                                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| `text2image`       | [`-i "inputs/omni/t2i.json"`](inputs/omni/t2i.json)                                                |
+| `text2video`       | [`-i "inputs/omni/t2v.json"`](inputs/omni/t2v.json)                                                |
+| `image2video`      | [`-i "inputs/omni/i2v.json"`](inputs/omni/i2v.json)                                                |
+| `forward_dynamics` | [`-i "inputs/omni/action_forward_dynamics*.json"`](inputs/omni/action_forward_dynamics_robot.json) |
+| `inverse_dynamics` | [`-i "inputs/omni/action_inverse_dynamics*.json"`](inputs/omni/action_inverse_dynamics_av.json)    |
+| `policy`           | [`-i "inputs/omni/action_policy*.json"`](inputs/omni/action_policy_robot.json)                     |
+
+To generate all examples, use `-i "inputs/omni/*.json"`.
+
+## Training
+
+See [Training](./docs/training.md).

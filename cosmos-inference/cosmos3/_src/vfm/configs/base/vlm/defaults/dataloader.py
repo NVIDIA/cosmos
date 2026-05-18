@@ -17,10 +17,10 @@ from torch.utils.data import DataLoader
 
 from cosmos3._src.imaginaire.lazy_config import LazyCall as L
 from cosmos3._src.imaginaire.utils.config_helper import ConfigStore
-from cosmos3._src.vfm.processors import build_processor
-from projects.cosmos3.vlm.datasets.collate_fn import custom_collate
-from projects.cosmos3.vlm.datasets.debug_data_qwen import DebugQwenDataset
-from projects.cosmos3.vlm.datasets.dummy_data_qwen import DummyQwenDataset
+from cosmos3._src.vfm.datasets.vlm.collate_fn import custom_collate
+from cosmos3._src.vfm.datasets.vlm.debug_data_qwen import DebugQwenDataset
+from cosmos3._src.vfm.datasets.vlm.dummy_data_qwen import DummyQwenDataset
+from cosmos3._src.vfm.processors import build_processor_lazy
 
 
 # Debug dataset
@@ -29,7 +29,7 @@ def create_debug_dataloader_config_qwen(
 ):
     return L(DataLoader)(
         dataset=L(DebugQwenDataset)(
-            tokenizer=L(build_processor)(
+            tokenizer=L(build_processor_lazy)(
                 tokenizer_type="${model.config.policy.model_name_or_path}",
                 credentials="${checkpoint.load_from_object_store.credentials}",
                 bucket="${checkpoint.load_from_object_store.bucket}",
@@ -52,7 +52,7 @@ def create_debug_dataloader_config_qwen(
 def create_dummy_dataloader_config_qwen():
     return L(DataLoader)(
         dataset=L(DummyQwenDataset)(
-            tokenizer=L(build_processor)(
+            tokenizer=L(build_processor_lazy)(
                 tokenizer_type="${model.config.policy.model_name_or_path}",
                 credentials="${checkpoint.load_from_object_store.credentials}",
                 bucket="${checkpoint.load_from_object_store.bucket}",

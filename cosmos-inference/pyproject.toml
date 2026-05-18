@@ -19,7 +19,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cosmos3"
-version = "1.2.1"
+version = "1.2.2"
 authors = [
   {name = "NVIDIA Corporation"},
 ]
@@ -83,6 +83,7 @@ train = [
   "boto3",
   "botocore",
   "datasets",
+  "diffusers-cosmos3",
   "dists-pytorch",
   "einx",
   "fastparquet",
@@ -299,6 +300,7 @@ required-environments = [
 ]
 
 [tool.uv.sources]
+diffusers-cosmos3 = { path = "packages/diffusers-cosmos3", editable = true }
 flash-attn = { index = "cosmos"}
 flash-attn-3-nv = { index = "cosmos" }
 lerobot = { git = "https://github.com/mli0603/lerobot.git" }

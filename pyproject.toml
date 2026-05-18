@@ -1,17 +1,341 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
-
-[project]
-name = "cosmos"
-version = "0.0.0"
-description = "Cosmos framework — main package (skeleton)"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[project]
+name = "cosmos"
+version = "1.2.2"
+authors = [
+  {name = "NVIDIA Corporation"},
+]
+description = "Cosmos World Foundation Model (WFM) — training infrastructure"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: GPU :: NVIDIA CUDA",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "accelerate",
+  "av",
+  "cattrs",
+  "diffusers",
+  "einops",
+  "hydra-core",
+  "imageio-ffmpeg",
+  "imageio",
+  "loguru",
+  "nvidia-cudnn-frontend",
+  "nvidia-ml-py",
+  "obstore",
+  "omegaconf",
+  "pydantic",
+  "requests",
+  "termcolor",
+  "transformers>=4.57.1,<5.0.0",
+  "tyro",
+  "uv",
+]
+
+[project.optional-dependencies]
+guardrail = [
+  "better-profanity",
+  "nltk",
+  "protobuf",
+  "retinaface-py",
+  "sentencepiece",
+]
+interactive = [
+  "websockets",
+]
+serve = [
+  "fastapi",
+  "httpx",
+  "gradio",
+  "ray[serve]",
+]
+train = [
+  "aioboto3",
+  "aiofiles",
+  "aiohttp",
+  "arrgh",
+  "blobfile",
+  "boto3",
+  "botocore",
+  "datasets",
+  "dists-pytorch",
+  "einx",
+  "fastparquet",
+  "ffmpeg-python",
+  "ffmpegcv",
+  "flask",
+  "flopth",
+  "ftfy",
+  "futureproof",
+  "fvcore",
+  "glfw",
+  "h5py",
+  "iopath>=0.1.10",
+  "imagecodecs",
+  "ipycanvas",
+  "ipyevents",
+  "jupyter-compare-view",
+  "jupyterlab",
+  "kornia",
+  "lerobot",
+  "lpips",
+  "lz4",
+  "matplotlib",
+  "mediapy",
+  "megatron-core",
+  "more-itertools",
+  "moviepy",
+  "multi-storage-client[boto3,google-cloud-storage,fsspec,observability-otel,vault]==0.44.0",
+  "ninja",
+  "nvidia-dali-cuda120",
+  "open-clip-torch",
+  "openai",
+  "opencv-contrib-python",
+  "packaging",
+  "pandas",
+  "parse",
+  "peft",
+  "pillow",
+  "plyfile",
+  "polars",
+  "polyscope",
+  "psycopg2-binary",
+  "py3nvml",
+  "pycocotools",
+  "pydispatcher",
+  "pygltflib",
+  "pyopengl",
+  "pytest",
+  "python-memcached",
+  "pytz",
+  "pyyaml",
+  "qwen-vl-utils",
+  "robotmq",
+  "rsa",
+  "s3fs",
+  "scikit-image",
+  "semver",
+  "setuptools",
+  "slangtorch",
+  "soundfile",
+  "tensorstore",
+  "tiktoken",
+  "timm",
+  "torch-fidelity",
+  "torch-optimizer",
+  "torchtitan",
+  "trimesh",
+  "typeguard",
+  "urllib3",
+  "wandb",
+  "webdataset",
+  "xatlas",
+  "zarr",
+]
+
+
+[dependency-groups]
+dev = [
+  "hatch",
+  "pyinstrument",
+  "pyrefly==0.55.0",
+  "pytest",
+  "pytest-custom_exit_code",
+  "pytest-cov",
+  "pytest-env",
+  "pytest-instafail",
+  "pytest-regressions",
+  "pytest-xdist",
+  "ruff==0.12.7",
+  "uv==0.10.8",
+]
+vllm = [
+  "vllm==0.19.0",
+  "torch==2.10.0",
+]
+# Match nvcr.io/nvidia/pytorch:25.11-py3: https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-26-01.html
+cu128 = [
+  "flash-attn-3-nv==1.0.3+cu128.torch210; platform_machine == 'x86_64'",
+  "flash-attn==2.7.4.post1+cu128.torch210; platform_machine == 'x86_64'",
+  "natten==0.21.6.dev6+cu128.torch210; platform_machine == 'x86_64'",
+  "torch==2.10.0+cu128",
+  "torchcodec==0.10.0+cu128", # https://github.com/meta-pytorch/torchcodec/releases
+  "torchvision==0.25.0+cu128", # https://github.com/pytorch/vision/releases
+  # Dependencies determined from 'uv pip install --dry-run "torch==2.10.0+cu128" --index-url https://download.pytorch.org/whl'
+  # Issue: https://github.com/astral-sh/uv/issues/14237
+  "nvidia-cublas-cu12==12.8.4.1",
+  "nvidia-cuda-cupti-cu12==12.8.90",
+  "nvidia-cuda-nvrtc-cu12==12.8.93",
+  "nvidia-cuda-runtime-cu12==12.8.90",
+  "nvidia-cudnn-cu12==9.10.2.21",
+  "nvidia-cufft-cu12==11.3.3.83",
+  "nvidia-cufile-cu12==1.13.1.3",
+  "nvidia-curand-cu12==10.3.9.90",
+  "nvidia-cusolver-cu12==11.7.3.90",
+  "nvidia-cusparse-cu12==12.5.8.93",
+  "nvidia-cusparselt-cu12==0.7.1",
+  "nvidia-nccl-cu12==2.27.5",
+  "nvidia-nvjitlink-cu12==12.8.93",
+  "nvidia-nvshmem-cu12==3.4.5",
+  "nvidia-nvtx-cu12==12.8.90",
+]
+cu128-train = [
+  {include-group = "cu128"},
+  "torchao==0.16.0+cu128; platform_machine == 'x86_64'", # https://github.com/pytorch/ao/issues/2919
+  "transformer-engine==2.12.0+cu128.torch210",
+  "triton==3.6.0",
+]
+# Match nvcr.io/nvidia/pytorch:25.11-py3: https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-25-11.html
+cu130 = [
+  "flash-attn-3-nv==1.0.3+cu130.torch210; platform_machine == 'x86_64'",
+  "flash-attn==2.7.4.post1+cu130.torch210; platform_machine == 'x86_64'",
+  "natten==0.21.6.dev6+cu130.torch210",
+  "torch==2.10.0+cu130",
+  "torchcodec==0.10.0+cu130", # https://github.com/meta-pytorch/torchcodec/releases
+  "torchvision==0.25.0+cu130", # https://github.com/pytorch/vision/releases
+  # Dependencies determined from 'uv pip install --dry-run "torch==2.10.0+cu130" --index-url https://download.pytorch.org/whl'
+  # Issue: https://github.com/astral-sh/uv/issues/14237
+  "nvidia-cublas==13.1.0.3",
+  "nvidia-cuda-cupti==13.0.85",
+  "nvidia-cuda-nvrtc==13.0.88",
+  "nvidia-cuda-runtime==13.0.96",
+  "nvidia-cudnn-cu13==9.15.1.9",
+  "nvidia-cufft==12.0.0.61",
+  "nvidia-cufile==1.15.1.6",
+  "nvidia-curand==10.4.0.35",
+  "nvidia-cusolver==12.0.4.66",
+  "nvidia-cusparse==12.6.3.3",
+  "nvidia-cusparselt-cu13==0.8.0",
+  "nvidia-nccl-cu13==2.28.9",
+  "nvidia-nvjitlink==13.0.88",
+  "nvidia-nvshmem-cu13==3.4.5",
+  "nvidia-nvtx==13.0.85",
+]
+cu130-train = [
+  {include-group = "cu130"},
+  "torchao==0.16.0+cu130; platform_machine == 'x86_64'", # https://github.com/pytorch/ao/issues/2919
+  "transformer-engine==2.12.0+cu130.torch210",
+  "triton==3.6.0",
+]
+# LIBERO simulator dependencies for the closed-loop eval client.
+# See docs/action_policy_closed_loop_eval.md. Mirrors packages/cosmos-policy
+# `libero` group; `libero` from PyPI declares `robosuite` transitively so we
+# don't need to list it here. The numpy upper bound that LIBERO/robosuite/numba
+# needs is enforced via `[tool.uv].override-dependencies` (cannot be group-scoped
+# because uv overrides are global).
+libero = [
+  "bddl",
+  "cloudpickle",
+  "draccus",
+  "easydict",
+  "gym",
+  "imageio[ffmpeg]",
+  "libero",
+  "mujoco==3.3.2",
+]
+
+[project.readme]
+content-type = "text/markdown"
+text = '''
+# Cosmos
+
+[Documentation](https://github.com/nvidia-cosmos/Cosmos/blob/main/README.md)
+'''
+
+[project.urls]
+documentation = "https://github.com/nvidia-cosmos/Cosmos/blob/main/README.md"
+homepage = "https://research.nvidia.com/labs/dir/cosmos3"
+issues = "https://github.com/nvidia-cosmos/Cosmos/issues"
+repository = "https://github.com/nvidia-cosmos/Cosmos"
+
+[tool.uv]
+conflicts = [
+  [
+    {group = "vllm"},
+    {group = "cu128"},
+    {group = "cu128-train"},
+    {group = "cu130"},
+    {group = "cu130-train"},
+  ],
+]
+override-dependencies = [
+  # Lower bound defeats robomimic/robosuite's old numpy 1.x pins; upper bound
+  # is required by numba (transitive of robosuite via the `libero` group), whose
+  # latest release supports numpy <2.3. uv overrides are global, so this also
+  # applies when `--group=libero` is not active — acceptable because no other
+  # group currently needs numpy 2.3+.
+  "numpy>=2.0.0,<2.3",
+  "lightning; sys_platform == 'never'", # PyPi quarantined: https://pypi.org/project/lightning/
+  "pynvml; sys_platform == 'never'",
+]
+required-environments = [
+  "sys_platform == 'linux' and platform_machine == 'x86_64'",
+  "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
+
+[tool.uv.sources]
+flash-attn = { index = "cosmos"}
+flash-attn-3-nv = { index = "cosmos" }
+lerobot = { git = "https://github.com/mli0603/lerobot.git" }
+megatron-core = { git = "https://github.com/NVIDIA/Megatron-LM.git", rev = "de56227" }
+natten = { index = "cosmos"}
+torch = { index = "pytorch"}
+torchao = { index = "pytorch"}
+torchcodec = { index = "pytorch" }
+torchvision = { index = "pytorch"}
+transformer-engine = { index = "cosmos"}
+triton = { index = "pytorch"}
+
+[[tool.uv.index]]
+name = "cosmos"
+url = "https://nvidia-cosmos.github.io/cosmos-dependencies/v1.5.0"
+explicit = true
+
+[[tool.uv.index]]
+name = "natten"
+url = "https://whl.natten.org"
+explicit = true
+format = "flat"
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl"
+explicit = true
+
+[tool.hatch.build.targets.sdist]
+packages = [
+  "cosmos",
+]
+
 [tool.hatch.build.targets.wheel]
-packages = ["cosmos"]
+packages = [
+  "cosmos",
+]
+exclude = [
+  "*_test.py",
+]

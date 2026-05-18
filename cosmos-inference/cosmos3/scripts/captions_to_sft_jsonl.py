@@ -15,7 +15,7 @@
 """Convert caption_from_video.py output directories into the SFT training JSONL format.
 
 The SFT dataset loader (sft_dataset.py) expects each JSONL line to have:
-  uuid, duration, width, height, s3_path, t2w_windows
+  uuid, duration, width, height, vision_path, t2w_windows
 
 where t2w_windows is a list of dicts with start_frame, end_frame, and a
 caption field.  The default key is "caption", which sft_dataset.py
@@ -158,16 +158,16 @@ def main(
             continue
 
         try:
-            s3_path = str(video_path.resolve().relative_to(videos_dir.resolve().parent))
+            vision_path = str(video_path.resolve().relative_to(videos_dir.resolve().parent))
         except ValueError:
-            s3_path = str(video_path)
+            vision_path = str(video_path)
 
         record = {
             "uuid": name,
             "duration": meta["duration"],
             "width": meta["width"],
             "height": meta["height"],
-            "s3_path": s3_path,
+            "vision_path": vision_path,
             "t2w_windows": [
                 {
                     "start_frame": 0,

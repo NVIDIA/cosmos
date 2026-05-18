@@ -25,17 +25,28 @@ from vllm.model_executor.models.qwen3_vl import Qwen3VLForConditionalGeneration
 logger = logging.getLogger(__name__)
 
 _DROP_PATTERNS: tuple[str, ...] = (
+    # Generation
     r"_moe_gen",
     r"^llm2vae\.",
     r"^vae2llm\.",
     r"^time_embedder\.",
+    # Sound
+    r"^llm2sound\.",
+    r"^sound2llm\.",
+    r"^sound_modality_embed$",
+    # Action
+    r"^llm2action\.",
+    r"^action2llm\.",
+    r"^action_modality_embed$",
 )
-"""Generation-tower drop patterns (regex, matched via `re.search`)."""
+"""Drop patterns (regex, matched via `re.search`)."""
 _DROP_RE = re.compile("|".join(_DROP_PATTERNS))
 
 _KEY_MAPPING: dict[str, str] = {
     # Flat Qwen3 -> nested HF Qwen3-VL. Negative lookahead skips already-nested keys.
     r"^model\.(?!language_model\.)(.+)$": r"model.language_model.\1",
+    # Flat Qwen3-VL vision component -> nested HF Qwen3-VL.
+    r"^(blocks\.|merger\.|patch_embed\.|pos_embed\.|deepstack_merger_list\.)(.*)$": r"model.visual.\1\2",
 }
 _KEY_MAPPING_RES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
     (re.compile(src), tgt) for src, tgt in _KEY_MAPPING.items()
@@ -85,10 +96,4 @@ class Cosmos3ForConditionalGeneration(Qwen3VLForConditionalGeneration):
             kept,
             skipped,
         )
-
-        # Drop once a future checkpoint ships `visual.*`. Mark the params as
-        # loaded so vLLM 0.19+ doesn't error on missing weights.
-        for name, _ in self.named_parameters():
-            if name.startswith("visual."):
-                loaded.add(name)
         return loaded

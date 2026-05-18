@@ -40,14 +40,14 @@ import yaml
 from typing_extensions import Self, assert_never
 from tyro.conf import Suppress
 
-from cosmos3.common.config import deserialize_config_dict, unstructure_config
+from cosmos3.common.config import deserialize_config, deserialize_config_dict, unstructure_config
 from cosmos3.common.init import is_rank0 as is_rank0
+from cosmos3._src.imaginaire.config import Config
 from cosmos3._src.imaginaire.flags import TRAINING, StrEnum
 from cosmos3._src.imaginaire.utils.checkpoint_db import CheckpointDirHf
 
 if TYPE_CHECKING:
     from cosmos3.common.inference import Inference
-    from cosmos3._src.imaginaire.config import Config
 
 if TRAINING or TYPE_CHECKING:
     T = TypeVar("T")
@@ -293,13 +293,19 @@ class ConfigArgs(ArgsBase):
     experiment: str
     experiment_overrides: list[str]
 
-    def load_config(self) -> "Config":
+    def load_config(self) -> Config:
         """Load Hydra config."""
         from cosmos3.common.config import load_config
 
-        if self.config_file_type != ConfigFileType.MODULE:
-            raise ValueError(f"Invalid config file type: {self.config_file_type}")
-        return load_config(self.config_file, self.experiment, overrides=self.experiment_overrides)
+        match self.config_file_type:
+            case ConfigFileType.MODULE:
+                return load_config(self.config_file, self.experiment, overrides=self.experiment_overrides)
+            case ConfigFileType.YAML | ConfigFileType.JSON:
+                config = deserialize_config(Path(self.config_file))
+                assert isinstance(config, Config)
+                return config
+            case _:
+                assert_never(self.config_file_type)
 
     def load_model_config_dict(self) -> dict:
         """Load model config dict."""

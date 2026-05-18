@@ -15,12 +15,10 @@
 
 # Configs for VLM / LLM models
 
-import json
 import os
 
 import attrs
 import torch.distributed as dist
-from transformers import PreTrainedTokenizerFast
 
 from cosmos3._src.imaginaire.flags import INTERNAL
 from cosmos3._src.imaginaire.lazy_config import LazyCall as L
@@ -37,6 +35,7 @@ from cosmos3._src.vfm.models.mot.unified_mot import (
     Qwen3VLTextConfig,
     Qwen3VLTextForCausalLM,
 )
+from cosmos3._src.vfm.processors import LLMTokenizerProcessor, build_processor_lazy
 from cosmos3._src.vfm.tokenizers.tokenization_qwen2 import Qwen2Tokenizer
 
 
@@ -108,7 +107,7 @@ def download_tokenizer_files(model_name: str, config_variant: str) -> str:
 
 def create_qwen2_tokenizer_with_download(pretrained_model_name: str, config_variant: str):
     destination_dir = download_tokenizer_files(pretrained_model_name, config_variant)
-    return Qwen2Tokenizer.from_pretrained(destination_dir)
+    return LLMTokenizerProcessor(Qwen2Tokenizer.from_pretrained(destination_dir))
 
 
 @attrs.define(slots=False)
@@ -119,7 +118,10 @@ class VLMConfig:
     # Langugage model class to instantiate
     model_instance: LazyDict | None = None
 
-    # Tokenizer class to instantiate
+    # Tokenizer / processor used by data augmentors. Always a BaseVLMProcessor
+    # subclass: VLM configs use `build_processor`, LLM-only configs wrap the raw
+    # tokenizer in `LLMTokenizerProcessor`. Either way, `_proc.tokenizer` exposes
+    # the underlying HuggingFace tokenizer.
     tokenizer: LazyDict | None = None
 
     # Path to the checkpoint
@@ -155,64 +157,6 @@ class VLMConfig:
     vlm_checkpoint_format: str | None = None
 
 
-def create_nemotron_tokenizer_with_download(pretrained_model_name: str, config_variant: str) -> PreTrainedTokenizerFast:
-    """Load Nemotron Fast BPE tokenizer, downloading files from S3/GCP if needed."""
-    destination_dir = download_tokenizer_files(pretrained_model_name, config_variant)
-    return PreTrainedTokenizerFast.from_pretrained(destination_dir, trust_remote_code=True)
-
-
-def _patch_nemotron_llm_tokenizer_vision_tokens(destination_dir: str) -> None:
-    """Remap reserved placeholder tokens to vision special tokens in-place.
-
-    The Nemotron LLM tokenizer reserves ``<SPECIAL_20>`` / ``<SPECIAL_21>``
-    at IDs 20/21 -- the same slots the VLM tokenizer uses for
-    ``<|vision_start|>`` / ``<|vision_end|>``.  Renaming them here keeps
-    every vision-token ID inside the original vocab_size (131072) so no
-    embedding-layer resize is needed during FSDP training.
-    """
-    remap = {"<SPECIAL_20>": "<|vision_start|>", "<SPECIAL_21>": "<|vision_end|>"}
-
-    tokenizer_json_path = os.path.join(destination_dir, "tokenizer.json")
-    if os.path.exists(tokenizer_json_path):
-        with open(tokenizer_json_path) as f:
-            data = json.load(f)
-        for entry in data.get("added_tokens", []):
-            if entry["content"] in remap:
-                entry["content"] = remap[entry["content"]]
-        vocab = data.get("model", {}).get("vocab", {})
-        for old_name, new_name in remap.items():
-            if old_name in vocab:
-                vocab[new_name] = vocab.pop(old_name)
-        with open(tokenizer_json_path, "w") as f:
-            json.dump(data, f)
-
-    tokenizer_config_path = os.path.join(destination_dir, "tokenizer_config.json")
-    if os.path.exists(tokenizer_config_path):
-        with open(tokenizer_config_path) as f:
-            tc_data = json.load(f)
-        for entry in tc_data.get("added_tokens_decoder", {}).values():
-            if entry.get("content") in remap:
-                entry["content"] = remap[entry["content"]]
-        with open(tokenizer_config_path, "w") as f:
-            json.dump(tc_data, f)
-
-
-def create_nemotron_llm_tokenizer_with_download(
-    pretrained_model_name: str, config_variant: str
-) -> PreTrainedTokenizerFast:
-    """Load Nemotron pure-LLM tokenizer with vision token slots pre-mapped.
-
-    Unlike the VLM tokenizer which already contains ``<|vision_start|>``
-    and ``<|vision_end|>``, the LLM tokenizer has generic placeholders at
-    those IDs.  This function renames them so that ``add_special_tokens``
-    resolves them to IDs 20/21 (within vocab_size) instead of appending
-    new entries beyond the embedding table.
-    """
-    destination_dir = download_tokenizer_files(pretrained_model_name, config_variant)
-    _patch_nemotron_llm_tokenizer_vision_tokens(destination_dir)
-    return PreTrainedTokenizerFast.from_pretrained(destination_dir, trust_remote_code=True)
-
-
 # Configs for LLM models
 Qwen3MoT_LLM_0p6b_Config: VLMConfig = VLMConfig(
     model_name="Qwen/Qwen3-0.6B",
@@ -228,8 +172,9 @@ Qwen3MoT_LLM_0p6b_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(Qwen2Tokenizer.from_pretrained)(
-        pretrained_model_name_or_path="Qwen/Qwen3-0.6B",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-0.6B",
+        config_variant="hf",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-0.6B/",
     credential_path="credentials/s3_training.secret",
@@ -250,8 +195,8 @@ Qwen3MoT_LLM_0p6b_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-0.6B",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-0.6B",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-0.6B/",
@@ -273,8 +218,8 @@ Nemotron3_LLM_2b_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_nemotron_llm_tokenizer_with_download)(
-        pretrained_model_name="Nemotron/NVIDIA-Nemotron-3-2B-BF16",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Nemotron/NVIDIA-Nemotron-3-2B-BF16",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Nemotron/NVIDIA-Nemotron-3-2B-BF16/",
@@ -302,8 +247,8 @@ Qwen3VLMoT_VLM_30b_a3b_Instruct_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-30B-A3B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-30B-A3B-Instruct",
         config_variant="s3",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-30B-A3B-Instruct/",
@@ -326,8 +271,8 @@ Qwen3VLMoT_VLM_30b_a3b_Instruct_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-30B-A3B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-30B-A3B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-30B-A3B-Instruct/",
@@ -350,8 +295,8 @@ CosmosReason2_VLM_30b_a3b_Private_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-30B-A3B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-30B-A3B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos-Reason2-30B-A3B-Private/",
@@ -376,8 +321,8 @@ Qwen3VLMoT_VLM_235b_a22b_Instruct_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-235B-A22B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-235B-A22B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-235B-A22B-Instruct/",
@@ -403,8 +348,8 @@ Qwen3VLMoT_VLM_2b_Instruct_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-2B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-2B-Instruct",
         config_variant="s3",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-2B-Instruct/",
@@ -426,8 +371,8 @@ Qwen3VLMoT_VLM_2b_Instruct_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-2B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-2B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-2B-Instruct/",
@@ -450,8 +395,8 @@ Qwen3VLMoT_VLM_2b_Instruct_HF_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-2B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-2B-Instruct",
         config_variant="hf",
     ),
     load_pretrained=True,
@@ -471,8 +416,8 @@ Nemotron3DenseVL_VLM_2b_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_nemotron_tokenizer_with_download)(
-        pretrained_model_name="Nemotron/NVIDIA-Nemotron-3-Dense-VL-2B-BF16-Alignment",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Nemotron/NVIDIA-Nemotron-3-Dense-VL-2B-BF16-Alignment",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Nemotron/NVIDIA-Nemotron-3-Dense-VL-2B-BF16-Alignment/",
@@ -496,8 +441,8 @@ Cosmos3Reasoner_Nemotron_VLM_2b_Private_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_nemotron_tokenizer_with_download)(
-        pretrained_model_name="Nemotron/NVIDIA-Nemotron-3-Dense-VL-2B-BF16-Alignment",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Nemotron/NVIDIA-Nemotron-3-Dense-VL-2B-BF16-Alignment",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/nvidia/Cosmos3-Reasoner-2B-Private/",
@@ -521,8 +466,8 @@ CosmosReason2_VLM_2b_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-2B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-2B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos-Reason2-2B/",
@@ -545,8 +490,8 @@ CosmosReason2_VLM_2b_Private_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-2B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-2B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos-Reason2-2B-Private/",
@@ -569,8 +514,8 @@ Cosmos3Reasoner_VLM_2b_Private_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-2B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-2B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos3-Reasoner-2B-Private/",
@@ -595,8 +540,8 @@ Qwen3VLMoT_VLM_4b_Instruct_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-4B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-4B-Instruct",
         config_variant="s3",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-4B-Instruct/",
@@ -618,8 +563,8 @@ Qwen3VLMoT_VLM_4b_Instruct_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-4B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-4B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-4B-Instruct/",
@@ -644,8 +589,8 @@ Qwen3VLMoT_VLM_8b_Instruct_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-8B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-8B-Instruct",
         config_variant="s3",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-8B-Instruct/",
@@ -667,8 +612,8 @@ Qwen3VLMoT_VLM_8b_Instruct_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-8B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-8B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-8B-Instruct/",
@@ -691,8 +636,8 @@ CosmosReason2_VLM_8b_Private_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-8B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-8B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos-Reason2-8B-Private/",
@@ -715,11 +660,35 @@ Cosmos3Reasoner_VLM_8b_Private_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-8B-Instruct",
+        config_variant="gcp",
+    ),
+    checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos3-Reasoner-8B-Private/",
+    credential_path="credentials/gcp_checkpoint.secret",
+    load_pretrained=True,
+    enable_gcs_patch_in_boto3=True,
+)
+
+Cosmos3NanoReasoner_VLM_GCP_Config: VLMConfig = VLMConfig(
+    model_name="nvidia/Cosmos3-Nano-Reasoner",
+    model_instance=L(Qwen3VLTextForCausalLM)(
+        config=L(create_vlm_config)(
+            base_config=L(Qwen3VLTextConfig.from_json_file)(
+                json_file="cosmos3/_src/vfm/models/vlm/qwen3_vl/configs/Qwen3-VL-8B-Instruct.json"
+            ),
+            layer_module="MoTDecoderLayer",
+            qk_norm_for_text=True,
+            qk_norm_for_diffusion=True,
+            tie_word_embeddings=True,
+            freeze_und=False,
+        ),
+    ),
     tokenizer=L(create_qwen2_tokenizer_with_download)(
         pretrained_model_name="Qwen/Qwen3-VL-8B-Instruct",
         config_variant="gcp",
     ),
-    checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos3-Reasoner-8B-Private/",
+    checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos3-Nano-Reasoner/",
     credential_path="credentials/gcp_checkpoint.secret",
     load_pretrained=True,
     enable_gcs_patch_in_boto3=True,
@@ -741,8 +710,8 @@ Qwen3VLMoT_VLM_32b_Instruct_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-32B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-32B-Instruct",
         config_variant="s3",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-32B-Instruct/",
@@ -764,8 +733,8 @@ Qwen3VLMoT_VLM_32b_Instruct_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-32B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-32B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Qwen/Qwen3-VL-32B-Instruct/",
@@ -788,8 +757,8 @@ CosmosReason2_VLM_32b_Private_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
-    tokenizer=L(create_qwen2_tokenizer_with_download)(
-        pretrained_model_name="Qwen/Qwen3-VL-32B-Instruct",
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-32B-Instruct",
         config_variant="gcp",
     ),
     checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos-Reason2-32B-Private/",
@@ -812,11 +781,35 @@ Cosmos3Reasoner_VLM_32b_Private_GCP_Config: VLMConfig = VLMConfig(
             freeze_und=False,
         ),
     ),
+    tokenizer=L(build_processor_lazy)(
+        tokenizer_type="Qwen/Qwen3-VL-32B-Instruct",
+        config_variant="gcp",
+    ),
+    checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos3-Reasoner-32B-Private/",
+    credential_path="credentials/gcp_checkpoint.secret",
+    load_pretrained=True,
+    enable_gcs_patch_in_boto3=True,
+)
+
+Cosmos3SuperReasoner_VLM_GCP_Config: VLMConfig = VLMConfig(
+    model_name="nvidia/Cosmos3-Super-Reasoner",
+    model_instance=L(Qwen3VLTextForCausalLM)(
+        config=L(create_vlm_config)(
+            base_config=L(Qwen3VLTextConfig.from_json_file)(
+                json_file="cosmos3/_src/vfm/models/vlm/qwen3_vl/configs/Qwen3-VL-32B-Instruct.json"
+            ),
+            layer_module="MoTDecoderLayer",
+            qk_norm_for_text=True,
+            qk_norm_for_diffusion=True,
+            tie_word_embeddings=True,
+            freeze_und=False,
+        ),
+    ),
     tokenizer=L(create_qwen2_tokenizer_with_download)(
         pretrained_model_name="Qwen/Qwen3-VL-32B-Instruct",
         config_variant="gcp",
     ),
-    checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos3-Reasoner-32B-Private/",
+    checkpoint_path="s3://bucket/cosmos3/pretrained/huggingface/Cosmos-Reason/Cosmos3-Super-Reasoner/",
     credential_path="credentials/gcp_checkpoint.secret",
     load_pretrained=True,
     enable_gcs_patch_in_boto3=True,
@@ -924,6 +917,12 @@ def register_vlm():
     cs.store(
         group="vlm_config",
         package="model.config.vlm_config",
+        name="cosmos3_nano_reasoner_vlm_gcp",
+        node=Cosmos3NanoReasoner_VLM_GCP_Config,
+    )
+    cs.store(
+        group="vlm_config",
+        package="model.config.vlm_config",
         name="cosmos_reason2_vlm_32b_private_gcp",
         node=CosmosReason2_VLM_32b_Private_GCP_Config,
     )
@@ -932,6 +931,12 @@ def register_vlm():
         package="model.config.vlm_config",
         name="cosmos3_reasoner_vlm_32b_private_gcp",
         node=Cosmos3Reasoner_VLM_32b_Private_GCP_Config,
+    )
+    cs.store(
+        group="vlm_config",
+        package="model.config.vlm_config",
+        name="cosmos3_super_reasoner_vlm_gcp",
+        node=Cosmos3SuperReasoner_VLM_GCP_Config,
     )
     cs.store(
         group="vlm_config",

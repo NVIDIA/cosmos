@@ -133,7 +133,8 @@ class SFTDataset(torch.utils.data.IterableDataset):
         self.is_initialized = False
         self.output_sizes = VIDEO_RES_SIZE_INFO[resolution]
 
-        self.vlm_tokenizer = lazy_instantiate(self.tokenizer_config)
+        _vlm_proc = lazy_instantiate(self.tokenizer_config)
+        self.vlm_tokenizer = _vlm_proc.tokenizer
         self.vlm_tokenizer, _ = add_special_tokens(self.vlm_tokenizer)
 
     def __len__(self):
@@ -169,9 +170,9 @@ class SFTDataset(torch.utils.data.IterableDataset):
         resize_h, resize_w = (round(input_h * resize_ratio), round(input_w * resize_ratio))
         crop_y, crop_x = (round((resize_h - target_h) / 2), round((resize_w - target_w) / 2))
 
-        video_bytes = download_from_s3(self.s3_client, metadata["s3_path"])
+        video_bytes = download_from_s3(self.s3_client, metadata["vision_path"])
         if video_bytes is None:
-            log.warning(f"Failed to download video from S3: {metadata['s3_path']}")
+            log.warning(f"Failed to download video from S3: {metadata['vision_path']}")
             return None
 
         # Decode all frames to (T, H, W, 3)
@@ -240,7 +241,7 @@ class SFTDataset(torch.utils.data.IterableDataset):
         if not video_chunk:
             log.warning(
                 f"No frames decoded for sample: {metadata['uuid']} "
-                f"(start={start_frame}, end={end_frame}, path={metadata['s3_path']})"
+                f"(start={start_frame}, end={end_frame}, path={metadata['vision_path']})"
             )
             return None
 
@@ -308,7 +309,7 @@ class SFTDataset(torch.utils.data.IterableDataset):
 
         ret = dict(
             __key__=f"{metadata['uuid']}_w{win_idx}",
-            __url__=metadata["s3_path"],
+            __url__=metadata["vision_path"],
             fps=original_fps,
             n_orig_video_frames=total_frames,
             chunk_index=win_idx,
@@ -406,7 +407,7 @@ class SFTDataset(torch.utils.data.IterableDataset):
             self.metadata = self.metadata[data_rank::total_data_ranks]
         else:
             # Keep the repeated samples together to aid cache hits.
-            self.metadata.sort(key=lambda x: hashlib.sha256(x["s3_path"].encode("utf-8")).hexdigest())
+            self.metadata.sort(key=lambda x: hashlib.sha256(x["vision_path"].encode("utf-8")).hexdigest())
             # Equally chunk the list (guaranteed to be divisible by total_data_ranks)
             chunk_size = len(self.metadata) // total_data_ranks
             start = data_rank * chunk_size
@@ -415,9 +416,9 @@ class SFTDataset(torch.utils.data.IterableDataset):
                 f"DRank {data_rank} has got a chunk {start}-{end} from {len(self.metadata)} data.", rank0_only=False
             )
             self.metadata = self.metadata[start:end]
-        num_unique_s3_paths = len(set(metadata["s3_path"] for metadata in self.metadata))
+        num_unique_vision_paths = len(set(metadata["vision_path"] for metadata in self.metadata))
         log.info(
-            f"DRank {data_rank} has {len(self.metadata)} data with {num_unique_s3_paths} unique s3_paths.",
+            f"DRank {data_rank} has {len(self.metadata)} data with {num_unique_vision_paths} unique vision_paths.",
             rank0_only=False,
         )
 
@@ -524,16 +525,16 @@ def _load_sft_metadata_from_s3(
             if not kept_windows:
                 continue
 
-            s3_path = record["s3_path"]
-            if "://" not in s3_path and not s3_path.startswith("/"):
+            vision_path = record["vision_path"]
+            if "://" not in vision_path and not vision_path.startswith("/"):
                 # Relative path to the JSONL file
-                s3_path = f"{os.path.dirname(jsonl_url)}/{s3_path}"
+                vision_path = f"{os.path.dirname(jsonl_url)}/{vision_path}"
 
             aspect_ratio = get_aspect_ratio(record["width"], record["height"])
             metadata_list.append(
                 {
                     "uuid": uuid,
-                    "s3_path": s3_path,
+                    "vision_path": vision_path,
                     "width": record["width"],
                     "height": record["height"],
                     "nb_frames": record.get("nb_frames"),

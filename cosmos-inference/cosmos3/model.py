@@ -17,7 +17,6 @@ import contextlib
 from pathlib import Path
 
 import attrs
-import diffusers
 import hydra
 import omegaconf
 import torch.distributed.checkpoint as dcp
@@ -36,9 +35,7 @@ from cosmos3._src.imaginaire.utils import misc
 from cosmos3._src.vfm.configs.base.defaults.model_config import ParallelismConfig
 
 if TYPE_CHECKING:
-    from cosmos3._src.vfm.models.mot.cosmos3_vfm_network import Cosmos3VFMNetwork
     from cosmos3._src.vfm.models.omni_mot_model import OmniMoTModel
-    from cosmos3._src.vfm.tokenizers.wan2pt2_vae_4x16x16 import WanVAE_
 
 
 _ROOT_DIR = Path(__file__).parents[1].absolute()
@@ -129,40 +126,4 @@ class Cosmos3OmniModel(transformers.PreTrainedModel):
 
     @classmethod
     def after_load_model(cls, model: "OmniMoTModel"):
-        pass
-
-
-class Cosmos3OmniTransformer(diffusers.pipelines.pipeline_utils.ModelMixin, diffusers.ConfigMixin):
-    @diffusers.configuration_utils.register_to_config
-    def __init__(self, model: dict):
-        super().__init__()
-
-        self.net: "Cosmos3VFMNetwork | None" = None
-
-    def forward(self, *args, **kwargs):
-        pass
-
-
-class Cosmos3OmniVisionTokenizer(diffusers.pipelines.pipeline_utils.ModelMixin, diffusers.ConfigMixin):
-    @diffusers.configuration_utils.register_to_config
-    def __init__(self, model: dict):
-        super().__init__()
-
-        self.model: "WanVAE_ | None" = None
-
-    def forward(self, *args, **kwargs):
-        pass
-
-
-class Cosmos3OmniDiffusersPipeline(diffusers.pipelines.pipeline_utils.DiffusionPipeline):
-    def __init__(
-        self,
-        transformer: Cosmos3OmniTransformer,
-        text_tokenizer: transformers.PreTrainedTokenizerBase,
-        vision_tokenizer: Cosmos3OmniVisionTokenizer,
-    ):
-        super().__init__()
-        self.register_modules(transformer=transformer, text_tokenizer=text_tokenizer, vision_tokenizer=vision_tokenizer)
-
-    def __call__(self):
         pass

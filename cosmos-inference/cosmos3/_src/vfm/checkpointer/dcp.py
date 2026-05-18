@@ -57,7 +57,7 @@ import os
 import re
 import time
 from multiprocessing import get_context
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Protocol, Tuple, Union, runtime_checkable
 
 import torch
 import torch.distributed as dist
@@ -72,9 +72,7 @@ from torch.distributed.checkpoint.metadata import (
 from torch.distributed.checkpoint.state_dict import (
     StateDictOptions,
     get_model_state_dict,
-    get_optimizer_state_dict,
     set_model_state_dict,
-    set_optimizer_state_dict,
 )
 from torch.distributed.checkpoint.stateful import Stateful
 
@@ -107,73 +105,60 @@ class ModelWrapper(Stateful):
         )
 
 
-class OptimizerWrapper(Stateful):
-    def __init__(
-        self,
-        model: nn.Module,
-        optim: torch.optim.Optimizer | List[torch.optim.Optimizer] | Stateful,
-    ) -> None:
-        self.model = model
-        self.optim_stateful = (
-            optim if isinstance(optim, Stateful) and not isinstance(optim, torch.optim.Optimizer) else None
-        )
-        self.optim = [optim] if isinstance(optim, torch.optim.Optimizer) else optim
+@runtime_checkable
+class _DataloaderStateHandler(Protocol):
+    """Structural contract for callbacks that participate in dataloader-state checkpointing."""
 
-    def state_dict(self) -> Dict[str, Any]:
-        if self.optim_stateful is not None:
-            return self.optim_stateful.state_dict()
-        return get_optimizer_state_dict(
-            model=self.model,
-            optimizers=self.optim,
-            options=StateDictOptions(flatten_optimizer_state_dict=True),
-        )
+    checkpoint_component: str
 
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        if self.optim_stateful is not None:
-            self.optim_stateful.load_state_dict(state_dict)
-            return
-        set_optimizer_state_dict(
-            model=self.model,
-            optimizers=self.optim,
-            optim_state_dict=state_dict,
-            options=StateDictOptions(flatten_optimizer_state_dict=True),
-        )
+    def has_checkpoint_state(self) -> bool: ...
+    def state_dict(self) -> dict[Any, Any]: ...
+    def load_state_dict(self, state_dict: dict[Any, Any]) -> None: ...
 
 
-class DataloaderWrapper:
-    def __init__(
-        self,
-        callbacks: Optional[callback.CallBackGroup],
-    ) -> None:
-        self.stateful = self._resolve_stateful(callbacks)
+class _DataloaderWrapper:
+    """Adapter that surfaces a dataloader-state callback's checkpoint API.
 
-    @staticmethod
-    def _resolve_stateful(
-        callbacks: Optional[callback.CallBackGroup],
-    ) -> Any | None:
+    Walks the registered callbacks at construction time and binds to the
+    first callback that:
+
+    1. Declares ``checkpoint_component == "dataloader"``, AND
+    2. Returns ``True`` from ``has_checkpoint_state()``.
+
+    The bound callback's ``state_dict`` / ``load_state_dict`` methods are
+    re-exposed via :meth:`state_dict` / :meth:`load_state_dict`.  Callers
+    must gate those on :meth:`has_state` — invoking them when nothing was
+    bound raises :class:`RuntimeError`.
+
+    Note: only the first callback tagged ``checkpoint_component=="dataloader"``
+    is considered; if it does not currently want its state checkpointed,
+    no further callbacks are searched.  In practice there is at most one
+    such callback (see ``DataLoaderStateCallback``).
+    """
+
+    def __init__(self, callbacks: callback.CallBackGroup | None) -> None:
+        self._callback: _DataloaderStateHandler | None = None
         if callbacks is None:
-            return None
-
-        for current_callback in getattr(callbacks, "_callbacks", []):
+            return
+        for current_callback in callbacks._callbacks:
             if getattr(current_callback, "checkpoint_component", None) != "dataloader":
                 continue
-            return current_callback if current_callback.has_checkpoint_state() else None
-        return None
+            if current_callback.has_checkpoint_state():
+                self._callback = current_callback
+            return
 
     def has_state(self) -> bool:
-        return self.stateful is not None
+        return self._callback is not None
 
     def state_dict(self) -> dict[Any, Any]:
-        if self.stateful is None:
-            return {}
-        return self.stateful.state_dict()
+        if self._callback is None:
+            raise RuntimeError("No dataloader state handler is registered, cannot save dataloader state.")
+        return self._callback.state_dict()
 
     def load_state_dict(self, state_dict: dict[Any, Any]) -> None:
-        if self.stateful is None:
-            if state_dict:
-                log.warning("Dataloader checkpoint state exists, but no dataloader state handler is registered.")
-            return
-        self.stateful.load_state_dict(state_dict)
+        if self._callback is None:
+            raise RuntimeError("No dataloader state handler is registered, cannot load dataloader state.")
+        self._callback.load_state_dict(state_dict)
 
 
 class AsyncMode(str, enum.Enum):
@@ -526,8 +511,7 @@ class DistributedCheckpointer(AbstractCheckpointer):
 
         if checkpoint_path is not None:
             self._check_checkpoint_exists(checkpoint_path)
-            dataloader_wrapper = DataloaderWrapper(self.callbacks)
-            _state_dict: dict[str, Any] = {}
+
             for key in resume_keys:
                 dist.barrier()
 
@@ -578,14 +562,13 @@ class DistributedCheckpointer(AbstractCheckpointer):
 
                 elif key == "optim":
                     log.info("- Loading the optimizer...")
-                    _optim_wrapper = OptimizerWrapper(model, optimizer)
-                    _state_dict = _optim_wrapper.state_dict()
+                    _state_dict = optimizer.state_dict()
                     dcp.load(
                         _state_dict,
                         storage_reader=storage_reader,
                         planner=load_planner,
                     )
-                    _optim_wrapper.load_state_dict(_state_dict)
+                    optimizer.load_state_dict(_state_dict)
 
                 elif key == "scheduler":
                     log.info("- Loading the scheduler...")
@@ -623,6 +606,7 @@ class DistributedCheckpointer(AbstractCheckpointer):
                     grad_scaler.load_state_dict(_state_dict["grad_scaler"])
                     iteration = _state_dict["iteration"]
                     set_rand_state_dict(_state_dict.get(rng_key, current_rng_state))
+
                 elif key == "dataloader":
                     if not easy_io.exists(cur_key_ckpt_full_path, backend_key=self.load_s3_backend_key):
                         log.info(
@@ -643,12 +627,16 @@ class DistributedCheckpointer(AbstractCheckpointer):
                         file_format="pkl",
                         backend_key=self.load_s3_backend_key,
                     )
-                    dataloader_wrapper.load_state_dict(_state_dict)
+                    dataloader_wrapper = _DataloaderWrapper(self.callbacks)
+                    if dataloader_wrapper.has_state():
+                        dataloader_wrapper.load_state_dict(_state_dict)
+
                 else:
                     raise ValueError(f"Invalid key: {key}. not support to resume.")
 
             if self.callbacks is not None and resume_keys:
-                self.callbacks.on_load_checkpoint(model, state_dict=_state_dict)
+                # Note that this callback is never used in the codebase.
+                self.callbacks.on_load_checkpoint(model, state_dict={})
             log.info(f"Loaded checkpoint from {checkpoint_path} in iteration {iteration}")
 
         else:
@@ -811,7 +799,7 @@ class DistributedCheckpointer(AbstractCheckpointer):
 
         to_save_dict = {
             "model": ModelWrapper(model).state_dict(),
-            "optim": OptimizerWrapper(model, optimizer).state_dict(),
+            "optim": optimizer.state_dict(),
             "scheduler": scheduler.state_dict(),
             "trainer": {
                 "grad_scaler": grad_scaler.state_dict(),
@@ -819,7 +807,7 @@ class DistributedCheckpointer(AbstractCheckpointer):
                 rng_key: get_rand_state_dict(),
             },
         }
-        dataloader_wrapper = DataloaderWrapper(self.callbacks)
+        dataloader_wrapper = _DataloaderWrapper(self.callbacks)
         if dataloader_wrapper.has_state():
             to_save_dict["dataloader"] = dataloader_wrapper.state_dict()
 

@@ -153,3 +153,29 @@ def _expand_per_sample_to_per_vision_item(
         ):  # torch.stack(tensor[idx].repeat(num_vision_items_per_sample[idx]) for idx in range(len(num_vision_items_per_sample)))
             expanded.append(tensor[sample_idx])  # [...]
     return torch.stack(expanded)  # [N_vision_items,...]
+
+
+def build_dense_sound_schedule(
+    sequence_plans: list,
+    x0_tokens_sound: list[torch.Tensor] | None,
+    timesteps: torch.Tensor,  # [B,...]
+    sigmas: torch.Tensor,  # [B,...]
+) -> tuple[torch.Tensor | None, torch.Tensor | None]:
+    """Reindex per-sample schedules to match the dense sound tensor list.
+
+    Sound tensors are dense over samples with ``has_sound=True``, while input
+    timesteps/sigmas are indexed by original batch position. This helper maps
+    dense sound entry ``i`` back to its source sample's schedule row.
+    """
+    sound_sample_indices = [i for i, plan in enumerate(sequence_plans) if getattr(plan, "has_sound", False)]
+    num_sound_tensors = 0 if x0_tokens_sound is None else len(x0_tokens_sound)
+    assert len(sound_sample_indices) == num_sound_tensors, (
+        "Sound tensor count must match sequence plans with has_sound=True. "
+        f"Got {num_sound_tensors} sound tensor(s) for {len(sound_sample_indices)} sound plan(s)."
+    )
+
+    if not sound_sample_indices:
+        return None, None
+
+    idx_sound = torch.tensor(sound_sample_indices, dtype=torch.long, device=timesteps.device)  # [n_sound]
+    return timesteps[idx_sound], sigmas[idx_sound]  # [n_sound,...], [n_sound,...]

@@ -314,6 +314,7 @@ class _VisionDataBase:
 class VisionDataArgs(ArgsBase, _VisionDataBase):
     vision_path: ResolvedFilePath | None
     condition_frame_indexes_vision: list[int]
+    condition_video_keep: Literal["first", "last"]
 
     resolution: Resolution | None
     aspect_ratio: AspectRatio | None
@@ -359,6 +360,10 @@ class VisionDataOverrides(OverridesBase, _VisionDataBase):
     """Path or URL to conditioning image/video."""
     condition_frame_indexes_vision: Training[list[int] | None] = None
     """Latent frame indices to condition on. Defaults to [0] for image, [0, 1] for video."""
+    condition_video_keep: Training[Literal["first", "last"] | None] = None
+    """Whether to take the first or last ``max_frames`` of the conditioning
+    video when it is longer than needed. Defaults to ``"first"``. No effect
+    on image conditioning."""
 
     # Vision fields
     resolution: Resolution | None = None
@@ -399,6 +404,9 @@ class VisionDataOverrides(OverridesBase, _VisionDataBase):
                 ]
             else:
                 self.condition_frame_indexes_vision = []
+
+        if self.condition_video_keep is None:
+            self.condition_video_keep = "first"
 
         # Image edit defaults to input image size
         if sample_meta.model_mode != ModelMode.IMAGE2IMAGE:
@@ -583,7 +591,7 @@ class OmniSampleOverrides(SampleOverrides, SamplingOverrides, SampleDataOverride
         else:
             defaults = _load_modality_defaults(sample_meta.model_mode)
         overrides = self.model_dump(exclude_none=True)
-        user_specified_shift = "shift" in overrides
+        shift_configured = "shift" in overrides or defaults.get("shift") is not None
         merged_data = _deep_merge(defaults, overrides)
         merged_data = {k: v for k, v in merged_data.items() if k in type(self).model_fields}
         merged = type(self).model_validate(merged_data)
@@ -601,7 +609,7 @@ class OmniSampleOverrides(SampleOverrides, SamplingOverrides, SampleDataOverride
         self._build_action_data(model_config=model_config, sample_meta=sample_meta)
 
 
-        if not user_specified_shift:
+        if not shift_configured:
             model_size = self._VLM_MODEL_SIZE[model_config.vlm_config.model_name]
             key = (model_size, self.resolution)
             if key in self._RESOLUTION_SHIFT_DEFAULTS:

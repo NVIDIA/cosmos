@@ -45,6 +45,12 @@ s3_eu_object_store = config.ObjectStoreConfig(
     bucket="bucket",
 )
 
+gcp_object_store = config.ObjectStoreConfig(
+    enabled=True,
+    credentials="credentials/gcp_checkpoint.secret",
+    bucket="bucket",
+)
+
 CHECKPOINT_LOCAL = CheckpointConfig(
     save_to_object_store=local_object_store,
     load_from_object_store=local_object_store,
@@ -69,12 +75,24 @@ CHECKPOINT_S3 = CheckpointConfig(
     dcp_async_mode_enabled=True,
 )
 
+CHECKPOINT_GCP = CheckpointConfig(
+    save_to_object_store=gcp_object_store,
+    load_from_object_store=gcp_object_store,
+    save_iter=1000,
+    load_path="",
+    load_training_state=False,
+    strict_resume=True,
+    enable_gcs_patch_in_boto3=True,
+    dcp_async_mode_enabled=True,
+)
+
 
 def register_checkpoint() -> None:
     cs = ConfigStore.instance()
     cs.store(group="checkpoint", package="checkpoint", name="local", node=CHECKPOINT_LOCAL)
     cs.store(group="checkpoint", package="checkpoint", name="pdx", node=CHECKPOINT_PDX)
     cs.store(group="checkpoint", package="checkpoint", name="s3", node=CHECKPOINT_S3)
+    cs.store(group="checkpoint", package="checkpoint", name="gcp", node=CHECKPOINT_GCP)
 
 
 DUMMY_CHECKPOINTER: Dict[str, str] = L(DummyCheckpointer)()

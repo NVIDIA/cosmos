@@ -352,10 +352,14 @@ def get_sample_data(
             case "video":
                 assert sample_args.vision_path is not None
                 assert sample_args.condition_frame_indexes_vision is not None
-                temporal_compression_factor = model.config.tokenizer.temporal_compression_factor
-                max_frames = (max(sample_args.condition_frame_indexes_vision) + 1) * temporal_compression_factor
+                num_condition_latent_frames = max(sample_args.condition_frame_indexes_vision) + 1
+                max_frames = model.tokenizer_vision_gen.get_pixel_num_frames(num_condition_latent_frames)
                 conditioning_frames = load_conditioning_video(
-                    Path(sample_args.vision_path), target_h=h, target_w=w, max_frames=max_frames
+                    Path(sample_args.vision_path),
+                    target_h=h,
+                    target_w=w,
+                    max_frames=max_frames,
+                    keep=sample_args.condition_video_keep or "first",
                 )
             case _:
                 conditioning_frames = None
@@ -498,6 +502,11 @@ def create_batches_from_dataset(
     assert max_model_len is not None or max_num_seqs is not None, "Either max_model_len or max_num_seqs must be set"
     assert max_model_len is None or max_num_seqs is None, "Either max_model_len or max_num_seqs must be set, not both"
 
+    # Tensor keys whose non-batch dims may differ across samples and must be
+    # promoted to a length-1 ``list[Tensor]`` so ``_merge_data_batches`` can
+    # flatten them via list-extension instead of failing in ``torch.cat``.
+    _VARIABLE_SHAPE_TENSOR_KEYS = {"video", "action"}
+
     def _prepare_for_merge(db: dict[str, Any]) -> dict[str, Any]:
         """Reshape a per-sample data dict so ``_merge_data_batches`` can combine it.
 
@@ -508,13 +517,18 @@ def create_batches_from_dataset(
           this, ``_merge_data_batches`` would route them to ``torch.stack``
           (adding a new batch dim), inconsistent with the ``torch.cat`` path
           taken by every other tensor key.
-        - **``"video"``** is converted from a ``[1, C, T, H, W]`` tensor (the
-          shape produced by ``_collate_sample``'s ``unsqueeze(0)``) into a
-          length-1 ``list[Tensor]`` of shape ``[C, T, H, W]``.
-          ``_merge_data_batches`` then flattens these per-sample lists across
-          the batch instead of calling ``torch.cat`` on the tensors, which
-          would fail when samples in the same chunk have different aspect
-          ratios or spatial dims (e.g. 544x736 vs 640x640).
+        - **``"video"`` / ``"action"``** are converted from
+          ``[1, *variable_dims]`` tensors (the shape produced by
+          ``_collate_sample``'s ``unsqueeze(0)``) into length-1 ``list[Tensor]``
+          of shape ``[*variable_dims]``. ``_merge_data_batches`` then flattens
+          these per-sample lists across the batch instead of calling
+          ``torch.cat`` on the tensors, which would fail when samples in the
+          same chunk have different shapes (e.g. videos with different aspect
+          ratios like 544x736 vs 640x640, or actions with different sequence
+          lengths like ``[148, D]`` vs ``[104, D]`` from variable-length clips
+          in the camera-480 dataset). Both keys are eventually consumed as
+          per-sample lists by ``pack_action`` / video tokenization, so the
+          list form matches the downstream contract.
 
         Args:
             db: Single sample's data dict, typically straight out of
@@ -528,7 +542,7 @@ def create_batches_from_dataset(
         for key, value in db.items():
             if isinstance(value, torch.Tensor) and value.ndim == 0:
                 updated_db[key] = value.unsqueeze(0)
-            elif key == "video" and isinstance(value, torch.Tensor):
+            elif key in _VARIABLE_SHAPE_TENSOR_KEYS and isinstance(value, torch.Tensor):
                 updated_db[key] = [value.squeeze(0)]
             else:
                 updated_db[key] = value
@@ -545,7 +559,7 @@ def create_batches_from_dataset(
             expanded = [sa]
         for exp_sa in expanded:
             all_args.append(exp_sa)
-            all_data.append(db)
+            all_data.append({k: list(v) if isinstance(v, list) else v for k, v in db.items()})
 
     if not all_args:
         return

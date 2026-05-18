@@ -13,32 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DATASET_PATH=$(uvx hf@latest download --repo-type dataset nvidia/bridge-v2-subset-synthetic-captions --include "sft_dataset_bridge/*" --quiet)/sft_dataset_bridge
+BASE_CHECKPOINT_NAME=Cosmos3-Nano
+CONFIG_FILE="cosmos3/configs/experiment/mixed_modality_sft_nano.yaml"
+export DATASET_PATH=$(uvx hf@latest download --repo-type dataset nvidia/bridge-v2-subset-synthetic-captions --revision 46468e12ac0dd36901e9e3240d4fc7620942b5d7 --quiet)/sft_dataset_bridge
 
 # HF -> DCP
 # Use temporary directory, since output is large.
 python -m cosmos3.scripts.convert_model_to_dcp \
-    --checkpoint-path Cosmos3-Nano \
+    --checkpoint-path $BASE_CHECKPOINT_NAME \
     -o $TMP_DIR/checkpoint_base
 
 # Train
 torchrun $TORCHRUN_ARGS -m cosmos3.scripts.train \
     -o $OUTPUT_DIR/train \
-    --config-file cosmos3/configs/experiment/mixed_modality_sft_8b.yaml \
+    --config-file $CONFIG_FILE \
     $TRAIN_ARGS \
     --config-overrides \
     "checkpoint.load_path=$TMP_DIR/checkpoint_base" \
-    "dataloader_train.dataloader.datasets.video.dataset.jsonl_paths=$DATASET_PATH/train/video_dataset_file.jsonl" \
     $TRAIN_OVERRIDES
 
 CHECKPOINT_ITER=$(cat $OUTPUT_DIR/train/job/checkpoints/latest_checkpoint.txt)
 CHECKPOINT_PATH=$OUTPUT_DIR/train/job/checkpoints/$CHECKPOINT_ITER
 
-# Inference
-torchrun $TORCHRUN_ARGS -m cosmos3.scripts.inference \
-    --parallelism-preset=latency \
-    -i $DATASET_PATH/val/inference_prompt/episode_049683_clip000.json \
-    -o $OUTPUT_DIR/inference \
+# DCP -> HF
+# Use temporary directory, since output is large.
+python -m cosmos3.scripts.export_model \
+    -o $TMP_DIR/model \
     --checkpoint-path $CHECKPOINT_PATH \
-    --config-file $OUTPUT_DIR/train/config.yaml \
-    $INFERENCE_ARGS
+    --config-file $OUTPUT_DIR/train/config.yaml
+
+# Exported model inference is already tested in 'scripts/_test/convert_model_to_dcp.sh'

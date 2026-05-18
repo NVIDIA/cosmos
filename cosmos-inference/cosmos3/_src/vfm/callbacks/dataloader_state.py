@@ -117,11 +117,3 @@ class DataLoaderStateCallback(Callback):
             os.environ[f"NSL_STATE_WORKER_{worker_id}_EPOCH"] = str(epoch)
             os.environ[f"NSL_STATE_WORKER_{worker_id}_INDEX"] = str(index)
             log.info(f"Loaded no replace dataloader state for worker {worker_id}: epoch={epoch}, index={index}")
-
-    def on_save_checkpoint(self, model: ImaginaireModel, state_dict: dict[str, Any]) -> None:
-        if self.distributor_type == "no_replace" and "dataloader" not in state_dict:
-            state_dict["dataloader"] = self.state_dict()
-
-    def on_load_checkpoint(self, model: ImaginaireModel, state_dict: dict[str, Any]) -> None:
-        if "dataloader" in state_dict:
-            self.load_state_dict(state_dict["dataloader"])

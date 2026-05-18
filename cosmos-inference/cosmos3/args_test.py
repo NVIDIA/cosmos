@@ -26,6 +26,7 @@ from cosmos3.args import (
     DEFAULT_CHECKPOINT,
     DEFAULT_CHECKPOINT_NAME,
     MODEL_MEMORY_BYTES_BY_SIZE,
+    ModelMode,
     OmniSampleOverrides,
     OmniSetupOverrides,
     _get_dp_shard_size,
@@ -210,3 +211,13 @@ def test_sample_args(tmp_path: Path):
     assert overrides.build_sample(model_config=model_dict.config) == args
     overrides_dump = {k: v for k, v in args.model_dump().items() if k in OmniSampleOverrides.model_fields}
     assert OmniSampleOverrides.model_validate(overrides_dump).build_sample(model_config=model_dict.config) == args
+
+    text2image_args = OmniSampleOverrides(
+        name="text2image",
+        output_dir=tmp_path / "text2image",
+        model_mode=ModelMode.TEXT2IMAGE,
+    ).build_sample(model_config=model_dict.config)
+    assert text2image_args.aspect_ratio == "1,1"
+    assert text2image_args.num_steps == 50
+    assert text2image_args.guidance == 4.0
+    assert text2image_args.shift == 3.0

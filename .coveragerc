@@ -1,0 +1,32 @@
+# https://coverage.readthedocs.io/en/latest/subprocess.html
+
+[run]
+data_file = outputs/coverage/coverage
+disable_warnings =
+    module-not-imported
+    no-data-collected
+parallel = True
+patch = subprocess
+
+[report]
+exclude_lines =
+    @overload
+    def __repr__
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    pragma: no cover
+    raise AssertionError
+    raise NotImplementedError
+omit =
+    *_test.py
+skip_empty = True
+show_missing = True
+
+[html]
+directory = outputs/coverage/html
+
+[json]
+output = outputs/coverage/coverage.json
+
+[xml]
+output = outputs/coverage/coverage.xml

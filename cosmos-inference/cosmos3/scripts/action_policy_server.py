@@ -471,6 +471,24 @@ def _load_introspection_config_dict(setup_args: OmniSetupArgs) -> dict:
     return deserialize_config_dict(Path(setup_args.config_file))
 
 
+class _ActionPolicyServerSetupArgs(OmniSetupArgs):
+    """Server-local setup args that avoid instantiating runtime EMA for frozen configs."""
+
+    def load_model_config_dict(self) -> dict:
+        model_dict = super().load_model_config_dict()
+        model_dict.setdefault("config", {}).setdefault("ema", {})["enabled"] = False
+        return model_dict
+
+
+def _disable_runtime_ema_for_frozen_config(setup_args: OmniSetupArgs) -> OmniSetupArgs:
+    """Use server-local setup args to instantiate frozen configs without runtime EMA."""
+    if setup_args.config_file_type == ConfigFileType.MODULE:
+        return setup_args
+
+    log.info("[action-server] disabled runtime EMA for frozen config model load")
+    return _ActionPolicyServerSetupArgs.model_validate(setup_args.model_dump())
+
+
 # ---------------------------------------------------------------------------
 # CLI args
 # ---------------------------------------------------------------------------
@@ -643,6 +661,7 @@ class ActionModelService:
         setup_overrides = args.build_setup_overrides()
         setup_args = setup_overrides.build_setup()
         init_output_dir(setup_args.output_dir)
+        setup_args = _disable_runtime_ema_for_frozen_config(setup_args)
 
         # Surface the resolved max_action_dim into the experiment config when
         # the user explicitly overrode it on the CLI; matches the previous

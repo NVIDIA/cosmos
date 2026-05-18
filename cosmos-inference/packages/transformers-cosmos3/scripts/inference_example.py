@@ -61,7 +61,11 @@ def main():
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": "Give me a short introduction to large language model."},
+                {
+                    "type": "image",
+                    "image": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/vision/robot_153.jpg",
+                },
+                {"type": "text", "text": "Caption the image in detail."},
             ],
         },
     ]

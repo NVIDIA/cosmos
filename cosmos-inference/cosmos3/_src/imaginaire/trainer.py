@@ -251,6 +251,11 @@ class ImaginaireTrainer:
             self.checkpointer.save(model, optimizer, scheduler, grad_scaler, iteration=0)
 
         _end_training = False
+        if torch.are_deterministic_algorithms_enabled():
+            # Re-seed all global RNGs after init (model load, checkpoint load, compile warmup,
+            # callbacks) so data-augmentation randomness starts from a deterministic state
+            # regardless of how much RNG state init consumed.
+            misc.set_random_seed(seed=self.config.trainer.seed, by_rank=True)
         with (
             maybe_enable_profiling(self.config, global_step=iteration) as torch_profiler,
             maybe_enable_memory_snapshot(self.config, global_step=iteration) as memory_profiler,

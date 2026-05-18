@@ -15,12 +15,20 @@ In a separate terminal, submit a request:
 
 ```shell
 curl -s http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "nvidia/Cosmos3-Nano",
-    "messages": [{"role": "user", "content": "Give me a short introduction to large language model."}],
-    "max_tokens": 4096
-  }' | jq -r '.choices[0].message.content'
+    -H "Content-Type: application/json" \
+    -d '{
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {"type": "image_url", "image_url": {"url": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/vision/robot_153.jpg"}},
+            {"type": "text", "text": "Caption the image in detail."}
+          ]
+        }
+      ],
+      "max_tokens": 4096,
+      "seed": 0
+    }' | jq -r '.choices[0].message.content'
 ```
 
 For more details, see:

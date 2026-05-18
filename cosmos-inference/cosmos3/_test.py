@@ -255,11 +255,23 @@ _script_configs = [
     ),
     ScriptConfig(
         script=_TEST_DIR / "sft.sh",
-        training=True,
         levels=(0, 1, 2),
         gpus=(1, MAX_GPUS, MAX_GPUS),
     ),
 ]
+for suffix in ["_policy", "_forward_dynamics"]:
+    _script_configs += [
+        ScriptConfig(
+            script=_TEST_DIR / f"sft{suffix}.sh",
+            levels=(0, 2),
+            gpus=(1, MAX_GPUS, MAX_GPUS),
+        ),
+        ScriptConfig(
+            script=_TEST_DIR / f"eval{suffix}.sh",
+            levels=(0, 2),
+            gpus=(1, MAX_GPUS, MAX_GPUS),
+        ),
+    ]
 
 
 @script_test(_script_configs)

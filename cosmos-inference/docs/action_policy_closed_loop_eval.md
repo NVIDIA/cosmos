@@ -96,7 +96,7 @@ Use `MUJOCO_GL=osmesa` for CPU rendering if EGL is not available.
 ## Start the Action Model Server
 
 Run the server in the Cosmos3 environment on a GPU machine. For a checkpoint trained with the OSS
-`cosmos3/configs/experiment/action_policy_sft_8b.yaml` config, point `--checkpoint-dir` at the local DCP
+`cosmos3/configs/experiment/action_policy_sft_nano.yaml` config, point `--checkpoint-dir` at the local DCP
 checkpoint and `--config-file` at the finalized training config saved by `cosmos3.scripts.train`.
 The training output directory is the `-o` directory passed to `cosmos3.scripts.train`; the checkpoint
 directory is under the job directory in `${IMAGINAIRE_OUTPUT_ROOT}`.
@@ -125,9 +125,9 @@ Notes:
 
 - `TRAIN_OUTPUT_DIR` should be the `-o` output directory passed to `cosmos3.scripts.train`. Its `job` symlink points to the checkpoint job directory.
 - `--checkpoint-dir` can point to either a local DCP checkpoint directory or a remote checkpoint path supported by the configured checkpoint reader. If you use remote storage, pass `--credential-path`.
-- `--config-file` should be the serialized `config.yaml` from the `cosmos3.scripts.train` `-o` output directory. Use `cosmos3/configs/experiment/action_policy_sft_8b.yaml` only when it exactly matches the run.
+- `--config-file` should be the serialized `config.yaml` from the `cosmos3.scripts.train` `-o` output directory. Use `cosmos3/configs/experiment/action_policy_sft_nano.yaml` only when it exactly matches the run.
 - `--raw-action-dim 10` matches LIBERO frame-wise relative actions with 6D rotation: `xyz(3) + rot6d(6) + gripper(1)`.
-- `--max-action-dim 64`, `--action-chunk-size 16`, `--fps 20`, and `--action-normalization quantile_rot` match the released `action_policy_sft_8b.yaml` config.
+- `--max-action-dim 64`, `--action-chunk-size 16`, `--fps 20`, and `--action-normalization quantile_rot` match the released `action_policy_sft_nano.yaml` config.
 - `--action-stats-path` should match the normalization statistics used by the checkpoint. The released package includes the LIBERO frame-wise relative 6D-rotation stats at `cosmos3/_src/vfm/datasets/action/normalizers/libero_native_frame_wise_relative_rot6d.json`.
 
 To see all available server arguments:
@@ -147,27 +147,27 @@ If the client runs on another machine, replace `localhost` with the server host 
 
 ### Server Options
 
-| Argument                 | Default                                   | Description                                                                                                                              |
-| ------------------------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `--experiment-name`      | required                                  | Run label. For module-backed configs, this is also the Hydra experiment name. Use `action_policy_sft_8b` for OSS YAML configs.           |
-| `--checkpoint-dir`       | required                                  | Local or remote DCP checkpoint directory. The server appends `/model` when the path does not already end with it.                        |
-| `--config-file`          | `cosmos3/_src/vfm/configs/base/config.py` | Finalized training config YAML for OSS-trained checkpoints, or a config module file for registry-backed checkpoints.                     |
-| `--credential-path`      | empty                                     | Credential file for remote checkpoint storage. Leave empty for local checkpoints.                                                        |
-| `--local-cache-dir`      | unset                                     | Local cache root for remote checkpoints.                                                                                                 |
-| `--seed`                 | `0`                                       | Random seed for model loading and generation.                                                                                            |
-| `--guidance`             | `1.0`                                     | Classifier-free guidance scale used during denoising.                                                                                    |
-| `--num-steps`            | `30`                                      | Number of denoising steps per policy request.                                                                                            |
-| `--fps`                  | `20`                                      | FPS metadata appended to the prompt when the checkpoint config enables duration/FPS augmentation.                                        |
-| `--action-chunk-size`    | inferred, fallback `16`                   | Number of action steps predicted per request.                                                                                            |
-| `--max-action-dim`       | inferred, fallback `64`                   | Padded action width expected by the model.                                                                                               |
-| `--raw-action-dim`       | inferred from stats, otherwise unset      | Unpadded action width returned to the client. Use `10` for LIBERO 6D-rotation actions.                                                   |
-| `--action-stats-path`    | unset                                     | JSON stats file used to denormalize generated actions.                                                                                   |
-| `--action-normalization` | `auto`                                    | Normalization to invert: `auto`, `minmax`, `meanstd`, `quantile`, or `quantile_rot`. Use `quantile_rot` for `action_policy_sft_8b.yaml`. |
-| `--dump-dir`             | unset                                     | Directory for request dumps, generated videos, and predicted actions.                                                                    |
-| `--dump-every`           | `1`                                       | Dump every N-th request when `--dump-dir` is set.                                                                                        |
-| `--http-400-on-error`    | disabled                                  | Return HTTP 400 on request errors instead of HTTP 200 with an empty action list.                                                         |
-| `--host`                 | `0.0.0.0`                                 | Host address to bind.                                                                                                                    |
-| `--port`                 | `8000`                                    | Port to listen on.                                                                                                                       |
+| Argument                 | Default                                   | Description                                                                                                                                |
+| ------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--experiment-name`      | required                                  | Run label. For module-backed configs, this is also the Hydra experiment name. Use `action_policy_sft_8b` for OSS YAML configs.             |
+| `--checkpoint-dir`       | required                                  | Local or remote DCP checkpoint directory. The server appends `/model` when the path does not already end with it.                          |
+| `--config-file`          | `cosmos3/_src/vfm/configs/base/config.py` | Finalized training config YAML for OSS-trained checkpoints, or a config module file for registry-backed checkpoints.                       |
+| `--credential-path`      | empty                                     | Credential file for remote checkpoint storage. Leave empty for local checkpoints.                                                          |
+| `--local-cache-dir`      | unset                                     | Local cache root for remote checkpoints.                                                                                                   |
+| `--seed`                 | `0`                                       | Random seed for model loading and generation.                                                                                              |
+| `--guidance`             | `1.0`                                     | Classifier-free guidance scale used during denoising.                                                                                      |
+| `--num-steps`            | `30`                                      | Number of denoising steps per policy request.                                                                                              |
+| `--fps`                  | `20`                                      | FPS metadata appended to the prompt when the checkpoint config enables duration/FPS augmentation.                                          |
+| `--action-chunk-size`    | inferred, fallback `16`                   | Number of action steps predicted per request.                                                                                              |
+| `--max-action-dim`       | inferred, fallback `64`                   | Padded action width expected by the model.                                                                                                 |
+| `--raw-action-dim`       | inferred from stats, otherwise unset      | Unpadded action width returned to the client. Use `10` for LIBERO 6D-rotation actions.                                                     |
+| `--action-stats-path`    | unset                                     | JSON stats file used to denormalize generated actions.                                                                                     |
+| `--action-normalization` | `auto`                                    | Normalization to invert: `auto`, `minmax`, `meanstd`, `quantile`, or `quantile_rot`. Use `quantile_rot` for `action_policy_sft_nano.yaml`. |
+| `--dump-dir`             | unset                                     | Directory for request dumps, generated videos, and predicted actions.                                                                      |
+| `--dump-every`           | `1`                                       | Dump every N-th request when `--dump-dir` is set.                                                                                          |
+| `--http-400-on-error`    | disabled                                  | Return HTTP 400 on request errors instead of HTTP 200 with an empty action list.                                                           |
+| `--host`                 | `0.0.0.0`                                 | Host address to bind.                                                                                                                      |
+| `--port`                 | `8000`                                    | Port to listen on.                                                                                                                         |
 
 ### HTTP API Reference
 
@@ -268,7 +268,7 @@ Use the same loop when adapting the HTTP server to a different simulator. The ac
 
 ## Run the LIBERO Evaluation Client
 
-Run the client in an environment with LIBERO installed. The OSS `action_policy_sft_8b.yaml` config trains on
+Run the client in an environment with LIBERO installed. The OSS `action_policy_sft_nano.yaml` config trains on
 concatenated `agentview` and wrist observations, so evaluate it with `--camera agentview,wrist`:
 
 ```shell

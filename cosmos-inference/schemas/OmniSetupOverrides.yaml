@@ -80,6 +80,10 @@ sample_overrides:
   aspect_ratio: null
   # Latent frame indices to condition on. Defaults to [0] for image, [0, 1] for video.
   condition_frame_indexes_vision: null
+  # Whether to take the first or last ``max_frames`` of the conditioning
+  # video when it is longer than needed. Defaults to ``"first"``. No effect
+  # on image conditioning.
+  condition_video_keep: null
   # Path to a JSON file of per-modality default sample fields. Overrides the built-in defaults.
   defaults_file: null
   # Action domain name passed to get_domain_id().

@@ -248,8 +248,11 @@ class HFModel(nn.Module):
         be called between ``parallelize()`` and this function.
 
         Args:
-            checkpoint_path: Local path to a directory containing .safetensors files.
-            credential_path: S3 credential file, or None for local filesystem.
+            checkpoint_path: Path to a directory containing .safetensors files.
+                Local paths and S3 URIs are tried first; if no safetensors are
+                found, explicit ``hf://org/model`` Hub URIs and bare
+                ``org/model`` repo IDs fall back to Hugging Face.
+            credential_path: S3 credential file, or None for local/HF.
             parallel_dims: ``ParallelDims`` instance (from
                 ``projects.cosmos3.vfm.utils.parallelism``).  The loader uses
                 it via :func:`~projects.cosmos3.vfm.models.utils.safetensors_loader._get_dp_shard_mesh`
