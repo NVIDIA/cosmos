@@ -12,7 +12,7 @@
 WANDB_API_KEY=xxx torchrun --nproc_per_node 1 -m scripts.train --config projects/dv_diffusion/config/cifar10.py
 ```
 
-* By default, OneLogger is automatically enabled by detecting the job environment - Slurm, NGC, Run:AI, and Local. Environment variable `ENABLE_ONELOGGER` is there to provide explicit control by the value between `TRUE` and `FALSE`. We assume `ENABLE_ONELOGGER` is set from [launcher](packages/launcher/README.md) Executor and users will always submit imaginaire4 jobs with [launcher](packages/launcher/README.md).
+* By default, OneLogger is automatically enabled by detecting the job environment - Slurm, NGC, Run:AI, and Local. Environment variable `ENABLE_ONELOGGER` is there to provide explicit control by the value between `TRUE` and `FALSE`. We assume `ENABLE_ONELOGGER` is set from launcher Executor and users will always submit imaginaire4 jobs with launcher.
   * NGC: `launcher.NGCExecutor` always sets `ENABLE_ONELOGGER=FALSE`.
   * Slurm: `launcher.SlurmExecutor` sets `ENABLE_ONELOGGER=TRUE` by default. It will follow user input if provided.
   * Run:AI: `launcher.RunAIExecutor` always sets `ENABLE_ONELOGGER=FALSE`.
@@ -22,7 +22,7 @@ WANDB_API_KEY=xxx torchrun --nproc_per_node 1 -m scripts.train --config projects
   * By default, `launcher.SlurmExecutor` sets `ONE_LOGGER_JOB_CATEGORY=production`.
   * If necessary, users are allowed to set `ONE_LOGGER_JOB_CATEGORY=test` through launcher. `test` mode is for jobs with abnormal behaviors such as interactive debugging jobs.
 
-* OneLogger is implemented in imaginaire4 in the form of Callback. `OneLoggerCallback` is defined in [imaginaire/utils/callback.py](imaginaire/utils/callback.py). `OneLoggerCallback` is added to the config callbacks before initializing `ImaginaireTrainer`.
+* OneLogger is implemented in imaginaire4 in the form of Callback. `OneLoggerCallback` is defined in [`../callback.py`](../callback.py). `OneLoggerCallback` is added to the config callbacks before initializing `ImaginaireTrainer`.
 
 `scripts/train.py`
 ```python

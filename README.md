@@ -21,9 +21,9 @@ Both halves share the same dependency manifest at the repository root, so a sing
 
 The training side provides:
 
-- A distributed trainer with FSDP / tensor / context / pipeline parallelism (see [`cosmos/trainer/`](./cosmos/trainer) and [`cosmos/model/`](./cosmos/model)).
-- A worker-based RL / post-training topology with `controller`, `rollout`, `reward`, `reference`, and `simulations` workers (see [`cosmos/workers/`](./cosmos/workers)).
-- A pluggable algorithm layer for losses, reward models, and RL update rules (see [`cosmos/algorithm/`](./cosmos/algorithm)).
+- A distributed trainer with FSDP / tensor / context / pipeline parallelism (see [`cosmos/trainer/`](./cosmos_training/cosmos/trainer) and [`cosmos/model/`](./cosmos_training/cosmos/model)).
+- A worker-based RL / post-training topology with `controller`, `rollout`, `reward`, `reference`, and `simulations` workers (see [`cosmos/workers/`](./cosmos_training/cosmos/workers)).
+- A pluggable algorithm layer for losses, reward models, and RL update rules (see [`cosmos/algorithm/`](./cosmos_training/cosmos/algorithm)).
 - Native DCP checkpointing with HuggingFace `safetensors` import/export.
 - Dataset abstractions for JSONL, WebDataset, and LeRobot formats.
 
@@ -52,7 +52,7 @@ If you are starting from the [recommended NVIDIA NGC base image](./docs/setup.md
 
 ## Training
 
-The training infrastructure lives in [`cosmos/`](./cosmos), with user-facing documentation in [`docs/`](./docs):
+The training infrastructure lives in [`cosmos/`](./cosmos_training/cosmos), with user-facing documentation in [`docs/`](./docs):
 
 | Topic                                                        | What it covers                                                                                                          |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
