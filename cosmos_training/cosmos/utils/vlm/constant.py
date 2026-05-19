@@ -13,9 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IGNORE_INDEX = -100
+# PyTorch CrossEntropyLoss treats targets equal to -100 as positions to
+# exclude from the loss (its upstream default for ignore_index). Used
+# wherever label tensors are assembled or CE losses are computed.
+IGNORE_INDEX: int = -100
 
-PROCESSOR_KEYS_TO_ADD_QWEN = [
+# Per-processor keys that downstream augmentors / collators pass through
+# from the HuggingFace processor output into the model batch.
+PROCESSOR_KEYS_TO_ADD_QWEN: list[str] = [
     "input_ids",
     "attention_mask",
     "pixel_values",
@@ -24,6 +29,6 @@ PROCESSOR_KEYS_TO_ADD_QWEN = [
     "video_grid_thw",
     "second_per_grid_ts",
 ]
-PROCESSOR_KEYS_TO_ADD_EAGLE = ["input_ids", "attention_mask", "pixel_values", "image_sizes"]
+PROCESSOR_KEYS_TO_ADD_EAGLE: list[str] = ["input_ids", "attention_mask", "pixel_values", "image_sizes"]
 
-PROCESSOR_KEYS_TO_ADD = list(set(PROCESSOR_KEYS_TO_ADD_QWEN + PROCESSOR_KEYS_TO_ADD_EAGLE))
+PROCESSOR_KEYS_TO_ADD: list[str] = list(set(PROCESSOR_KEYS_TO_ADD_QWEN + PROCESSOR_KEYS_TO_ADD_EAGLE))

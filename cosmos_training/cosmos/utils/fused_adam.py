@@ -18,13 +18,12 @@ import transformer_engine as te
 import transformer_engine_torch as tex
 
 from cosmos.utils import distributed, log
+from cosmos.utils.misc import get_local_tensor_if_DTensor
 
 
 class FusedAdam(torch.optim.Optimizer):
     """Implements Adam algorithm.
 
-    Currently GPU-only.  Requires Apex to be installed via
-    ``pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./``.
 
     This version of fused Adam implements 2 fusions.
 
@@ -38,6 +37,7 @@ class FusedAdam(torch.optim.Optimizer):
         opt = FusedAdam(model.parameters(), lr = ....)
         ...
         opt.step()
+
 
     .. warning::
         A previous version of :class:`FusedAdam` allowed a number of additional arguments to ``step``.
@@ -88,8 +88,10 @@ class FusedAdam(torch.optim.Optimizer):
             raise RuntimeError("FusedAdam does not support the AMSGrad variant.")
         if master_weights and not capturable:
             raise RuntimeError("Master weights is currently only supported with the capturable version.")
+
         # If the optimizer is capturable then LR should be a tensor (on GPU)
-        log.warning(f"FusedAdam master_weights: {master_weights} capturable: {capturable}")
+        log.info(f"FusedAdam master_weights: {master_weights} capturable: {capturable}")
+
         lr = torch.tensor(lr, dtype=torch.float32) if capturable else lr
         defaults = dict(lr=lr, bias_correction=bias_correction, betas=betas, eps=eps, weight_decay=weight_decay)
         super(FusedAdam, self).__init__(params, defaults)
@@ -112,7 +114,6 @@ class FusedAdam(torch.optim.Optimizer):
 
             self._step_supports_amp_scaling = True
 
-        # Skip buffer
         self._dummy_overflow_buf = torch.tensor([0], dtype=torch.int, device="cuda")
         self.multi_tensor_adam = tex.multi_tensor_adam
         self.multi_tensor_adam_capturable = tex.multi_tensor_adam_capturable
@@ -143,6 +144,7 @@ class FusedAdam(torch.optim.Optimizer):
                 param_list = pg["params"]
                 self.param_groups_master.append(
                     {
+                        # Change related to master weights
                         "params": [p.clone().detach().float() if self.master_weights else None for p in param_list],
                     }
                 )
@@ -196,33 +198,33 @@ class FusedAdam(torch.optim.Optimizer):
                 # State initialization
                 if len(state) == 0:
                     # Exponential moving average of gradient values
-                    state["exp_avg"] = torch.zeros_like(p.data).float()
+                    state["exp_avg"] = torch.zeros_like(p).float()
                     # Exponential moving average of squared gradient values
-                    state["exp_avg_sq"] = torch.zeros_like(p.data).float()
+                    state["exp_avg_sq"] = torch.zeros_like(p).float()
 
                 if p.dtype == torch.float16:
                     if self.master_weights:
-                        p_16_master.append(p_master.data)
-                    g_16.append(p.grad.data)
-                    p_16.append(p.data)
-                    m_16.append(state["exp_avg"])
-                    v_16.append(state["exp_avg_sq"])
+                        p_16_master.append(get_local_tensor_if_DTensor(p_master))
+                    g_16.append(get_local_tensor_if_DTensor(p.grad))
+                    p_16.append(get_local_tensor_if_DTensor(p))
+                    m_16.append(get_local_tensor_if_DTensor(state["exp_avg"]))
+                    v_16.append(get_local_tensor_if_DTensor(state["exp_avg_sq"]))
                 elif p.dtype == torch.bfloat16:
                     if self.master_weights:
-                        bf16_master.append(p_master.data)
-                    g_bf.append(p.grad)
-                    p_bf.append(p)
-                    m_bf.append(state["exp_avg"])
-                    v_bf.append(state["exp_avg_sq"])
+                        bf16_master.append(get_local_tensor_if_DTensor(p_master))
+                    g_bf.append(get_local_tensor_if_DTensor(p.grad))
+                    p_bf.append(get_local_tensor_if_DTensor(p))
+                    m_bf.append(get_local_tensor_if_DTensor(state["exp_avg"]))
+                    v_bf.append(get_local_tensor_if_DTensor(state["exp_avg_sq"]))
                 elif p.dtype == torch.float32:
                     if self.master_weights:
-                        p_32_master.append(p_master.data)
-                    g_32.append(p.grad.data)
-                    p_32.append(p.data)
-                    m_32.append(state["exp_avg"])
-                    v_32.append(state["exp_avg_sq"])
+                        p_32_master.append(get_local_tensor_if_DTensor(p_master))
+                    g_32.append(get_local_tensor_if_DTensor(p.grad))
+                    p_32.append(get_local_tensor_if_DTensor(p))
+                    m_32.append(get_local_tensor_if_DTensor(state["exp_avg"]))
+                    v_32.append(get_local_tensor_if_DTensor(state["exp_avg_sq"]))
                 else:
-                    raise RuntimeError("FusedAdam only support fp16 and fp32.")
+                    raise RuntimeError("FusedAdam only support fp16, bf16 and fp32.")
 
             # If the optimizer is capturable, then if there's a grad scaler it works
             # on the GPU + a different multi_tensor_applier should be called

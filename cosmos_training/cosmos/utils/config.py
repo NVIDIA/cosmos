@@ -540,7 +540,7 @@ class Config:
         assert self.job.name != ""
 
 
-def load_config(config_path: str, opts: list[str], enable_one_logger: bool = False) -> Config:
+def load_config(config_path: str, opts: list[str]) -> Config:
     from cosmos.utils.serialization import from_yaml, load_callable
 
     t1 = time.monotonic_ns()
@@ -554,18 +554,6 @@ def load_config(config_path: str, opts: list[str], enable_one_logger: bool = Fal
         config = override(config, opts, remove_defaults=True)
     else:
         config = _load_py_config(config_path, opts, validate=False)
-
-    if enable_one_logger:
-        try:
-            # pyrefly: ignore  # missing-import
-            from cosmos.utils.one_logger.one_logger_override_utils import override_one_logger_callback
-
-            ol_t1 = time.monotonic_ns()
-            config = override_one_logger_callback(config)
-            ol_t2 = time.monotonic_ns()
-            logging.debug(f"override_one_logger_callback: took {(ol_t2 - ol_t1) / 1e6:.2f}ms")
-        except ImportError:
-            pass
 
     t2 = time.monotonic_ns()
     logging.debug(f"total time to load config: {(t2 - t1) / 1e6:.2f}ms")

@@ -45,7 +45,7 @@ import torch
 import torch.distributed as dist
 import torch.nn.functional as F
 
-from cosmos.utils.vfm.vlm.constant import IGNORE_INDEX
+from cosmos.utils.vlm.constant import IGNORE_INDEX
 
 
 def cross_entropy_loss(

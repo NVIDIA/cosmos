@@ -69,7 +69,7 @@ def _optimizer_cls(
     elif optimizer_type.lower() == "adamw":
         optimizer = torch.optim.AdamW(params, **optimizer_kwargs)
     elif optimizer_type.lower() == "fusedadam":
-        from cosmos.utils.vfm.fused_adam import FusedAdam
+        from cosmos.utils.fused_adam import FusedAdam
 
         # FusedAdam is fused by construction and does not accept a ``fused`` kwarg.
         optimizer_kwargs.pop("fused", None)

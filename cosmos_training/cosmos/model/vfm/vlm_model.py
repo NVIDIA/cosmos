@@ -43,8 +43,8 @@ from configs.base.defaults.model_config import VLMModelConfig
 from cosmos.model.vfm.hf_model import HFModel
 from cosmos.model.vfm.parallelize_vlm import parallelize
 from cosmos.utils.vfm.parallelism import ParallelDims
-from cosmos.utils.vfm.vlm.constant import IGNORE_INDEX
-from cosmos.utils.vfm.vlm.create_position_ids import get_position_ids
+from cosmos.utils.vlm.constant import IGNORE_INDEX
+from cosmos.utils.vlm.create_position_ids import get_position_ids
 
 # Model-type dispatch sets. Using hf_config.model_type (stable HF-defined string)
 # rather than backbone.model_name avoids the brittleness of substring-matching a local
@@ -297,7 +297,7 @@ class VLMModel(ImaginaireModel):
           g. Load pretrain weights into sharded CUDA tensors.
           h. Apply gradient checkpointing if configured.
         """
-        from cosmos.utils.vfm.vlm.pretrained_models_downloader import (
+        from cosmos.utils.vlm.pretrained_models_downloader import (
             maybe_download_hf_model_from_s3,
         )
 

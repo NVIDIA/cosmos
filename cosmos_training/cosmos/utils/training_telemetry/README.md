@@ -46,9 +46,9 @@ The file backend will make every rank generate a json file with telemetry events
 
 The library uses the following mechanisms to intercept training events:
 
-* Top-level function decorator
-* Context managers
-* Callback implementation
+- Top-level function decorator
+- Context managers
+- Callback implementation
 
 ### Top-level function decorator
 
@@ -64,11 +64,11 @@ from cosmos.utils.training_telemetry import telemetry
 
 ### Context managers
 
-They are defined in [context_managers.py](./context_managers.py) and are called by higher-level context managers that also wrap other telemetry code (one-logger and timers), defined in [../context_managers.py](../context_managers.py). They are as follows:
+They are defined in [../context_managers.py](../context_managers.py) and wrap telemetry code (timers and NVTX marks). They are as follows:
 
-* `data_loader_init`: can be used to wrap code that initializes the data loader
-* `model_init`: can be used to wrap code that initializes a model
-* `distributed_init`: can be used to wrap code that initializes distributed communication
+- `data_loader_init`: can be used to wrap code that initializes the data loader
+- `model_init`: can be used to wrap code that initializes a model
+- `distributed_init`: can be used to wrap code that initializes distributed communication
 
 The context managers capture events that are not currently available in the callback.
 
@@ -80,38 +80,38 @@ This is defined in [callback.py](./callback.py) and implements most of the funct
 
 The following training events are captured:
 
-* Application running time and other information:
-  * Timezone
-  * Node name
-  * World size
-  * Rank
-  * Total iterations
-  * Checkpoint strategy and other information
-  * More data can be added in [telemetry.py](telemetry.py)
-* Data loader init
-* Model init
-* Distributed init
-* Optimizer init
-* Entire training loop duration
-* Training step duration (NVTX only)
-* Model forward (NVTX only)
-* Model backward (NVTX only)
-* Data loading (NVTX only)
-* Training iterations - every `trainer.logging_iter` the following is logged:
-  * Avg iteration time
-  * Avg forward time
-  * Avg backward time
-  * Avg data loading time
-  * Current iteration
-  * Number of iterations since previous logging
-  * Loss
-  * Batch size
-  * FLOPS - TODO (?)
-* Validation
-  * Total - logged
-  * Single step (NVTX only)  
-* Checkpoint load
-* Checkpoint save
+- Application running time and other information:
+  - Timezone
+  - Node name
+  - World size
+  - Rank
+  - Total iterations
+  - Checkpoint strategy and other information
+  - More data can be added in [telemetry.py](telemetry.py)
+- Data loader init
+- Model init
+- Distributed init
+- Optimizer init
+- Entire training loop duration
+- Training step duration (NVTX only)
+- Model forward (NVTX only)
+- Model backward (NVTX only)
+- Data loading (NVTX only)
+- Training iterations - every `trainer.logging_iter` the following is logged:
+  - Avg iteration time
+  - Avg forward time
+  - Avg backward time
+  - Avg data loading time
+  - Current iteration
+  - Number of iterations since previous logging
+  - Loss
+  - Batch size
+  - FLOPS - TODO (?)
+- Validation
+  - Total - logged
+  - Single step (NVTX only)  
+- Checkpoint load
+- Checkpoint save
 
 ## Output
 

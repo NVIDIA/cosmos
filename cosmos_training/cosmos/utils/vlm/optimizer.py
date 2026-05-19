@@ -45,11 +45,26 @@ class OptimizerConfig:
     betas: tuple[float, float] = (0.9, 0.95)
     lr_multiplier: LazyDict = LazyDict(dict(vision_encoder=0.1, mm_projector=1.0, llm=1.0))
 
-    # model freeze config
+    # Legacy named freeze flags — VFM-unified VLMModel and cosmos-rl sft_trainer both
+    # honor these. Supported archs: Qwen2.5-VL, Qwen3-VL (dense + MoE), InternVL3_5.
     freeze_vision_encoder: bool = False
     freeze_mm_projector: bool = False
     freeze_llm: bool = False
     freeze_llm_moe_gates: bool = False
+
+    # Regex-based freeze — mutually exclusive (enforced in __attrs_post_init__ below and
+    # again at the top of _apply_freeze_config for the LazyCall/DictConfig runtime path).
+    # trainable_params: whitelist — only matching params are trainable (full override).
+    # frozen_params:    blacklist — matching params get frozen, additive on top of legacy.
+
+    # reads only the legacy booleans (sft_trainer_cosmos_rl.py:200); trainable_params /
+    # frozen_params are silently ignored there.
+    trainable_params: Optional[list[str]] = None
+    frozen_params: Optional[list[str]] = None
+
+    def __attrs_post_init__(self) -> None:
+        if self.trainable_params is not None and self.frozen_params is not None:
+            raise ValueError("OptimizerConfig: set at most one of trainable_params or frozen_params, not both.")
 
 
 def _optimizer_cls(params: list[nn.Parameter], optimizer_kwargs: dict[str, Any], name: str):
@@ -170,7 +185,7 @@ def build_optimizers(
     fused = config.fused
     optimizer_kwargs = {
         "lr": lr,
-        "betas": config.betas,
+        "betas": tuple(config.betas),
         "weight_decay": config.weight_decay,
         "fused": fused,
         "foreach": not fused,

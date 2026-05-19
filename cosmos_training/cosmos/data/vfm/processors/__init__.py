@@ -26,7 +26,7 @@ from cosmos.data.vfm.processors.nemotron3densevl_processor import Nemotron3Dense
 from cosmos.data.vfm.processors.nemotronvl_processor import NemotronVLProcessor
 from cosmos.data.vfm.processors.qwen3vl_processor import Qwen3VLProcessor
 from cosmos.model.vfm.tokenizers.tokenization_qwen2 import Qwen2Tokenizer
-from cosmos.utils.vfm.vlm.pretrained_models_downloader import maybe_download_hf_model_from_s3
+from cosmos.utils.vlm.pretrained_models_downloader import maybe_download_hf_model_from_s3
 
 _VARIANT_TO_CREDENTIALS = {
     "s3": ("credentials/s3_training.secret", "checkpoints-us-east-1"),

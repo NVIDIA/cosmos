@@ -1212,7 +1212,7 @@ def main() -> None:
         print(f"Loading config: {args.config}")
         print(f"Config overrides: {args.opts}")
     try:
-        config = load_config(args.config, args.opts, enable_one_logger=False)
+        config = load_config(args.config, args.opts)
     except Exception as e:
         print(f"Failed to load config: {e}")
         raise

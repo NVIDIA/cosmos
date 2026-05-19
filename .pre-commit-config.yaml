@@ -17,7 +17,8 @@ default_language_version:
   python: python3.13
 exclude: (?x)(
     ^tests/data/|
-    ^cosmos-inference/
+    ^cosmos-inference/|
+    ^\.claude/
   )
 repos:
   - repo: https://github.com/google/addlicense

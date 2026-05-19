@@ -26,7 +26,7 @@ from cosmos.data.imaginaire.webdataset.augmentors.augmentor import Augmentor
 from cosmos.utils import log
 from cosmos.data.vfm.vlm.video_decoder_qwen import token_to_pixels
 from cosmos.data.vfm.processors.qwen3vl_processor import Qwen3VLProcessor as Processor
-from cosmos.utils.vfm.vlm.constant import IGNORE_INDEX, PROCESSOR_KEYS_TO_ADD
+from cosmos.utils.vlm.constant import IGNORE_INDEX, PROCESSOR_KEYS_TO_ADD
 
 
 def maybe_subsample_frames(model_name_or_path, list_of_pil_image, max_video_token_length, processor):

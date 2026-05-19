@@ -35,7 +35,7 @@ from transformers.models.auto.processing_auto import AutoProcessor
 
 from cosmos.utils import log
 from cosmos.model.vfm.vlm.qwen3_vl.utils import tokenize_caption
-from cosmos.utils.vfm.vlm.pretrained_models_downloader import maybe_download_hf_model_from_s3
+from cosmos.utils.vlm.pretrained_models_downloader import maybe_download_hf_model_from_s3
 
 
 def convert_string_content_to_list_content(messages: List[Dict]) -> List[Dict]:

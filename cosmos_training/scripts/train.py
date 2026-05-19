@@ -230,7 +230,7 @@ For python-based LazyConfig, use "path.key=value".
     if args.deterministic:
         _setup_deterministic_env_and_backends()
 
-    config = load_config(args.config, args.opts, enable_one_logger=True)
+    config = load_config(args.config, args.opts)
 
     if args.dryrun:
         logging.info(
