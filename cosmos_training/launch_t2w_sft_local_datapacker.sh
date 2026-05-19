@@ -87,7 +87,6 @@ IMAGINAIRE_OUTPUT_ROOT="$OUTPUT_ROOT" PYTHONPATH=. \
     upload_reproducible_setup=false \
     "checkpoint.load_path=$DCP_LOAD_PATH" \
     checkpoint=local \
-    ckpt_type=dummy \
     checkpoint.load_from_object_store.enabled=false \
     checkpoint.save_to_object_store.enabled=false \
     model.config.parallelism.data_parallel_shard_degree=-1 \

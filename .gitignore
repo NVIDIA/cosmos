@@ -1,3 +1,12 @@
+# Editor / OS noise.
+*.swp
+.DS_Store
+
+# Local training output (generated, large).
+training_output/
+
+# Release-tool metadata (regenerated on every release run).
+cosmos_training_meta/
 /assets
 /credentials
 /datasets
@@ -5,16 +14,6 @@
 /tmp
 .cuda-name
 *.env
-
-# Local training output (generated, large).
-training_output/
-
-# Release-tool metadata (regenerated on every release run).
-cosmos_training_meta/
-
-# Editor / OS noise.
-*.swp
-.DS_Store
 
 # ------------------------ BELOW IS AUTO-GENERATED FOR PYTHON REPOS ------------------------
 

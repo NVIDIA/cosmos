@@ -68,7 +68,6 @@ IMAGINAIRE_OUTPUT_ROOT="$OUTPUT_ROOT" PYTHONPATH=. \
     trainer.max_iter=10 \
     trainer.logging_iter=1 \
     job.wandb_mode=disabled \
-    ckpt_type=dummy \
     checkpoint.load_from_object_store.enabled=false \
     checkpoint.save_to_object_store.enabled=false \
     upload_reproducible_setup=false \

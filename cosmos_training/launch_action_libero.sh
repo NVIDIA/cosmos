@@ -100,7 +100,6 @@ LOGURU_LEVEL=DEBUG IMAGINAIRE_OUTPUT_ROOT="$OUTPUT_ROOT" PYTHONPATH=. \
     job.wandb_mode=disabled \
     upload_reproducible_setup=false \
     checkpoint=local \
-    ckpt_type=dummy \
     checkpoint.load_from_object_store.enabled=false \
     checkpoint.save_to_object_store.enabled=false \
     model.config.parallelism.data_parallel_shard_degree=-1 \
