@@ -16,6 +16,7 @@
 import argparse
 import os
 import traceback
+from typing import Any
 
 import torch
 from loguru import logger as logging
@@ -27,7 +28,11 @@ from cosmos.utils import distributed
 from cosmos.utils.context_managers import data_loader_init, distributed_init, model_init
 from cosmos.utils.launch import log_reproducible_setup
 from cosmos.utils.training_telemetry import telemetry
-from scripts.interface_toml import translate_interface_toml
+from scripts.interface_toml import (
+    read_config_py_from_toml,
+    read_path_overrides,
+    translate_interface_toml,
+)
 
 # ---------------------------------------------------------------------------
 # --deterministic: mirrors launch_vfm.sh determinism settings.
@@ -137,6 +142,58 @@ def _apply_deterministic_config_overrides(config: Config) -> None:
     )
 
 
+def _set_dataset_jsonl(config: Config, value: Any) -> str:
+    """Route ``dataset_jsonl`` to whichever ``jsonl_paths`` attribute the
+    resolved Config actually exposes.
+
+    Different experiments expose the jsonl_paths list under different attribute
+    trees of ``config.dataloader_train``:
+      - ``data_source.jsonl_paths``                       (e.g. t2w_sft_8b_local_datapacker)
+      - ``dataloader.datasets.video.dataset.jsonl_paths`` (e.g. mixed_modality_sft_8b)
+    Returns the dotted attribute path that was actually set.
+    """
+    jsonl_list = [value] if isinstance(value, str) else list(value)
+    dl = config.dataloader_train
+    data_source = getattr(dl, "data_source", None)
+    if data_source is not None and hasattr(data_source, "jsonl_paths"):
+        data_source.jsonl_paths = jsonl_list
+        return "dataloader_train.data_source.jsonl_paths"
+    try:
+        dataset = dl.dataloader.datasets.video.dataset
+    except AttributeError:
+        dataset = None
+    if dataset is not None and hasattr(dataset, "jsonl_paths"):
+        dataset.jsonl_paths = jsonl_list
+        return "dataloader_train.dataloader.datasets.video.dataset.jsonl_paths"
+    raise AttributeError(
+        "dataset_jsonl: no known jsonl_paths attribute on config.dataloader_train "
+        "(tried data_source.jsonl_paths and dataloader.datasets.video.dataset.jsonl_paths)"
+    )
+
+
+def _apply_path_overrides(config: Config, paths: dict[str, Any]) -> None:
+    """Apply TOML top-level path keys to the resolved Config in-place.
+
+    Each key has a fixed attribute target except ``dataset_jsonl``, which is
+    routed by ``_set_dataset_jsonl`` based on the experiment's dataloader tree.
+    """
+    if not paths:
+        return
+    applied: list[str] = []
+    if "checkpoint_path" in paths:
+        config.checkpoint.load_path = paths["checkpoint_path"]
+        applied.append("checkpoint.load_path")
+    if "wan_vae_path" in paths:
+        config.model.config.tokenizer.vae_path = paths["wan_vae_path"]
+        applied.append("model.config.tokenizer.vae_path")
+    if "model_path" in paths:
+        config.model.config.policy.backbone.model_name = paths["model_path"]
+        applied.append("model.config.policy.backbone.model_name")
+    if "dataset_jsonl" in paths:
+        applied.append(_set_dataset_jsonl(config, paths["dataset_jsonl"]))
+    logging.info(f"[interface.toml] applied path overrides: {applied}")
+
+
 @logging.catch(reraise=True)
 @telemetry.monitor
 def launch(config: Config, args: argparse.Namespace) -> None:
@@ -189,11 +246,14 @@ if __name__ == "__main__":
     # Usage:
     #   torchrun --nproc_per_node=1 -m scripts.train --config=configs/base/config.py
     #   torchrun --nproc_per_node=1 -m scripts.train --config=.../config.py --toml=interface.toml
+    #   torchrun --nproc_per_node=1 -m scripts.train --toml=interface.toml
     # When --config and --toml are both given, --toml is treated as the flat
     # interface.toml schema (see toml/vfm_example.toml).
     # scripts/interface_toml.py translates it into Hydra overrides; the variant
     # (vfm-vlm vs vfm-base) is inferred from the --config path. When --toml is
-    # alone, it must be a full structured TOML (root _target_ etc.).
+    # alone, the TOML may self-declare the paired config.py via a top-level
+    # ``config = "vfm"|"vlm"`` field (interface mode); otherwise it is loaded
+    # as a full structured TOML (root _target_ etc.).
 
     # Get the config file from the input arguments.
     parser = argparse.ArgumentParser(description="Training")
@@ -250,18 +310,33 @@ For python-based LazyConfig, use "path.key=value".
     if args.deterministic:
         _setup_deterministic_env_and_backends()
 
+    # Path overrides declared at the top of the TOML (checkpoint_path,
+    # wan_vae_path, dataset_jsonl, model_path) are not Hydra-style strings —
+    # they're applied to the resolved Config object post-load.
+    path_overrides: dict[str, Any] = {}
     if args.config and args.toml:
         config_path = args.config
         interface_overrides = translate_interface_toml(args.toml, args.config)
         args.opts = list(args.opts or []) + interface_overrides
+        path_overrides = read_path_overrides(args.toml)
     elif args.toml:
-        config_path = args.toml
+        # If the TOML self-declares its paired config.py (top-level `config = "vfm"|"vlm"`),
+        # treat it as an interface TOML; otherwise load it as a full structured TOML.
+        toml_declared_config = read_config_py_from_toml(args.toml)
+        if toml_declared_config is not None:
+            config_path = toml_declared_config
+            interface_overrides = translate_interface_toml(args.toml, config_path)
+            args.opts = list(args.opts or []) + interface_overrides
+            path_overrides = read_path_overrides(args.toml)
+        else:
+            config_path = args.toml
     elif args.config:
         config_path = args.config
     else:
         parser.error("Provide --config and/or --toml.")
 
     config = load_config(config_path, args.opts)
+    _apply_path_overrides(config, path_overrides)
 
     if args.dryrun:
         logging.info(

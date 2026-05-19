@@ -296,6 +296,54 @@ INTERFACE_TO_HYDRA_VFM_BASE: MappingDict = {
 VARIANT_VLM = "vfm-vlm"
 VARIANT_BASE = "vfm-base"
 
+# Maps a top-level interface TOML ``config = "..."`` field to the paired
+# ``configs/base/...config.py`` path. Lets a TOML self-declare its variant so
+# launch scripts don't need to pass ``--config=...`` separately.
+CONFIG_FIELD_TO_PY = {
+    "vfm": "configs/base/config.py",
+    "vlm": "configs/base/vlm/config.py",
+}
+
+# Top-level path keys the TOML may declare in place of CLI-tail overrides.
+# train.py applies them post-load: the first three map to fixed attribute
+# paths on the resolved Config; ``dataset_jsonl`` is routed by hasattr probe
+# because different experiments expose jsonl_paths under different trees.
+PATH_OVERRIDE_KEYS = ("checkpoint_path", "wan_vae_path", "dataset_jsonl", "model_path")
+
+# Top-level keys consumed by the launcher, not by translate_interface_toml.
+_LAUNCHER_DIRECTIVE_KEYS = ("config",) + PATH_OVERRIDE_KEYS
+
+
+def read_config_py_from_toml(toml_path: str) -> str | None:
+    """Return the ``configs/base/...config.py`` path declared by a TOML's
+    top-level ``config`` field, or ``None`` if the field is absent.
+
+    Raises ``ValueError`` if the field is present but not one of the known
+    variant strings.
+    """
+    with open(toml_path, "rb") as f:
+        raw = tomllib.load(f)
+    variant = raw.get("config")
+    if variant is None:
+        return None
+    if variant not in CONFIG_FIELD_TO_PY:
+        raise ValueError(
+            f"{toml_path}: top-level `config` = {variant!r} is not one of "
+            f"{list(CONFIG_FIELD_TO_PY)}"
+        )
+    return CONFIG_FIELD_TO_PY[variant]
+
+
+def read_path_overrides(toml_path: str) -> dict[str, Any]:
+    """Return any ``PATH_OVERRIDE_KEYS`` top-level fields the TOML declares.
+
+    Missing keys are simply absent from the result. train.py routes each one
+    onto the resolved Config after ``load_config`` returns.
+    """
+    with open(toml_path, "rb") as f:
+        raw = tomllib.load(f)
+    return {k: raw[k] for k in PATH_OVERRIDE_KEYS if k in raw}
+
 
 def _detect_variant(config_path: str | None) -> str:
     if config_path is None:
@@ -338,6 +386,11 @@ def translate_interface_toml(toml_path: str, config_path: str | None) -> list[st
         raw = tomllib.load(f)
     if not isinstance(raw, dict):
         raise ValueError(f"Expected dict-like TOML, got {type(raw)}")
+    # Top-level launcher directives (config variant + PATH_OVERRIDE_KEYS) are
+    # consumed by read_config_py_from_toml() / read_path_overrides(); they
+    # aren't Hydra overrides.
+    for key in _LAUNCHER_DIRECTIVE_KEYS:
+        raw.pop(key, None)
 
     variant = _detect_variant(config_path)
     mapping = _select_mapping(variant)

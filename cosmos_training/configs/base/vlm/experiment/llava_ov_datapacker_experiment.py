@@ -292,6 +292,12 @@ pre_exp012_llava_ov_datapacker = LazyDict(
             logging_iter=1,
             run_validation=False,
         ),
+        # Local-only mode: disable the parent's object-store IO so the run
+        # stays self-contained (no GCP credentials required).
+        checkpoint=dict(
+            load_from_object_store=dict(enabled=False),
+            save_to_object_store=dict(enabled=False),
+        ),
         # Replace the S3 WebDataset-based dataloader with DataPackerDataLoader
         # pointing at lmms-lab/LLaVA-OneVision-Data streamed from HuggingFace Hub.
         dataloader_train=L(build_vlm_datapacker_dataloader)(

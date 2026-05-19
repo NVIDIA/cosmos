@@ -214,6 +214,17 @@ def action_policy_sft_8b_datapacker_experiments() -> None:
     exp["model"]["config"]["rectified_flow_training_config"]["action_loss_weight"] = 10.0
     exp["model"]["config"]["num_embodiment_domains"] = 32
 
+    # Local-only mode: bypass internal GCP object-store paths in favor of the
+    # local checkpoint_path / wan_vae_path declared in toml/launch_action_libero.toml
+    # and the HF tokenizer/weights stack. Without these, defaults pull the GCP
+    # bucket + qwen3_vl_mot_vlm_8b_instruct_gcp variant.
+    exp["model"]["config"]["tokenizer"]["bucket_name"] = ""
+    exp["model"]["config"]["tokenizer"]["object_store_credential_path_pretrained"] = ""
+    exp["checkpoint"]["load_from_object_store"] = dict(enabled=False)
+    exp["checkpoint"]["save_to_object_store"] = dict(enabled=False)
+    exp["model"]["config"]["vlm_config"]["tokenizer"] = dict(config_variant="hf")
+    exp["model"]["config"]["vlm_config"]["pretrained_weights"]["enabled"] = False
+
     # Replace the 3-layer IterativeJointDataLoader stack with DataPackerDataLoader.
     # max_tokens=999_999 ensures the token budget never triggers;
     # max_batch_size=256 is the effective batch boundary (matches action_policy_sft_8b).

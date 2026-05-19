@@ -1,30 +1,24 @@
 #!/usr/bin/env bash
 # TOML-launch sibling of run_mixed_modality_sft_trace.sh.
 #
-# Same job (mixed_modality_sft_8b smoke + import tracer), but the common
-# Hydra overrides live in toml/mixed_modality_sft_8b.toml instead
-# of being inlined on the CLI. Only the project-specific paths
-# (jsonl_paths, vae_path) and the env-controlled trainer.max_iter remain
-# as CLI tail overrides.
+# Same job (mixed_modality_sft_8b smoke + import tracer), but all Hydra
+# overrides — including trainer.max_iter — live in
+# toml/mixed_modality_sft_8b.toml. No CLI tail overrides.
 #
 # Usage (inside container on a 4-GPU node):
 #   srun --overlap --jobid <JOB_ID> --container-name yangyangt_dev \
 #        bash /lustre/.../cosmos_training/run_mixed_modality_sft_trace_toml.sh
 #
-# Env vars (same as the direct-CLI script):
-#   MAX_ITER (default: 2)    trainer.max_iter — keep small for trace runs
+# Env vars:
 #   PORT     (default: 12399) torchrun master port
 #   OUT_LOG  (default: /lustre/.../cosmos_opensource/training_output/imports_mixed_modality_sft_8b.log)
 set -uo pipefail
 
 # Self-locate: WORKDIR is the directory this script sits in (cosmos_training/).
 WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DATASET_JSONL="/nfs/sw/sw_aidot/users/pzeren/Cosmos-prerelease/workdir/cosmos_opensource/sft_dataset_bridge/train/video_dataset_file.jsonl"
-WAN_VAE_PATH="/nfs/sw/sw_aidot/users/pzeren/Cosmos-prerelease/workdir/cosmos_opensource/pretrained/tokenizers/video/wan2pt2/Wan2.2_VAE.pth"
 # Note: DCP_LOAD_PATH is in the TOML ([train.ckpt].load_path), not here.
 
 PORT="${PORT:-12399}"
-MAX_ITER="${MAX_ITER:-2}"
 OUT_LOG="${OUT_LOG:-/nfs/sw/sw_aidot/users/pzeren/Cosmos-prerelease/workdir/cosmos_opensource/training_output/imports_mixed_modality_sft_8b.log}"
 
 TRACER_DIR="/tmp/cosmos_import_tracer"
@@ -33,7 +27,6 @@ LOG_DIR="/tmp/cosmos_import_logs"
 echo "=== mixed_modality_sft_8b import trace (TOML launch) ==="
 echo "  WORKDIR:  $WORKDIR"
 echo "  PORT:     $PORT"
-echo "  MAX_ITER: $MAX_ITER"
 echo "  OUT_LOG:  $OUT_LOG"
 echo "========================================================"
 
@@ -70,8 +63,6 @@ PYEOF
 
 # 2. Sanity-check inputs.
 [[ -d "$WORKDIR" ]]      || { echo "ERROR: WORKDIR not found: $WORKDIR" >&2; exit 1; }
-[[ -f "$DATASET_JSONL" ]] || { echo "ERROR: dataset jsonl not found: $DATASET_JSONL" >&2; exit 1; }
-[[ -f "$WAN_VAE_PATH" ]]  || { echo "ERROR: Wan VAE not found: $WAN_VAE_PATH" >&2; exit 1; }
 [[ -f "$WORKDIR/toml/mixed_modality_sft_8b.toml" ]] \
     || { echo "ERROR: TOML not found: $WORKDIR/toml/mixed_modality_sft_8b.toml" >&2; exit 1; }
 
@@ -82,31 +73,20 @@ mkdir -p "$HF_HOME"
 export HF_TOKEN="${HF_TOKEN:-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}"
 export HF_HUB_DISABLE_XET=1
 
-echo ">>> $(date '+%H:%M:%S') Launching torchrun (port $PORT, max_iter $MAX_ITER) ..."
+echo ">>> $(date '+%H:%M:%S') Launching torchrun (port $PORT) ..."
 
 # 3. Run the smoke with the tracer on PYTHONPATH.
 # PYTHONPATH order: tracer dir FIRST so its sitecustomize wins.
 #
-# What goes where:
-#   --toml  →  toml/mixed_modality_sft_8b.toml carries
-#              job.wandb_mode, trainer.{max_iter, logging_iter, run_validation},
-#              upload_reproducible_setup, experiment=mixed_modality_sft_8b,
-#              checkpoint.load_path, model.config.parallelism.data_parallel_shard_degree
-#   CLI tail →  the two project-specific deep paths that the interface schema
-#               doesn't cover, plus the env-controlled trainer.max_iter
-#               (CLI overrides win over TOML, so $MAX_ITER replaces the
-#               TOML default of 2).
+# All Hydra overrides — experiment, ckpt, dp_shard, trainer.{max_iter,
+# logging_iter, run_validation}, dataset paths — live in
+# toml/mixed_modality_sft_8b.toml. No CLI tail.
 COSMOS_IMPORT_TRACE=1 \
 COSMOS_IMPORT_LOG_DIR="$LOG_DIR" \
 PYTHONPATH="$TRACER_DIR:$WORKDIR" \
 IMAGINAIRE_OUTPUT_ROOT=/tmp/cosmos-trace-output \
     torchrun --nproc_per_node=4 --master_port=$PORT -m scripts.train \
-    --config=configs/base/config.py \
     --toml=toml/mixed_modality_sft_8b.toml \
-    -- \
-    "dataloader_train.dataloader.datasets.video.dataset.jsonl_paths=[\"$DATASET_JSONL\"]" \
-    "model.config.tokenizer.vae_path=$WAN_VAE_PATH" \
-    trainer.max_iter=$MAX_ITER \
     2>&1 | tail -40
 
 SMOKE_EXIT=${PIPESTATUS[0]}

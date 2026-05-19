@@ -18,6 +18,10 @@
 #   model.config.vlm_config.pretrained_weights.enabled=false
 # The LIBERO data root flows via the LIBERO_LOCAL_DATA_ROOT env var.
 
+config = "vfm"
+checkpoint_path = "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/users/maoshengl/inter_ckpts/internal"
+wan_vae_path = "/nfs/sw/sw_aidot/users/pzeren/Cosmos-prerelease/workdir/cosmos_opensource/pretrained/tokenizers/video/wan2pt2/Wan2.2_VAE.pth"
+
 [job]
 # output_dir = ${IMAGINAIRE_OUTPUT_ROOT}/${job.project}/${job.group}/${job.name}
 project = "cosmos3_action_libero"                # hydra: job.project

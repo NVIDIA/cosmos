@@ -14,6 +14,10 @@
 #   dataloader_train.dataloader.datasets.video.dataset.jsonl_paths=[...]
 #   model.config.tokenizer.vae_path=<path>
 
+config = "vfm"
+wan_vae_path = "/nfs/sw/sw_aidot/users/pzeren/Cosmos-prerelease/workdir/cosmos_opensource/pretrained/tokenizers/video/wan2pt2/Wan2.2_VAE.pth"
+dataset_jsonl = "/nfs/sw/sw_aidot/users/pzeren/Cosmos-prerelease/workdir/cosmos_opensource/sft_dataset_bridge/train/video_dataset_file.jsonl"
+
 [job]
 # output_dir = ${IMAGINAIRE_OUTPUT_ROOT}/${job.project}/${job.group}/${job.name}
 project = "cosmos3"                             # hydra: job.project

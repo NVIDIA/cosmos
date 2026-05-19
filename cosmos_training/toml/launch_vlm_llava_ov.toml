@@ -16,6 +16,9 @@
 #   checkpoint.load_from_object_store.enabled=false
 #   checkpoint.save_to_object_store.enabled=false
 
+config = "vlm"
+model_path = "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/users/maoshengl/models/Siglip2-Qwen3-1.7B-BF16-Alignment"
+
 [job]
 # output_dir = ${IMAGINAIRE_OUTPUT_ROOT}/${job.project}/${job.group}/${job.name}
 project = "cosmos_reason2"                        # hydra: job.project

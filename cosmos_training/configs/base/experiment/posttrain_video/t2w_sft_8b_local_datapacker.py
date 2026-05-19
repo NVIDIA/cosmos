@@ -212,7 +212,16 @@ t2w_sft_8b_local_datapacker = LazyDict(
                 sound_gen=False,
                 # VLMConfig schema unified (commit 63161d8b80 "v12 + dingm"):
                 # `load_pretrained` collapsed into `pretrained_weights: PretrainedWeightsConfig`.
-                vlm_config=dict(pretrained_weights=dict(enabled=False)),
+                vlm_config=dict(
+                    pretrained_weights=dict(enabled=False),
+                    tokenizer=dict(config_variant="hf"),
+                ),
+                # Local-only mode: bypass GCP object-store bucket/creds interpolations
+                # from the wan2pt2_tokenizer default + gcp_iad_gb200 cluster.
+                tokenizer=dict(
+                    bucket_name="",
+                    object_store_credential_path_pretrained="",
+                ),
                 diffusion_expert_config=dict(
                     patch_spatial=2,
                     position_embedding_type="unified_3d_mrope",
@@ -264,6 +273,9 @@ t2w_sft_8b_local_datapacker = LazyDict(
             load_training_state=False,
             strict_resume=True,
             keys_to_skip_loading=["net_ema."],
+            # Local-only mode: disable the gcp checkpoint preset's object-store IO.
+            load_from_object_store=dict(enabled=False),
+            save_to_object_store=dict(enabled=False),
         ),
         upload_reproducible_setup=False,
         # ---------------------------------------------------------------------------
