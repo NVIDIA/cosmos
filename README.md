@@ -443,25 +443,15 @@ pip install "cosmos-guardrail==0.3.1"
 Start a Nano server:
 
 ```shell
-sglang serve \
-  --model-type diffusion \
-  --model-path nvidia/Cosmos3-Nano \
-  --num-gpus 1 \
-  --host 0.0.0.0 \
-  --port 8000 \
-  --output-path /tmp/cosmos3-sglang
+sglang serve --model-path nvidia/Cosmos3-Nano
 ```
 
-For `Cosmos3-Super`, use multiple GPUs:
+For a video-specialized checkpoint, use `Cosmos3-Super-Image2Video` with multiple GPUs:
 
 ```shell
 sglang serve \
-  --model-type diffusion \
-  --model-path nvidia/Cosmos3-Super \
-  --num-gpus 4 \
-  --host 0.0.0.0 \
-  --port 8000 \
-  --output-path /tmp/cosmos3-sglang
+  --model-path nvidia/Cosmos3-Super-Image2Video \
+  --num-gpus 4
 ```
 
 Vision endpoints:
@@ -475,7 +465,7 @@ Vision endpoints:
 Text-to-video example:
 
 ```shell
-job_id=$(curl -sS -X POST http://localhost:8000/v1/videos \
+job_id=$(curl -sS -X POST http://localhost:30000/v1/videos \
   --form-string "prompt=A small warehouse robot moves a blue box across a clean floor." \
   --form-string "negative_prompt=blurry, distorted, low quality" \
   --form-string "size=1280x720" \
@@ -489,21 +479,21 @@ job_id=$(curl -sS -X POST http://localhost:8000/v1/videos \
   | python -c 'import json, sys; print(json.load(sys.stdin)["id"])')
 
 while true; do
-  status=$(curl -sS "http://localhost:8000/v1/videos/${job_id}" \
+  status=$(curl -sS "http://localhost:30000/v1/videos/${job_id}" \
     | python -c 'import json, sys; print(json.load(sys.stdin)["status"])')
   [ "$status" = "completed" ] && break
   [ "$status" = "failed" ] && exit 1
   sleep 1
 done
 
-curl -sS -L "http://localhost:8000/v1/videos/${job_id}/content" \
+curl -sS -L "http://localhost:30000/v1/videos/${job_id}/content" \
   -o cosmos3_t2v_output.mp4
 ```
 
 Text-to-image example:
 
 ```shell
-curl -sS -X POST http://localhost:8000/v1/images/generations \
+curl -sS -X POST http://localhost:30000/v1/images/generations \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "A warehouse robot folds a blue cloth on a clean workbench.",
