@@ -467,14 +467,13 @@ Vision endpoints:
 | Mode | Endpoint | Notes |
 | --- | --- | --- |
 | Text to image | `POST /v1/images/generations` | Returns base64 by default for Cosmos 3 |
-| Text to video | `POST /v1/videos/sync` or `POST /v1/videos` | `/sync` blocks and returns MP4 bytes with `Accept: video/mp4` |
-| Image to video | `POST /v1/videos/sync` or `POST /v1/videos` | Upload the conditioning image with `input_reference` |
+| Text to video | `POST /v1/videos` | Creates an async job; poll `GET /v1/videos/{id}` and download `/content` |
+| Image to video | `POST /v1/videos` | Upload the conditioning image with `input_reference` |
 
 Text-to-video example:
 
 ```shell
-curl -sS -X POST http://localhost:8000/v1/videos/sync \
-  -H "Accept: video/mp4" \
+job_id=$(curl -sS -X POST http://localhost:8000/v1/videos \
   --form-string "prompt=A small warehouse robot moves a blue box across a clean floor." \
   --form-string "negative_prompt=blurry, distorted, low quality" \
   --form-string "size=1280x720" \
@@ -485,6 +484,17 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync \
   --form-string "flow_shift=10.0" \
   --form-string "seed=42" \
   --form-string 'extra_params={"guardrails":true,"use_resolution_template":false,"use_duration_template":false}' \
+  | python -c 'import json, sys; print(json.load(sys.stdin)["id"])')
+
+while true; do
+  status=$(curl -sS "http://localhost:8000/v1/videos/${job_id}" \
+    | python -c 'import json, sys; print(json.load(sys.stdin)["status"])')
+  [ "$status" = "completed" ] && break
+  [ "$status" = "failed" ] && exit 1
+  sleep 1
+done
+
+curl -sS -L "http://localhost:8000/v1/videos/${job_id}/content" \
   -o cosmos3_t2v_output.mp4
 ```
 
