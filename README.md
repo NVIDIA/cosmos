@@ -434,6 +434,8 @@ Supported checkpoints:
 Install SGLang with diffusion extras:
 
 ```shell
+git clone https://github.com/sgl-project/sglang.git
+cd sglang
 pip install -e "python[diffusion]"
 pip install "cosmos-guardrail==0.3.1"
 ```
