@@ -27,6 +27,7 @@
     - [Generator with vLLM-Omni](#generator-with-vllm-omni)
     - [Reasoner with Transformers](#reasoner-with-transformers)
     - [Reasoner with vLLM](#reasoner-with-vllm)
+    - [Reasoner with NIM](#reasoner-with-nim)
   - [Troubleshooting](#troubleshooting)
     - [Which CUDA version should I use?](#which-cuda-version-should-i-use)
     - [Which base container should I use?](#which-base-container-should-i-use)
@@ -473,6 +474,107 @@ Configuration notes:
 | `--media-io-kwargs '{"video": {"num_frames": -1}}'` | Allows the processor to consider all available frames before downstream frame sampling |
 | `--allowed-local-media-path` | Required when requests pass local `file://` media paths |
 
+#### Reasoner with NIM
+
+<details>
+<summary>Expand NIM Reasoner setup, container launch, and request reference</summary>
+
+Use the [Cosmos 3 Reasoner NIM](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner) for the fastest path to a production-grade, OpenAI-compatible Reasoner endpoint. NIM ships a prebuilt, optimized container so you skip the vLLM dependency and CUDA-pairing setup above; it serves text outputs from text, image, and video inputs.
+
+You can try it interactively in your browser on the [cosmos3-nano-reasoner build page](https://build.nvidia.com/nvidia/cosmos3-nano-reasoner) — that playground is powered by this same NIM. See the [Cosmos Reason 3 NIM API reference](https://docs.nvidia.com/nim/vision-language-models/1.7.0/examples/cosmos-reason3/api.html) for the full request reference.
+
+The container serves two sizes, selected with `NIM_MODEL_SIZE`:
+
+| `NIM_MODEL_SIZE` | Served model name |
+| --- | --- |
+| `nano` (default) | `nvidia/cosmos3-nano-reasoner` |
+| `super` | `nvidia/cosmos3-super-reasoner` |
+
+Launch the NIM container (Nano shown; set `-e NIM_MODEL_SIZE=super` for Super). `NGC_API_KEY` must be set in your environment first — generate one from [NGC](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner) and log Docker in to `nvcr.io` once (`docker login nvcr.io`, username `$oauthtoken`, password = your key).
+
+```shell
+export CONTAINER_NAME="nvidia-cosmos3-reasoner"
+export IMG_NAME="nvcr.io/nim/nvidia/cosmos3-reasoner:1.7.0"
+export LOCAL_NIM_CACHE=~/.cache/nim
+mkdir -p "$LOCAL_NIM_CACHE"
+
+docker run -it --rm --name=$CONTAINER_NAME \
+  --runtime=nvidia \
+  --gpus all \
+  --shm-size=32GB \
+  -e NGC_API_KEY=$NGC_API_KEY \
+  -e NIM_MODEL_SIZE=nano \
+  -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
+  -u $(id -u) \
+  -p 8000:8000 \
+  $IMG_NAME
+```
+
+The OpenAI-compatible API is then available at `http://127.0.0.1:8000/v1`. Query it with `curl`:
+
+```shell
+curl -X POST 'http://127.0.0.1:8000/v1/chat/completions' \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "nvidia/cosmos3-nano-reasoner",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": [
+        {"type": "image_url", "image_url": {"url": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/assets/cosmos3/inputs/vision/robot_153.jpg"}},
+        {"type": "text", "text": "Describe what is happening in this image in one sentence."}
+      ]}
+    ],
+    "max_tokens": 256,
+    "stream": false
+  }'
+```
+
+Or with the OpenAI Python client:
+
+```python
+from openai import OpenAI
+
+# The container exposes the OpenAI-compatible API locally; the api_key is unused.
+client = OpenAI(base_url="http://127.0.0.1:8000/v1", api_key="not-used")
+
+response = client.chat.completions.create(
+    model="nvidia/cosmos3-nano-reasoner",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {
+            "role": "user",
+            "content": [
+                {"type": "video_url", "video_url": {"url": "https://download.samplelib.com/mp4/sample-5s.mp4"}},
+                {"type": "text", "text": "List the notable events with approximate timestamps."},
+            ],
+        },
+    ],
+    max_tokens=256,
+    stream=False,
+    extra_body={"media_io_kwargs": {"video": {"fps": 4.0}}},
+)
+print(response.choices[0].message.content)
+```
+
+Inputs and request notes:
+
+| Item | Notes |
+| --- | --- |
+| Images | JPG/JPEG/PNG, passed as a public URL or base64 data URI via `image_url` |
+| Videos | MP4, passed as a public URL, base64, or pre-decoded `video_frames` via `video_url` |
+| `extra_body.media_io_kwargs` | Controls video frame sampling, e.g. `{"video": {"fps": 4.0}}` or `{"video": {"num_frames": 16}}` |
+| `extra_body.mm_processor_kwargs` | Per-image resize bounds, e.g. `{"size": {"shortest_edge": 1568, "longest_edge": 262144}}` (defaults: `shortest_edge=3136`, `longest_edge=12845056`) |
+| Explicit reasoning | Append `Answer the question in the following format: <think>\nyour reasoning\n</think>\n\n<answer>\nyour answer\n</answer>.` to the user prompt |
+
+References:
+
+- [Cosmos Reason 3 NIM API reference](https://docs.nvidia.com/nim/vision-language-models/1.7.0/examples/cosmos-reason3/api.html)
+- [cosmos3-reasoner NGC container](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner)
+- [cosmos3-nano-reasoner build page](https://build.nvidia.com/nvidia/cosmos3-nano-reasoner)
+
+</details>
+
 ### Troubleshooting
 
 #### Which CUDA version should I use?
@@ -507,6 +609,7 @@ The Cosmos Framework requires `uv >= 0.11.3` (enforced via its `pyproject.toml`)
 | Generator production inference | vLLM-Omni | API path for image, video, sound, and action outputs |
 | Reasoner research or model development | Transformers (coming soon) | Python-first path for prompts, processors, and model behavior |
 | Reasoner production inference | vLLM | OpenAI-compatible endpoint for text outputs from text and vision inputs |
+| Reasoner turnkey deployment | NIM | Prebuilt, optimized OpenAI-compatible container — no vLLM/CUDA setup |
 | Runnable setup, training, or evaluation | Cosmos Framework | Full workflow docs for setup, inference, omni-model training, and evaluation |
 
 ### Examples
@@ -524,6 +627,7 @@ We are building examples that show Cosmos 3 capabilities end to end, including w
 | Inverse dynamics with vLLM-Omni | Generator | Inverse dynamics: ego-motion trajectory prediction from input AV video, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/action/run_id_with_vllm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_id_with_vllm.ipynb) |
 | Reasoner with Cosmos Framework | Reasoner | Text and image reasoning: detailed captioning, robot task planning, 2D grounding, describe-anything, and action-trajectory prompts, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/reasoner/run_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_cosmos_framework.ipynb) |
 | Reasoner with vLLM | Reasoner | Image and video reasoning: captioning, temporal localization, embodied reasoning, common-sense reasoning, 2D grounding, describe-anything, action CoT, driving scenes, physical-plausibility, and situation understanding, against an OpenAI-compatible vLLM server (Cosmos3-Super on 4 GPUs by default; switch to Nano per the cookbook README). | [Notebook](cookbooks/cosmos3/reasoner/run_with_vllm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_vllm.ipynb) |
+| Reasoner with NIM | Reasoner | The same image and video reasoning examples as the vLLM notebook, run against the prebuilt, OpenAI-compatible [Cosmos 3 Reasoner NIM](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner) container; local media is sent as base64 data URIs. | [Notebook](cookbooks/cosmos3/reasoner/run_with_nim.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_nim.ipynb) |
 
 ### Inference Benchmarks
 

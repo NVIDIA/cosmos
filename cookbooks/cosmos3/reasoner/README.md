@@ -115,6 +115,68 @@ change only the **server launch** command and the client `base_url`; every
 example resolves the model dynamically
 (`MODEL = client.models.list().data[0].id`), so the prompts work unchanged.
 
+## Run with NIM
+
+### Quickstart
+
+Set up the environment: [NIM setup](../README.md#nim). That launches the
+prebuilt [Cosmos 3 Reasoner NIM](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner)
+container, which serves the same OpenAI-compatible chat-completions API as the
+vLLM path on port 8000 — without the vLLM/CUDA setup. You can also try this same
+NIM interactively in your browser on the
+[cosmos3-nano-reasoner build page](https://build.nvidia.com/nvidia/cosmos3-nano-reasoner).
+
+Once the server is up, query it with the OpenAI client (the served model name is
+`nvidia/cosmos3-nano-reasoner`, or `nvidia/cosmos3-super-reasoner` for Super):
+
+```python
+import openai
+
+image_url = (
+    "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/refs/heads/"
+    "assets/cosmos3/inputs/vision/robot_153.jpg"
+)
+
+client = openai.OpenAI(api_key="not-used", base_url="http://127.0.0.1:8000/v1")
+
+response = client.chat.completions.create(
+    model="nvidia/cosmos3-nano-reasoner",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": image_url}},
+                {"type": "text", "text": "Caption the image in detail."},
+            ],
+        }
+    ],
+    max_tokens=4096,
+)
+
+print(response.choices[0].message.content)
+```
+
+Video inputs use the `video_url` content type and accept `media_io_kwargs`
+frame-sampling controls through `extra_body`
+(`{"media_io_kwargs": {"video": {"fps": 4.0}}}`). See the
+[Cosmos Reason 3 NIM API reference](https://docs.nvidia.com/nim/vision-language-models/1.7.0/examples/cosmos-reason3/api.html)
+and the [NIM section in the top-level README](../../../README.md#reasoner-with-nim)
+for the full request reference.
+
+### Notebook walkthrough
+
+[`run_with_nim.ipynb`](./run_with_nim.ipynb) is the NIM counterpart to the vLLM
+notebook: it launches the NIM container, waits for readiness, and then runs the
+same image and video examples — detailed captioning, VQA, temporal localization,
+embodied reasoning, common-sense reasoning, 2D grounding, describe-anything,
+action CoT trajectories, driving scenes, physical-plausibility, and situation
+understanding. Because the container does not see the host filesystem, local
+assets are sent as base64 data URIs; video frame sampling is controlled with
+`media_io_kwargs` while spatial resolution is controlled with
+`mm_processor_kwargs`. Each example resolves the served model dynamically
+(`client.models.list()`), so the prompts work unchanged for both the `nano` and
+`super` sizes.
+
 ## Run with Transformers
 
 Support for Transformers-based Reasoner inference is coming soon — see

@@ -11,6 +11,7 @@ backend you want to run and follow that one section.
 | [Transformers](#transformers-coming-soon) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action) | Generator (Audiovisual, Action) |
+| [NIM](#nim) | Prebuilt OpenAI-compatible reasoning server (image/video understanding); no venv | Reasoner |
 
 ## Prerequisites
 
@@ -25,6 +26,7 @@ backend you want to run and follow that one section.
   ```
 
 - For the Cosmos Framework and vLLM backends: access to `git@github.com:NVIDIA/cosmos-framework.git`.
+- For the NIM backend: an NGC API key (used as `NGC_API_KEY`), which you can generate on [build.nvidia.com](https://build.nvidia.com/nvidia/cosmos3-nano-reasoner) or [NGC](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner), plus a one-time `docker login nvcr.io` (username `$oauthtoken`, password = your key). The HF login above is not needed for NIM.
 - Enough local disk for the venv/image, the uv cache, and the model cache. Nano
   downloads plus CUDA dependencies can take tens of GiB.
 
@@ -303,6 +305,35 @@ Additional parallelism options (Docker or native):
 Ensure the server has enough GPUs for the product of enabled degrees
 (`tensor_parallel_size` × `cfg_parallel_size` × `ulysses_degree`).
 
+## NIM
+
+A prebuilt container that serves the Reasoner over an OpenAI-compatible API for
+image and video understanding. Like vLLM-Omni this is a Docker image, so there is
+no venv or `--torch-backend` to manage; unlike the other backends it
+authenticates with an NGC API key instead of Hugging Face (see
+[Prerequisites](#prerequisites)).
+
+Start a Nano server (publishes the OpenAI-compatible API on port 8000; the first
+run downloads the model into `~/.cache/nim`):
+
+```bash
+export NGC_API_KEY=<your_key>
+
+docker run --runtime=nvidia --gpus all \
+  --shm-size=32GB \
+  -e NGC_API_KEY="$NGC_API_KEY" \
+  -e NIM_MODEL_SIZE=nano \
+  -v ~/.cache/nim:/opt/nim/.cache \
+  -u $(id -u) \
+  -p 8000:8000 \
+  nvcr.io/nim/nvidia/cosmos3-reasoner:1.7.0
+```
+
+For **Cosmos3-Super-Reasoner** (the larger model), set `-e NIM_MODEL_SIZE=super`.
+The container serves `nvidia/cosmos3-nano-reasoner` (or
+`nvidia/cosmos3-super-reasoner`); pass that exact name as the request `model`, or
+resolve it dynamically with `client.models.list()`.
+
 ## Verify the environment
 
 For the Cosmos Framework / Diffusers / vLLM venvs, check that PyTorch sees the GPU:
@@ -320,9 +351,16 @@ if torch.cuda.is_available():
 PY
 ```
 
-For a vLLM / vLLM-Omni server, confirm it is serving the model (use the host port
-you set with `COSMOS3_HOST_PORT` or `VLLM_PORT`):
+For a vLLM / vLLM-Omni / NIM server, confirm it is serving the model (use the host
+port you set with `COSMOS3_HOST_PORT` or `VLLM_PORT`):
 
 ```bash
 curl http://localhost:8000/v1/models
+```
+
+A NIM server also exposes a readiness endpoint that returns `200` once the model
+is loaded:
+
+```bash
+curl http://localhost:8000/v1/health/ready
 ```
