@@ -40,11 +40,11 @@ dynamics on Nano looks like:
 ```bash
 torchrun --nproc-per-node=1 \
   -m cosmos_framework.scripts.inference \
-  --parallelism-preset=throughput \
+  --parallelism-preset=latency \
   -i <forward-dynamics input spec>.json \
   -o /tmp/cosmos3_action_fd \
   --checkpoint-path Cosmos3-Nano \
-  --seed=0
+  --seed 0
 ```
 
 The input spec pairs a start image with an action trajectory. The notebooks
@@ -66,35 +66,30 @@ visualize the generated videos:
 
 ### Quickstart
 
-Set up the environment: [vLLM-Omni setup](../../README.md#vllm-omni).
-Start the server from this folder. The container listens on port 8000; the
-example publishes it to host port 8001:
+Set up the environment and start the server:
+[vLLM-Omni setup](../../README.md#vllm-omni) (Docker recommended). From the
+`cosmos` repo root, set `export COSMOS3_WORKDIR=$PWD` and
+`export COSMOS3_HOST_PORT=8001`, then run the Docker command from the env setup
+guide. Wait until this succeeds:
 
 ```bash
-docker rm -f cosmos3-vllm-omni-notebook 2>/dev/null || true
-
-docker run -d --name cosmos3-vllm-omni-notebook \
-  --runtime nvidia --gpus '"device=0"' \
-  -e CUDA_DEVICE_ORDER=PCI_BUS_ID \
-  -v ~/.cache/huggingface:/root/.cache/huggingface \
-  -v "$PWD:/workspace" \
-  -p 8001:8000 --ipc=host \
-  vllm/vllm-omni:cosmos3 \
-  vllm serve nvidia/Cosmos3-Nano \
-    --omni \
-    --model-class-name Cosmos3OmniDiffusersPipeline \
-    --allowed-local-media-path / \
-    --port 8000
-
-# Wait until this returns model metadata before sending requests:
 curl http://localhost:8001/v1/models
 ```
 
 Forward-dynamics requests are multipart `POST`s to `/v1/videos` — a start image
 under `files={"input_reference": ...}` plus an `extra_params` payload carrying the
-action trajectory. The vLLM notebook builds the full request body for AV,
-DROID, and UMI examples, including autoregressive chunked generation for the
-robotics examples.
+action trajectory. The vLLM notebooks use these diffusion defaults for action
+generation (see [`run_fd_with_vllm.ipynb`](./run_fd_with_vllm.ipynb) and
+[`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb)):
+
+| Field | Value |
+| --- | --- |
+| `num_inference_steps` | `30` |
+| `guidance_scale` | `1.0` |
+| `flow_shift` | `10.0` |
+
+The notebooks build the full request body for AV, DROID, and UMI examples,
+including autoregressive chunked generation for the robotics examples.
 
 ### Notebook walkthrough
 

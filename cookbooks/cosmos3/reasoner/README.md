@@ -64,23 +64,16 @@ because the current Cosmos Framework Reasoner path expects image inputs through
 
 ### Quickstart
 
-Set up the environment: [vLLM setup](../README.md#vllm).
+Set up the environment and start the server:
+[vLLM setup](../README.md#vllm) (install) and
+[Start the server](../README.md#start-the-server) (launch commands).
 
-Start an OpenAI-compatible Nano server on a single GPU:
+The quickstart below uses **Cosmos3-Nano** on port 8000. The
+[`run_with_vllm.ipynb`](./run_with_vllm.ipynb) notebook defaults to
+**Cosmos3-Super** on port **8001** — use that launch command from the env setup
+guide and point the client at `http://localhost:8001/v1`.
 
-```bash
-CUDA_VISIBLE_DEVICES=0 \
-vllm serve nvidia/Cosmos3-Nano \
-    --hf-overrides '{"architectures": ["Cosmos3ReasonerForConditionalGeneration"]}' \
-    --tensor-parallel-size 1 \
-    --mm-encoder-tp-mode data \
-    --async-scheduling \
-    --allowed-local-media-path "$(dirname "$(pwd)")" \
-    --media-io-kwargs '{"video": {"num_frames": -1}}' \
-    --port 8000
-```
-
-Once it is up, query it with the OpenAI client:
+Once the server is ready, query it with the OpenAI client:
 
 ```python
 import openai
@@ -112,13 +105,14 @@ print(response.choices[0].message.content)
 
 ### Notebook walkthrough
 
-[`run_with_vllm.ipynb`](./run_with_vllm.ipynb) ships configured for
-**`Cosmos3-Super`** (served across 4 GPUs) and walks through many more image and
-video examples: detailed captioning, VQA, temporal localization, embodied
-reasoning, common-sense reasoning, 2D grounding, describe-anything, action CoT
-trajectories, driving scenes, physical-plausibility, and situation understanding.
-To run a different model, only the **server launch cell** and the **client port**
-change; every example resolves the model dynamically
+[`run_with_vllm.ipynb`](./run_with_vllm.ipynb) uses the **Cosmos3-Super** launch
+from the [environment setup guide](../README.md#start-the-server) and walks
+through many more image and video examples: detailed captioning,
+VQA, temporal localization, embodied reasoning, common-sense reasoning, 2D
+grounding, describe-anything, action CoT trajectories, driving scenes,
+physical-plausibility, and situation understanding. To run a different model,
+change only the **server launch** command and the client `base_url`; every
+example resolves the model dynamically
 (`MODEL = client.models.list().data[0].id`), so the prompts work unchanged.
 
 ## Run with Transformers

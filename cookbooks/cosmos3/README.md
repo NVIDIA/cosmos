@@ -139,55 +139,169 @@ export VLLM_USE_DEEP_GEMM=0
 > `.venv/bin` is on `PATH` (e.g. `source .venv/bin/activate`). FlashInfer's
 > just-in-time kernel build shells out to `ninja`, which lives in the venv.
 
+### Start the server
+
+All Reasoner cookbooks talk to an OpenAI-compatible chat-completions API. After
+[installing vLLM](#vllm), run the commands below from
+`cookbooks/cosmos3/reasoner` (same working directory as
+[`run_with_vllm.ipynb`](reasoner/run_with_vllm.ipynb)). That sets
+`$(dirname "$(pwd)")` to `<cosmos>/cookbooks/cosmos3`, which matches the
+notebook's `COSMOS3_MEDIA_ROOT`.
+
+**Cosmos3-Nano** (single GPU, port 8000):
+
+```bash
+CUDA_VISIBLE_DEVICES=0 \
+vllm serve nvidia/Cosmos3-Nano \
+  --hf-overrides '{"architectures": ["Cosmos3ReasonerForConditionalGeneration"]}' \
+  --tensor-parallel-size 1 \
+  --mm-encoder-tp-mode data \
+  --async-scheduling \
+  --allowed-local-media-path "$(dirname "$(pwd)")" \
+  --media-io-kwargs '{"video": {"num_frames": -1}}' \
+  --port 8000
+```
+
+**Cosmos3-Super** (four GPUs; default in [`run_with_vllm.ipynb`](reasoner/run_with_vllm.ipynb), port 8001):
+
+```bash
+export COSMOS3_MEDIA_ROOT="$(dirname "$(pwd)")"
+export VLLM_PORT="${VLLM_PORT:-8001}"
+
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
+vllm serve nvidia/Cosmos3-Super \
+  --hf-overrides '{"architectures": ["Cosmos3ReasonerForConditionalGeneration"]}' \
+  --tensor-parallel-size 4 \
+  --mm-encoder-tp-mode data \
+  --async-scheduling \
+  --allowed-local-media-path "$COSMOS3_MEDIA_ROOT" \
+  --media-io-kwargs '{"video": {"num_frames": -1}}' \
+  --port "$VLLM_PORT"
+```
+
+The Super notebook polls `/health` for up to 1800 seconds on first start while CUDA
+graphs compile.
+
+| Option | Use |
+| --- | --- |
+| `--tensor-parallel-size` | Number of GPUs for tensor-parallel inference |
+| `--mm-encoder-tp-mode data` | Data parallelism for the visual encoder |
+| `--media-io-kwargs '{"video": {"num_frames": -1}}'` | Lets the processor see all frames before downstream sampling |
+| `--allowed-local-media-path` | Must cover local `file://` media paths; defaults to `<cosmos>/cookbooks/cosmos3` when run from `cookbooks/cosmos3/reasoner` |
+
 ## vLLM-Omni
 
 OpenAI-compatible **generation** server (image/video/audio/action) for the
-Generator cookbooks. The simplest path is the prebuilt Docker image
-`vllm/vllm-omni:cosmos3`:
+Generator cookbooks.
+
+Cosmos3 checkpoints can exceed the default server init timeout — always pass
+`--init-timeout 1800` on every `vllm serve` command below.
+
+### Option 1: Docker (recommended)
+
+The prebuilt image `vllm/vllm-omni:cosmos3` supports every Generator modality
+(including action). Pull once:
 
 ```bash
 docker pull vllm/vllm-omni:cosmos3
 ```
 
-Start a Nano server (publishes the OpenAI-compatible API on port 8000; mount any
-directory whose local media/action files the server should read):
+Set paths once; adjust for your checkout and cache location:
 
 ```bash
-docker run --runtime nvidia --gpus all \
-  -v ~/.cache/huggingface:/root/.cache/huggingface \
-  -v "$(pwd):/workspace" \
-  -p 8000:8000 \
-  --ipc=host \
+export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
+export COSMOS3_WORKDIR="${COSMOS3_WORKDIR:-$(pwd)}"
+export COSMOS3_HOST_PORT="${COSMOS3_HOST_PORT:-8000}"
+```
+
+The container listens on port 8000; `-p "${COSMOS3_HOST_PORT}:8000"` publishes it
+on the host. Generator notebooks often use `COSMOS3_HOST_PORT=8001` so port 8000
+stays free for a Reasoner server.
+
+**Cosmos3-Nano** (single GPU):
+
+```bash
+docker run --runtime nvidia --gpus '"device=0"' \
+  -e CUDA_DEVICE_ORDER=PCI_BUS_ID \
+  -v "${HF_HOME}:/root/.cache/huggingface" \
+  -v "${COSMOS3_WORKDIR}:/workspace" \
+  -p "${COSMOS3_HOST_PORT}:8000" --ipc=host \
   vllm/vllm-omni:cosmos3 \
   vllm serve nvidia/Cosmos3-Nano \
-  --omni \
-  --model-class-name Cosmos3OmniDiffusersPipeline \
-  --allowed-local-media-path / \
-  --port 8000
+    --omni \
+    --model-class-name Cosmos3OmniDiffusersPipeline \
+    --allowed-local-media-path / \
+    --port 8000 \
+    --init-timeout 1800
 ```
 
-For **Cosmos3-Super** (the larger 64B model), split the weights across GPUs and,
-if needed, offload layers to reduce peak memory:
+**Cosmos3-Super** (all GPUs; add tensor parallelism and layerwise offload):
 
 ```bash
 docker run --runtime nvidia --gpus all \
-  -v ~/.cache/huggingface:/root/.cache/huggingface \
-  -v "$(pwd):/workspace" \
-  -p 8000:8000 \
-  --ipc=host \
+  -v "${HF_HOME}:/root/.cache/huggingface" \
+  -v "${COSMOS3_WORKDIR}:/workspace" \
+  -p "${COSMOS3_HOST_PORT}:8000" --ipc=host \
   vllm/vllm-omni:cosmos3 \
   vllm serve nvidia/Cosmos3-Super \
+    --omni \
+    --model-class-name Cosmos3OmniDiffusersPipeline \
+    --allowed-local-media-path / \
+    --tensor-parallel-size 4 \
+    --enable-layerwise-offload \
+    --port 8000 \
+    --init-timeout 1800
+```
+
+Mount any directory that holds local media or action JSON files referenced in
+requests. Set `--allowed-local-media-path /` (as above) when the whole container
+filesystem should be readable.
+
+vLLM-Omni prints `Application startup complete.` when the API is ready.
+
+### Option 2: Native venv (limited modalities)
+
+To install from the upstreaming PR branch instead of Docker (text-to-image,
+text-to-video, and image-to-video only — not action or sound yet), create a venv
+and pick the CUDA build that matches your driver (see
+[CUDA driver and the `cuXXX` backend](#cuda-driver-and-the-cuxxx-backend)):
+
+```bash
+uv venv --python 3.13 --seed --managed-python
+source .venv/bin/activate
+
+# CUDA 13 driver:
+uv pip install --torch-backend=cu130 \
+  "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@refs/pull/3454/head"
+
+# CUDA 12.x driver:
+# uv pip install --torch-backend=cu128 \
+#   "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@refs/pull/3454/head"
+```
+
+Run the same `vllm serve` arguments as in the Docker commands above, directly on
+the host (no `docker run` wrapper):
+
+```bash
+vllm serve nvidia/Cosmos3-Nano \
   --omni \
   --model-class-name Cosmos3OmniDiffusersPipeline \
   --allowed-local-media-path / \
-  --tensor-parallel-size 4 \
-  --enable-layerwise-offload \
-  --port 8000
+  --port 8000 \
+  --init-timeout 1800
 ```
 
-If you installed vLLM-Omni from the PR branch instead, run the same
-`vllm serve ... --omni ...` command directly, without the
-`docker run ... vllm/vllm-omni:cosmos3` wrapper.
+For Super, add `--tensor-parallel-size 4 --enable-layerwise-offload`.
+
+Additional parallelism options (Docker or native):
+
+| Option | Use |
+| --- | --- |
+| `--cfg-parallel-size 2` | Runs positive and negative CFG branches on two GPUs |
+| `--ulysses-degree 2` | Ulysses sequence parallelism across GPUs |
+
+Ensure the server has enough GPUs for the product of enabled degrees
+(`tensor_parallel_size` × `cfg_parallel_size` × `ulysses_degree`).
 
 ## Verify the environment
 
@@ -206,7 +320,8 @@ if torch.cuda.is_available():
 PY
 ```
 
-For a vLLM / vLLM-Omni server, confirm it is serving the model:
+For a vLLM / vLLM-Omni server, confirm it is serving the model (use the host port
+you set with `COSMOS3_HOST_PORT` or `VLLM_PORT`):
 
 ```bash
 curl http://localhost:8000/v1/models

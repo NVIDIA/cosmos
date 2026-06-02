@@ -233,6 +233,7 @@ A `text-to-video` run takes a while: the first run downloads `Cosmos3-Nano`, and
 ```python
 import torch
 from diffusers import Cosmos3OmniPipeline
+from diffusers.schedulers.scheduling_unipc_multistep import UniPCMultistepScheduler
 from diffusers.utils import export_to_video
 
 pipe = Cosmos3OmniPipeline.from_pretrained(
@@ -240,13 +241,22 @@ pipe = Cosmos3OmniPipeline.from_pretrained(
     torch_dtype=torch.bfloat16,
     device_map="cuda",
 )
+pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config, flow_shift=10.0)
 
 result = pipe(
     prompt="A mobile robot navigates a warehouse aisle and stops at a shelf.",
+    negative_prompt="",
+    image=None,
     num_frames=189,
     height=720,
     width=1280,
-    fps=24.0,
+    fps=24,
+    num_inference_steps=35,
+    guidance_scale=6.0,
+    enable_sound=False,
+    add_resolution_template=False,
+    add_duration_template=False,
+    generator=torch.Generator(device="cuda").manual_seed(1234),
 )
 
 export_to_video(result.video, "cosmos3_t2v.mp4", fps=24, macro_block_size=1)
@@ -287,12 +297,16 @@ docker run --runtime nvidia --gpus all \
   --omni \
   --model-class-name Cosmos3OmniDiffusersPipeline \
   --allowed-local-media-path / \
-  --port 8000
+  --port 8000 \
+  --init-timeout 1800
 ```
+
+Cosmos3 checkpoints can exceed the default server init timeout; use
+`--init-timeout 1800` on every `vllm serve` command in this section.
 
 vLLM-Omni prints `Application startup complete.` when the API is ready.
 
-For `nvidia/Cosmos3-Super` (the larger 64B model), split weights across GPUs and optionally offload layers to reduce peak memory: `--tensor-parallel-size` splits model weights across multiple GPUs, and `--enable-layerwise-offload` offloads transformer blocks between CPU and GPU with a latency tradeoff and extra CPU RAM use. For example, on four GPUs, add `--tensor-parallel-size 4 --enable-layerwise-offload` to the `vllm serve` command.
+For `nvidia/Cosmos3-Super` (the larger 64B model), split weights across GPUs and optionally offload layers to reduce peak memory: `--tensor-parallel-size` splits model weights across multiple GPUs, and `--enable-layerwise-offload` offloads transformer blocks between CPU and GPU with a latency tradeoff and extra CPU RAM use. For example, on four GPUs, add `--tensor-parallel-size 4 --enable-layerwise-offload --init-timeout 1800` to the `vllm serve` command.
 
 Additional parallelism options:
 
@@ -316,7 +330,7 @@ uv pip install --torch-backend=cu130 \
 #   "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@refs/pull/3454/head"
 ```
 
-Then run `vllm serve nvidia/Cosmos3-Nano --omni --model-class-name Cosmos3OmniDiffusersPipeline --allowed-local-media-path / --port 8000` directly, without the `docker run ... vllm/vllm-omni:cosmos3` wrapper.
+Then run `vllm serve nvidia/Cosmos3-Nano --omni --model-class-name Cosmos3OmniDiffusersPipeline --allowed-local-media-path / --port 8000 --init-timeout 1800` directly, without the `docker run ... vllm/vllm-omni:cosmos3` wrapper.
 
 Vision endpoints:
 
@@ -345,11 +359,13 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync \
   --form-string "prompt=A small warehouse robot moves a blue box across a clean floor." \
   --form-string "negative_prompt=blurry, distorted, low quality" \
   --form-string "size=1280x720" \
-  --form-string "num_frames=81" \
+  --form-string "num_frames=189" \
   --form-string "fps=24" \
   --form-string "num_inference_steps=35" \
-  --form-string "guidance_scale=4.0" \
-  --form-string "seed=42" \
+  --form-string "guidance_scale=6.0" \
+  --form-string "flow_shift=10.0" \
+  --form-string "seed=0" \
+  --form-string 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true}' \
   -o cosmos3_t2v_output.mp4
 ```
 
@@ -401,7 +417,8 @@ stages:
 vllm serve nvidia/Cosmos3-Nano --omni \
   --model-class-name Cosmos3OmniDiffusersPipeline \
   --deploy-config no_guardrails.yaml \
-  --port 8000
+  --port 8000 \
+  --init-timeout 1800
 ```
 
 References:
@@ -436,6 +453,10 @@ vllm serve nvidia/Cosmos3-Nano \
   --allowed-local-media-path / \
   --port 8000
 ```
+
+For notebook launch commands (Cosmos3-Super on four GPUs, media-path defaults, and
+full flag sets), see
+[cookbooks/cosmos3/README.md — Start the server](cookbooks/cosmos3/README.md#start-the-server).
 
 If your vLLM build reports that DeepGEMM is unavailable, disable it before starting the server:
 

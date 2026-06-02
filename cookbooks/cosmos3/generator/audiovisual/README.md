@@ -15,14 +15,47 @@ to get one generation running per backend — run them from this folder.
 
 Set up the environment: [Cosmos Framework setup](../../README.md#cosmos-framework).
 Activate the framework venv created during setup (`packages/cosmos3/.venv` at the
-repo root), or call its `torchrun` by path, then launch a text-to-video generation
+repo root), or call its `torchrun` by path. The notebook builds a full inference
+payload JSON (not the raw prompt asset alone); build one the same way, then run
 from this folder:
 
 ```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+prompt = json.dumps(
+    json.load(open("assets/prompts/text2video/robot_kitchen.json")),
+    ensure_ascii=True,
+    separators=(",", ":"),
+)
+negative = json.dumps(
+    json.load(open("assets/negative_prompts/text2video/neg_prompt.json")),
+    ensure_ascii=True,
+    separators=(",", ":"),
+)
+payload = {
+    "model_mode": "text2video",
+    "name": "robot_kitchen",
+    "prompt": prompt,
+    "negative_prompt": negative,
+    "enable_sound": False,
+    "num_steps": 35,
+    "guidance": 6.0,
+    "shift": 10.0,
+    "fps": 24,
+    "num_frames": 189,
+    "resolution": "720",
+    "aspect_ratio": "16,9",
+    "seed": 0,
+}
+Path("/tmp/cosmos3_t2v_payload.json").write_text(json.dumps(payload, indent=2) + "\n")
+PY
+
 torchrun --nproc-per-node=1 \
   -m cosmos_framework.scripts.inference \
   --parallelism-preset=throughput \
-  -i assets/prompts/text2video/robot_kitchen.json \
+  -i /tmp/cosmos3_t2v_payload.json \
   -o /tmp/cosmos3_t2v_framework \
   --checkpoint-path Cosmos3-Nano \
   --seed=0
@@ -92,9 +125,11 @@ audio) using `Cosmos3OmniPipeline`, including how to preview the generated media
 
 ### Quickstart
 
-Set up the environment and start a Nano server:
-[vLLM-Omni setup](../../README.md#vllm-omni) — the `docker run` command there
-serves the OpenAI-compatible API on port 8000.
+Set up the environment and start the server:
+[vLLM-Omni setup](../../README.md#vllm-omni) (Docker recommended). Run the
+Docker command from this folder (`COSMOS3_WORKDIR` defaults to the current
+directory) with **`COSMOS3_HOST_PORT=8000`** unless you already have another
+server on that port.
 
 Send a text-to-video request with the OpenAI-compatible video API:
 
@@ -139,7 +174,7 @@ For image-to-video, post to the same endpoint with an image under
 ### Notebook walkthrough
 
 [`run_with_vllm_omni.ipynb`](./run_with_vllm_omni.ipynb) is the full tutorial for
-the vLLM-Omni backend: it documents the Docker and PR-branch server options (Nano
-and Super, with tensor parallelism, layerwise offload, and CFG-parallel variants)
-and walks through text-to-image, text-to-video, and image-to-video requests with
-audio on or off.
+the vLLM-Omni backend: it walks through text-to-image, text-to-video, and
+image-to-video requests with audio on or off. Server launch options (Nano and
+Super, tensor parallelism, layerwise offload, and CFG-parallel variants) live in
+the [shared environment setup guide](../../README.md#vllm-omni).
