@@ -23,6 +23,15 @@ Generator results are published incrementally from internal benchmark runs. **Em
   - [H200 141GB HBM3](#h200-141gb-hbm3)
   - [B200](#b200)
   - [B300](#b300)
+- [Cosmos3-Super Reasoner](#cosmos3-super-reasoner)
+  - [RTX PRO 6000 Blackwell](#rtx-pro-6000-blackwell-1)
+  - [H20](#h20-1)
+  - [H100 NVL](#h100-nvl-1)
+  - [H200 NVL](#h200-nvl-1)
+  - [H100 80GB HBM3 (SXM)](#h100-80gb-hbm3-sxm-1)
+  - [H200 141GB HBM3](#h200-141gb-hbm3-1)
+  - [B200](#b200-1)
+  - [B300](#b300-1)
 
 ## Cosmos3-Nano Generator
 
@@ -570,6 +579,354 @@ All runs use the **`nvidia/Cosmos3-Nano`** checkpoint. Metrics are collected wit
 
 <sub>Notes:
 1. Source: vLLM inference benchmarking for `nvidia/Cosmos3-Nano`; AIPerf client was used as the benchmarking tool.
+2. Hardware: results are grouped by GPU product (RTX PRO 6000 Blackwell, H20, H100 NVL, H200 NVL, H100 80GB HBM3 SXM, H200 141GB HBM3, B200, B300). All metrics are averages for a number of requests.
+3. **Time To First Token (TTFT)** measures latency until the first output token is emitted. **Request Latency** is end-to-end time per request. For single-token outputs (Output 1), TTFT and request latency are identical.
+4. **Request Throughput** is completed requests per second. **Output Token Throughput** is generated tokens per second (for Output 1 workloads, the two throughputs match).
+5. Concurrency is the number of simultaneous client requests issued by AIPerf, not tensor-parallel GPU count.</sub>
+## Cosmos3-Super Reasoner
+
+These tables report **Cosmos3-Super** reasoner serving performance through **vLLM**. Unlike the generator sections, Reasoner benchmarks measure **text understanding and generation latency** - time to first token (TTFT) in milliseconds, end-to-end request latency in milliseconds, and token throughput under concurrent load - not diffusion sampling time. Workloads vary input sequence length, output sequence length, and video frame rate to reflect common captioning, VQA, and video-understanding request profiles.
+
+All runs use the **`nvidia/Cosmos3-Super`** checkpoint. Metrics are collected with the AIPerf client at client-side concurrency levels of 1, 64, 128, and 256. Each GPU section below contains four workload tables (Input 50 / Output 1 or 100 / Video 1 or 2 FPS). Lower is better for latency metrics; higher is better for throughput. **Empty cells indicate a run has not been completed** for that GPU, workload, or concurrency level.
+
+### RTX PRO 6000 Blackwell
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 534.73 | 24781.47 | 41467.45 | 82626.36 |
+| Request Latency (ms) | 534.73 | 24781.47 | 41467.45 | 82626.36 |
+| Request Count (requests) | 50 | 320 | 256 | 509 |
+| Request Throughput (Req/s) | 1.86 | 2.34 | 2.34 | 2.32 |
+| Output Token Throughput (Tok/s) | 1.86 | 2.34 | 2.34 | 2.32 |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 978.78 | 51145.61 | 85476.50 |  |
+| Request Latency (ms) | 978.78 | 51145.61 | 85476.50 |  |
+| Request Count (requests) | 50 | 320 | 256 |  |
+| Request Throughput (Req/s) | 1.02 | 1.13 | 1.13 |  |
+| Output Token Throughput (Tok/s) | 1.02 | 1.13 | 1.13 |  |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 530.47 | 25094.90 | 54400.80 | 117849.75 |
+| Request Latency (ms) | 5225.79 | 40064.22 | 69193.77 | 133019.50 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.19 | 1.51 | 1.50 | 1.51 |
+| Output Token Throughput (Tok/s) | 19.12 | 151.27 | 149.69 | 151.15 |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 981.55 |  | 114704.46 |  |
+| Request Latency (ms) | 5716.49 |  | 130177.35 |  |
+| Request Count (requests) | 50 |  | 256 |  |
+| Request Throughput (Req/s) | 0.17 |  | 0.77 |  |
+| Output Token Throughput (Tok/s) | 17.49 |  | 77.00 |  |
+
+### H20
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 1241.58 |  | 108912.73 |  |
+| Request Latency (ms) | 1241.58 |  | 108912.73 |  |
+| Request Count (requests) | 50 |  | 256 |  |
+| Request Throughput (Req/s) | 0.80 |  | 0.89 |  |
+| Output Token Throughput (Tok/s) | 0.80 |  | 0.89 |  |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 2399.91 |  |  |  |
+| Request Latency (ms) | 2399.91 |  |  |  |
+| Request Count (requests) | 50 |  |  |  |
+| Request Throughput (Req/s) | 0.42 |  |  |  |
+| Output Token Throughput (Tok/s) | 0.42 |  |  |  |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 1230.95 |  | 108988.21 |  |
+| Request Latency (ms) | 3523.74 |  | 135784.46 |  |
+| Request Count (requests) | 50 |  | 256 |  |
+| Request Throughput (Req/s) | 0.28 |  | 0.78 |  |
+| Output Token Throughput (Tok/s) | 28.36 |  | 77.81 |  |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 2380.85 |  |  |  |
+| Request Latency (ms) | 4707.46 |  |  |  |
+| Request Count (requests) | 50 |  |  |  |
+| Request Throughput (Req/s) | 0.21 |  |  |  |
+| Output Token Throughput (Tok/s) | 21.22 |  |  |  |
+
+### H100 NVL
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 521.87 | 27004.42 | 45688.95 | 90353.80 |
+| Request Latency (ms) | 521.87 | 27004.42 | 45688.95 | 90353.80 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 1.91 | 2.15 | 2.13 | 2.14 |
+| Output Token Throughput (Tok/s) | 1.91 | 2.15 | 2.13 | 2.14 |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 993.48 | 55409.83 | 92484.18 |  |
+| Request Latency (ms) | 993.48 | 55409.83 | 92484.18 |  |
+| Request Count (requests) | 50 | 320 | 256 |  |
+| Request Throughput (Req/s) | 1.00 | 1.05 | 1.05 |  |
+| Output Token Throughput (Tok/s) | 1.00 | 1.05 | 1.05 |  |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 508.97 | 26567.65 | 54861.82 | 116733.31 |
+| Request Latency (ms) | 3119.76 | 39090.16 | 67203.81 | 129435.49 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.32 | 1.54 | 1.55 | 1.54 |
+| Output Token Throughput (Tok/s) | 32.03 | 153.87 | 154.58 | 154.04 |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 999.10 | 49069.05 | 116178.34 |  |
+| Request Latency (ms) | 3638.23 | 59084.57 | 128875.27 |  |
+| Request Count (requests) | 50 | 320 | 256 |  |
+| Request Throughput (Req/s) | 0.27 | 1.00 | 0.77 |  |
+| Output Token Throughput (Tok/s) | 27.46 | 100.14 | 77.38 |  |
+
+### H200 NVL
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 357.69 | 16243.11 | 26759.35 | 54470.31 |
+| Request Latency (ms) | 357.69 | 16243.11 | 26759.35 | 54470.31 |
+| Request Count (requests) | 50 | 319 | 254 | 510 |
+| Request Throughput (Req/s) | 2.78 | 3.56 | 3.58 | 3.53 |
+| Output Token Throughput (Tok/s) | 2.78 | 3.56 | 3.58 | 3.53 |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 641.05 | 33640.68 | 56090.59 | 111965.21 |
+| Request Latency (ms) | 641.05 | 33640.68 | 56090.59 | 111965.21 |
+| Request Count (requests) | 50 | 320 | 255 | 510 |
+| Request Throughput (Req/s) | 1.56 | 1.72 | 1.72 | 1.71 |
+| Output Token Throughput (Tok/s) | 1.56 | 1.72 | 1.72 | 1.71 |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 348.88 | 5805.63 | 16053.68 | 48411.16 |
+| Request Latency (ms) | 2385.95 | 21240.62 | 40187.13 | 75354.93 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.42 | 3.01 | 3.06 | 2.99 |
+| Output Token Throughput (Tok/s) | 41.87 | 300.56 | 305.57 | 298.96 |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 640.14 | 13800.40 | 47514.83 | 110513.13 |
+| Request Latency (ms) | 2692.46 | 41460.80 | 74683.53 | 138991.66 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.37 | 1.52 | 1.51 | 1.52 |
+| Output Token Throughput (Tok/s) | 37.12 | 151.97 | 151.42 | 152.07 |
+
+### H100 80GB HBM3 (SXM)
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) |  |  |  |  |
+| Request Latency (ms) |  |  |  |  |
+| Request Count (requests) |  |  |  |  |
+| Request Throughput (Req/s) |  |  |  |  |
+| Output Token Throughput (Tok/s) |  |  |  |  |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) |  |  |  |  |
+| Request Latency (ms) |  |  |  |  |
+| Request Count (requests) |  |  |  |  |
+| Request Throughput (Req/s) |  |  |  |  |
+| Output Token Throughput (Tok/s) |  |  |  |  |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) |  |  |  |  |
+| Request Latency (ms) |  |  |  |  |
+| Request Count (requests) |  |  |  |  |
+| Request Throughput (Req/s) |  |  |  |  |
+| Output Token Throughput (Tok/s) |  |  |  |  |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) |  |  |  |  |
+| Request Latency (ms) |  |  |  |  |
+| Request Count (requests) |  |  |  |  |
+| Request Throughput (Req/s) |  |  |  |  |
+| Output Token Throughput (Tok/s) |  |  |  |  |
+
+### H200 141GB HBM3
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 327.21 | 14045.01 | 23809.00 | 46893.25 |
+| Request Latency (ms) | 327.21 | 14045.01 | 23809.00 | 46893.25 |
+| Request Count (requests) | 50 | 320 | 256 | 507 |
+| Request Throughput (Req/s) | 3.04 | 4.14 | 4.09 | 4.08 |
+| Output Token Throughput (Tok/s) | 3.04 | 4.14 | 4.09 | 4.08 |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 592.19 | 28769.68 | 48595.04 | 95884.55 |
+| Request Latency (ms) | 592.19 | 28769.68 | 48595.04 | 95884.55 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 1.68 | 2.01 | 1.99 | 2.01 |
+| Output Token Throughput (Tok/s) | 1.68 | 2.01 | 1.99 | 2.01 |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 327.73 | 5374.55 | 14328.53 | 42108.40 |
+| Request Latency (ms) | 2254.07 | 18553.56 | 35613.84 | 65558.20 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.44 | 3.44 | 3.44 | 3.43 |
+| Output Token Throughput (Tok/s) | 44.31 | 344.02 | 344.42 | 343.29 |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 592.97 | 11969.34 | 41372.57 | 95995.33 |
+| Request Latency (ms) | 2533.93 | 36021.00 | 65053.92 | 120751.01 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.39 | 1.75 | 1.74 | 1.75 |
+| Output Token Throughput (Tok/s) | 39.43 | 174.83 | 173.72 | 174.85 |
+
+### B200
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 212.10 | 6902.51 | 11412.35 | 22707.11 |
+| Request Latency (ms) | 212.10 | 6902.51 | 11412.35 | 22707.11 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 4.68 | 8.41 | 8.52 | 8.52 |
+| Output Token Throughput (Tok/s) | 4.68 | 8.41 | 8.52 | 8.52 |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 350.30 | 13909.70 | 23275.71 | 46780.29 |
+| Request Latency (ms) | 350.30 | 13909.70 | 23275.71 | 46780.29 |
+| Request Count (requests) | 50 | 320 | 256 | 510 |
+| Request Throughput (Req/s) | 2.84 | 4.16 | 4.16 | 4.10 |
+| Output Token Throughput (Tok/s) | 2.84 | 4.16 | 4.16 | 4.10 |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 212.40 | 2723.57 | 5574.27 | 16228.42 |
+| Request Latency (ms) | 1552.87 | 9594.94 | 17572.41 | 34293.88 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.64 | 6.65 | 7.21 | 6.97 |
+| Output Token Throughput (Tok/s) | 64.30 | 664.83 | 721.29 | 696.84 |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 325.21 | 3821.22 | 15872.01 | 42120.75 |
+| Request Latency (ms) | 1686.82 | 17970.15 | 34042.27 | 61444.78 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.59 | 3.55 | 3.52 | 3.60 |
+| Output Token Throughput (Tok/s) | 59.21 | 354.77 | 352.10 | 360.15 |
+
+### B300
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 176.24 | 6665.86 | 11233.68 | 22238.90 |
+| Request Latency (ms) | 176.24 | 6665.86 | 11233.68 | 22238.90 |
+| Request Count (requests) | 50 | 320 | 256 | 510 |
+| Request Throughput (Req/s) | 5.64 | 8.71 | 8.67 | 8.65 |
+| Output Token Throughput (Tok/s) | 5.64 | 8.71 | 8.67 | 8.65 |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 301.49 | 13570.83 | 22688.87 | 45276.68 |
+| Request Latency (ms) | 301.49 | 13570.83 | 22688.87 | 45276.68 |
+| Request Count (requests) | 50 | 320 | 255 | 512 |
+| Request Throughput (Req/s) | 3.31 | 4.26 | 4.26 | 4.26 |
+| Output Token Throughput (Tok/s) | 3.31 | 4.26 | 4.26 | 4.26 |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 175.83 | 2491.56 | 4999.71 | 8916.09 |
+| Request Latency (ms) | 1492.46 | 9254.00 | 17203.60 | 33189.36 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.67 | 6.89 | 7.37 | 7.61 |
+| Output Token Throughput (Tok/s) | 66.93 | 689.29 | 736.64 | 761.12 |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 303.52 | 3655.15 | 8924.49 | 30494.72 |
+| Request Latency (ms) | 1637.02 | 17223.78 | 33088.08 | 62798.50 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.61 | 3.70 | 3.82 | 3.83 |
+| Output Token Throughput (Tok/s) | 61.02 | 370.09 | 382.18 | 383.31 |
+
+<sub>Notes:
+1. Source: vLLM inference benchmarking for `nvidia/Cosmos3-Super`; AIPerf client was used as the benchmarking tool.
 2. Hardware: results are grouped by GPU product (RTX PRO 6000 Blackwell, H20, H100 NVL, H200 NVL, H100 80GB HBM3 SXM, H200 141GB HBM3, B200, B300). All metrics are averages for a number of requests.
 3. **Time To First Token (TTFT)** measures latency until the first output token is emitted. **Request Latency** is end-to-end time per request. For single-token outputs (Output 1), TTFT and request latency are identical.
 4. **Request Throughput** is completed requests per second. **Output Token Throughput** is generated tokens per second (for Output 1 workloads, the two throughputs match).
