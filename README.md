@@ -436,9 +436,13 @@ Install SGLang with diffusion extras:
 ```shell
 git clone https://github.com/sgl-project/sglang.git
 cd sglang
+# Optional: pin a release tag or known-good commit for reproducible deployments.
+# git checkout <release-tag-or-commit>
 pip install -e "python[diffusion]"
 pip install "cosmos-guardrail==0.3.1"
 ```
+
+> **Version note:** Cosmos 3 support in SGLang Diffusion is actively improving. The command above installs the latest upstream SGLang so users get current Cosmos 3 fixes and performance work. For production deployments or reproducible benchmarks, pin an SGLang release tag or a known-good commit before running `pip install`.
 
 Start a Nano server:
 
