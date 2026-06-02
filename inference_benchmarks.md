@@ -28,7 +28,6 @@ Generator results are published incrementally from internal benchmark runs. **Em
   - [H20](#h20-1)
   - [H100 NVL](#h100-nvl-1)
   - [H200 NVL](#h200-nvl-1)
-  - [H100 80GB HBM3 (SXM)](#h100-80gb-hbm3-sxm-1)
   - [H200 141GB HBM3](#h200-141gb-hbm3-1)
   - [B200](#b200-1)
   - [B300](#b300-1)
@@ -757,48 +756,6 @@ All runs use the **`nvidia/Cosmos3-Super`** checkpoint. Metrics are collected wi
 | Request Throughput (Req/s) | 0.37 | 1.52 | 1.51 | 1.52 |
 | Output Token Throughput (Tok/s) | 37.12 | 151.97 | 151.42 | 152.07 |
 
-### H100 80GB HBM3 (SXM)
-
-#### Input 50 / Output 1 / Video 1 FPS
-
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  |  |  |
-| Request Latency (ms) |  |  |  |  |
-| Request Count (requests) |  |  |  |  |
-| Request Throughput (Req/s) |  |  |  |  |
-| Output Token Throughput (Tok/s) |  |  |  |  |
-
-#### Input 50 / Output 1 / Video 2 FPS
-
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  |  |  |
-| Request Latency (ms) |  |  |  |  |
-| Request Count (requests) |  |  |  |  |
-| Request Throughput (Req/s) |  |  |  |  |
-| Output Token Throughput (Tok/s) |  |  |  |  |
-
-#### Input 50 / Output 100 / Video 1 FPS
-
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  |  |  |
-| Request Latency (ms) |  |  |  |  |
-| Request Count (requests) |  |  |  |  |
-| Request Throughput (Req/s) |  |  |  |  |
-| Output Token Throughput (Tok/s) |  |  |  |  |
-
-#### Input 50 / Output 100 / Video 2 FPS
-
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  |  |  |
-| Request Latency (ms) |  |  |  |  |
-| Request Count (requests) |  |  |  |  |
-| Request Throughput (Req/s) |  |  |  |  |
-| Output Token Throughput (Tok/s) |  |  |  |  |
-
 ### H200 141GB HBM3
 
 #### Input 50 / Output 1 / Video 1 FPS
@@ -927,7 +884,7 @@ All runs use the **`nvidia/Cosmos3-Super`** checkpoint. Metrics are collected wi
 
 <sub>Notes:
 1. Source: vLLM inference benchmarking for `nvidia/Cosmos3-Super`; AIPerf client was used as the benchmarking tool.
-2. Hardware: results are grouped by GPU product (RTX PRO 6000 Blackwell, H20, H100 NVL, H200 NVL, H100 80GB HBM3 SXM, H200 141GB HBM3, B200, B300). All metrics are averages for a number of requests.
+2. Hardware: results are grouped by GPU product (RTX PRO 6000 Blackwell, H20, H100 NVL, H200 NVL, H200 141GB HBM3, B200, B300). All metrics are averages for a number of requests.
 3. **Time To First Token (TTFT)** measures latency until the first output token is emitted. **Request Latency** is end-to-end time per request. For single-token outputs (Output 1), TTFT and request latency are identical.
 4. **Request Throughput** is completed requests per second. **Output Token Throughput** is generated tokens per second (for Output 1 workloads, the two throughputs match).
 5. Concurrency is the number of simultaneous client requests issued by AIPerf, not tensor-parallel GPU count.</sub>
