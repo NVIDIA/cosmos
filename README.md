@@ -428,7 +428,6 @@ References:
 - [Cosmos 3 vLLM-Omni recipes](https://github.com/vllm-project/vllm-omni/tree/main/recipes/nvidia)
 - [vLLM-Omni Videos API](https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/videos_api/)
 - [vLLM-Omni Image Generation API](https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/image_generation_api/)
-- [Cosmos 3 vLLM-Omni upstreaming PR](https://github.com/vllm-project/vllm-omni/pull/3454)
 
 </details>
 
