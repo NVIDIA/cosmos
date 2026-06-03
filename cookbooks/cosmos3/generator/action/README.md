@@ -13,6 +13,18 @@ Environment setup for both backends is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide; each backend below
 links to the section you need.
 
+## Table of Contents
+
+- [Action Definition](#action-definition)
+- [Run with Cosmos Framework](#run-with-cosmos-framework)
+  - [Quickstart](#quickstart)
+  - [Cosmos Framework Notebook Walkthrough](#cosmos-framework-notebook-walkthrough)
+- [Run with vLLM-Omni](#run-with-vllm-omni)
+  - [Quickstart](#quickstart-1)
+  - [Notebook walkthrough](#notebook-walkthrough)
+- [Policy Server](#policy-server)
+
+
 ## Action Definition
 
 Cosmos3 treats action as a modality whose tokens represent transitions between
@@ -105,6 +117,12 @@ write outputs under `outputs/cosmos3_action_vllm/`:
   DROID, and UMI robotics examples.
 - [`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
+
+## Policy Server
+
+To serve Cosmos3-Nano-Policy-DROID as a policy server that streams actions to a
+client driving a simulated or real robot, see
+[`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md).
 
 ## TODO
 
