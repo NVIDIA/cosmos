@@ -319,17 +319,17 @@ Additional parallelism options:
 
 When combining parallelism options, ensure the server has enough GPUs for the product of the enabled degrees (`tensor_parallel_size` × `cfg_parallel_size` × `ulysses_degree`).
 
-To install the three merged modes (text-to-image, text-to-video, image-to-video) from the upstreaming PR branch instead of using the Docker image, create a venv and install vLLM-Omni from the PR ref, choosing the CUDA build that matches your driver:
+To install vLLM-Omni from `main` instead of using the Docker image (text-to-image, text-to-video, image-to-video, and video-with-sound are merged there; see the [Cosmos3-Nano](https://github.com/vllm-project/vllm-omni/blob/main/recipes/nvidia/Cosmos3-Nano.md) and [Cosmos3-Super](https://github.com/vllm-project/vllm-omni/blob/main/recipes/nvidia/Cosmos3-Super.md) recipes for per-modality usage), create a venv and install, choosing the CUDA build that matches your driver:
 
 ```shell
 uv venv --python 3.13 --seed --managed-python
 source .venv/bin/activate
 # CUDA 13 driver:
 uv pip install --torch-backend=cu130 \
-  "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@refs/pull/3454/head"
+  "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@main"
 # CUDA 12.8 driver:
 # uv pip install --torch-backend=cu128 \
-#   "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@refs/pull/3454/head"
+#   "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@main"
 ```
 
 Then run `vllm serve nvidia/Cosmos3-Nano --omni --model-class-name Cosmos3OmniDiffusersPipeline --allowed-local-media-path / --port 8000 --init-timeout 1800` directly, without the `docker run ... vllm/vllm-omni:cosmos3` wrapper.
