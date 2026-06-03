@@ -419,7 +419,7 @@ References:
 <details>
 <summary>Expand SGLang generator setup, endpoints, and request reference</summary>
 
-Use SGLang Diffusion for native Cosmos 3 visual generation behind OpenAI-compatible image and video APIs. SGLang currently supports text-to-image, text-to-video, and image-to-video for the generator checkpoints; video-to-video, video-with-sound, and action modes are planned separately.
+Use SGLang Diffusion for native Cosmos 3 visual generation behind OpenAI-compatible image and video APIs. Cosmos 3 also includes video-with-sound and action/policy models; this SGLang section focuses on the currently supported text-to-image, text-to-video, and image-to-video generator serving paths.
 
 Supported checkpoints:
 
@@ -438,6 +438,9 @@ git clone https://github.com/sgl-project/sglang.git
 cd sglang
 # Optional: pin a release tag or known-good commit for reproducible deployments.
 # git checkout <release-tag-or-commit>
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -e "python[diffusion]"
 pip install "cosmos-guardrail==0.3.1"
 ```
@@ -469,6 +472,7 @@ Vision endpoints:
 Text-to-video example:
 
 ```shell
+# Submit an async video generation job and capture its ID.
 job_id=$(curl -sS -X POST http://localhost:30000/v1/videos \
   --form-string "prompt=A small warehouse robot moves a blue box across a clean floor." \
   --form-string "negative_prompt=blurry, distorted, low quality" \
@@ -480,16 +484,17 @@ job_id=$(curl -sS -X POST http://localhost:30000/v1/videos \
   --form-string "flow_shift=10.0" \
   --form-string "seed=42" \
   --form-string 'extra_params={"guardrails":true,"use_resolution_template":false,"use_duration_template":false}' \
-  | python -c 'import json, sys; print(json.load(sys.stdin)["id"])')
+  | jq -r .id)
 
-while true; do
-  status=$(curl -sS "http://localhost:30000/v1/videos/${job_id}" \
-    | python -c 'import json, sys; print(json.load(sys.stdin)["status"])')
-  [ "$status" = "completed" ] && break
+# Poll until the job completes. Cosmos 3 video generation can take several minutes.
+status=""
+until [ "$status" = "completed" ]; do
+  status=$(curl -sS "http://localhost:30000/v1/videos/${job_id}" | jq -r .status)
   [ "$status" = "failed" ] && exit 1
-  sleep 1
+  sleep 5
 done
 
+# Download the completed MP4.
 curl -sS -L "http://localhost:30000/v1/videos/${job_id}/content" \
   -o cosmos3_t2v_output.mp4
 ```
