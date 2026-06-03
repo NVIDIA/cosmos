@@ -352,7 +352,7 @@ Action modes use Cosmos 3 as a world model: they condition on an embodiment (`do
 | Inverse dynamics | `inverse_dynamics` | Video + instruction | Video + predicted action chunk |
 | Forward dynamics | `forward_dynamics` | Image + action chunk | Video |
 
-Pass embodiment settings through `extra_params`: `action_mode`, `domain_name` (for example `bridge_orig_lerobot`, `av`, or `camera_pose`), `raw_action_dim`, and `action_chunk_size`. Forward dynamics also takes an `action_path` pointing at an action file the server can read, so start the server with `--allowed-local-media-path` covering that file (for Docker, mount the file and pass the container-visible path). For the full set of robot, autonomous-vehicle, and camera-pose variants, see the [Cosmos 3 online-serving examples](https://github.com/vllm-project/vllm-omni/tree/main/examples/online_serving/cosmos3).
+Pass embodiment settings through `extra_params`: `action_mode`, `domain_name` (for example `bridge_orig_lerobot`, `av`, or `camera_pose`), `raw_action_dim`, and `action_chunk_size`. Forward dynamics also takes an `action_path` pointing at an action file the server can read, so start the server with `--allowed-local-media-path` covering that file (for Docker, mount the file and pass the container-visible path). For the full set of robot, autonomous-vehicle, and camera-pose variants, see the [Cosmos 3 vLLM-Omni recipes](https://github.com/vllm-project/vllm-omni/tree/main/recipes/nvidia).
 
 Example video request:
 
@@ -425,7 +425,7 @@ vllm serve nvidia/Cosmos3-Nano --omni \
 
 References:
 
-- [Cosmos 3 online-serving examples](https://github.com/vllm-project/vllm-omni/tree/main/examples/online_serving/cosmos3)
+- [Cosmos 3 vLLM-Omni recipes](https://github.com/vllm-project/vllm-omni/tree/main/recipes/nvidia)
 - [vLLM-Omni Videos API](https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/videos_api/)
 - [vLLM-Omni Image Generation API](https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/image_generation_api/)
 - [Cosmos 3 vLLM-Omni upstreaming PR](https://github.com/vllm-project/vllm-omni/pull/3454)
