@@ -37,6 +37,7 @@
   - [Choosing an Integration](#choosing-an-integration)
   - [Examples](#examples)
   - [Inference Benchmarks](#inference-benchmarks)
+  - [Finetune](#finetune)
   - [Limitations](#limitations)
 - [Ecosystem](#ecosystem)
 - [News](#news)
@@ -640,6 +641,12 @@ Cosmos 3 latency and serving numbers live in [`inference_benchmarks.md`](inferen
 | [Cosmos3-Nano generator](inference_benchmarks.md#cosmos3-nano-generator) | Generator | Cosmos3-Nano | Text-to-image, text-to-video, and image-to-video latency across PyTorch, vLLM-Omni, and Diffusers |
 | [Cosmos3-Super generator](inference_benchmarks.md#cosmos3-super-generator) | Generator | Cosmos3-Super | The same modalities and engines at the larger checkpoint scale |
 | [Cosmos3-Nano reasoner](inference_benchmarks.md#cosmos3-nano-reasoner) | Reasoner | Cosmos3-Nano | vLLM serving metrics — TTFT, request latency, and throughput at concurrency 1/64/128/256 |
+
+### Finetune
+
+Finetune Cosmos 3 with the [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework), NVIDIA's end-to-end Physical AI framework for training and serving world models. It provides runnable setup, inference, omni-model training, and evaluation workflows for the Generator and Reasoner surfaces, with reference recipes for vision, action, and reasoning post-training.
+
+See the [Cosmos Framework training guide](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/training.md) for the full post-training workflow, including data preparation, configuration, and launch commands.
 
 ### Limitations
 
