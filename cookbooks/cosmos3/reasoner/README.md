@@ -7,6 +7,10 @@ Environment setup for every backend is centralized in the shared
 [Cosmos3 cookbooks environment setup](../README.md) guide; each backend below
 links to the section you need.
 
+## Reasoner Prompt Guide
+
+See the [Reasoner Prompt Guide](./reasoner_prompt_guide.md).
+
 ## Run with Cosmos Framework
 
 ### Quickstart
