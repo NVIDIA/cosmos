@@ -100,4 +100,4 @@ python policies/cosmos3/run.py \
 
 Example output:
 
-<video controls width="864" height="480" src="https://github.com/user-attachments/assets/794a4bea-e845-44c8-bf51-f3c2bf9226b6"></video>
+<video controls width="864" height="480" src="https://github.com/user-attachments/assets/95a16737-5eb9-4b3f-a0ad-3a6b929b423f"></video>
