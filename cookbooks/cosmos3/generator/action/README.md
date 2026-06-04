@@ -8,7 +8,7 @@ under [`assets/`](./assets) and cover two tasks:
   plus an action trajectory (AV, DROID, and UMI robotics examples).
 - **Inverse dynamics (`id`)** — predict ego-motion trajectories from input AV
   videos.
-- **Policy** — act as a closed-loop control policy: given the current
+- **Policy (`policy`)** — act as a closed-loop control policy: given the current
   observation, a task goal, and optionally the robot's proprioceptive state,
   predict the next actions to execute on a robot, streaming them continuously to
   drive a simulated or real robot.
