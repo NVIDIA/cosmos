@@ -431,13 +431,11 @@ Supported checkpoints:
 | `nvidia/Cosmos3-Super-Image2Video` | Supported | Image-to-video specialized checkpoint |
 | `nvidia/Cosmos3-Nano-Policy-DROID` | Not supported yet | Action/policy checkpoint |
 
-Install SGLang with diffusion extras:
+Install SGLang from the main branch with diffusion extras:
 
 ```shell
-git clone https://github.com/sgl-project/sglang.git
+git clone --branch main https://github.com/sgl-project/sglang.git
 cd sglang
-# Optional: pin a release tag or known-good commit for reproducible deployments.
-# git checkout <release-tag-or-commit>
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
@@ -445,7 +443,7 @@ pip install -e "python[diffusion]"
 pip install "cosmos-guardrail==0.3.1"
 ```
 
-> **Version note:** Cosmos 3 support in SGLang Diffusion is actively improving. The command above installs the latest upstream SGLang so users get current Cosmos 3 fixes and performance work. For production deployments or reproducible benchmarks, pin an SGLang release tag or a known-good commit before running `pip install`.
+> **Version note:** Cosmos 3 support in SGLang Diffusion currently requires the SGLang main branch. Switch to a stable SGLang release once Cosmos 3 support is included there.
 
 Start a Nano server:
 
