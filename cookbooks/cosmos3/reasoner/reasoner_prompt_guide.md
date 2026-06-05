@@ -68,7 +68,7 @@ messages = [
         "role": "user",
         "content": [
             {"type": "video_url", "video_url": {"url": "file:///path/to/video.mp4"}},
-            {"type": "text", "text": _USER_PROMPT},
+            {"type": "text", "text": "What's happening in this video?"},
         ],
     },
 ]
@@ -155,7 +155,7 @@ Media:
 User Prompt:
 
 ````text
-List all action segments in the video. For each detected event, you must determine:
+List all action segments in the video.
 
 Provide the result in json format with 'seconds' for time depiction for each event. Use keywords 'start', 'end' and 'caption' in the json output. Please list multiple events if applicable.
 
@@ -172,6 +172,40 @@ Provide the result in json format with 'seconds' for time depiction for each eve
   "caption": EVENT2
 },
 ...
+]
+```
+````
+
+Model Answer:
+
+````text
+```json
+[
+  {
+    "start": 0.1,
+    "end": 2.7,
+    "caption": "A white and black humanoid robot stands beside a red popcorn dispenser, its right arm extended toward the machine while its left arm reaches for a green paper cup placed on a black table in front of it."
+  },
+  {
+    "start": 2.7,
+    "end": 4.2,
+    "caption": "The robot's left arm grasps the green paper cup and lifts it slightly off the table, positioning it under the popcorn dispenser's spout."
+  },
+  {
+    "start": 4.2,
+    "end": 14.8,
+    "caption": "The robot's right arm activates the dispenser, releasing a steady stream of popcorn into the cup held by its left arm, filling it gradually as the arm adjusts to maintain proper alignment."
+  },
+  {
+    "start": 14.8,
+    "end": 17.9,
+    "caption": "Once the cup is sufficiently filled, the robot's left arm carefully places the cup back onto the black table, ensuring it remains stable."
+  },
+  {
+    "start": 17.9,
+    "end": 18.7,
+    "caption": "The robot retracts both arms to a neutral position, completing the task with the popcorn cup now resting on the table."
+  }
 ]
 ```
 ````
@@ -286,6 +320,18 @@ Answer the question using the following format:
 Your reasoning.
 </think>
 Write your final answer immediately after the </think> tag.
+```
+
+Model Answer:
+
+```text
+<think>
+Okay, let's see. The video is a lab or workshop with two robot arms. The camera is top-down, showing a cardboard box in the center, air column wrap to the right, and some items arranged next to it. Robot Arm 1 is on the left, stationary. Robot Arm 2 on the right just picked up a smart charger from the items and is moving it upwards and slightly left.
+
+So, what's next? The smart charger is being lifted. The box is open and has air column wrap inside. Maybe the next step is placing the charger into the box. Since the box is in the center and the arm is moving left, which is towards the box. The air column wrap is there for cushioning, so placing the charger into the box makes sense. Also, the items were arranged in sequence, so after picking up one, the next action would logically be placing it into the box. Robot Arm 1 hasn't moved yet, so maybe Arm 2 continues the task. So the immediate next action should be placing the smart charger into the cardboard box.
+</think>
+
+The robot arm places the smart charger into the cardboard box, positioning it securely within the air column wrap for cushioning.
 ```
 
 #### Drive Scene Next Action
