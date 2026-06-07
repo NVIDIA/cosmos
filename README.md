@@ -634,13 +634,14 @@ We are building examples that show Cosmos 3 capabilities end to end, including w
 
 ### Inference Benchmarks
 
-Cosmos 3 latency and serving numbers live in [`inference_benchmarks.md`](inference_benchmarks.md). Generator sections report diffusion-path latency (seconds) by GPU, engine, resolution, and tensor-parallel width; the Reasoner section reports vLLM serving metrics under concurrent load. Empty cells mean a combination has not been measured yet, not that it is unsupported.
+Cosmos 3 latency and serving numbers live in [`inference_benchmarks.md`](inference_benchmarks.md). Generator sections report diffusion-path latency (seconds) by GPU, engine, resolution, and tensor-parallel width; Reasoner sections report vLLM serving metrics under concurrent load. Empty cells mean a combination has not been measured yet, not that it is unsupported.
 
 | Benchmark | Surface | Model | What it covers |
 | --- | --- | --- | --- |
 | [Cosmos3-Nano generator](inference_benchmarks.md#cosmos3-nano-generator) | Generator | Cosmos3-Nano | Text-to-image, text-to-video, and image-to-video latency across PyTorch, vLLM-Omni, and Diffusers |
 | [Cosmos3-Super generator](inference_benchmarks.md#cosmos3-super-generator) | Generator | Cosmos3-Super | The same modalities and engines at the larger checkpoint scale |
 | [Cosmos3-Nano reasoner](inference_benchmarks.md#cosmos3-nano-reasoner) | Reasoner | Cosmos3-Nano | vLLM serving metrics — TTFT, request latency, and throughput at concurrency 1/64/128/256 |
+| [Cosmos3-Super reasoner](inference_benchmarks.md#cosmos3-super-reasoner) | Reasoner | Cosmos3-Super | The same serving metrics at the larger checkpoint scale; coverage is sparser than Nano |
 
 ### Finetune
 
