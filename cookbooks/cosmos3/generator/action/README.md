@@ -14,6 +14,11 @@ Environment setup for both backends is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide; each backend below
 links to the section you need.
 
+Guardrail model access: Generator paths that load guardrails require the gated
+[nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
+model license to be accepted on Hugging Face before the backend loads the
+guardrail models.
+
 ## Table of Contents
 
 - [Run with Cosmos Framework](#run-with-cosmos-framework)

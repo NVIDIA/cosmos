@@ -9,6 +9,11 @@ Environment setup for every backend is centralized in the shared
 links to the section you need. The quickstarts are minimal text-to-video examples
 to get one generation running per backend — run them from this folder.
 
+Guardrail model access: Generator paths that load guardrails require the gated
+[nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
+model license to be accepted on Hugging Face before the backend loads the
+guardrail models.
+
 ## Run with Cosmos Framework
 
 ### Quickstart
