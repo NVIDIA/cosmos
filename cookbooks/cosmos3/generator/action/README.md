@@ -14,10 +14,11 @@ Environment setup for both backends is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide; each backend below
 links to the section you need.
 
-Guardrail model access: Generator paths that load guardrails require the gated
+Generator requires the Guardrail. Request access to the gated
 [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
-model license to be accepted on Hugging Face before the backend loads the
-guardrail models.
+HF repository before running these examples. To disable the guardrail, set
+`enable_safety_checker=False` (Diffusers), `guardrails: false` (vLLM-Omni
+`extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework).
 
 ## Table of Contents
 
