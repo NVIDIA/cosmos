@@ -1,0 +1,201 @@
+{
+  "subjects": [
+    {
+      "description": "A pedestrian wearing a bright green short-sleeved shirt and dark trousers walking along the left sidewalk toward the camera",
+      "appearance_details": "Casual urban attire, relaxed gait, arms swinging gently at sides",
+      "relationship": "One of several pedestrians populating the street scene",
+      "location": "Left midground, sidewalk",
+      "relative_size": "Small within frame",
+      "orientation": "Facing toward the camera",
+      "pose": "Upright, mid-stride walking posture",
+      "action": "Walking toward the observer",
+      "state_changes": "Gradually approaches and grows slightly larger in frame.",
+      "clothing": "Green short-sleeved shirt, dark pants, casual shoes",
+      "expression": "Neutral, relaxed",
+      "gender": "Unknown",
+      "age": "Adult",
+      "skin_tone_and_texture": "Medium tone, not clearly visible at distance",
+      "facial_features": "Indistinct at distance",
+      "number_of_subjects": 1,
+      "number_of_arms": 2,
+      "number_of_legs": 2
+    },
+    {
+      "description": "A couple walking away from the camera further up the inclined sidewalk",
+      "appearance_details": "Two figures in casual clothing, walking side by side at a leisurely pace",
+      "relationship": "Companions walking together, moving away from the observer",
+      "location": "Left background, upper sidewalk",
+      "relative_size": "Small within frame",
+      "orientation": "Backs to the camera",
+      "pose": "Upright walking posture, close to each other",
+      "action": "Strolling up the incline",
+      "state_changes": "Slowly recede into the distance as the camera advances.",
+      "clothing": "Casual everyday clothing in muted tones",
+      "expression": "Not visible",
+      "gender": "Unknown",
+      "age": "Adult",
+      "skin_tone_and_texture": "Not clearly visible",
+      "facial_features": "Not visible",
+      "number_of_subjects": 2,
+      "number_of_arms": 4,
+      "number_of_legs": 4
+    },
+    {
+      "description": "A person in a red shirt standing near the base of a tree on the right side of the street",
+      "appearance_details": "Standing still, seemingly paused or waiting, red shirt contrasting with the light blue building behind",
+      "relationship": "Static pedestrian element anchoring the right side of the scene",
+      "location": "Right midground, curbside near a tree trunk",
+      "relative_size": "Small within frame",
+      "orientation": "Partially turned toward the street",
+      "pose": "Standing, weight on one leg, arms at sides",
+      "action": "Standing in place near the tree",
+      "state_changes": "Remains mostly stationary as the camera passes.",
+      "clothing": "Red shirt, dark pants",
+      "expression": "Not clearly visible",
+      "gender": "Unknown",
+      "age": "Adult",
+      "skin_tone_and_texture": "Medium tone, not clearly visible at distance",
+      "facial_features": "Indistinct at distance",
+      "number_of_subjects": 1,
+      "number_of_arms": 2,
+      "number_of_legs": 2
+    },
+    {
+      "description": "A white sedan driving slowly forward in the center of the road",
+      "appearance_details": "Clean white paint, standard compact sedan body, brake lights occasionally glowing red",
+      "relationship": "Directly ahead of the observer, pacing the forward motion",
+      "location": "Center foreground to midground",
+      "relative_size": "Medium within frame",
+      "orientation": "Rear facing the camera, moving away",
+      "pose": "Driving posture, upright on wheels",
+      "action": "Advancing slowly up the incline",
+      "state_changes": "Maintains steady slow forward motion throughout.",
+      "clothing": "",
+      "expression": "",
+      "gender": "",
+      "age": "",
+      "skin_tone_and_texture": "",
+      "facial_features": "",
+      "number_of_subjects": 1,
+      "number_of_arms": 0,
+      "number_of_legs": 0
+    },
+    {
+      "description": "A red car positioned slightly ahead and to the left of the white sedan",
+      "appearance_details": "Compact hatchback or sedan with vivid red paint, visible rear tail lights",
+      "relationship": "Leading vehicle, slightly off-center from the white car",
+      "location": "Center-left midground, ahead of the white car",
+      "relative_size": "Small within frame",
+      "orientation": "Rear facing the camera",
+      "pose": "Driving posture on the roadway",
+      "action": "Driving forward up the street",
+      "state_changes": "Gradually moves further ahead as the scene progresses.",
+      "clothing": "",
+      "expression": "",
+      "gender": "",
+      "age": "",
+      "skin_tone_and_texture": "",
+      "facial_features": "",
+      "number_of_subjects": 1,
+      "number_of_arms": 0,
+      "number_of_legs": 0
+    },
+    {
+      "description": "A row of cars parked tightly along the right curb",
+      "appearance_details": "Assorted compact vehicles in varied colors (silver, gray, white, dark tones), dusty windows, close bumper-to-bumper spacing",
+      "relationship": "Lines the right edge of the road next to the light blue building",
+      "location": "Right side, foreground into midground along the curb",
+      "relative_size": "Medium within frame",
+      "orientation": "Parallel to the curb, facing up the incline",
+      "pose": "Stationary, parked",
+      "action": "Parked along the curb",
+      "state_changes": "No significant change.",
+      "clothing": "",
+      "expression": "",
+      "gender": "",
+      "age": "",
+      "skin_tone_and_texture": "",
+      "facial_features": "",
+      "number_of_subjects": 6,
+      "number_of_arms": 0,
+      "number_of_legs": 0
+    }
+  ],
+  "background_setting": "A slightly inclined, paved urban street stretches ahead, flanked by mature leafy trees whose canopies partially arch over the road. On the left, a bright blue metal fence and the adjoining lower walls of multi-story buildings are covered in layered, colorful graffiti with bold tags and stylized lettering. On the right, a light blue plastered building with shuttered windows rises beside a tightly packed row of parked cars. Overhead, a dense tangle of utility wires and cables crisscrosses between wooden and metal poles, typical of a densely built, older city neighborhood. The street has visible patches, cracks, and faint lane markings, and narrow sidewalks run along both sides.",
+  "lighting": {
+    "conditions": "Overcast daylight, bright and diffused",
+    "direction": "Ambient top-down with soft directional fill from the open sky",
+    "shadows": "Soft, low-contrast shadows cast beneath trees, vehicles, and pedestrians onto the asphalt",
+    "illumination_effect": "Evenly lit scene with muted highlights and gentle tonal gradations, reducing glare and enhancing color saturation of the graffiti and vehicles"
+  },
+  "aesthetics": {
+    "composition": "Symmetrical one-point perspective along the centerline of the street, with trees, buildings, and parked cars forming strong leading lines converging toward the vanishing point up the incline",
+    "color_scheme": "Muted grays of the asphalt and overcast sky contrasted with vivid accents of graffiti colors, bright green, red, and the light blue building",
+    "mood_atmosphere": "Everyday urban calm, mundane vibrancy, quietly bustling",
+    "patterns": "Repeating vertical tree trunks, parked cars, and overhead crisscrossing utility wires"
+  },
+  "cinematography": {
+    "camera_motion": "Slow steady forward tracking shot, matching the pace of the white car ahead",
+    "framing": "Wide shot encompassing both sidewalks, full road, and overhead wires",
+    "camera_angle": "Eye-level, roughly at the height of a car windshield",
+    "depth_of_field": "Deep",
+    "focus": "Sharp focus throughout, from the pavement in front to the distant vanishing point of the street",
+    "lens_focal_length": "Standard wide-angle, approximately 28mm equivalent"
+  },
+  "style_medium": "Live-action video",
+  "artistic_style": "Documentary, observational realism",
+  "context": "Urban street-level travelogue or dashcam-style capture of daily city life",
+  "actions": [
+    {
+      "time": "0:00-0:01",
+      "description": "Camera begins its steady forward glide up the inclined street; white car ahead rolls slowly, red car visible further up to its left; pedestrian in green shirt appears in the left midground approaching."
+    },
+    {
+      "time": "0:01-0:02",
+      "description": "Graffiti-covered blue fence slides past on the left; parked cars on the right enter and exit frame; person in red shirt remains standing near the tree."
+    },
+    {
+      "time": "0:02-0:03",
+      "description": "Couple up the incline continues walking away; green-shirted pedestrian draws closer to the camera; No Parking sign on the utility pole becomes clearly legible."
+    },
+    {
+      "time": "0:03-0:04",
+      "description": "Camera continues its measured advance, maintaining distance from the white car; overhead wires sweep past; the scene settles into its steady urban rhythm."
+    }
+  ],
+  "text_and_signage_elements": [
+    {
+      "text": "E (crossed out)",
+      "category": "scene_sign",
+      "appearance": "Circular regulatory sign, blue background with red border and red diagonal slash through a white letter 'E'",
+      "spatial_temporal": "Mounted on a utility pole on the left side of the street, visible throughout the clip",
+      "context": "A 'No Parking' (Estacionamento proibido) traffic sign indicating parking is prohibited along this stretch of road"
+    },
+    {
+      "text": "Assorted graffiti tags and stylized lettering",
+      "category": "physical_in_scene",
+      "appearance": "Multicolored spray-paint lettering in bold, overlapping styles across the blue fence and adjacent walls",
+      "spatial_temporal": "Along the left side of the street, visible throughout the clip",
+      "context": "Street art and tagging typical of urban neighborhoods, adding visual texture to the scene"
+    }
+  ],
+  "segments": [
+    {
+      "segment_index": 0,
+      "time_range": "0:00-0:04",
+      "description": "A continuous forward tracking shot up a gently inclined urban street, following the slow pace of a white car in the center lane, with a red car ahead, graffiti-covered surfaces and pedestrians on the left, and parked cars and a standing pedestrian in red on the right, all beneath a web of overhead utility wires under an overcast sky.",
+      "key_changes": "Pedestrian in green shirt gradually approaches the camera; couple in the background recedes; parked cars pass by on the right.",
+      "camera": "Smooth, steady forward motion at a constant slow speed, no panning or tilting, maintaining a consistent eye-level perspective."
+    }
+  ],
+  "transitions": [],
+  "temporal_caption": "At the start, the camera glides forward along a gently inclined city street, already in motion and matching the slow pace of a white car ahead in the center lane, with a red car slightly further up and to its left. Around the first second, the blue graffiti-covered fence and walls on the left scroll by while a pedestrian in a green shirt walks toward the lens on the left sidewalk. By the second second, parked cars line the right curb beside the light blue building, and the person in the red shirt stands quietly near a tree trunk. In the third second, the couple further up the incline continues to walk away into the distance, and the circular No Parking sign on the utility pole becomes clearly visible. In the final second, the steady forward motion persists under the overcast sky and tangled overhead wires, capturing the unhurried rhythm of the busy urban street.",
+  "audio_description": "Ambient urban soundscape with the low hum of slow-moving engines from the white and red cars, faint tire noise on asphalt, distant chatter of pedestrians, occasional bird calls from the leafy trees, and the soft rustle of foliage under a light breeze; no dialogue or music.",
+  "resolution": {
+    "W": 1280,
+    "H": 720
+  },
+  "aspect_ratio": "16,9",
+  "duration": "4s",
+  "fps": 30
+}

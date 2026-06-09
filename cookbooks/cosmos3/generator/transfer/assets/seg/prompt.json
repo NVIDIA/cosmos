@@ -1,0 +1,106 @@
+{
+  "subjects": [
+    {
+      "description": "A male climber wearing a black tank top and dark pants, with a colorful chalk bag clipped to his waist, navigating the overhanging bouldering wall.",
+      "appearance_details": "Athletic build with visible arm and shoulder musculature, chalk dust on fingers, climbing shoes snug on his feet, a patterned chalk bag with red, blue, and yellow accents bouncing at his lower back.",
+      "relationship": "Primary subject performing the climb while being observed by the seated person.",
+      "location": "Center to lower-center of the frame on the overhanging wall",
+      "relative_size": "Medium within frame",
+      "orientation": "Back and side partially facing the camera as he faces the wall",
+      "pose": "Suspended on the overhang, limbs extended across holds, body taut and angled upward",
+      "action": "Progressing up the overhanging bouldering wall through a sequence of hand and foot moves",
+      "state_changes": "Shifts from a hanging start position to a dynamic upward reach, then stabilizes with a high foot, then extends left arm to the next hold.",
+      "clothing": "Black tank top, dark athletic pants, climbing shoes, colorful chalk bag at waist",
+      "expression": "Focused and determined, jaw slightly set",
+      "gender": "Male",
+      "age": "Young adult",
+      "skin_tone_and_texture": "Light to medium skin tone with a slight sheen of sweat",
+      "facial_features": "Short hair, defined jawline; partial profile visible when turning toward holds",
+      "number_of_subjects": 1,
+      "number_of_arms": 2,
+      "number_of_legs": 2
+    },
+    {
+      "description": "A seated observer in a purple top and dark pants, sitting on the padded floor near the black curtains to the right.",
+      "appearance_details": "Relaxed posture, attention directed toward the climber, legs loosely crossed or extended on the mat.",
+      "relationship": "Spectator or belay partner watching the climber's progress.",
+      "location": "Right background, at floor level",
+      "relative_size": "Small within frame",
+      "orientation": "Facing toward the climbing wall, partial profile to camera",
+      "pose": "Seated on the padded mat, upper body upright, head tilted up toward the wall",
+      "action": "Observing the climber attentively",
+      "state_changes": "No significant change.",
+      "clothing": "Purple top and dark pants",
+      "expression": "Attentive, calm",
+      "gender": "Unknown",
+      "age": "Young adult",
+      "skin_tone_and_texture": "Medium skin tone, smooth",
+      "facial_features": "Indistinct at distance",
+      "number_of_subjects": 1,
+      "number_of_arms": 2,
+      "number_of_legs": 2
+    }
+  ],
+  "background_setting": "A brightly lit indoor climbing gym dominated by a large, steeply overhanging bouldering wall densely covered with colorful climbing holds in red, blue, green, yellow, and orange. The overhanging wall angles out over a dark grey padded floor. To the left, a vertical wall section bears grey holds and a mounted yellow fire extinguisher. To the right, black curtains hang from ceiling to floor, partially framing the space where the observer sits. Bright overhead lights are affixed to a corrugated metal ceiling, giving the gym an open, industrial feel.",
+  "lighting": {
+    "conditions": "Bright indoor artificial lighting",
+    "direction": "Top-lit from overhead fixtures",
+    "shadows": "Soft, short shadows cast downward from the climber and holds onto the wall and mats",
+    "illumination_effect": "Even, high-key illumination that saturates the colorful holds and keeps the entire scene clearly visible"
+  },
+  "aesthetics": {
+    "composition": "Wide framing that captures the full scale of the overhanging wall, with the climber central on the overhang, the seated observer anchoring the right background, and the grey vertical wall with fire extinguisher balancing the left side.",
+    "color_scheme": "Vibrant primary and secondary hues\u2014reds, blues, greens, yellows, oranges\u2014set against neutral greys of the wall, floor, and ceiling, with black curtains adding contrast.",
+    "mood_atmosphere": "Energetic, focused, athletic, purposeful",
+    "patterns": "Scattered grid-like distribution of multicolored climbing holds and corrugated ceiling ridges"
+  },
+  "cinematography": {
+    "camera_motion": "Static",
+    "framing": "Wide shot",
+    "camera_angle": "Eye-level",
+    "depth_of_field": "Deep",
+    "focus": "Entire climbing wall and climber in sharp focus",
+    "lens_focal_length": "Wide-angle"
+  },
+  "style_medium": "Live-action video",
+  "artistic_style": "Realistic documentary",
+  "context": "Indoor bouldering session captured for training review or climbing content",
+  "actions": [
+    {
+      "time": "0:00-0:01",
+      "description": "The climber hangs on the overhang, left hand on a blue hold, right hand on a red hold, left foot planted on a lower blue hold, right leg dangling."
+    },
+    {
+      "time": "0:01-0:02",
+      "description": "He reaches his right hand upward to grasp a higher red hold, shifting his body weight upward along the overhang."
+    },
+    {
+      "time": "0:02-0:03",
+      "description": "He brings his right foot up onto a small hold, stabilizing his suspended position on the wall."
+    },
+    {
+      "time": "0:03-0:04",
+      "description": "He extends his left arm upward toward a higher hold, propelling his body further up the incline while the observer watches."
+    }
+  ],
+  "text_and_signage_elements": [],
+  "segments": [
+    {
+      "segment_index": 0,
+      "time_range": "0:00-0:04",
+      "description": "A single continuous wide shot of the climber moving through a four-move sequence on the overhanging bouldering wall while a seated observer watches from the right background.",
+      "key_changes": "Climber progresses from a static hanging position to successive upward reaches with right hand, right foot, and left hand.",
+      "camera": "Static wide-angle framing throughout"
+    }
+  ],
+  "transitions": [],
+  "temporal_caption": "At 0:00, the climber is suspended on the overhang with his left hand on a blue hold and right hand on a red hold, left foot on a lower blue foothold and right leg hanging free, while a purple-shirted observer sits on the mat to the right. By 0:01, he reaches his right hand up to a higher red hold, shifting his weight upward under the overhang. Around 0:02, he swings his right foot up and places it on a small hold, locking his body into a more stable suspended position. From 0:03 to 0:04, he extends his left arm high to grasp the next hold, driving his body further up the angled wall as the observer continues to watch attentively.",
+  "audio_description": "Ambient gym sounds dominate: the soft scuff of climbing shoes on textured holds, the faint chalky rub of hands, occasional creak of the wall, muffled background chatter and distant shoe squeaks from elsewhere in the gym, and the low hum of overhead lights. No dialogue or music.",
+  "resolution": {
+    "W": 1280,
+    "H": 720
+  },
+  "aspect_ratio": "16,9",
+  "duration": "4s",
+  "fps": 30
+}

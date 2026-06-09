@@ -1,0 +1,24 @@
+{
+  "name": "transfer_wsm",
+  "model_mode": "video2video",
+  "resolution": "720",
+  "aspect_ratio": "16,9",
+  "num_frames": 101,
+  "fps": 10,
+  "shift": 10.0,
+  "num_steps": 50,
+  "seed": 2026,
+  "num_video_frames_per_chunk": 101,
+  "num_conditional_frames": 1,
+  "num_first_chunk_conditional_frames": 0,
+  "share_vision_temporal_positions": true,
+  "negative_metadata_mode": "none",
+  "negative_prompt_keep_metadata": false,
+  "guidance": 1.0,
+  "control_guidance": 3.0,
+  "negative_prompt_file": "../assets/negative_prompt.json",
+  "prompt_path": "../assets/wsm/prompt.json",
+  "wsm": {
+    "control_path": "../assets/wsm/control_wsm.mp4"
+  }
+}

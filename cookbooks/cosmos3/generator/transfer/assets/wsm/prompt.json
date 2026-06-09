@@ -1,0 +1,141 @@
+{
+  "subjects": [
+    {
+      "description": "A white commercial SUV with prominent advertising graphics including a phone number '777-7777' rendered in bold red and yellow lettering across its side panels",
+      "appearance_details": "Glossy white body paint, tinted windows, standard alloy wheels, and visible commercial decals on the door panels; the vehicle has a clean, well-maintained appearance",
+      "relationship": "Oncoming traffic crossing the path of the recording vehicle",
+      "location": "Initially center-distance, then crossing left across the foreground",
+      "relative_size": "Medium within frame",
+      "orientation": "Initially front-facing toward camera, then rotating leftward as it turns",
+      "pose": "Moving vehicle in motion",
+      "action": "Approaches the intersection and executes a left turn in front of the stopped recording vehicle",
+      "state_changes": "Transitions from forward approach to a leftward turning maneuver, then drives off down the side street",
+      "clothing": "",
+      "expression": "",
+      "gender": "",
+      "age": "",
+      "skin_tone_and_texture": "",
+      "facial_features": "",
+      "number_of_subjects": 1,
+      "number_of_arms": 0,
+      "number_of_legs": 0
+    },
+    {
+      "description": "A silver four-door sedan with a clean, modern body design",
+      "appearance_details": "Metallic silver paint with subtle reflections of the overcast sky, standard headlights, and a low-profile sedan silhouette",
+      "relationship": "Cross-traffic from the perpendicular street performing a turn maneuver",
+      "location": "Right-side intersecting street, then turning into the central road ahead",
+      "relative_size": "Small within frame",
+      "orientation": "Initially facing leftward from the right cross-street, then rotating to face away from camera",
+      "pose": "Vehicle in motion through a turning maneuver",
+      "action": "Approaches from the right cross-street, turns left, and drives away straight down the road ahead",
+      "state_changes": "Rotates from a perpendicular orientation to align with the main road and recede into the distance",
+      "clothing": "",
+      "expression": "",
+      "gender": "",
+      "age": "",
+      "skin_tone_and_texture": "",
+      "facial_features": "",
+      "number_of_subjects": 1,
+      "number_of_arms": 0,
+      "number_of_legs": 0
+    },
+    {
+      "description": "The dark hood of the recording vehicle occupying the lower foreground of the frame",
+      "appearance_details": "Glossy dark-colored hood reflecting the grey overcast sky and a dense network of overhead utility wires; a small blue object rests near the center of the hood",
+      "relationship": "The stationary host vehicle from which the dashcam perspective is captured",
+      "location": "Lower foreground spanning the bottom of the frame",
+      "relative_size": "Large within frame",
+      "orientation": "Facing forward toward the intersection",
+      "pose": "Stationary",
+      "action": "Remains stopped at the marked intersection throughout the entire video",
+      "state_changes": "No significant change.",
+      "clothing": "",
+      "expression": "",
+      "gender": "",
+      "age": "",
+      "skin_tone_and_texture": "",
+      "facial_features": "",
+      "number_of_subjects": 1,
+      "number_of_arms": 0,
+      "number_of_legs": 0
+    }
+  ],
+  "background_setting": "An urban residential intersection on an overcast day. Multi-story residential buildings featuring classic bay windows line both sides of the streets, interspersed with leafless deciduous trees and a few evergreen conifers. A complex network of overhead utility wires criss-crosses the sky, and suspended traffic lights hang above the marked crosswalks. Painted crosswalk lines and lane markings are visible on the asphalt. The neighborhood has a quiet, mid-density residential feel typical of older West Coast streets.",
+  "lighting": {
+    "conditions": "Overcast",
+    "direction": "Diffuse, omnidirectional ambient light from a uniformly grey sky",
+    "shadows": "Minimal, soft shadows beneath vehicles and trees with no sharp shadow edges",
+    "illumination_effect": "Flat, even illumination that mutes colors and reduces contrast across the scene"
+  },
+  "aesthetics": {
+    "composition": "Symmetrical dashcam framing with the dark vehicle hood anchoring the lower third, the intersection and traffic lights centered, and residential buildings flanking both sides",
+    "color_scheme": "Muted grey palette dominated by overcast sky tones, charcoal asphalt, and beige-grey building facades, with accent pops of red traffic lights and the SUV's red and yellow lettering",
+    "mood_atmosphere": "Calm, mundane, quiet urban routine",
+    "patterns": "Repeating bay window facades and the lattice of overhead utility wires"
+  },
+  "cinematography": {
+    "camera_motion": "Static",
+    "framing": "Wide shot",
+    "camera_angle": "Eye-level",
+    "depth_of_field": "Deep",
+    "focus": "Sharp focus throughout the intersection and surrounding buildings",
+    "lens_focal_length": "Wide-angle dashcam lens"
+  },
+  "style_medium": "Live-action video",
+  "artistic_style": "Documentary dashcam realism",
+  "context": "Dashcam footage from a vehicle stopped at a red light at an urban residential intersection",
+  "actions": [
+    {
+      "time": "0:00-0:02",
+      "description": "The recording vehicle sits stopped at the red light; the white commercial SUV is visible approaching from the opposite direction, while the residential surroundings remain still."
+    },
+    {
+      "time": "0:02-0:05",
+      "description": "The white SUV enters the intersection and begins executing a left turn, crossing in front of the stopped vehicle from right to left across the frame."
+    },
+    {
+      "time": "0:05-0:07",
+      "description": "The white SUV completes its turn and proceeds away down the street to the left; simultaneously, a silver sedan appears from the right cross-street approaching the intersection."
+    },
+    {
+      "time": "0:07-0:09",
+      "description": "The silver sedan executes a left turn and drives straight ahead down the road, receding into the distance, while the traffic lights remain red and the scene settles."
+    }
+  ],
+  "text_and_signage_elements": [
+    {
+      "text": "777-7777",
+      "category": "vehicle_graphic",
+      "appearance": "Bold red and yellow block lettering, large and easily readable",
+      "spatial_temporal": "Displayed on the side of the white SUV, visible from approximately 0:01 to 0:06 as it approaches and turns",
+      "context": "Commercial contact phone number advertising a business"
+    }
+  ],
+  "segments": [
+    {
+      "segment_index": 0,
+      "time_range": "0:00-0:04",
+      "description": "Static dashcam view of the stopped vehicle at a red light as a white commercial SUV approaches from the opposite direction and begins a left turn across the intersection",
+      "key_changes": "SUV transitions from straight approach to active turning maneuver",
+      "camera": "Completely static dashcam fixed to the vehicle"
+    },
+    {
+      "segment_index": 1,
+      "time_range": "0:04-0:09",
+      "description": "The white SUV completes its turn and exits frame to the left while a silver sedan from the right cross-street turns and drives away down the road ahead",
+      "key_changes": "Two vehicles successively clear the intersection while traffic lights remain red",
+      "camera": "Completely static dashcam fixed to the vehicle"
+    }
+  ],
+  "transitions": [],
+  "temporal_caption": "From 0:00 to 0:02, the dashcam shows a quiet residential intersection on an overcast day with the recording vehicle stopped at a red light and a white commercial SUV bearing '777-7777' lettering visible in the distance. From 0:02 to 0:05, the SUV enters the intersection and arcs into a left turn directly in front of the stopped car. Between 0:05 and 0:07, the SUV completes its turn and heads off down the street to the left while a silver sedan emerges from the cross-street on the right. From 0:07 to 0:09, the silver sedan executes its own left turn and recedes straight down the road ahead, leaving the intersection quiet again with the red lights still glowing.",
+  "audio_description": "Ambient outdoor city sounds with the low hum of idling vehicles, the muffled passing whoosh of the turning SUV's tires on damp asphalt, faint mechanical drone of the sedan accelerating away, distant urban background noise, and occasional bird chirps. No speech or music is present.",
+  "resolution": {
+    "W": 1280,
+    "H": 720
+  },
+  "aspect_ratio": "16,9",
+  "duration": "9s",
+  "fps": 10
+}

@@ -1,0 +1,86 @@
+{
+  "subjects": [
+    {
+      "description": "Two identical white robotic arms with sleek, segmented matte-white housings and exposed articulated joints, each terminating in a black two-fingered pincer-style gripper.",
+      "appearance_details": "Clean industrial design with visible bolt seams, subtle grey accents at the joints, cable routing along the upper arm, and glossy black rubberized pads on the inner faces of the gripper fingers.",
+      "relationship": "The two arms operate in parallel above the table, each tending to its own place setting in a coordinated manner.",
+      "location": "Suspended above the table, one on the left half and one on the center-right of the frame",
+      "relative_size": "Medium within frame",
+      "orientation": "Pointing downward toward the table surface",
+      "pose": "Arms extended vertically with grippers facing down, poised above the bowls",
+      "action": "Descending slightly and opening then closing their grippers in unison above the bowls",
+      "state_changes": "Arms lower a short distance; grippers open slightly, then close, without touching the dishware",
+      "clothing": "",
+      "expression": "",
+      "gender": "",
+      "age": "",
+      "skin_tone_and_texture": "",
+      "facial_features": "",
+      "number_of_subjects": 2,
+      "number_of_arms": 0,
+      "number_of_legs": 0
+    }
+  ],
+  "background_setting": "A modern, minimalist dining scene viewed from directly above. A warm-toned wooden dining table serves as the backdrop, with three carefully arranged place settings. On the left, a textured beige woven placemat holds a shallow greyish-white ceramic bowl, flanked by a folded white napkin and silver knife on its left and another silver knife on the right. In the center, a rectangular wooden serving tray supports an identical bowl with a white napkin and silver knife on its left and a white napkin plus silver fork on its right. On the right, a blue placemat printed with white ginkgo leaf patterns lies empty and flat. The overall environment suggests a tabletop robotics demonstration or automated fine-dining setup.",
+  "lighting": {
+    "conditions": "Bright, even studio-style lighting",
+    "direction": "Top-lit with soft diffusion from overhead",
+    "shadows": "Soft, subtle shadows directly beneath the arms, bowls, and utensils",
+    "illumination_effect": "A clean, uniform illumination that highlights textures of the wood, fabric, and ceramic while minimizing harsh contrast"
+  },
+  "aesthetics": {
+    "composition": "Symmetrical top-down composition showcasing three place settings spread horizontally with the robotic arms intruding vertically from above",
+    "color_scheme": "Neutral palette of warm wood tones, whites, greys, black gripper accents, and a pop of blue from the patterned placemat",
+    "mood_atmosphere": "Calm, precise, clean, futuristic, modern",
+    "patterns": "White ginkgo leaf print on the blue placemat; woven texture of the beige placemat"
+  },
+  "cinematography": {
+    "camera_motion": "Static",
+    "framing": "Wide overhead shot capturing the full tabletop arrangement",
+    "camera_angle": "High angle / overhead",
+    "depth_of_field": "Deep",
+    "focus": "Sharp focus across the entire tabletop, bowls, utensils, and robotic grippers",
+    "lens_focal_length": "Standard wide focal length equivalent to around 35mm"
+  },
+  "style_medium": "Live-action video",
+  "artistic_style": "Realistic, clean product-demonstration cinematography",
+  "context": "A demonstration of dual-arm robotic manipulation performing coordinated tabletop tasks in a domestic dining setting",
+  "actions": [
+    {
+      "time": "0:00-0:01",
+      "description": "Both robotic arms hold steady above their respective bowls, grippers closed, in initial standby position."
+    },
+    {
+      "time": "0:01-0:02",
+      "description": "The two arms simultaneously descend a short distance toward the bowls beneath them."
+    },
+    {
+      "time": "0:02-0:03",
+      "description": "The black pincer grippers on both arms open slightly in a synchronized motion while remaining just above the bowls."
+    },
+    {
+      "time": "0:03-0:04",
+      "description": "The grippers close again in unison and the arms hold their lowered position without making contact with the dishware."
+    }
+  ],
+  "text_and_signage_elements": [],
+  "segments": [
+    {
+      "segment_index": 0,
+      "time_range": "0:00-0:04",
+      "description": "A continuous overhead view of two white robotic arms coordinating above a set dining table, descending and opening/closing their grippers above two bowls.",
+      "key_changes": "Arms lower slightly; grippers cycle open then closed",
+      "camera": "Static high-angle framing with no movement"
+    }
+  ],
+  "transitions": [],
+  "temporal_caption": "At the start (0:00-0:01), the overhead frame reveals a neatly arranged wooden dining table with three place settings and two white robotic arms hovering motionless above the left and center bowls. From 0:01 to 0:02, both arms descend smoothly and in perfect sync toward their respective bowls. Between 0:02 and 0:03, the black pincer grippers of each arm open slightly in a coordinated gesture, poised just above the ceramic dishware. From 0:03 to 0:04, the grippers close again together, and the arms remain suspended in their lowered position without touching the bowls, concluding the brief synchronized maneuver.",
+  "audio_description": "Quiet ambient room tone accompanied by the faint mechanical whirring of servo motors and soft, precise clicks as the robotic grippers open and close. No dialogue or music is present.",
+  "resolution": {
+    "W": 736,
+    "H": 544
+  },
+  "aspect_ratio": "4,3",
+  "duration": "4s",
+  "fps": 30
+}

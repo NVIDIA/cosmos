@@ -1,0 +1,86 @@
+{
+  "subjects": [
+    {
+      "description": "A woman with blonde hair tied back in a low ponytail, dressed in a black sleeveless top with an open back, black leggings, and black athletic shoes, practicing a dance routine.",
+      "appearance_details": "Slim, athletic build; hair pulled back smoothly and swinging with her turns; minimal visible accessories; clean, modern dance attire.",
+      "relationship": "Sole performer in the rehearsal studio, framed by cameras on tripods recording her practice.",
+      "location": "Center of the frame, standing on the wood-style floor between the curtained wall and the red-framed window.",
+      "relative_size": "Medium within frame",
+      "orientation": "Initially facing away from the camera and slightly toward the window, then rotating counter-clockwise through multiple angles.",
+      "pose": "Begins with right arm extended back and right leg crossed behind the left; later pivots, brings arms to chest, lowers hands to waist, and finally extends arms outward with right foot stepped back.",
+      "action": "Performing a sequence of dance pivots and stances.",
+      "state_changes": "Pose evolves through four distinct positions: back-facing extended stance, sharp pivot with arms to chest, back-turn with hands at waist, and final open-armed poised stance.",
+      "clothing": "Black sleeveless top with open back, black leggings, black shoes.",
+      "expression": "Focused, composed, eyes concentrated on her movements.",
+      "gender": "Female",
+      "age": "Young adult",
+      "skin_tone_and_texture": "Light, smooth skin tone with a natural matte finish under studio daylight.",
+      "facial_features": "Defined cheekbones, subtle makeup, neutral focused features.",
+      "number_of_subjects": 1,
+      "number_of_arms": 2,
+      "number_of_legs": 2
+    }
+  ],
+  "background_setting": "A brightly lit rehearsal studio with light-colored wood-style flooring marked by circular green decals used as position markers. One wall is covered by a large black curtain decorated with scattered small white rectangular papers, in front of which two tripods hold small recording cameras. The opposite wall features a large window with bright red frames through which natural daylight streams, revealing a brick building across the way. Beneath the window rests a long bench with alternating orange and white patterned cushions, and a black floor-standing speaker stands nearby.",
+  "lighting": {
+    "conditions": "Bright daylight combined with even studio lighting",
+    "direction": "Side-lit from the right through the large red-framed window, with soft ambient fill across the room",
+    "shadows": "Soft, diffused shadows stretching across the wood floor toward the curtain side",
+    "illumination_effect": "Clean, airy illumination that highlights the dancer's silhouette and the colorful accents of the studio"
+  },
+  "aesthetics": {
+    "composition": "Wide symmetrical framing that captures the full studio, with the dancer centered between the curtain wall and the windowed wall",
+    "color_scheme": "Warm wood tones and orange cushions balanced against the black curtain, red window frames, and the dancer's black attire, with pops of green floor decals",
+    "mood_atmosphere": "Focused, energetic, disciplined, creative",
+    "patterns": "Alternating orange and white cushion pattern on the bench; scattered white rectangular papers on the black curtain; circular green decals on the floor"
+  },
+  "cinematography": {
+    "camera_motion": "Static",
+    "framing": "Wide shot",
+    "camera_angle": "Eye-level",
+    "depth_of_field": "Deep",
+    "focus": "Sharp focus on the dancer and the full studio environment",
+    "lens_focal_length": "Wide-angle lens, approximately 18-24mm equivalent"
+  },
+  "style_medium": "Live-action video",
+  "artistic_style": "Realistic, documentary-style rehearsal footage",
+  "context": "Dance rehearsal self-recording session in a studio",
+  "actions": [
+    {
+      "time": "0:00-0:01",
+      "description": "The dancer stands with her back to the camera, angled toward the window, right arm extended back and right leg crossed behind her left."
+    },
+    {
+      "time": "0:01-0:02",
+      "description": "She pivots sharply to her left, arms drawing in close to her chest as she faces the black curtain, ponytail swinging with the momentum."
+    },
+    {
+      "time": "0:02-0:03",
+      "description": "Continuing her counter-clockwise rotation, she turns her back toward the room's center again and lowers her hands near her waist."
+    },
+    {
+      "time": "0:03-0:04",
+      "description": "She extends both arms outward and steps her right foot back, settling into a poised final stance."
+    }
+  ],
+  "text_and_signage_elements": [],
+  "segments": [
+    {
+      "segment_index": 0,
+      "time_range": "0:00-0:04",
+      "description": "The dancer executes a continuous counter-clockwise sequence of four distinct poses in the rehearsal studio, captured in a single steady wide-angle shot.",
+      "key_changes": "Progression through four poses: opening back-facing extension, sharp pivot to curtain, back-turn with hands at waist, final open-armed stance.",
+      "camera": "Static wide-angle view holding the entire studio in frame."
+    }
+  ],
+  "transitions": [],
+  "temporal_caption": "At 0:00, the blonde dancer stands with her back toward the camera, right arm extended behind her and right leg crossed behind the left, poised near the center of the sunlit studio. By 0:01, she pivots crisply to her left, pulling her arms in tight to her chest as her ponytail swings, now facing the black paper-dotted curtain. Around 0:02, her counter-clockwise rotation continues and she turns her back to the room's center once more, lowering her hands softly to her waist. By 0:03 to 0:04, she opens both arms outward and steps her right foot back, landing in a confident, poised finishing stance while the studio remains framed steadily around her.",
+  "audio_description": "Soft ambient room tone with faint footsteps and shoe squeaks on the wood floor as the dancer pivots; a rhythmic pop or electronic dance track plays from the black speaker at moderate volume, punctuated by the subtle swish of her hair and clothing during the turns. No dialogue.",
+  "resolution": {
+    "W": 1280,
+    "H": 720
+  },
+  "aspect_ratio": "16,9",
+  "duration": "4s",
+  "fps": 30
+}

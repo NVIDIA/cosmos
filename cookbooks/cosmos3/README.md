@@ -6,7 +6,7 @@ backend you want to run and follow that one section.
 
 | Backend | Use it for | Used by |
 | --- | --- | --- |
-| [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action) |
+| [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
 | [Transformers](#transformers-coming-soon) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
@@ -78,6 +78,57 @@ The notebooks honor `COSMOS3_UV_GROUP` (default `cu130-train`); set
 This produces a venv at `packages/cosmos3/.venv`. Run framework commands either
 by activating it (`source .venv/bin/activate`) or via its absolute interpreter
 (`.venv/bin/python`, `.venv/bin/torchrun`).
+
+### Recommended base image (optional)
+
+For CUDA 13, NVIDIA documents the [NGC PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
+`nvcr.io/nvidia/pytorch:25.09-py3` as the recommended starting point; for CUDA 12 use
+`nvcr.io/nvidia/pytorch:25.06-py3`. See the repo root
+[Which base container should I use?](../../README.md#which-base-container-should-i-use)
+and [Cosmos Framework setup](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/setup.md#recommended-base-image).
+
+Inside that image (or any minimal GPU host), install the system packages below **before**
+your first `torchrun` inference — `uv sync --all-extras` alone is not enough for
+guardrails.
+
+### System packages (required for Framework guardrails)
+
+Framework inference enables **guardrails by default**. The video guardrail path imports
+OpenCV (via RetinaFace), which needs graphics libraries that are often missing on
+headless servers and minimal containers.
+
+From `packages/cosmos3` (or the framework repo root), with `apt-get` available.
+NGC and many training containers run as **root** — use `apt-get` directly (no `sudo`).
+On a normal host where you are not root, prefix with `sudo`.
+
+```bash
+apt-get update
+apt-get install -y --no-install-recommends \
+  curl ffmpeg git-lfs libgl1 libglib2.0-0 libx11-dev libxcb1 tree wget
+```
+
+Verify OpenCV imports after `source .venv/bin/activate`:
+
+```bash
+python -c "import cv2; print(cv2.__version__)"
+```
+
+If you see `libxcb.so.1: cannot open shared object file`, the `libxcb1` / `libgl1`
+packages above were not installed. The same fix is documented in the repo root
+[troubleshooting guide](../../README.md#import-fails-with-libxcbso1-cannot-open-shared-object-file).
+
+When using the **NGC PyTorch base image**, clear `LD_LIBRARY_PATH` after activating the
+venv so the container’s bundled libtorch does not shadow the venv (see
+[Cosmos Framework FAQ — PyTorch import inside NGC](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/faq.md)):
+
+```bash
+source .venv/bin/activate
+export LD_LIBRARY_PATH=
+```
+
+Guardrails also require Hugging Face access to the gated safety models (accept the
+license and set `HF_TOKEN` as in [Prerequisites](#prerequisites)). To disable guardrails
+for a one-off run, pass `--no-guardrails` to `cosmos_framework.scripts.inference`.
 
 ## Diffusers
 
