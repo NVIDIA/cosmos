@@ -95,10 +95,18 @@ def make_preview(src: Path, crf: int = 28) -> Path:
     return preview
 
 
-def preview_transfer(control: str) -> None:
+def preview_transfer(control: str, *, model: str | None = None) -> None:
+    """Preview control input and generated output for *control*.
+
+    *model* selects which output directory to read (``Cosmos3-Nano`` uses
+    ``<output_root>/<control>/…``; ``Cosmos3-Super`` uses
+    ``<output_root>/<control>_super/…``).  Defaults to the
+    ``COSMOS3_MODEL`` environment variable, falling back to ``Cosmos3-Nano``.
+    """
+    resolved_model = model or os.environ.get("COSMOS3_MODEL", "Cosmos3-Nano")
     spec = load_transfer_spec(control)
     control_path = resolve_spec_path(spec[control]["control_path"])
-    vision_path = _output_root() / control / f"transfer_{control}" / "vision.mp4"
+    vision_path = _output_root() / resolved_model / f"transfer_{control}" / "vision.mp4"
     if not control_path.is_file():
         raise FileNotFoundError(f"missing control video: {control_path}")
     if not vision_path.is_file():

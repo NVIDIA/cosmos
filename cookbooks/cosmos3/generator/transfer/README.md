@@ -1,6 +1,7 @@
 # Cosmos3 Generator Transfer Examples
 
-Cosmos3-Nano video **transfer** examples on the native PyTorch (Cosmos Framework) path.
+Cosmos3 video **transfer** examples — **Nano** (single GPU) and **Super** (multi-GPU, 32B) — on
+the native PyTorch (Cosmos Framework) path.
 Sample assets under [`assets/`](./assets) cover spatial control signals paired with
 `prompt.json` files:
 
@@ -33,69 +34,94 @@ come from the control video; see the spec field reference for how `fps` and
 | World scenario (WSM) | `assets/wsm/` | `control_wsm.mp4` + `prompt.json` | 101 frames @ 10 FPS |
 
 Transfer inference is selected automatically when any hint key is present in the spec.
+The same spec files are used for both Nano and Super — model selection is controlled
+entirely by `--checkpoint-path`.
 
 ## Run with Cosmos Framework
 
 ### Quickstart
 
 Set up the environment: [Cosmos Framework setup](../../README.md#cosmos-framework).
-Activate the framework venv, then run inference (checked-in `specs/*.json` use paths
-relative to `specs/`). Transfer on Nano looks like:
+Run the commands below inside the **cosmos container** (e.g. `pytorch:25.09-py3`) — the same
+environment used to install the venv and run the notebook. The commands mirror the notebook
+exactly: `cd` into the framework repo first, then invoke the venv's Python or torchrun
+(the system Python does not have `cosmos_framework`).
 
 ```bash
-cd cookbooks/cosmos3/generator/transfer
+# Set once — the cosmos-framework repo root (contains .venv/ and pyproject.toml).
+# In this cosmos checkout: packages/cosmos3 (or packages/cosmos-framework).
+export COSMOS_FRAMEWORK=/path/to/cosmos-framework   # e.g. <cosmos_root>/packages/cosmos3
+export TRANSFER_ROOT=$(pwd)/cookbooks/cosmos3/generator/transfer
 
-# edge
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i specs/edge.json \
-  -o ./output/ \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
+# NGC containers bundle libtorch in LD_LIBRARY_PATH which conflicts with Triton/CUDA.
+unset LD_LIBRARY_PATH
+```
 
-# blur
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i specs/blur.json \
-  -o ./output/ \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
+#### Cosmos3-Nano (single GPU)
 
-# depth
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i specs/depth.json \
-  -o ./output/ \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
+```bash
+cd "$COSMOS_FRAMEWORK"
 
-# seg
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
+# edge — replace edge.json with blur.json / depth.json / seg.json / wsm.json for other controls
+CUDA_VISIBLE_DEVICES=0 \
+.venv/bin/python -m cosmos_framework.scripts.inference \
   --parallelism-preset=latency \
-  -i specs/seg.json \
-  -o ./output/ \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
-
-# wsm
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i specs/wsm.json \
-  -o ./output/ \
+  -i "$TRANSFER_ROOT/specs/edge.json" \
+  -o "$TRANSFER_ROOT/outputs/Cosmos3-Nano/" \
   --checkpoint-path Cosmos3-Nano \
   --seed 2026
 ```
 
+#### Cosmos3-Super (multi-GPU)
+
+```bash
+cd "$COSMOS_FRAMEWORK"
+
+# edge — replace edge.json with other control specs as needed
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
+.venv/bin/torchrun --nproc-per-node=4 \
+  --master-addr=127.0.0.1 --master-port=29500 \
+  -m cosmos_framework.scripts.inference \
+  --parallelism-preset=latency \
+  -i "$TRANSFER_ROOT/specs/edge.json" \
+  -o "$TRANSFER_ROOT/outputs/Cosmos3-Super/" \
+  --checkpoint-path Cosmos3-Super \
+  --seed 2026
+```
+
+| | Cosmos3-Nano | Cosmos3-Super |
+|---|---|---|
+| `--checkpoint-path` | `Cosmos3-Nano` | `Cosmos3-Super` |
+| Launcher | `.venv/bin/python` (from framework root) | `.venv/bin/torchrun --nproc-per-node=<N>` (from framework root) |
+| `--parallelism-preset` | `latency` | `latency` |
+| GPUs | 1 | 4+ |
+
 The input spec sets `prompt_path` and a hint block with `control_path` pointing at the
 checked-in assets under [`assets/`](./assets) via paths relative to [`specs/`](./specs).
 
-Outputs are written under the directory passed to `-o`, with one subdirectory per sample name,
-for example `output/transfer_edge/vision.mp4`. Batch size must be 1 for transfer.
+Outputs are written under the directory passed to `-o`, with one subdirectory per sample
+name, e.g. `outputs/Cosmos3-Nano/transfer_edge/vision.mp4`.
+
+### Notebook (self-contained)
+
+[`run_video_transfer_with_cosmos_framework.ipynb`](./run_video_transfer_with_cosmos_framework.ipynb)
+is a self-contained tutorial: it installs all dependencies (system packages, framework
+clone, Python venv via `uv`), authenticates with Hugging Face, and runs all five controls
+with previews.
+
+1. Open the notebook and edit **§2 (Configure)** — paste your `HF_TOKEN` and optionally
+   set cache/output paths.
+2. Run **§9–§13** for Cosmos3-Nano (single GPU) or **§14–§18** for Cosmos3-Super (multi-GPU).
+   No model flag needed — each section uses its matching checkpoint explicitly.
+
+To execute headlessly:
+
+```bash
+cd cookbooks/cosmos3/generator/transfer
+jupyter execute run_video_transfer_with_cosmos_framework.ipynb
+```
+
+Outputs land under `outputs/notebooks/<model>/transfer_<control>/vision.mp4`.
 
 ### Spec field reference
 
@@ -134,13 +160,12 @@ Key fields:
 
 - **`num_frames`** — number of video frames.
 
-
 ### Cookbook entrypoints
 
 - [`run_video_transfer_with_cosmos_framework.ipynb`](./run_video_transfer_with_cosmos_framework.ipynb) —
-  full tutorial on a **GPU host**: environment setup, `nvidia-smi` check, then five inference blocks
-  (edge, blur, depth, seg, wsm) with previews. See [Cosmos3 environment setup](../../README.md).
+  self-contained notebook: §9–§13 Nano (single GPU), §14–§18 Super (multi-GPU). Edit §2, run top-to-bottom.
 - [`specs/`](./specs) — checked-in Framework input JSON per control (paths relative to `specs/`).
+  Shared by both Nano and Super.
 
 ### Troubleshooting
 
