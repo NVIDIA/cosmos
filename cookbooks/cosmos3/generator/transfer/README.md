@@ -1,6 +1,7 @@
 # Cosmos3 Generator Transfer Examples
 
-Cosmos3-Nano video **transfer** examples on the native PyTorch (Cosmos Framework) path.
+Cosmos3 video **transfer** examples — **Nano** (single GPU) and **Super** (multi-GPU, 32B) — on
+the native PyTorch (Cosmos Framework) path.
 Sample assets under [`assets/`](./assets) cover spatial control signals paired with
 `prompt.json` files:
 
@@ -33,6 +34,8 @@ come from the control video; see the spec field reference for how `fps` and
 | World scenario (WSM) | `assets/wsm/` | `control_wsm.mp4` + `prompt.json` | 101 frames @ 10 FPS |
 
 Transfer inference is selected automatically when any hint key is present in the spec.
+The same spec files are used for both Nano and Super — model selection is controlled
+entirely by `--checkpoint-path`.
 
 ## Run with Cosmos Framework
 
@@ -40,62 +43,73 @@ Transfer inference is selected automatically when any hint key is present in the
 
 Set up the environment: [Cosmos Framework setup](../../README.md#cosmos-framework).
 Activate the framework venv, then run inference (checked-in `specs/*.json` use paths
-relative to `specs/`). Transfer on Nano looks like:
+relative to `specs/`).
+
+#### Cosmos3-Nano (single GPU)
 
 ```bash
 cd cookbooks/cosmos3/generator/transfer
 
-# edge
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
+# edge (replace edge.json with blur.json / depth.json / seg.json / wsm.json for other controls)
+python -m cosmos_framework.scripts.inference \
   --parallelism-preset=latency \
   -i specs/edge.json \
-  -o ./output/ \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
-
-# blur
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i specs/blur.json \
-  -o ./output/ \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
-
-# depth
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i specs/depth.json \
-  -o ./output/ \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
-
-# seg
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i specs/seg.json \
-  -o ./output/ \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
-
-# wsm
-torchrun --nproc-per-node=1 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i specs/wsm.json \
-  -o ./output/ \
+  -o ./outputs/Cosmos3-Nano/ \
   --checkpoint-path Cosmos3-Nano \
   --seed 2026
 ```
 
+#### Cosmos3-Super (multi-GPU)
+
+```bash
+cd cookbooks/cosmos3/generator/transfer
+
+# edge — adjust --nproc-per-node to match the number of available GPUs
+torchrun --nproc-per-node=4 \
+  -m cosmos_framework.scripts.inference \
+  --parallelism-preset=throughput \
+  -i specs/edge.json \
+  -o ./outputs/Cosmos3-Super/ \
+  --checkpoint-path Cosmos3-Super \
+  --seed 2026
+```
+
+| | Cosmos3-Nano | Cosmos3-Super |
+|---|---|---|
+| `--checkpoint-path` | `Cosmos3-Nano` | `Cosmos3-Super` |
+| Launcher | `python` | `torchrun --nproc-per-node=<N>` |
+| `--parallelism-preset` | `latency` | `throughput` |
+| GPUs | 1 | 4+ |
+
 The input spec sets `prompt_path` and a hint block with `control_path` pointing at the
 checked-in assets under [`assets/`](./assets) via paths relative to [`specs/`](./specs).
 
-Outputs are written under the directory passed to `-o`, with one subdirectory per sample name,
-for example `output/transfer_edge/vision.mp4`. Batch size must be 1 for transfer.
+Outputs are written under the directory passed to `-o`, with one subdirectory per sample
+name, e.g. `outputs/Cosmos3-Nano/transfer_edge/vision.mp4`.
+
+### Notebook (self-contained)
+
+[`run_video_transfer_with_cosmos_framework.ipynb`](./run_video_transfer_with_cosmos_framework.ipynb)
+is a self-contained tutorial: it installs all dependencies (system packages, framework
+clone, Python venv via `uv`), authenticates with Hugging Face, and runs all five controls
+with previews.
+
+1. Open the notebook and edit **§2 (Configure)** — paste your `HF_TOKEN` and optionally
+   set cache/output paths.
+2. To run **Cosmos3-Super** instead of Nano, add to the config cell:
+   ```python
+   os.environ["COSMOS3_MODEL"] = "Cosmos3-Super"
+   ```
+3. Run all cells top-to-bottom, or run only the control sections you need (§9–§13).
+
+To execute headlessly:
+
+```bash
+cd cookbooks/cosmos3/generator/transfer
+jupyter execute run_video_transfer_with_cosmos_framework.ipynb
+```
+
+Outputs land under `outputs/notebooks/<model>/transfer_<control>/vision.mp4`.
 
 ### Spec field reference
 
@@ -134,13 +148,12 @@ Key fields:
 
 - **`num_frames`** — number of video frames.
 
-
 ### Cookbook entrypoints
 
 - [`run_video_transfer_with_cosmos_framework.ipynb`](./run_video_transfer_with_cosmos_framework.ipynb) —
-  full tutorial on a **GPU host**: environment setup, `nvidia-smi` check, then five inference blocks
-  (edge, blur, depth, seg, wsm) with previews. See [Cosmos3 environment setup](../../README.md).
+  self-contained notebook covering both Nano and Super. Edit §2, run top-to-bottom.
 - [`specs/`](./specs) — checked-in Framework input JSON per control (paths relative to `specs/`).
+  Shared by both Nano and Super.
 
 ### Troubleshooting
 

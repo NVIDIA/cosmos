@@ -1,0 +1,5 @@
+# Generated ffmpeg preview transcodes (created by preview_helpers.make_preview)
+assets/**/*_preview.mp4
+
+# Notebook output directories
+outputs/
