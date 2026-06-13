@@ -34,6 +34,13 @@ come from the control video; see the spec field reference for how `fps` and
 
 Transfer inference is selected automatically when any hint key is present in the spec.
 
+> **PAIBench-C reproduction**: The checked-in specs (`specs/*.json`) with `--seed 2026`
+> are the canonical inference recipe used for the PAIBench-C results in the Cosmos3 report.
+> Prompts follow the structured `prompt.json` format shown in `assets/*/`. For the full
+> benchmark run, use the same per-clip seed (`2026`) for all clips. Evaluation
+> reproducibility is tracked separately at
+> [SHI-Labs/physical-ai-bench#7](https://github.com/SHI-Labs/physical-ai-bench/issues/7).
+
 ## Run with Cosmos Framework
 
 ### Quickstart
