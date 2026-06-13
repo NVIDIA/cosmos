@@ -42,6 +42,32 @@ fingers.
 
 Action data samples across different embodiments can be inspected interactively in the [Cosmos3 Action Viewer](https://huggingface.co/spaces/nvidia/Cosmos3-Action-Viewer) Hugging Face Space.
 
+### Dataset state, action layout, and normalization
+
+The inverse-dynamics examples predict action trajectories from video inputs.
+They do not infer a full LeRobot episode by themselves: fields such as
+`observation.state`, timestamps, frame indexes, and camera streams must come
+from the source dataset or the robot logging pipeline used to create the
+episode. When building a LeRobot-format dataset, align the predicted `action`
+rows with the original per-timestep observations instead of treating inverse
+dynamics as a replacement for state estimation.
+
+For a concrete LeRobot-style robotics sample, inspect
+[`assets/droid_lerobot_example/`](./assets/droid_lerobot_example/). Its
+metadata declares the DROID state streams
+`observation.state.cartesian_position`,
+`observation.state.joint_positions`, and
+`observation.state.gripper_position`, while the parquet/video assets provide the
+corresponding timestep-aligned records. This is the current checked-in example
+for understanding how action-conditioned robotics inputs relate to dataset
+state fields.
+
+Current checked-in action assets cover the AV, DROID, and UMI examples listed
+above. Use the action JSON files and notebooks as the canonical layout and
+normalization references for those examples. Other embodiment layouts and
+normalization statistics should be treated as model/data-release specific until
+their example assets are published.
+
 ## Run with Cosmos Framework
 
 ### Quickstart
