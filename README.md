@@ -26,6 +26,7 @@
   - [Quickstart](#quickstart)
     - [Generator with Diffusers](#generator-with-diffusers)
     - [Generator with vLLM-Omni](#generator-with-vllm-omni)
+    - [Generator with SGLang](#generator-with-sglang)
     - [Reasoner with Transformers](#reasoner-with-transformers)
     - [Reasoner with vLLM](#reasoner-with-vllm)
     - [Reasoner with NIM](#reasoner-with-nim)
@@ -429,6 +430,122 @@ References:
 - [Cosmos 3 vLLM-Omni recipes](https://github.com/vllm-project/vllm-omni/tree/main/recipes/cosmos3)
 - [vLLM-Omni Videos API](https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/videos_api/)
 - [vLLM-Omni Image Generation API](https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/image_generation_api/)
+
+</details>
+
+#### Generator with SGLang
+
+<details>
+<summary>Expand SGLang generator setup, endpoints, and request reference</summary>
+
+Use SGLang Diffusion for native Cosmos 3 visual generation behind OpenAI-compatible image and video APIs. Cosmos 3 also includes video-with-sound and action/policy models; this SGLang section focuses on the currently supported text-to-image, text-to-video, and image-to-video generator serving paths.
+
+Supported checkpoints:
+
+| Model | Status | Notes |
+| --- | --- | --- |
+| `nvidia/Cosmos3-Nano` | Supported | Text-to-image, text-to-video, image-to-video |
+| `nvidia/Cosmos3-Super` | Supported | Use multiple GPUs for the 64B checkpoint |
+| `nvidia/Cosmos3-Super-Text2Image` | Supported | Text-to-image specialized checkpoint |
+| `nvidia/Cosmos3-Super-Image2Video` | Supported | Image-to-video specialized checkpoint |
+| `nvidia/Cosmos3-Nano-Policy-DROID` | Not supported yet | Action/policy checkpoint |
+
+Install SGLang from the main branch with diffusion extras:
+
+```shell
+git clone --branch main https://github.com/sgl-project/sglang.git
+cd sglang
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e "python[diffusion]"
+pip install "cosmos-guardrail==0.3.1"
+```
+
+> **Version note:** Cosmos 3 support in SGLang Diffusion currently requires the SGLang main branch. Switch to a stable SGLang release once Cosmos 3 support is included there.
+
+Start a Nano server:
+
+```shell
+sglang serve --model-path nvidia/Cosmos3-Nano
+```
+
+For a video-specialized checkpoint, use `Cosmos3-Super-Image2Video` with multiple GPUs:
+
+```shell
+sglang serve \
+  --model-path nvidia/Cosmos3-Super-Image2Video \
+  --num-gpus 4
+```
+
+This is the performance-mode setup. If it runs out of memory, switch to SGLang Diffusion's memory preset:
+
+```shell
+sglang serve \
+  --model-path nvidia/Cosmos3-Super-Image2Video \
+  --num-gpus 4 \
+  --performance-mode memory
+```
+
+Vision endpoints:
+
+| Mode | Endpoint | Notes |
+| --- | --- | --- |
+| Text to image | `POST /v1/images/generations` | Returns base64 by default for Cosmos 3 |
+| Text to video | `POST /v1/videos` | Creates an async job; poll `GET /v1/videos/{id}` and download `/content` |
+| Image to video | `POST /v1/videos` | Upload the conditioning image with `input_reference` |
+
+Text-to-video example:
+
+```shell
+# Submit an async video generation job and capture its ID.
+job_id=$(curl -sS -X POST http://localhost:30000/v1/videos \
+  --form-string "prompt=A small warehouse robot moves a blue box across a clean floor." \
+  --form-string "negative_prompt=blurry, distorted, low quality" \
+  --form-string "size=1280x720" \
+  --form-string "num_frames=81" \
+  --form-string "fps=24" \
+  --form-string "num_inference_steps=35" \
+  --form-string "guidance_scale=4.0" \
+  --form-string "flow_shift=10.0" \
+  --form-string "seed=42" \
+  --form-string 'extra_params={"guardrails":true,"use_resolution_template":false,"use_duration_template":false}' \
+  | jq -r .id)
+
+# Poll until the job completes. Cosmos 3 video generation can take several minutes.
+status=""
+until [ "$status" = "completed" ]; do
+  status=$(curl -sS "http://localhost:30000/v1/videos/${job_id}" | jq -r .status)
+  [ "$status" = "failed" ] && exit 1
+  sleep 5
+done
+
+# Download the completed MP4.
+curl -sS -L "http://localhost:30000/v1/videos/${job_id}/content" \
+  -o cosmos3_t2v_output.mp4
+```
+
+Text-to-image example:
+
+```shell
+curl -sS -X POST http://localhost:30000/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "A warehouse robot folds a blue cloth on a clean workbench.",
+    "size": "1280x720",
+    "n": 1,
+    "num_inference_steps": 35,
+    "guidance_scale": 6.0,
+    "flow_shift": 10.0,
+    "seed": 0,
+    "extra_args": {
+      "use_resolution_template": false,
+      "guardrails": true
+    }
+  }'
+```
+
+SGLang accepts Cosmos 3 request options including `max_sequence_length`, `flow_shift`, `extra_params.guardrails`, `extra_params.use_resolution_template`, and `extra_params.use_duration_template`. Guardrails are enabled by default when `cosmos-guardrail` is installed; set `SGLANG_DISABLE_COSMOS3_GUARDRAILS=1` before starting the server to skip loading the guardrail models.
 
 </details>
 
