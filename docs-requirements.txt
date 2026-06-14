@@ -1,0 +1,6 @@
+# Dependencies for building the Cosmos documentation site (mkdocs.yml).
+# Install with:  pip install -r docs-requirements.txt
+# Versions below are the ones verified to build the site cleanly.
+mkdocs-material~=9.7
+mkdocs-jupyter~=0.26
+mkdocs-same-dir~=0.1

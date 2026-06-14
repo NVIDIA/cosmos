@@ -192,3 +192,8 @@ core.*
 /public/
 /dataset/
 /downloaded_data/
+
+# MkDocs build output
+/site/
+.site/
+.venv-docs/

@@ -1,0 +1,122 @@
+/* NVIDIA-style theme for the Cosmos docs.
+ *
+ * Signature NVIDIA green (#76b900) on headings, links, and accents.
+ * The top bar stays black on purpose: green-on-black is NVIDIA's iconic
+ * look and keeps header text readable (bright green + white text fails
+ * contrast). To make the bar itself green, set palette.primary: custom in
+ * mkdocs.yml and add `--md-primary-fg-color: #76b900;` below. */
+
+:root {
+  --nv-green: #76b900;        /* NVIDIA signature green */
+  --nv-green-dark: #5c9100;   /* darker — readable on white */
+  --nv-green-bright: #8fd11a; /* brighter — for dark backgrounds */
+
+  /* Accent drives links/hover/active-nav/search highlight in Material. */
+  --md-accent-fg-color: var(--nv-green-dark);
+}
+
+/* ---- Headings in NVIDIA green ---- */
+.md-typeset h1 {
+  color: var(--nv-green-dark);
+  font-weight: 700;
+}
+
+.md-typeset h2 {
+  color: var(--nv-green-dark);
+  font-weight: 600;
+  /* Subtle green rule under section titles. */
+  border-bottom: 2px solid rgba(118, 185, 0, 0.25);
+  padding-bottom: 0.25em;
+}
+
+.md-typeset h3 {
+  color: var(--nv-green);
+  font-weight: 600;
+}
+
+.md-typeset h4,
+.md-typeset h5 {
+  color: var(--nv-green-dark);
+}
+
+/* ---- Links ---- */
+.md-typeset a {
+  color: var(--nv-green-dark);
+}
+.md-typeset a:hover,
+.md-typeset a:focus {
+  color: var(--nv-green);
+}
+
+/* ---- Small accents: code-block focus, table header tint ---- */
+.md-typeset table:not([class]) th {
+  background-color: rgba(118, 185, 0, 0.10);
+}
+
+/* ---- Top-level "tab" navigation in NVIDIA green ---- */
+/* The tab bar on the (black) header. */
+.md-tabs__link {
+  color: var(--nv-green-bright);
+  opacity: 1;
+}
+.md-tabs__link--active {
+  color: #ffffff;
+  font-weight: 700;
+}
+.md-tabs__link:hover {
+  color: #ffffff;
+}
+
+/* Every entry in the left index (all levels) in NVIDIA green. */
+.md-nav--primary .md-nav__link {
+  color: var(--nv-green-dark);
+}
+/* Top level a bit bolder for hierarchy. */
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link {
+  font-weight: 700;
+}
+/* Active item: brighter + bold so "you are here" stands out. */
+.md-nav--primary .md-nav__link--active {
+  color: var(--nv-green);
+  font-weight: 700;
+}
+
+/* ---- Left sidebar: group / section titles in NVIDIA green ---- */
+.md-nav__title,
+.md-nav__item--section > .md-nav__link,
+.md-nav__item--section > label.md-nav__link {
+  color: var(--nv-green-dark);
+  font-weight: 700;
+}
+
+/* ---- Hide the README's hand-written "Table of Contents" on the site ----
+ * It's redundant with the left-sidebar TOC (toc.integrate). The heading is
+ * kept in README.md so it still renders usefully on GitHub. */
+.md-typeset h2#table-of-contents,
+.md-typeset h2#table-of-contents + ul {
+  display: none;
+}
+
+/* ---- Dark mode: use the brighter green for contrast ---- */
+[data-md-color-scheme="slate"] {
+  --md-accent-fg-color: var(--nv-green-bright);
+}
+[data-md-color-scheme="slate"] .md-typeset h1,
+[data-md-color-scheme="slate"] .md-typeset h2,
+[data-md-color-scheme="slate"] .md-typeset h3,
+[data-md-color-scheme="slate"] .md-typeset h4,
+[data-md-color-scheme="slate"] .md-typeset h5 {
+  color: var(--nv-green-bright);
+}
+[data-md-color-scheme="slate"] .md-typeset a {
+  color: var(--nv-green-bright);
+}
+[data-md-color-scheme="slate"] .md-typeset a:hover {
+  color: #a6e22e;
+}
+[data-md-color-scheme="slate"] .md-nav__title,
+[data-md-color-scheme="slate"] .md-nav__item--section > .md-nav__link,
+[data-md-color-scheme="slate"] .md-nav__item--section > label.md-nav__link,
+[data-md-color-scheme="slate"] .md-nav--primary .md-nav__link {
+  color: var(--nv-green-bright);
+}

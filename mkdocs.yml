@@ -1,0 +1,121 @@
+# Cosmos documentation site.
+#
+# This uses Material for MkDocs to publish the existing Markdown + notebooks
+# WITHOUT moving any files: the `same-dir` plugin makes the repo root the docs
+# source, so nav entries below point straight at the files where they already
+# live. Preview locally with `mkdocs serve`; publish via GitHub Pages later.
+
+site_name: Cosmos
+site_description: NVIDIA Cosmos — world foundation models for Physical AI
+site_url: https://nvidia.github.io/cosmos/
+
+repo_url: https://github.com/NVIDIA/cosmos
+repo_name: NVIDIA/cosmos
+edit_uri: edit/main/
+
+theme:
+  name: material
+  # NOTE: assets must live in a SUBDIRECTORY. The same-dir plugin drops
+  # non-Markdown files at the repo root, so a root-level logo would 404.
+  logo: branding/cosmos-logo-thumbnail.png
+  favicon: branding/cosmos-logo-thumbnail.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: green
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - navigation.footer
+    - toc.follow
+    # Render each page's table of contents INSIDE the left sidebar (Sana-style),
+    # instead of a separate right-hand column. Left = jump index, middle = content.
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+
+# docs_dir is the repo root so existing files are published in place (no moves).
+# The `same-dir` plugin is what makes pointing docs_dir at the config dir legal.
+docs_dir: .
+
+extra_css:
+  - branding/nvidia.css
+
+plugins:
+  - same-dir
+  - search
+  - mkdocs-jupyter:
+      include_source: true
+      execute: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+# Keep the build limited to documentation: with docs_dir at the repo root,
+# everything else (data files, large assets, configs) is excluded from copying.
+exclude_docs: |
+  /.github/
+  /site/
+  /.venv/
+  /*.parquet
+  /**/*.parquet
+
+nav:
+  - Home: README.md
+  - Benchmarks: inference_benchmarks.md
+  - Cookbooks:
+      - Environment Setup: cookbooks/cosmos3/README.md
+      - Reasoner:
+          - Overview: cookbooks/cosmos3/reasoner/README.md
+          - Run with Cosmos Framework: cookbooks/cosmos3/reasoner/run_with_cosmos_framework.ipynb
+          - Run with vLLM: cookbooks/cosmos3/reasoner/run_with_vllm.ipynb
+          - Run with NIM: cookbooks/cosmos3/reasoner/run_with_nim.ipynb
+      - Generator — Action:
+          - Overview: cookbooks/cosmos3/generator/action/README.md
+          - Run FD with vLLM: cookbooks/cosmos3/generator/action/run_fd_with_vllm.ipynb
+          - Run ID with vLLM: cookbooks/cosmos3/generator/action/run_id_with_vllm.ipynb
+          - Run ID with Cosmos Framework: cookbooks/cosmos3/generator/action/run_id_with_cosmos_framework.ipynb
+          - Run FD with Cosmos Framework: cookbooks/cosmos3/generator/action/run_fd_with_cosmos_framework.ipynb
+          - Run Policy with Cosmos Framework: cookbooks/cosmos3/generator/action/run_policy_with_cosmos_framework.md
+      - Generator — Audiovisual:
+          - Overview: cookbooks/cosmos3/generator/audiovisual/README.md
+          - Run with diffusers: cookbooks/cosmos3/generator/audiovisual/run_with_diffusers.ipynb
+          - Run with Cosmos Framework: cookbooks/cosmos3/generator/audiovisual/run_with_cosmos_framework.ipynb
+          - Run with vLLM Omni: cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb
+  - Contributing: CONTRIBUTING.md
+  - Release Notes: RELEASE.md
