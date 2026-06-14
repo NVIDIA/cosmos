@@ -459,13 +459,13 @@ sglang serve \
   --num-gpus 4
 ```
 
-This is the performance-mode setup. If it runs out of memory, switch to memory mode by adding `--use-fsdp-inference`, which shards model weights across GPUs:
+This is the performance-mode setup. If it runs out of memory, switch to SGLang Diffusion's memory preset:
 
 ```shell
 sglang serve \
   --model-path nvidia/Cosmos3-Super-Image2Video \
   --num-gpus 4 \
-  --use-fsdp-inference
+  --performance-mode memory
 ```
 
 Vision endpoints:
