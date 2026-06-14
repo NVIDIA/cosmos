@@ -9,6 +9,12 @@ Environment setup for every backend is centralized in the shared
 links to the section you need. The quickstarts are minimal text-to-video examples
 to get one generation running per backend — run them from this folder.
 
+Generator requires the Guardrail. Request access to the gated
+[nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
+HF repository before running these examples. To disable the guardrail, set
+`enable_safety_checker=False` (Diffusers), `guardrails: false` (vLLM-Omni
+`extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework).
+
 ## Run with Cosmos Framework
 
 ### Quickstart

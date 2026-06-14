@@ -17,7 +17,10 @@ backend you want to run and follow that one section.
 
 - Linux with NVIDIA GPU access.
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/), `git`, and `git-lfs` installed.
-- Hugging Face access to the gated Cosmos3 model repos. Authenticate once before the first run:
+- Hugging Face access to the gated Cosmos3 model repos. Generator also requires
+  access to the gated
+  [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
+  HF repository. Authenticate once before the first run:
 
   ```bash
   uvx hf@latest auth login
@@ -25,6 +28,9 @@ backend you want to run and follow that one section.
   export HF_TOKEN=<your_token>
   ```
 
+  To disable the guardrail, set `enable_safety_checker=False` (Diffusers), `guardrails: false`
+  (vLLM-Omni `extra_params`/`extra_args`), or
+  `--no-guardrails` (Cosmos Framework).
 - For the Cosmos Framework and vLLM backends: access to `git@github.com:NVIDIA/cosmos-framework.git`.
 - For the NIM backend: an NGC API key (used as `NGC_API_KEY`), which you can generate on [build.nvidia.com](https://build.nvidia.com/nvidia/cosmos3-nano-reasoner) or [NGC](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner), plus a one-time `docker login nvcr.io` (username `$oauthtoken`, password = your key). The HF login above is not needed for NIM.
 - Enough local disk for the venv/image, the uv cache, and the model cache. Nano
