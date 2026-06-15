@@ -203,7 +203,7 @@ export VLLM_USE_DEEP_GEMM=0
 All Reasoner cookbooks talk to an OpenAI-compatible chat-completions API. After
 [installing vLLM](#vllm), run the commands below from
 `cookbooks/cosmos3/reasoner` (same working directory as
-[`run_with_vllm.ipynb`](reasoner/run_with_vllm.ipynb)). That sets
+[`run_with_vllm.ipynb`](reasoner/basic_examples/run_with_vllm.ipynb)). That sets
 `$(dirname "$(pwd)")` to `<cosmos>/cookbooks/cosmos3`, which matches the
 notebook's `COSMOS3_MEDIA_ROOT`.
 
@@ -221,7 +221,7 @@ vllm serve nvidia/Cosmos3-Nano \
   --port 8000
 ```
 
-**Cosmos3-Super** (four GPUs; default in [`run_with_vllm.ipynb`](reasoner/run_with_vllm.ipynb), port 8001):
+**Cosmos3-Super** (four GPUs; default in [`run_with_vllm.ipynb`](reasoner/basic_examples/run_with_vllm.ipynb), port 8001):
 
 ```bash
 export COSMOS3_MEDIA_ROOT="$(dirname "$(pwd)")"
