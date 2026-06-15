@@ -1,13 +1,25 @@
-# Cosmos3 Generator Audiovisual Examples
+# Cosmos3 Generator Audiovisual Cookbooks
 
 Generate images and video (with optional audio) from text or image prompts with
-`Cosmos3-Nano` and `Cosmos3-Super`, across three inference backends. Sample
-prompts live under [`assets/`](./assets).
+`Cosmos3-Nano` and `Cosmos3-Super`, across three inference backends.
 
 Environment setup for every backend is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide; each backend below
 links to the section you need. The quickstarts are minimal text-to-video examples
 to get one generation running per backend — run them from this folder.
+
+## Basic Examples
+
+The [`basic_examples/`](./basic_examples/) directory contains the shipped starter
+cookbooks and sample prompts. Community-contributed cookbooks are added as sibling
+directories alongside `basic_examples/` — see the
+[Contributing Guide](../../../../CONTRIBUTING.md) for the recipe structure.
+
+| Cookbook | Backend | Notebook |
+|---------|---------|----------|
+| T2I / T2V / I2V + audio | Cosmos Framework | [`basic_examples/run_with_cosmos_framework.ipynb`](./basic_examples/run_with_cosmos_framework.ipynb) |
+| T2I / T2V / I2V + audio | Diffusers | [`basic_examples/run_with_diffusers.ipynb`](./basic_examples/run_with_diffusers.ipynb) |
+| T2I / T2V / I2V + audio | vLLM-Omni | [`basic_examples/run_with_vllm_omni.ipynb`](./basic_examples/run_with_vllm_omni.ipynb) |
 
 Generator requires the Guardrail. Request access to the gated
 [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
@@ -31,12 +43,12 @@ import json
 from pathlib import Path
 
 prompt = json.dumps(
-    json.load(open("assets/prompts/text2video/robot_kitchen.json")),
+    json.load(open("basic_examples/assets/prompts/text2video/robot_kitchen.json")),
     ensure_ascii=True,
     separators=(",", ":"),
 )
 negative = json.dumps(
-    json.load(open("assets/negative_prompts/text2video/neg_prompt.json")),
+    json.load(open("basic_examples/assets/negative_prompts/text2video/neg_prompt.json")),
     ensure_ascii=True,
     separators=(",", ":"),
 )
@@ -72,7 +84,7 @@ more GPUs via `--nproc-per-node`.
 
 ### Notebook walkthrough
 
-[`run_with_cosmos_framework.ipynb`](./run_with_cosmos_framework.ipynb) is the full
+[`run_with_cosmos_framework.ipynb`](./basic_examples/run_with_cosmos_framework.ipynb) is the full
 tutorial for the native PyTorch backend: it covers every use case — text-to-image,
 text-to-video, image-to-video, with audio on or off — and includes the detailed,
 environment-aware setup and visualization for each generation.
@@ -91,8 +103,8 @@ from diffusers import Cosmos3OmniPipeline
 from diffusers.schedulers.scheduling_unipc_multistep import UniPCMultistepScheduler
 from diffusers.utils import export_to_video
 
-prompt = json.load(open("assets/prompts/text2video/robot_kitchen.json"))
-negative = json.load(open("assets/negative_prompts/text2video/neg_prompt.json"))
+prompt = json.load(open("basic_examples/assets/prompts/text2video/robot_kitchen.json"))
+negative = json.load(open("basic_examples/assets/negative_prompts/text2video/neg_prompt.json"))
 
 pipe = Cosmos3OmniPipeline.from_pretrained(
     "nvidia/Cosmos3-Nano", torch_dtype=torch.bfloat16, device_map="cuda"
@@ -122,7 +134,7 @@ To run **Cosmos3-Super** instead, load the larger checkpoint:
 
 ### Notebook walkthrough
 
-[`run_with_diffusers.ipynb`](./run_with_diffusers.ipynb) is the full tutorial for
+[`run_with_diffusers.ipynb`](./basic_examples/run_with_diffusers.ipynb) is the full tutorial for
 the Diffusers backend: it provisions a dedicated venv, then walks through
 text-to-image, text-to-video, and image-to-video generation (with and without
 audio) using `Cosmos3OmniPipeline`, including how to preview the generated media.
@@ -145,8 +157,8 @@ from pathlib import Path
 
 import requests
 
-prompt = json.load(open("assets/prompts/text2video/robot_kitchen.json"))
-negative = json.load(open("assets/negative_prompts/text2video/neg_prompt.json"))
+prompt = json.load(open("basic_examples/assets/prompts/text2video/robot_kitchen.json"))
+negative = json.load(open("basic_examples/assets/negative_prompts/text2video/neg_prompt.json"))
 
 response = requests.post(
     "http://localhost:8000/v1/videos/sync",
@@ -179,7 +191,7 @@ For image-to-video, post to the same endpoint with an image under
 
 ### Notebook walkthrough
 
-[`run_with_vllm_omni.ipynb`](./run_with_vllm_omni.ipynb) is the full tutorial for
+[`run_with_vllm_omni.ipynb`](./basic_examples/run_with_vllm_omni.ipynb) is the full tutorial for
 the vLLM-Omni backend: it walks through text-to-image, text-to-video, and
 image-to-video requests with audio on or off. Server launch options (Nano and
 Super, tensor parallelism, layerwise offload, and CFG-parallel variants) live in

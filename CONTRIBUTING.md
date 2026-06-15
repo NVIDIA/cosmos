@@ -62,35 +62,46 @@ cookbooks/
     │
     ├── reasoner/                          # Reasoner Tower
     │   ├── README.md                      # Reasoner overview + backend table
-    │   ├── reasoner_prompt_guide.md       # Prompt engineering reference
-    │   ├── run_with_vllm.ipynb            # Cookbook: vLLM backend
-    │   ├── run_with_nim.ipynb             # Cookbook: NIM backend
-    │   ├── run_with_cosmos_framework.ipynb # Cookbook: Framework backend
-    │   └── assets/                        # Images, videos, sample outputs
+    │   ├── basic_examples/                # Shipped starter cookbooks
+    │   │   ├── reasoner_prompt_guide.md
+    │   │   ├── run_with_vllm.ipynb
+    │   │   ├── run_with_nim.ipynb
+    │   │   ├── run_with_cosmos_framework.ipynb
+    │   │   └── assets/
+    │   └── <your-cookbook>/                # ← Community contributions go here
+    │       ├── README.md
+    │       ├── run_<task>_with_<backend>.ipynb
+    │       └── assets/
     │
     └── generator/
         ├── audiovisual/                   # Generator: T2I, T2V, I2V, audio
         │   ├── README.md
-        │   ├── run_with_diffusers.ipynb
-        │   ├── run_with_vllm_omni.ipynb
-        │   ├── run_with_cosmos_framework.ipynb
-        │   └── assets/
+        │   ├── basic_examples/            # Shipped starter cookbooks
+        │   │   ├── run_with_diffusers.ipynb
+        │   │   ├── run_with_vllm_omni.ipynb
+        │   │   ├── run_with_cosmos_framework.ipynb
+        │   │   └── assets/
+        │   └── <your-cookbook>/            # ← Community contributions go here
         │
         ├── action/                        # Generator: policy, FDM, IDM
         │   ├── README.md
-        │   ├── run_fd_with_cosmos_framework.ipynb
-        │   ├── run_fd_with_vllm.ipynb
-        │   ├── run_id_with_cosmos_framework.ipynb
-        │   ├── run_id_with_vllm.ipynb
-        │   ├── run_policy_with_cosmos_framework.md
-        │   └── assets/
+        │   ├── basic_examples/            # Shipped starter cookbooks
+        │   │   ├── run_fd_with_cosmos_framework.ipynb
+        │   │   ├── run_fd_with_vllm.ipynb
+        │   │   ├── run_id_with_cosmos_framework.ipynb
+        │   │   ├── run_id_with_vllm.ipynb
+        │   │   ├── run_policy_with_cosmos_framework.md
+        │   │   └── assets/
+        │   └── <your-cookbook>/            # ← Community contributions go here
         │
         └── transfer/                      # Generator: video-to-video transfer
             ├── README.md
-            ├── run_video_transfer_with_cosmos_framework.ipynb
-            ├── preview_helpers.py
-            ├── specs/
-            └── assets/
+            ├── basic_examples/            # Shipped starter cookbooks
+            │   ├── run_video_transfer_with_cosmos_framework.ipynb
+            │   ├── preview_helpers.py
+            │   ├── specs/
+            │   └── assets/
+            └── <your-cookbook>/            # ← Community contributions go here
 ```
 
 ### Where Does My Cookbook Go?

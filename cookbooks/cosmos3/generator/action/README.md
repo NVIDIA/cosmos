@@ -1,8 +1,24 @@
-# Cosmos3 Generator Action Examples
+# Cosmos3 Generator Action Cookbooks
 
-Cosmos3-Nano action-generation examples across two inference backends — native
-PyTorch (Cosmos Framework) and vLLM-Omni. Both backends use the sample assets
-under [`assets/`](./assets) and cover two tasks:
+Cosmos3-Nano action-generation cookbooks across two inference backends — native
+PyTorch (Cosmos Framework) and vLLM-Omni.
+
+## Basic Examples
+
+The [`basic_examples/`](./basic_examples/) directory contains the shipped starter
+cookbooks and sample assets. Community-contributed cookbooks are added as sibling
+directories alongside `basic_examples/` — see the
+[Contributing Guide](../../../../CONTRIBUTING.md) for the recipe structure.
+
+| Cookbook | Backend | Notebook |
+|---------|---------|----------|
+| Forward dynamics (AV, DROID, UMI) | Cosmos Framework | [`basic_examples/run_fd_with_cosmos_framework.ipynb`](./basic_examples/run_fd_with_cosmos_framework.ipynb) |
+| Inverse dynamics (AV) | Cosmos Framework | [`basic_examples/run_id_with_cosmos_framework.ipynb`](./basic_examples/run_id_with_cosmos_framework.ipynb) |
+| Policy (DROID) | Cosmos Framework | [`basic_examples/run_policy_with_cosmos_framework.md`](./basic_examples/run_policy_with_cosmos_framework.md) |
+| Forward dynamics (AV, DROID, UMI) | vLLM-Omni | [`basic_examples/run_fd_with_vllm.ipynb`](./basic_examples/run_fd_with_vllm.ipynb) |
+| Inverse dynamics (AV) | vLLM-Omni | [`basic_examples/run_id_with_vllm.ipynb`](./basic_examples/run_id_with_vllm.ipynb) |
+
+Both backends use the sample assets under [`basic_examples/assets/`](./basic_examples/assets/) and cover two tasks:
 
 - **Forward dynamics (`fd`)** — predict future observations from a start image
   plus an action trajectory (AV, DROID, and UMI robotics examples) using the Cosmos3-Nano.
@@ -68,7 +84,7 @@ torchrun --nproc-per-node=1 \
 
 The input spec pairs a start image with an action trajectory. The notebooks
 assemble ready-to-run specs for AV, DROID, and UMI examples from the checked-in
-assets under [`assets/`](./assets). Outputs are written under the framework
+assets under [`basic_examples/assets/`](./basic_examples/assets/). Outputs are written under the framework
 checkout.
 
 ### Cosmos Framework Walkthrough
@@ -76,11 +92,11 @@ checkout.
 The Cosmos Framework build their input spec, run inference, and
 visualize the generated videos:
 
-- [`run_fd_with_cosmos_framework.ipynb`](./run_fd_with_cosmos_framework.ipynb) —
+- [`run_fd_with_cosmos_framework.ipynb`](./basic_examples/run_fd_with_cosmos_framework.ipynb) —
   forward dynamics for AV, DROID, and UMI robotics examples using Cosmos3-Nano.
-- [`run_id_with_cosmos_framework.ipynb`](./run_id_with_cosmos_framework.ipynb) —
+- [`run_id_with_cosmos_framework.ipynb`](./basic_examples/run_id_with_cosmos_framework.ipynb) —
   inverse dynamics, predicting ego-motion trajectories from input AV videos using Cosmos3-Nano.
-- [`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID.
+- [`run_policy_with_cosmos_framework.md`](./basic_examples/run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID.
 
 
 ## Run with vLLM-Omni
@@ -100,8 +116,8 @@ curl http://localhost:8001/v1/models
 Forward-dynamics requests are multipart `POST`s to `/v1/videos` — a start image
 under `files={"input_reference": ...}` plus an `extra_params` payload carrying the
 action trajectory. The vLLM notebooks use these diffusion defaults for action
-generation (see [`run_fd_with_vllm.ipynb`](./run_fd_with_vllm.ipynb) and
-[`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb)):
+generation (see [`run_fd_with_vllm.ipynb`](./basic_examples/run_fd_with_vllm.ipynb) and
+[`run_id_with_vllm.ipynb`](./basic_examples/run_id_with_vllm.ipynb)):
 
 | Field | Value |
 | --- | --- |
@@ -117,9 +133,9 @@ including autoregressive chunked generation for the robotics examples.
 The vLLM-Omni notebooks send requests through the OpenAI-compatible video API and
 write outputs under `outputs/cosmos3_action_vllm/`:
 
-- [`run_fd_with_vllm.ipynb`](./run_fd_with_vllm.ipynb) — forward dynamics for AV,
+- [`run_fd_with_vllm.ipynb`](./basic_examples/run_fd_with_vllm.ipynb) — forward dynamics for AV,
   DROID, and UMI robotics examples.
-- [`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb) — inverse dynamics,
+- [`run_id_with_vllm.ipynb`](./basic_examples/run_id_with_vllm.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
 
 

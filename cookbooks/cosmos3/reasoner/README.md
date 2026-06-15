@@ -1,15 +1,28 @@
-# Cosmos3 Reasoner Examples
+# Cosmos3 Reasoner Cookbooks
 
 Run the Cosmos3 Reasoner (vision-language reasoning over images and video) across
-multiple inference backends. Sample inputs live under [`assets/`](./assets).
+multiple inference backends.
 
 Environment setup for every backend is centralized in the shared
 [Cosmos3 cookbooks environment setup](../README.md) guide; each backend below
 links to the section you need.
 
+## Basic Examples
+
+The [`basic_examples/`](./basic_examples/) directory contains the shipped starter
+cookbooks and sample inputs. Community-contributed cookbooks are added as sibling
+directories alongside `basic_examples/` — see the
+[Contributing Guide](../../../CONTRIBUTING.md) for the recipe structure.
+
+| Cookbook | Backend | Notebook |
+|---------|---------|----------|
+| Reasoner inference | Cosmos Framework | [`basic_examples/run_with_cosmos_framework.ipynb`](./basic_examples/run_with_cosmos_framework.ipynb) |
+| Reasoner inference | vLLM | [`basic_examples/run_with_vllm.ipynb`](./basic_examples/run_with_vllm.ipynb) |
+| Reasoner inference | NIM | [`basic_examples/run_with_nim.ipynb`](./basic_examples/run_with_nim.ipynb) |
+
 ## Reasoner Prompt Guide
 
-See the [Reasoner Prompt Guide](./reasoner_prompt_guide.md).
+See the [Reasoner Prompt Guide](./basic_examples/reasoner_prompt_guide.md).
 
 ## Run with Cosmos Framework
 
@@ -29,7 +42,7 @@ cat > outputs/cookbooks/cosmos3/reasoner/inputs/robot_image.json <<'JSON'
   "model_mode": "reasoner",
   "name": "robot_image",
   "prompt": "Describe what is happening in this image in one sentence.",
-  "vision_path": "../../cookbooks/cosmos3/reasoner/assets/robot_153.jpg",
+  "vision_path": "../../cookbooks/cosmos3/reasoner/basic_examples/assets/robot_153.jpg",
   "enable_sound": false
 }
 JSON
@@ -54,7 +67,7 @@ The generated text is written to
 
 ### Notebook walkthrough
 
-[`run_with_cosmos_framework.ipynb`](./run_with_cosmos_framework.ipynb) is the full
+[`run_with_cosmos_framework.ipynb`](./basic_examples/run_with_cosmos_framework.ipynb) is the full
 tutorial. It writes text and image smoke tests, then walks through image
 capability sections — detailed captioning, robot task planning, 2D grounding,
 describe-anything, and action-trajectory prompts — rendering the prompt, media
@@ -73,7 +86,7 @@ Set up the environment and start the server:
 [Start the server](../README.md#start-the-server) (launch commands).
 
 The quickstart below uses **Cosmos3-Nano** on port 8000. The
-[`run_with_vllm.ipynb`](./run_with_vllm.ipynb) notebook defaults to
+[`run_with_vllm.ipynb`](./basic_examples/run_with_vllm.ipynb) notebook defaults to
 **Cosmos3-Super** on port **8001** — use that launch command from the env setup
 guide and point the client at `http://localhost:8001/v1`.
 
@@ -83,7 +96,7 @@ Once the server is ready, query it with the OpenAI client:
 from pathlib import Path
 import openai
 
-image_path = Path("assets/robot_153.jpg").resolve()
+image_path = Path("basic_examples/assets/robot_153.jpg").resolve()
 image_url = image_path.as_uri()
 
 client = openai.OpenAI(api_key="EMPTY", base_url="http://localhost:8000/v1")
@@ -108,7 +121,7 @@ print(response.choices[0].message.content)
 
 ### Notebook walkthrough
 
-[`run_with_vllm.ipynb`](./run_with_vllm.ipynb) uses the **Cosmos3-Super** launch
+[`run_with_vllm.ipynb`](./basic_examples/run_with_vllm.ipynb) uses the **Cosmos3-Super** launch
 from the [environment setup guide](../README.md#start-the-server) and walks
 through many more image and video examples: detailed captioning,
 VQA, temporal localization, embodied reasoning, common-sense reasoning, 2D
@@ -138,7 +151,7 @@ import mimetypes
 from pathlib import Path
 import openai
 
-image_path = Path("assets/robot_153.jpg").resolve()
+image_path = Path("basic_examples/assets/robot_153.jpg").resolve()
 mime = mimetypes.guess_type(image_path.name)[0] or "application/octet-stream"
 image_url = f"data:{mime};base64,{base64.b64encode(image_path.read_bytes()).decode('ascii')}"
 
@@ -170,7 +183,7 @@ for the full request reference.
 
 ### Notebook walkthrough
 
-[`run_with_nim.ipynb`](./run_with_nim.ipynb) is the NIM counterpart to the vLLM
+[`run_with_nim.ipynb`](./basic_examples/run_with_nim.ipynb) is the NIM counterpart to the vLLM
 notebook: it launches the NIM container, waits for readiness, and then runs the
 same image and video examples — detailed captioning, VQA, temporal localization,
 embodied reasoning, common-sense reasoning, 2D grounding, describe-anything,
