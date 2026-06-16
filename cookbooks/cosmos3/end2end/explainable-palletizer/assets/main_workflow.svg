@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="svgtitle svgdesc">
+  <title id="svgtitle">Explainable palletizer: Cosmos3 validation loop</title>
+  <desc id="svgdesc">The app server or smoke client connects to Sim Server for robot-loop evidence, to a Cosmos3 Diffusers endpoint for generated palletizing artifacts, and to Frontend for operator review. Frontend also connects directly to Sim Server for the camera stream.</desc>
+
+  <defs>
+    <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#76b900"/>
+    </marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#4a4a4a"/>
+    </marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="rgba(79,195,247,0.6)"/>
+    </marker>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#191919" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="640" fill="#080808"/>
+  <rect width="1200" height="640" fill="url(#grid)"/>
+
+  <!-- Docker network boundary -->
+  <rect x="60" y="108" width="1080" height="440" rx="10" fill="none" stroke="#232323" stroke-width="1.5" stroke-dasharray="8 5"/>
+  <text x="80" y="124" font-family="'JetBrains Mono',Courier,monospace" font-size="11" fill="#404040">zenith-net</text>
+
+  <!-- ═══ HEADER ═══ -->
+  <text x="75" y="46" font-family="'JetBrains Mono',Courier,monospace" font-size="12" fill="#76b900" letter-spacing="4">RUNTIME ARCHITECTURE</text>
+  <text x="75" y="83" font-family="Arial,Helvetica,sans-serif" font-size="38" font-weight="800" fill="#ffffff">Explainable Palletizer <tspan fill="#76b900">Validation Loop</tspan></text>
+
+  <!-- ═══════════════════════════════════════════
+       TOP ROW: sim-server  ·  app-server  ·  inference-server
+       App-server is the central hub. Exception: Frontend
+       connects directly to sim-server for camera stream.
+  ═══════════════════════════════════════════ -->
+
+  <!-- ── NODE 1: SIM SERVER (SWAPPABLE) ── -->
+  <rect x="75" y="130" width="270" height="225" rx="6" fill="rgba(79,195,247,0.04)" stroke="#4fc3f7" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <rect x="75" y="130" width="270" height="3" rx="1" fill="#4fc3f7"/>
+  <!-- SWAPPABLE badge top-right -->
+  <rect x="225" y="138" width="108" height="20" rx="3" fill="rgba(79,195,247,0.10)" stroke="rgba(79,195,247,0.38)" stroke-width="1"/>
+  <text x="279" y="152" font-family="'JetBrains Mono',Courier,monospace" font-size="10.5" fill="#4fc3f7" text-anchor="middle">↔ SWAPPABLE</text>
+  <!-- Port, tag, name -->
+  <text x="92" y="175" font-family="'JetBrains Mono',Courier,monospace" font-size="13" fill="#777">:8100</text>
+  <text x="92" y="193" font-family="'JetBrains Mono',Courier,monospace" font-size="11" fill="#4fc3f7" letter-spacing="1.5">SIMULATION / REAL</text>
+  <text x="92" y="220" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="700" fill="#ffffff">Sim Server</text>
+  <text x="92" y="240" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#4fc3f7">or Real Robot</text>
+  <!-- Description -->
+  <text x="92" y="267" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Isaac Sim + cuRobo MotionGen</text>
+  <text x="92" y="285" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Doosan P3020 · conveyor</text>
+  <text x="92" y="303" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Box image capture</text>
+
+  <!-- ── NODE 2: APP SERVER (central hub, highlighted) ── -->
+  <rect x="465" y="130" width="270" height="225" rx="6" fill="rgba(118,185,0,0.07)" stroke="#76b900" stroke-width="2"/>
+  <rect x="465" y="130" width="270" height="3" rx="1" fill="#76b900"/>
+  <!-- Port, tag, name -->
+  <text x="482" y="158" font-family="'JetBrains Mono',Courier,monospace" font-size="13" fill="#777">:8000</text>
+  <text x="482" y="176" font-family="'JetBrains Mono',Courier,monospace" font-size="11" fill="#76b900" letter-spacing="2">ORCHESTRATION</text>
+  <text x="482" y="204" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="700" fill="#ffffff">App Server</text>
+  <!-- Description -->
+  <text x="482" y="232" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Control loop</text>
+  <text x="482" y="250" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Prompt builder</text>
+  <text x="482" y="268" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Action parser</text>
+  <text x="482" y="286" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Pallet state + constraints</text>
+  <text x="482" y="304" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">WebSocket event stream</text>
+
+  <!-- ── NODE 3: COSMOS3 ENDPOINT (highlighted) ── -->
+  <rect x="855" y="130" width="270" height="225" rx="6" fill="rgba(118,185,0,0.07)" stroke="#76b900" stroke-width="1.5"/>
+  <rect x="855" y="130" width="270" height="3" rx="1" fill="#76b900"/>
+  <!-- Port, tag, name -->
+  <text x="872" y="158" font-family="'JetBrains Mono',Courier,monospace" font-size="13" fill="#777">:8200</text>
+  <text x="872" y="176" font-family="'JetBrains Mono',Courier,monospace" font-size="11" fill="#76b900" letter-spacing="2">GENERATION</text>
+  <text x="872" y="204" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="700" fill="#ffffff">Cosmos3 Endpoint</text>
+  <!-- Description -->
+  <text x="872" y="232" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Diffusers backend</text>
+  <text x="872" y="250" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Nano default · Super quality</text>
+  <text x="872" y="268" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Prompt + seed + model ID</text>
+  <text x="872" y="286" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">/health · /v1/models · /v1/infer</text>
+  <text x="872" y="304" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Generated media artifact</text>
+
+  <!-- ═══ HORIZONTAL ARROWS (sim ↔ app-server) ═══ -->
+
+  <!-- sim-server → app-server: box images + state (REST GET) -->
+  <line x1="348" y1="220" x2="462" y2="220" stroke="#76b900" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="405" y="213" font-family="Arial,sans-serif" font-size="10.5" fill="#76b900" text-anchor="middle">box images + state</text>
+
+  <!-- app-server → sim-server: pick/place cmd (REST POST) — dashed -->
+  <line x1="463" y1="238" x2="349" y2="238" stroke="#4a4a4a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ad)"/>
+  <text x="405" y="254" font-family="Arial,sans-serif" font-size="10" fill="#555" text-anchor="middle">pick/place cmd</text>
+
+  <!-- ═══ HORIZONTAL ARROWS (app-server ↔ inference-server) ═══ -->
+
+  <!-- app-server → Cosmos3 endpoint: palletizing prompt -->
+  <line x1="738" y1="220" x2="852" y2="220" stroke="#76b900" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="795" y="213" font-family="Arial,sans-serif" font-size="10.5" fill="#76b900" text-anchor="middle">scene prompt</text>
+
+  <!-- Cosmos3 endpoint → app-server: artifact + metadata — dashed -->
+  <line x1="854" y1="238" x2="740" y2="238" stroke="#4a4a4a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ad)"/>
+  <text x="795" y="254" font-family="Arial,sans-serif" font-size="10" fill="#555" text-anchor="middle">artifact + metadata</text>
+
+  <!-- ═══ NODE 4: FRONTEND (directly below app-server) ═══ -->
+  <rect x="465" y="383" width="270" height="135" rx="6" fill="#111111" stroke="#2d2d2d" stroke-width="1.5"/>
+  <!-- Port, tag, name -->
+  <text x="482" y="409" font-family="'JetBrains Mono',Courier,monospace" font-size="13" fill="#777">:3000</text>
+  <text x="482" y="427" font-family="'JetBrains Mono',Courier,monospace" font-size="11" fill="#76b900" letter-spacing="2">FRONTEND</text>
+  <text x="482" y="452" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="700" fill="#ffffff">Frontend</text>
+  <!-- Description (2 compact lines) -->
+  <text x="482" y="475" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Camera feed · Reasoning trace</text>
+  <text x="482" y="493" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#cccccc">Parsed action · Execution status</text>
+
+  <!-- ═══ VERTICAL ARROW: app-server → frontend (WebSocket events) ═══ -->
+  <line x1="600" y1="358" x2="600" y2="380" stroke="#76b900" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="614" y="373" font-family="Arial,sans-serif" font-size="10.5" fill="#76b900">WebSocket events</text>
+
+  <!-- ═══ DIAGONAL ARROW: sim-server → frontend (camera stream, nginx /sim/ proxy) ═══ -->
+  <line x1="280" y1="355" x2="470" y2="383" stroke="rgba(79,195,247,0.45)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ab)"/>
+  <text x="358" y="378" font-family="Arial,sans-serif" font-size="10" fill="rgba(79,195,247,0.55)" text-anchor="middle">camera stream</text>
+
+</svg>

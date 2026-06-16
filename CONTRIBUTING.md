@@ -73,35 +73,42 @@ cookbooks/
     │       ├── run_<task>_with_<backend>.ipynb
     │       └── assets/
     │
-    └── generator/
-        ├── audiovisual/                   # Generator: T2I, T2V, I2V, audio
-        │   ├── README.md
-        │   ├── basic_examples/            # Shipped starter cookbooks
-        │   │   ├── run_with_diffusers.ipynb
-        │   │   ├── run_with_vllm_omni.ipynb
-        │   │   ├── run_with_cosmos_framework.ipynb
-        │   │   └── assets/
-        │   └── <your-cookbook>/            # ← Community contributions go here
-        │
-        ├── action/                        # Generator: policy, FDM, IDM
-        │   ├── README.md
-        │   ├── basic_examples/            # Shipped starter cookbooks
-        │   │   ├── run_fd_with_cosmos_framework.ipynb
-        │   │   ├── run_fd_with_vllm.ipynb
-        │   │   ├── run_id_with_cosmos_framework.ipynb
-        │   │   ├── run_id_with_vllm.ipynb
-        │   │   ├── run_policy_with_cosmos_framework.md
-        │   │   └── assets/
-        │   └── <your-cookbook>/            # ← Community contributions go here
-        │
-        └── transfer/                      # Generator: video-to-video transfer
+    ├── generator/
+    │   ├── audiovisual/                   # Generator: T2I, T2V, I2V, audio
+    │   │   ├── README.md
+    │   │   ├── basic_examples/            # Shipped starter cookbooks
+    │   │   │   ├── run_with_diffusers.ipynb
+    │   │   │   ├── run_with_vllm_omni.ipynb
+    │   │   │   ├── run_with_cosmos_framework.ipynb
+    │   │   │   └── assets/
+    │   │   └── <your-cookbook>/            # ← Community contributions go here
+    │   │
+    │   ├── action/                        # Generator: policy, FDM, IDM
+    │   │   ├── README.md
+    │   │   ├── basic_examples/            # Shipped starter cookbooks
+    │   │   │   ├── run_fd_with_cosmos_framework.ipynb
+    │   │   │   ├── run_fd_with_vllm.ipynb
+    │   │   │   ├── run_id_with_cosmos_framework.ipynb
+    │   │   │   ├── run_id_with_vllm.ipynb
+    │   │   │   ├── run_policy_with_cosmos_framework.md
+    │   │   │   └── assets/
+    │   │   └── <your-cookbook>/            # ← Community contributions go here
+    │   │
+    │   └── transfer/                      # Generator: video-to-video transfer
+    │       ├── README.md
+    │       ├── basic_examples/            # Shipped starter cookbooks
+    │       │   ├── run_video_transfer_with_cosmos_framework.ipynb
+    │       │   ├── preview_helpers.py
+    │       │   ├── specs/
+    │       │   └── assets/
+    │       └── <your-cookbook>/            # ← Community contributions go here
+    │
+    └── end2end/                            # Multi-tower or application workflows
+        ├── README.md
+        └── <your-cookbook>/                # ← Community contributions go here
             ├── README.md
-            ├── basic_examples/            # Shipped starter cookbooks
-            │   ├── run_video_transfer_with_cosmos_framework.ipynb
-            │   ├── preview_helpers.py
-            │   ├── specs/
-            │   └── assets/
-            └── <your-cookbook>/            # ← Community contributions go here
+            ├── run_<task>_with_<backend>.md
+            └── assets/
 ```
 
 ### Where Does My Cookbook Go?
@@ -112,6 +119,7 @@ cookbooks/
 | Text-to-image, text-to-video, image-to-video, audio | `cookbooks/cosmos3/generator/audiovisual/` |
 | Robotics policy, forward/inverse dynamics | `cookbooks/cosmos3/generator/action/` |
 | Video-to-video style transfer, edge-guided generation | `cookbooks/cosmos3/generator/transfer/` |
+| Multi-tower application workflows or external robot/simulation stacks | `cookbooks/cosmos3/end2end/` |
 
 If your cookbook spans multiple towers (e.g., Reasoner analysis → Generator synthesis), create a new directory under `cookbooks/cosmos3/` with a clear name (e.g., `cookbooks/cosmos3/end2end/`).
 
