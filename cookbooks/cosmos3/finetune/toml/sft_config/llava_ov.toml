@@ -1,0 +1,108 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# pre_exp012_llava_ov — VLM training on lmms-lab/LLaVA-OneVision-Data
+# via CosmosDataLoader. Base config = cosmos_framework/configs/base/vlm/config.py
+# (selected by [job].task="vlm").
+#
+# One knob that the SFTExperimentConfig dataclass does NOT model — supply
+# it as a CLI extra override at launch time:
+#
+#   data_setting.max_tokens=<int, drives both max_seq_len and dataloader.max_tokens>
+#
+# (The backbone is now modeled — see [model.backbone] below.)
+#
+# Example launch:
+#   torchrun --nproc_per_node=4 -m cosmos_framework.scripts.train \
+#       --sft-toml toml/sft_config/llava_ov.toml -- \
+#       data_setting.max_tokens=16000
+#
+# Per-task remap (see _PATH_REMAPS["vlm"]):
+#   model.parallelism.*            -> model.config.parallelism.*
+#   model.compile.*                -> model.config.compile.*
+#   model.activation_checkpointing.* -> model.config.activation_checkpointing.*
+#   model.precision                -> model.config.precision
+#   model.attn_implementation      -> model.config.policy.attn_implementation
+#   model.backbone.*               -> model.config.policy.backbone.*
+#   model.ema.*                    -> model.config.ema.*
+#   model.{max_num_tokens_after_packing, joint_attn_implementation, lora_*,
+#          tokenizer.*} and dataloader_train.{max_sequence_length, seed} -> SKIPPED
+
+[job]
+task         = "vlm"
+experiment   = "pre_exp012_llava_ov"
+project      = "cosmos3"                                 # matches legacy
+group        = "vlm_llava_ov_demo"
+name         = "pre_exp012_llava_ov"
+wandb_mode   = "disabled"
+
+[model]
+# VLM-only attention impl (PolicyConfig.attn_implementation).
+attn_implementation = "cosmos"     # "cosmos" | "flash_attention_2" | "sdpa" | "eager"
+precision           = "bfloat16"   # was [model.parallelism].precision
+
+[model.backbone]
+model_name = "Qwen/Qwen3-VL-8B-Instruct"   # → model.config.policy.backbone.model_name (VLM remap)
+
+[model.ema]
+enabled         = false
+rate            = 0.1
+iteration_shift = 0
+
+[model.parallelism]
+data_parallel_shard_degree      = 8                  # matches legacy dp_shard_size=8
+data_parallel_replicate_degree  = -1                 # matches legacy dp_replicate_size=-1
+context_parallel_shard_degree   = 1
+cfg_parallel_shard_degree       = 1
+
+[model.compile]
+enabled                         = false              # was [model.parallelism].use_torch_compile
+compile_dynamic                 = true
+
+[model.activation_checkpointing]
+mode                = "full"
+save_ops_regex      = ["fmha"]
+preserve_rng_state  = true
+determinism_check   = "default"
+
+[optimizer]
+betas         = [0.9, 0.95]
+eps           = 1.0e-8                              # skipped for VLM by _PATH_REMAPS
+fused         = true
+lr            = 1.0e-5                              # matches legacy
+weight_decay  = 0.1                                 # matches legacy
+# keys_to_select / lr_multipliers omitted — VLM Trainer defaults apply.
+
+[scheduler]
+cycle_lengths      = [500]                          # matches legacy (VLM_LAMBDACOSINE_KWARGS uses ${trainer.max_iter})
+f_max              = [1.0]
+f_min              = [0.5]                          # matches legacy
+f_start            = [0.05]                         # matches legacy
+verbosity_interval = 0                              # skipped for VLM by _PATH_REMAPS
+warm_up_steps      = [1000]                         # matches legacy
+
+[trainer]
+distributed_parallelism = "fsdp"
+grad_accum_iter         = 1
+logging_iter            = 1
+max_iter                = 500                     # matches legacy
+
+[trainer.callbacks.compile_tokenizer]
+compile_after_iterations = 3
+enabled                  = false
+
+[trainer.callbacks.grad_clip]
+clip_norm    = 1.0
+force_finite = false                                # matches VLM default in cosmos_framework/configs/base/vlm/defaults/callbacks.py:55
+
+[checkpoint]
+keys_to_skip_loading = []
+load_path            = "???"                      # MISSING sentinel; skipped by build_hydra_overrides — supply at runtime
+save_iter            = 100
+
+[dataloader_train]
+# Routed by PATH_REMAPS["vlm"] onto the CosmosDataLoader's nested PoolPackingBatcher:
+#   max_samples_per_batch -> dataloader_train.batcher.max_batch_size
+#   max_sequence_length   -> dataloader_train.batcher.max_tokens
+max_samples_per_batch = 1
+max_sequence_length   = 16000

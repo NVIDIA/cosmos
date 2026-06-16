@@ -1,0 +1,91 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# videophy2_sft_nano — VLM dialog SFT on VideoPhy-2 via CosmosDataLoader.
+# Base config = cosmos_framework/configs/base/vlm/config.py (selected by [job].task="vlm").
+#
+# Dataset prep:
+#   python -m cosmos_framework.scripts.vlm.prepare_videophy2_from_hf \
+#       --out_root $VIDEOPHYSICS_ROOT --split train  # and again with --split val
+#
+# Required env at launch: VIDEOPHYSICS_ROOT (read by the experiment Python).
+#
+# Example launch:
+#   bash launch_sft_videophy2_nano.sh
+
+[job]
+task         = "vlm"
+experiment   = "videophy2_sft_nano"
+project      = "cosmos3"
+group        = "vlm_videophy2_sft"
+name         = "videophy2_sft_nano"
+wandb_mode   = "disabled"
+
+[model]
+attn_implementation = "cosmos"
+precision           = "bfloat16"                         # was [model.parallelism].precision
+
+[model.backbone]
+model_name = "Qwen/Qwen3-VL-8B-Instruct"
+
+[model.ema]
+enabled         = false
+rate            = 0.1
+iteration_shift = 0
+
+[model.parallelism]
+data_parallel_shard_degree      = 8
+data_parallel_replicate_degree  = -1
+context_parallel_shard_degree   = 1
+cfg_parallel_shard_degree       = 1
+
+[model.compile]
+enabled                         = false                  # was [model.parallelism].use_torch_compile
+compile_dynamic                 = true
+
+[model.activation_checkpointing]
+mode                = "full"
+save_ops_regex      = ["fmha"]
+preserve_rng_state  = true
+determinism_check   = "default"
+
+[optimizer]
+betas         = [0.9, 0.95]
+eps           = 1.0e-8
+fused         = true
+lr            = 1.0e-6
+weight_decay  = 0.1
+
+[scheduler]
+cycle_lengths      = [50]
+f_max              = [1.0]
+f_min              = [0.1]
+f_start            = [0.05]
+verbosity_interval = 0
+warm_up_steps      = [5]
+
+[trainer]
+distributed_parallelism = "fsdp"
+grad_accum_iter         = 8
+logging_iter            = 1
+max_iter                = 50
+
+[trainer.callbacks.compile_tokenizer]
+compile_after_iterations = 3
+enabled                  = false
+
+[trainer.callbacks.grad_clip]
+clip_norm    = 1.0
+force_finite = false
+
+[checkpoint]
+keys_to_skip_loading = []
+load_path            = "???"
+save_iter            = 100
+
+[dataloader_train]
+# Routed by PATH_REMAPS["vlm"] onto the CosmosDataLoader's nested PoolPackingBatcher:
+#   max_samples_per_batch -> dataloader_train.batcher.max_batch_size
+#   max_sequence_length   -> dataloader_train.batcher.max_tokens
+max_samples_per_batch = 1
+max_sequence_length   = 16000

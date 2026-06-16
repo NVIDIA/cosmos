@@ -1,0 +1,91 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# vision_sft_nano — T2V / I2V / V2V vision-only SFT (Qwen3-VL-8B / nano)
+# Consumed by cosmos_framework.configs.toml_config.sft_config.load_experiment_from_toml.
+# Uses PackingDataLoader (no dataloader_train.seed slot — keep it omitted here).
+
+[job]
+task         = "vfm"
+experiment   = "vision_sft_nano"
+project      = "cosmos3"
+group        = "sft"
+name         = "vision_sft_nano"
+wandb_mode   = "disabled"
+
+[model]
+max_num_tokens_after_packing = 45056
+joint_attn_implementation    = "two_way"
+precision                    = "bfloat16"                # was [model.parallelism].precision
+
+[model.ema]
+enabled         = true
+rate            = 0.1
+iteration_shift = 0
+
+[model.parallelism]
+data_parallel_shard_degree      = -1                     # -1 = auto from WORLD_SIZE (matches legacy)
+data_parallel_replicate_degree  = 1
+
+[model.compile]
+enabled                         = true                   # was [model.parallelism].use_torch_compile
+compile_dynamic                 = true
+
+[model.activation_checkpointing]
+mode                = "full"
+save_ops_regex      = ["fmha"]
+preserve_rng_state  = true
+determinism_check   = "default"
+
+[model.tokenizer]
+vae_path = "${oc.env:WAN_VAE_PATH}"
+
+[optimizer]
+betas         = [0.9, 0.95]
+eps           = 1.0e-6
+fused         = true
+keys_to_select = [
+    "moe_gen",
+    "time_embedder",
+    "vae2llm",
+    "llm2vae",
+]
+lr            = 2.0e-5
+weight_decay  = 0                                        # int matches legacy YAML repr
+# lr_multipliers intentionally empty for vision SFT (Hydra default {} stands).
+
+[scheduler]
+cycle_lengths      = [1000]
+f_max              = [1.0]
+f_min              = [0.0]
+f_start            = [0.0]
+verbosity_interval = 0
+warm_up_steps      = [50]
+
+[trainer]
+distributed_parallelism = "fsdp"
+grad_accum_iter         = 2
+logging_iter            = 1
+max_iter                = 500
+
+[trainer.callbacks.compile_tokenizer]
+compile_after_iterations = 3
+enabled                  = false
+# warmup_resolutions omitted (None at experiment level)
+
+[trainer.callbacks.grad_clip]
+clip_norm    = 0.1
+force_finite = true
+
+[checkpoint]
+keys_to_skip_loading = ["net_ema."]
+load_path            = "${oc.env:BASE_CHECKPOINT_PATH}"
+save_iter            = 100
+
+[dataloader_train]
+max_sequence_length = 45056
+# Per-caption token cap before truncation. Structured-JSON captions run longer than
+# dense prose (measured max ~1790 tokens), so keep headroom; raise it for longer captions.
+max_caption_tokens = 2048
+# max_samples_per_batch omitted (None — PackingDataLoader doesn't cap by sample count)
+# seed omitted — PackingDataLoader has no seed ctor kwarg
