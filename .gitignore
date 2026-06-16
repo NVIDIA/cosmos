@@ -181,6 +181,14 @@ packages/
 cookbooks/cosmos3/generator/audiovisual/outputs/
 outputs/
 
+# Cosmos3 finetune cookbook runtime artifacts (downloads, converted ckpts, runs)
+cookbooks/cosmos3/finetune/data/
+cookbooks/cosmos3/finetune/checkpoints/
+cookbooks/cosmos3/finetune/outputs/
+
+# Superpowers design specs / implementation plans (kept local, not tracked)
+docs/superpowers/
+
 # Streamlit
 .streamlit/
 
