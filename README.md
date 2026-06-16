@@ -639,6 +639,8 @@ curl -sS -X POST http://localhost:30000/v1/images/generations \
 
 SGLang accepts Cosmos 3 request options including `max_sequence_length`, `flow_shift`, `extra_params.guardrails`, `extra_params.use_resolution_template`, and `extra_params.use_duration_template`. Guardrails are enabled by default when `cosmos-guardrail` is installed; set `SGLANG_DISABLE_COSMOS3_GUARDRAILS=1` before starting the server to skip loading the guardrail models.
 
+For complete serving instructions and request examples, see the [Cosmos3 SGLang cookbook](https://docs.sglang.io/cookbook/diffusion/Cosmos/Cosmos3).
+
 </details>
 
 #### Reasoner with Transformers
