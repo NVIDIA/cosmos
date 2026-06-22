@@ -211,11 +211,10 @@ Generator requires the Guardrail. Request access to the gated
 HF repository. To disable the guardrail, set `enable_safety_checker=False` (Diffusers),
 `guardrails: false` (vLLM-Omni `extra_params`/`extra_args`), or
 `--no-guardrails` (Cosmos Framework).
-
 #### Generator with Diffusers
 
 <details>
-<summary>Expand Diffusers generator setup, example, and modes</summary>
+<summary>Expand Diffusers Generator setup, example, and modes</summary>
 
 Use HuggingFace Diffusers for Cosmos 3 Generator research, training, and model development. This path loads the full Cosmos 3 checkpoint, including the reasoner path, diffusion generation path, and media tokenizers.
 
@@ -287,7 +286,7 @@ See the [Cosmos 3 Diffusers documentation](https://huggingface.co/docs/diffusers
 #### Generator with vLLM-Omni
 
 <details>
-<summary>Expand vLLM-Omni generator setup, endpoints, and request reference</summary>
+<summary>Expand vLLM-Omni Generator setup, endpoints, and request reference</summary>
 
 Use vLLM-Omni for Generator production inference behind an OpenAI-compatible API. This integration loads the full Cosmos 3 checkpoint, including the Qwen3-VL-based reasoner path and the diffusion generation path. For understanding-only tasks that return text, use [Reasoner with vLLM](#reasoner-with-vllm) instead, which loads only the reasoner.
 
@@ -439,12 +438,20 @@ References:
 </details>
 
 #### Reasoner with Transformers
-Coming soon!
+
+<details>
+<summary>Expand Transformers Reasoner notes (coming soon)</summary>
+
+Native Transformers support for the Cosmos 3 Reasoner is coming soon. In the meantime, use [Reasoner with vLLM](#reasoner-with-vllm) or [Reasoner with NIM](#reasoner-with-nim) for production inference.
+
+</details>
 
 #### Reasoner with vLLM
 
 <details>
-<summary>Use vLLM for Reasoner production inference behind an OpenAI-compatible chat-completions API.</summary>
+<summary>Expand vLLM Reasoner setup, server launch, and configuration</summary>
+
+Use vLLM for Reasoner production inference behind an OpenAI-compatible chat-completions API. This path loads only the reasoner; for generation tasks that return images or video, use [Generator with vLLM-Omni](#generator-with-vllm-omni) instead.
 
 ```shell
 uv venv --python 3.13 --seed --managed-python
@@ -481,6 +488,7 @@ Configuration notes:
 | `--mm-encoder-tp-mode data` | Data parallelism for the visual encoder in multimodal workloads |
 | `--media-io-kwargs '{"video": {"num_frames": -1}}'` | Allows the processor to consider all available frames before downstream frame sampling |
 | `--allowed-local-media-path` | Required when requests pass local `file://` media paths |
+
 </details>
 
 #### Reasoner with NIM
@@ -587,6 +595,7 @@ References:
 - [cosmos3-nano-reasoner build page](https://build.nvidia.com/nvidia/cosmos3-nano-reasoner)
 
 </details>
+
 
 ### Troubleshooting
 
