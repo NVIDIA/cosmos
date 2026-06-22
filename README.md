@@ -656,11 +656,12 @@ Cosmos 3 latency and serving numbers live in [`inference_benchmarks.md`](inferen
 
 ### Finetune
 
-Post-train Cosmos 3 on your own data with the supervised fine-tuning (SFT) cookbooks below. Each recipe is a self-contained launch script: a single `bash launch_sft_<recipe>.sh` downloads the data, prepares the base checkpoint, and runs 8×H100 training.
+Post-train Cosmos 3 on your own data with the supervised fine-tuning (SFT) cookbooks below. Each recipe is a self-contained launch script: a single `bash launch_sft_<recipe>.sh` prepares or validates the data, prepares the base checkpoint, and runs 8×H100 training.
 
 | Cookbook | Surface | Recipes |
 | --- | --- | --- |
 | [Vision generator SFT](cookbooks/cosmos3/generator/audiovisual/finetune/README.md) | Generator | Full SFT (Cosmos3-Nano) and LoRA SFT (Cosmos3-Super) on captioned video |
+| [Policy-DROID SFT](cookbooks/cosmos3/generator/action/finetune/README.md) | Generator | Full SFT (Cosmos3-Nano) for action policy on the DROID dataset |
 | [Reasoner SFT](cookbooks/cosmos3/reasoner/finetune/README.md) | Reasoner | Alignment SFT on LLaVA-OneVision and physical-plausibility SFT on VideoPhy-2 |
 
 These cookbooks run on the [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework), NVIDIA's end-to-end Physical AI framework for training and serving world models. For the full post-training reference — every config field, raw `torchrun`, resuming, and advanced parallelism — see the [Cosmos Framework training guide](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/training.md).

@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# ============================================================================
+# DROID action-policy SFT — run config for the `action_policy_droid_nano`
+# experiment. The recipe knobs (optimizer/lr, scheduler type, grad_clip,
+# count-based batch, action-head skip-on-load, dataset knobs) live in the
+# registered experiment; this file only sets run-level scalars (iters, ckpt
+# cadence, parallelism shape, wandb, VAE path).
+#
+# Env required:
+#   DROID_ROOT=/path/to/droid_lerobot_640x360/success
+#   BASE_CHECKPOINT_PATH=<Cosmos3-Nano DCP dir>
+#   WAN_VAE_PATH=<Wan2.2_VAE.pth>
+#   IMAGINAIRE_OUTPUT_ROOT=/path/to/output_root   # persist checkpoints
+# ============================================================================
+
+[job]
+task         = "vfm"
+experiment   = "action_policy_droid_nano"
+project      = "cosmos3_action"
+group        = "action_sft"
+name         = "action_policy_droid_repro"
+wandb_mode   = "online"
+
+[model]
+precision = "bfloat16"
+
+[model.parallelism]
+data_parallel_shard_degree     = 8    # 8-GPU model shard; set replicate for multi-node HSDP
+data_parallel_replicate_degree = 1
+
+[model.activation_checkpointing]
+mode           = "full"
+save_ops_regex = ["fmha"]
+
+[model.tokenizer]
+vae_path = "${oc.env:WAN_VAE_PATH}"
+
+[scheduler]
+cycle_lengths = [10000]   # match max_iter
+
+[trainer]
+max_iter     = 10000
+logging_iter = 50
+
+[checkpoint]
+load_path = "${oc.env:BASE_CHECKPOINT_PATH}"
+save_iter = 1000
+
+# max_samples_per_batch is 128 in the experiment — samples packed into each per-rank batch
+# (the num_workers x prefetch_factor workers just decode in parallel to keep it fed); res480,
+# reference recipe, validated multi-node on GB200.
+# On lower-memory GPUs, reduce it at launch, e.g.:
+#   --opts dataloader_train.max_samples_per_batch=32

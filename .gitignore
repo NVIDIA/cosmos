@@ -185,6 +185,9 @@ outputs/
 cookbooks/cosmos3/generator/audiovisual/finetune/data/
 cookbooks/cosmos3/generator/audiovisual/finetune/checkpoints/
 cookbooks/cosmos3/generator/audiovisual/finetune/outputs/
+cookbooks/cosmos3/generator/action/finetune/data/
+cookbooks/cosmos3/generator/action/finetune/checkpoints/
+cookbooks/cosmos3/generator/action/finetune/outputs/
 cookbooks/cosmos3/reasoner/finetune/data/
 cookbooks/cosmos3/reasoner/finetune/checkpoints/
 cookbooks/cosmos3/reasoner/finetune/outputs/

@@ -18,6 +18,7 @@ The rest of this doc shows how to run these modes on selected embodiments direct
 - [Run with vLLM-Omni](#run-with-vllm-omni)
   - [Quickstart](#quickstart-1)
   - [Notebook walkthrough](#notebook-walkthrough)
+- [Post-Train for Cosmos3-Nano-Policy-DROID](#post-train-for-cosmos3-nano-policy-droid)
 
 ## Overview
 
@@ -126,6 +127,13 @@ write outputs under `outputs/cosmos3_action_vllm/`:
   DROID, and UMI robotics examples.
 - [`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
+
+## Post-Train for Cosmos3-Nano-Policy-DROID
+
+To reproduce our post-training recipe for [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID), use the
+[Cosmos3-Nano-Policy-DROID SFT cookbook](./finetune/README.md). It follows the same
+launch-script pattern as the other Cosmos3 finetune cookbooks while delegating
+the canonical training implementation to Cosmos Framework.
 
 
 
