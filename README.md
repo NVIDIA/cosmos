@@ -769,7 +769,7 @@ Cosmos 3 latency and serving numbers live in [`inference_benchmarks.md`](inferen
 
 Post-train Cosmos 3 on your own data with the supervised fine-tuning (SFT) cookbooks below. Each recipe is a self-contained launch script: a single `bash launch_sft_<recipe>.sh` prepares or validates the data, prepares the base checkpoint, and runs 8×H100 training.
 
-| Cookbook | Surface | Model | What it covers | Script |
+| Example | Surface | Model | What it covers | Script |
 | --- | --- | --- | --- | --- |
 | [Vision generator SFT](cookbooks/cosmos3/generator/audiovisual/finetune/README.md) | Generator | Cosmos3-Nano | Full SFT on captioned video | `launch_sft_vision_nano.sh` |
 | [Vision generator SFT](cookbooks/cosmos3/generator/audiovisual/finetune/README.md) | Generator | Cosmos3-Super | LoRA SFT on captioned video | `launch_sft_vision_super.sh` |
