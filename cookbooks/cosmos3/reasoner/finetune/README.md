@@ -4,10 +4,10 @@ Supervised fine-tuning (SFT) of the Cosmos3 Reasoner on your own data. Tested on
 
 | Recipe | Launch shell | Dataset | Notes |
 | --- | --- | --- | --- |
-| Alignment SFT (LLaVA-OneVision) | `launch_sft_llava_ov.sh` | [lmms-lab/LLaVA-OneVision-Data](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-Data) | Streams from HF; Cosmos3-Nano Reasoner checkpoint auto-built |
+| Alignment SFT (LLaVA-OneVision) | `launch_sft_llava_ov.sh` | [lmms-lab/LLaVA-OneVision-Data](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-Data) | Streams from HF; Cosmos3-Nano Reasoner checkpoint auto-prepared |
 | Physical-plausibility SFT (VideoPhy-2) | `launch_sft_videophy2_nano.sh` | [videophysics/videophy2_train](https://huggingface.co/datasets/videophysics/videophy2_train) | 1–5 plausibility scoring; dataset + checkpoint auto-prepared |
 
-Both use `[job].task = "vlm"` and bootstrap from a Cosmos3-Nano Reasoner checkpoint, auto-built on first run.
+Both use `[job].task = "vlm"` and bootstrap from a Cosmos3-Nano Reasoner checkpoint, auto-prepared on first run.
 
 ## Prerequisites
 
