@@ -5,7 +5,7 @@
 # Complete recipe: Reasoner physical-plausibility SFT on VideoPhy-2 (8x H100).
 # Run from this folder with the cosmos-framework venv active (see README):
 #   bash launch_sft_videophy2_nano.sh
-# It materializes the dataset, builds the merged Cosmos3-Nano Reasoner checkpoint, and
+# It materializes the dataset, builds the Cosmos3-Nano Reasoner checkpoint, and
 # trains — in order. Paths are fixed under this (git-ignored) folder.
 
 set -euo pipefail
@@ -19,13 +19,13 @@ if [[ ! -d "$VIDEOPHYSICS_ROOT/videophy2_train" ]]; then
     python -m cosmos_framework.scripts.vlm.prepare_videophy2_from_hf --out_root "$VIDEOPHYSICS_ROOT" --split both
 fi
 
-# 2. Build the merged Cosmos3-Nano Reasoner checkpoint (skipped if present).
+# 2. Build the Cosmos3-Nano Reasoner checkpoint (skipped if present).
 if [[ ! -d "$REASONER_CHECKPOINT" ]]; then
     python -m cosmos_framework.scripts.convert_model_to_vlm_safetensors --checkpoint-path Cosmos3-Nano -o "$REASONER_CHECKPOINT"
 fi
 
 # 3. Train (8-GPU FSDP). VIDEOPHYSICS_ROOT is read from the environment; the
-#    merged checkpoint is supplied as a config override after `--`.
+#    checkpoint is supplied as a config override after `--`.
 export VIDEOPHYSICS_ROOT
 # On a 4-GPU node (e.g. GB200x4), set --nproc_per_node=4 instead.
 IMAGINAIRE_OUTPUT_ROOT="$PWD/outputs/train" torchrun --nproc_per_node=8 \
