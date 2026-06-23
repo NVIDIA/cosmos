@@ -540,7 +540,7 @@ Supported checkpoints:
 | `nvidia/Cosmos3-Super` | Supported | Use multiple GPUs for the 64B checkpoint |
 | `nvidia/Cosmos3-Super-Text2Image` | Supported | Text-to-image specialized checkpoint |
 | `nvidia/Cosmos3-Super-Image2Video` | Supported | Image-to-video specialized checkpoint |
-| `nvidia/Cosmos3-Nano-Policy-DROID` | Not supported yet | Action/policy checkpoint |
+| `nvidia/Cosmos3-Nano-Policy-DROID` | Supported | Action/policy checkpoint |
 
 Install SGLang from the main branch with diffusion extras:
 
@@ -586,6 +586,19 @@ Vision endpoints:
 | Text to image | `POST /v1/images/generations` | Returns base64 by default for Cosmos 3 |
 | Text to video | `POST /v1/videos` | Creates an async job; poll `GET /v1/videos/{id}` and download `/content` |
 | Image to video | `POST /v1/videos` | Upload the conditioning image with `input_reference` |
+| Video to Video | `POST /v1/videos` | Upload the conditioning video with `video_reference` and choose which frames stay as clean conditioning |
+| Video with sound | `POST /v1/videos` | Add `generate_sound=true` to produce a soundtrack alongside the video |
+
+Action modes use Cosmos 3 as a world model: they condition on an embodiment (`domain_name`) and exchange video and action sequences. Policy and inverse dynamics return a predicted action chunk, and read the action data from the completed result; forward dynamics returns only video.
+
+| Mode | `action_mode` | Input | Output |
+| --- | --- | --- | --- |
+| Policy | `policy` | Image + instruction | Video + predicted action chunk |
+| Inverse dynamics | `inverse_dynamics` | Video + instruction | Video + predicted action chunk |
+| Forward dynamics | `forward_dynamics` | Image + action chunk | Video |
+
+Pass embodiment settings through `extra_params`: `action_mode`, `domain_name` (for example `bridge_orig_lerobot`, `av`, or `camera_pose`), `raw_action_dim`, and optionally `action_view_point`. SGLang derives the action chunk length from `num_frames - 1`, so set `num_frames` to `action_chunk_size + 1`.
+For forward dynamics, pass the action trajectory directly in `extra_params["action"]` as a JSON array of shape `[action_chunk_size, raw_action_dim]`. SGLang does not use action_path for HTTP requests, so no `--allowed-local-media-path` setup is needed for action files.
 
 Text-to-video example:
 
@@ -635,6 +648,38 @@ curl -sS -X POST http://localhost:30000/v1/images/generations \
       "guardrails": true
     }
   }'
+```
+
+Video-to-video-with-sound example:
+
+```shell
+job_id=$(curl -sS --fail-with-body -X POST "http://localhost:30000/v1/videos" \
+  -H "Accept: application/json" \
+  --form-string 'prompt=A small warehouse robot moves a blue box across a clean floor.' \
+  --form-string 'negative_prompt=blurry, distorted, low quality' \
+  --form-string 'size=1280x720' \
+  --form-string 'num_frames=61' \
+  --form-string 'fps=24' \
+  --form-string 'num_inference_steps=30' \
+  --form-string 'guidance_scale=4.0' \
+  --form-string 'flow_shift=10.0' \
+  --form-string 'seed=1234' \
+  --form-string 'generate_sound=true' \
+  --form-string 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true}' \
+  -F 'video_reference=@/path/to/video.mp4;type=video/mp4' \
+  | jq -r .id)
+
+# Poll until the job completes. Cosmos 3 video generation can take several minutes.
+status=""
+until [ "$status" = "completed" ]; do
+  status=$(curl -sS "http://localhost:30000/v1/videos/${job_id}" | jq -r .status)
+  [ "$status" = "failed" ] && exit 1
+  sleep 5
+done
+
+# Download the completed MP4.
+curl -sS -L "http://localhost:30000/v1/videos/${job_id}/content" \
+  -o cosmos3_v2vs_output.mp4
 ```
 
 SGLang accepts Cosmos 3 request options including `max_sequence_length`, `flow_shift`, `extra_params.guardrails`, `extra_params.use_resolution_template`, and `extra_params.use_duration_template`. Guardrails are enabled by default when `cosmos-guardrail` is installed; set `SGLANG_DISABLE_COSMOS3_GUARDRAILS=1` before starting the server to skip loading the guardrail models.
