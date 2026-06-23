@@ -29,6 +29,8 @@ bash launch_sft_vision_super.sh     # LoRA SFT on Cosmos3-Super
 
 Paths are fixed at the top of each script (under this git-ignored folder) — edit them there to put data or checkpoints on another filesystem.
 
+These recipes default to 8 GPUs. On a 4-GPU node (e.g. GB200×4), set `--nproc_per_node=4` on the `torchrun` line in the launch script.
+
 ## Outputs
 
 Training writes to `outputs/train/<project>/<group>/<name>/`:

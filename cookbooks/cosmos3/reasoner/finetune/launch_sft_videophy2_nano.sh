@@ -27,6 +27,7 @@ fi
 # 3. Train (8-GPU FSDP). VIDEOPHYSICS_ROOT is read from the environment; the
 #    merged checkpoint is supplied as a config override after `--`.
 export VIDEOPHYSICS_ROOT
+# On a 4-GPU node (e.g. GB200x4), set --nproc_per_node=4 instead.
 IMAGINAIRE_OUTPUT_ROOT="$PWD/outputs/train" torchrun --nproc_per_node=8 \
     -m cosmos_framework.scripts.train --sft-toml="toml/sft_config/videophy2_sft_nano.toml" \
     -- model.config.policy.backbone.safetensors_path="$VLM_CHECKPOINT"
