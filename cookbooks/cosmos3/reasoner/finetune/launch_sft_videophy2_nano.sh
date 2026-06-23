@@ -19,7 +19,7 @@ if [[ ! -d "$VIDEOPHYSICS_ROOT/videophy2_train" ]]; then
     python -m cosmos_framework.scripts.vlm.prepare_videophy2_from_hf --out_root "$VIDEOPHYSICS_ROOT" --split both
 fi
 
-# 2. Merge Cosmos3-Nano LM onto the Qwen3-VL-8B-Instruct visual tower (skipped if present).
+# 2. Build the merged Cosmos3-Nano VLM checkpoint (skipped if present).
 if [[ ! -d "$VLM_CHECKPOINT" ]]; then
     python -m cosmos_framework.scripts.convert_model_to_vlm_safetensors --checkpoint-path Cosmos3-Nano -o "$VLM_CHECKPOINT"
 fi
