@@ -6,7 +6,7 @@
 # Run from this folder with the cosmos-framework venv active (see README):
 #   bash launch_sft_vision_nano.sh
 # It downloads the data, prepares the base checkpoint, and trains — in order.
-# Paths are fixed under this (git-ignored) folder; edit them below to relocate.
+# Paths are fixed under this folder; edit them below to relocate.
 
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"

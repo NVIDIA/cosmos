@@ -15,7 +15,7 @@ Both bootstrap from a Cosmos3-Nano Reasoner checkpoint, auto-built on first run.
 2. **Recommended container.** For a curated CUDA + PyTorch base, NVIDIA recommends starting from the NGC PyTorch container **`nvcr.io/nvidia/pytorch:25.09-py3`** (CUDA 13; use **`:25.06-py3`** for a CUDA 12.8 driver). See the framework [setup guide](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/setup.md#recommended-base-image).
 3. **Activate** the framework venv so `cosmos_framework` is importable: `source <path-to>/packages/cosmos3/.venv/bin/activate`.
 4. **Hugging Face access.** The Cosmos3-Nano base checkpoint and datasets are fetched from HF — authenticate once with `uvx hf@latest auth login` (or export `HF_TOKEN`); accept any dataset terms first.
-5. **Run from this directory** (`cookbooks/cosmos3/reasoner/finetune/`). Any downloads, converted checkpoints, and run outputs default to `data/`, `checkpoints/`, and `outputs/` here (all git-ignored).
+5. **Run from this directory** (`cookbooks/cosmos3/reasoner/finetune/`). Any downloads, converted checkpoints, and run outputs default to `data/`, `checkpoints/`, and `outputs/` here.
 
 ## Quick start
 
@@ -27,7 +27,7 @@ bash launch_sft_llava_ov.sh          # alignment SFT; dataset streams from HF, b
 bash launch_sft_videophy2_nano.sh    # first run materializes VideoPhy-2 + builds the Cosmos3-Nano Reasoner checkpoint, then trains
 ```
 
-The VideoPhy-2 download/convert steps are skipped once their outputs exist. Paths are fixed at the top of each script (under this git-ignored folder) — edit them there to relocate data or checkpoints.
+The VideoPhy-2 download/convert steps are skipped once their outputs exist. Paths are fixed at the top of each script — edit them there to relocate data or checkpoints.
 
 These recipes default to 8 GPUs. On a 4-GPU node (e.g. GB200×4), set `--nproc_per_node=4` on the `torchrun` line in the launch script.
 

@@ -6,7 +6,7 @@
 # Run from this folder with the cosmos-framework venv active (see README):
 #   bash launch_sft_videophy2_nano.sh
 # It materializes the dataset, builds the Cosmos3-Nano Reasoner checkpoint, and
-# trains — in order. Paths are fixed under this (git-ignored) folder.
+# trains — in order. Paths are fixed under this folder.
 
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"

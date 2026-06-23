@@ -7,7 +7,7 @@
 #   bash launch_sft_llava_ov.sh
 # The dataset streams from HuggingFace, so there's nothing to download first. It
 # builds the Cosmos3-Nano Reasoner checkpoint, then trains — in order. Paths
-# are fixed under this (git-ignored) folder.
+# are fixed under this folder.
 
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
