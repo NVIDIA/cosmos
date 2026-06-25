@@ -180,7 +180,7 @@ uv pip install --torch-backend=auto \
   pillow \
   "safetensors>=0.8.0" \
   torch \
-  torchvision \
+  "torchvision==0.25.0" \
   "transformers>=5.11.0"
 ```
 
