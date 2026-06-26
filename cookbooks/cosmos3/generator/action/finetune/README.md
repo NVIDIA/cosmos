@@ -10,9 +10,9 @@ This example demonstrates supervised fine-tuning (SFT) of [Cosmos3-Nano](https:/
 | Policy-DROID SFT | `launch_sft_action_policy_droid.sh` | Cosmos3-Nano | [Cosmos3-DROID](https://huggingface.co/datasets/nvidia/Cosmos3-DROID) success split |
 | Policy-LIBERO-10 SFT | `launch_sft_action_policy_libero.sh` | Cosmos3-Nano | [LIBERO_LeRobot_v3](https://huggingface.co/datasets/nvidia/LIBERO_LeRobot_v3) `libero_10` |
 
-The DROID recipe uses `[job].task = "vfm"` with the registered `action_policy_droid_nano` experiment: `joint_pos` 8-D actions, proprioceptive state, `concat_view` 480p video, chunk length 32, episode-shuffle streaming, and the optional `keep_ranges_1_0_1.json` window filter.
+The DROID recipe uses the registered `action_policy_droid_nano` experiment: `joint_pos` 8-D actions, proprioceptive state, `concat_view` 480p video, chunk length 32, episode-shuffle streaming, and the optional `keep_ranges_1_0_1.json` window filter.
 
-The LIBERO-10 recipe uses the registered `action_policy_libero_nano` experiment: `frame_wise_relative` rot6d 10-D actions, `quantile_rot` normalization, `concat_view` (third-person + wrist) at 20 fps, lr 5e-5 / warmup 500 / cycle 16000, global batch 2048 (HSDP 2x8). Train on `libero_10` **alone**. No keep-ranges filter.
+The LIBERO-10 recipe uses the registered `action_policy_libero_nano` experiment: `frame_wise_relative` rot6d 10-D actions, `quantile_rot` normalization, `concat_view` (third-person + wrist) at 20 fps, lr 5e-5 / warmup 500 / cycle 16000, global batch 2048 (HSDP 2x8). Train on `libero_10` **alone**.
 
 ## Prerequisites
 
@@ -44,7 +44,7 @@ The launcher is a complete local wrapper for the public cookbook:
 - downloads `Wan2.2_VAE.pth` if needed
 - converts `Cosmos3-Nano` to a local DCP checkpoint if needed
 - downloads `keep_ranges_1_0_1.json` if needed
-- launches 8-GPU training with `action_policy_droid_repro.toml`
+- launches training with `action_policy_droid_repro.toml`
 
 The script intentionally stays close to the `cosmos-framework` example launcher: `DATASET_PATH`
 is bridged to `DROID_ROOT`, `BASE_CHECKPOINT_PATH` and `WAN_VAE_PATH` are exported for the TOML,
@@ -82,7 +82,7 @@ The launcher:
 
 - downloads `nvidia/LIBERO_LeRobot_v3` `libero_10` to `data/LIBERO_LeRobot_v3/libero_10` if missing
 - downloads `Wan2.2_VAE.pth` and converts `Cosmos3-Nano` to a local DCP checkpoint if needed
-- launches 8-GPU training with the LIBERO action-policy TOML (`action_policy_libero_repro.toml`)
+- launches training with the LIBERO action-policy TOML (`action_policy_libero_repro.toml`)
 
 Relocate inputs via env vars, or run a short smoke test:
 
@@ -92,7 +92,7 @@ export EXTRA_TAIL_OVERRIDES="job.wandb_mode=disabled trainer.max_iter=10 checkpo
 bash launch_sft_action_policy_libero.sh
 ```
 
-Checkpoints are saved every 500 iters; sweep them to pick the best iteration.
+Checkpoints are saved every 500 iters.
 
 ## Outputs
 

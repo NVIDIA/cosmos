@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: OpenMDW-1.1
 
-# Complete recipe: LIBERO-10 action-policy SFT on Cosmos3-Nano (8x H100).
+# Complete recipe: LIBERO-10 action-policy SFT on Cosmos3-Nano (HSDP 2x8).
 # Run from this folder with the cosmos-framework venv active (see README):
 #   bash launch_sft_action_policy_libero.sh
 # It prepares the small dependencies, checks for the staged libero_10 dataset, and trains.
@@ -46,7 +46,8 @@ if [[ ! -d "$BASE_CHECKPOINT_PATH" ]]; then
     python -m cosmos_framework.scripts.convert_model_to_dcp -o "$BASE_CHECKPOINT_PATH" --checkpoint-path Cosmos3-Nano
 fi
 
-# 4. Train (8-GPU FSDP by default). The TOML reads these paths from the environment.
+# 4. Train (HSDP 2x8 per the TOML; set NNODES/NODE_RANK/MASTER_ADDR per node).
+#    The TOML reads these paths from the environment.
 export LIBERO_ROOT
 export BASE_CHECKPOINT_PATH
 export WAN_VAE_PATH
