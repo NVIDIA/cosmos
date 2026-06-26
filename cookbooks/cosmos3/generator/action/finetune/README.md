@@ -68,8 +68,8 @@ bash launch_sft_action_policy_droid.sh
 
 ## LIBERO-10 quick start
 
-The LIBERO launcher mirrors the DROID one. It stages the `libero_10` suite (auto-downloaded if
-missing), downloads the Wan VAE, converts the base checkpoint, and trains — no keep-ranges filter.
+The LIBERO launcher stages the `libero_10` suite (auto-downloaded if missing),
+downloads the Wan VAE, converts the base checkpoint, and trains.
 
 ```shell
 bash launch_sft_action_policy_libero.sh
