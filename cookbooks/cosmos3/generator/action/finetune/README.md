@@ -2,8 +2,8 @@
 
 This example demonstrates supervised fine-tuning (SFT) of [Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) into a robot action policy, using the action-policy recipe from [cosmos-framework](https://github.com/NVIDIA/cosmos-framework). Two embodiments are covered, each reproducing a Cosmos3 paper result:
 
-- **DROID** — reproduces [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID) on real-robot manipulation data.
-- **LIBERO-10** — reproduces the Cosmos3 paper's LIBERO-10 simulation-benchmark results.
+- **DROID** — reproduces [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID): trained on real-robot DROID data, evaluated on the RoboLab simulation benchmark.
+- **LIBERO-10** — reproduces the Cosmos3 paper's LIBERO-10 results: trained and evaluated on the LIBERO-10 simulation benchmark.
 
 | Recipe | Launch shell | Base model | Dataset |
 | --- | --- | --- | --- |
@@ -12,7 +12,7 @@ This example demonstrates supervised fine-tuning (SFT) of [Cosmos3-Nano](https:/
 
 The DROID recipe uses `[job].task = "vfm"` with the registered `action_policy_droid_nano` experiment: `joint_pos` 8-D actions, proprioceptive state, `concat_view` 480p video, chunk length 32, episode-shuffle streaming, and the optional `keep_ranges_1_0_1.json` window filter.
 
-The LIBERO-10 recipe uses the registered `action_policy_libero_nano` experiment: `frame_wise_relative` rot6d 10-D actions, `quantile_rot` normalization, `concat_view` (third-person + wrist) at 20 fps, lr 5e-5 / warmup 500 / cycle 16000, global batch 2048 (HSDP 2x8). Train on `libero_10` **alone** (the all-suites mix dilutes libero_10). No keep-ranges filter.
+The LIBERO-10 recipe uses the registered `action_policy_libero_nano` experiment: `frame_wise_relative` rot6d 10-D actions, `quantile_rot` normalization, `concat_view` (third-person + wrist) at 20 fps, lr 5e-5 / warmup 500 / cycle 16000, global batch 2048 (HSDP 2x8). Train on `libero_10` **alone**. No keep-ranges filter.
 
 ## Prerequisites
 
