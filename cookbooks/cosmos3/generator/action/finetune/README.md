@@ -9,7 +9,7 @@ This example demonstrates supervised fine-tuning (SFT) of [Cosmos3-Nano](https:/
 
 The DROID recipe uses `[job].task = "vfm"` with the registered `action_policy_droid_nano` experiment: `joint_pos` 8-D actions, proprioceptive state, `concat_view` 480p video, chunk length 32, episode-shuffle streaming, and the optional `keep_ranges_1_0_1.json` window filter.
 
-The LIBERO-10 recipe uses the registered `action_policy_libero_nano` experiment: `frame_wise_relative` rot6d 10-D actions, `quantile_rot` normalization, `concat_view` (third-person + wrist) at 20 fps, lr 5e-5 / warmup 500 / cycle 16000, global batch 2048. Train on `libero_10` **alone** (the Table-20 reproduction; the 4-suite mix dilutes libero_10). No keep-ranges filter. Reaches ~95% success on the 500-episode libero_10 closed-loop eval (best ~95.2% @ iter_1500).
+The LIBERO-10 recipe uses the registered `action_policy_libero_nano` experiment: `frame_wise_relative` rot6d 10-D actions, `quantile_rot` normalization, `concat_view` (third-person + wrist) at 20 fps, lr 5e-5 / warmup 500 / cycle 16000, global batch 2048. Train on `libero_10` **alone** (the 4-suite mix dilutes libero_10). No keep-ranges filter.
 
 ## Prerequisites
 
@@ -89,7 +89,7 @@ export EXTRA_TAIL_OVERRIDES="job.wandb_mode=disabled trainer.max_iter=10 checkpo
 bash launch_sft_action_policy_libero.sh
 ```
 
-Checkpoints are saved every 500 iters (sweep 500/1000/1500/2000); the peak is typically iter_1500.
+Checkpoints are saved every 500 iters; sweep them to pick the best iteration.
 
 ## Outputs
 
