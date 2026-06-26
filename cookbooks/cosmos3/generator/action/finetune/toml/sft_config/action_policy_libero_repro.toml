@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# ============================================================================
+# LIBERO action-policy SFT — run config for the `action_policy_libero_nano`
+# experiment (Cosmos3-Nano LIBERO-10). The recipe knobs (optimizer base, count-
+# based batch, action-head skip-on-load, dataset knobs) live in the registered
+# experiment; this file sets run-level scalars (lr/schedule, iters, ckpt cadence,
+# parallelism shape, wandb, VAE path).
+#
+# RECIPE (recommended): lr 5e-5, warmup 500, cycle 16000 (so LR is barely decayed
+# at iter 2000, ~4.5e-5), global batch 2048, save every 500 -> sweep 500..2000.
+# Best observed: ~95.2% @ iter_1500 (libero_10, 500-ep closed-loop eval), with
+# task-0 success stable across the sweep (no over-fit collapse). This gentle-LR
+# schedule is more robust than a higher lr (e.g. 1e-4), which peaks near iter_1000
+# then over-fits task 0 and regresses. See docs/action_policy_libero_sft.md.
+#
+# REPRODUCTION: train on libero_10 ALONE (point LIBERO_ROOT at the libero_10
+# LeRobot conversion only). The 4-suite mix dilutes libero_10 (~1/4 the exposure
+# per step) and converges more slowly.
+#
+# Env required:
+#   LIBERO_ROOT=/path/to/libero_10_lerobot
+#   BASE_CHECKPOINT_PATH=<Cosmos3-Nano DCP dir>
+#   WAN_VAE_PATH=<Wan2.2_VAE.pth>
+#   IMAGINAIRE_OUTPUT_ROOT=/path/to/output_root   # persist checkpoints
+# ============================================================================
+
+[job]
+task         = "vfm"
+experiment   = "action_policy_libero_nano"
+project      = "cosmos3_action_libero"
+group        = "action_sft"
+name         = "action_policy_libero_repro"
+wandb_mode   = "online"
+
+[model]
+precision = "bfloat16"
+# Cap the packed sequence (GA-validated). Uncapped (-1) packs one very long sequence
+# and OOMs even on H200.
+max_num_tokens_after_packing = 74000
+
+[model.parallelism]
+data_parallel_shard_degree     = 8    # 1-node 8-GPU shard; raise replicate for multi-node HSDP
+data_parallel_replicate_degree = 1
+
+[model.activation_checkpointing]
+mode           = "selective"          # GA recipe (full is slower; selective fits 256x512)
+save_ops_regex = ["fmha"]
+
+[model.tokenizer]
+vae_path = "${oc.env:WAN_VAE_PATH}"
+
+[optimizer]
+lr = 5.0e-05              # recommended base lr
+
+[scheduler]
+cycle_lengths = [16000]   # LR trajectory: warmup 500 -> linear decay over 16k (barely decayed at 2k)
+warm_up_steps = [500]
+
+[trainer]
+max_iter        = 2000    # pause at 2k; sweep checkpoints 500/1000/1500/2000 for the peak
+logging_iter    = 50
+grad_accum_iter = 2       # global batch = max_samples_per_batch 128 x DP 8 x grad_accum 2 = 2048
+
+[checkpoint]
+load_path = "${oc.env:BASE_CHECKPOINT_PATH}"
+save_iter = 500           # sweep cadence; peak is typically iter_1500
+
+# NOTE (train/serve parity — see GitHub issue NVIDIA/cosmos-framework#50): the
+# 256x512 concat_view is snapped to a 192x320 model canvas (resize+reflect-pad), and
+# the eval server reproduces the same snap. Run the client with the same 2:1 concat
+# (--camera agentview,wrist --image_size 256) so resolution + prompt suffix match, and
+# use --action-normalization quantile_rot + the bundled libero rot6d stats on the
+# server so denormalization matches training. See docs/action_policy_libero_sft.md.
+#
+# max_samples_per_batch is 128 in the experiment (256 OOMs: per-forward peak, not grad_accum).
+# On lower-memory GPUs reduce at launch:
+#   --opts dataloader_train.max_samples_per_batch=64
