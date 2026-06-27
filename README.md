@@ -982,7 +982,7 @@ The Cosmos Framework requires `uv >= 0.11.3` (enforced via its `pyproject.toml`)
 | Goal | Use | Notes |
 | --- | --- | --- |
 | Generator research or model development | Diffusers | Python-first path for inspecting and modifying generator behavior |
-| Generator broader production/API serving | vLLM-Omni | API path for image, video, sound, and action outputs |
+| Generator broader production/API serving | vLLM-Omni / SGLang | API path for image, video, sound, and action outputs |
 | Generator turnkey deployment | NIM | Prebuilt NGC container for T2V/I2V video generation only; uses `/v1/infer` and returns JSON `b64_video` |
 | Reasoner research or model development | Transformers | Python-first path for prompts, processors, and model behavior |
 | Reasoner production inference | vLLM | OpenAI-compatible endpoint for text outputs from text and vision inputs |
