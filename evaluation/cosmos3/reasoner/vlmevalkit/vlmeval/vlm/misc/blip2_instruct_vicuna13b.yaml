@@ -1,0 +1,43 @@
+ # Copyright (c) 2022, salesforce.com, inc.
+ # All rights reserved.
+ # SPDX-License-Identifier: BSD-3-Clause
+ # For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+
+model:
+  arch: instruct_vicuna13b
+  load_finetuned: False
+  load_pretrained: True
+
+  pretrained: "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/InstructBLIP/instruct_blip_vicuna13b_trimmed.pth"
+  finetuned: ""
+
+  # vit encoder
+  image_size: 224
+  drop_path_rate: 0
+  use_grad_checkpoint: False
+  vit_precision: "fp16"
+  freeze_vit: True
+
+  # Q-Former
+  num_query_token: 32
+
+  # path to Vicuna checkpoint
+  llm_model: "Please set the path to your vicuna-13b-v1.1"
+
+  # generation configs
+  prompt: ""
+
+
+preprocess:
+    vis_processor:
+        train:
+          name: "blip2_image_train"
+          image_size: 224
+        eval:
+          name: "blip_image_eval"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+        eval:
+          name: "blip_caption"

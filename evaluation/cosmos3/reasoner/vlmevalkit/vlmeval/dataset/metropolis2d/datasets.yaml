@@ -1,0 +1,35 @@
+# Dataset configuration for Metropolis2D datasets
+# Each dataset can be configured with:
+#   - name: Dataset name (used to reference in code)
+#   - dataset: Dataset class name
+#   - data_root: Root directory containing images/labels
+#   - annotation_file: (grounding only) Path to annotation JSON file
+
+detection:
+  - name: Astro2D
+    dataset: Astro2DDetectionDataset
+    data_root: s3://cosmos_understanding/benchmark/metropolis2d_astro/C0065-QA.m4v
+    # data_root: /lustre/fsw/portfolios/edgeai/users/yuw/data/astro_kpi_for_cosmos/C0065-QA.m4v
+    # min_bbox_area: optional; default 400 if data_root path ends with "IVA-0009-KPI-05_190916_10ft-60-deg.mp4", else 0
+  - name: Astro2DBench_C0065
+    dataset: Astro2DDetectionDataset
+    data_root: s3://cosmos_understanding/benchmark/metropolis2d_astro/C0065-QA.m4v
+  - name: Astro2DBench_IVAKPI05
+    dataset: Astro2DDetectionDataset
+    data_root: s3://cosmos_understanding/benchmark/metropolis2d_astro/IVA-0009-KPI-05_190916_10ft-60-deg.mp4
+  - name: Astro2DBench_IVAKPI11
+    dataset: Astro2DDetectionDataset
+    data_root: s3://cosmos_understanding/benchmark/metropolis2d_astro/IVA-0009-KPI-11_220320_NVR_ch2_main_20220201180404_20220201190000_4_cut_4.mp4
+
+grounding:
+  - name: Metropolis2DGrounding
+    dataset: Metropolis2DGroundingDataset
+    data_root: s3://cosmos_understanding/benchmark/metropolis2d_grounding/
+    annotation_file: s3://cosmos_understanding/benchmark/metropolis2d_grounding/annotations/RefDrone_test_filtered.jsonl
+  # VANTAGE-bench source. Byte-equivalent (image, sentence, bbox) tuples to
+  # Metropolis2DGrounding above (verified: 3,276/3,276 intersection); the
+  # annotation file is in LLaVA-conversation format, parsed by the 'llava' arm.
+  - name: VANTAGE_2DGrounding
+    dataset: Metropolis2DGroundingDataset
+    data_root: s3://cosmos_understanding/benchmark/vantage_benchmark_hf_release_annotations/Spatial/2d_referring_expressions/refdrone/
+    annotation_file: s3://cosmos_understanding/benchmark/vantage_benchmark_hf_release_annotations/Spatial/2d_referring_expressions/refdrone/refdrone_test_llava.json

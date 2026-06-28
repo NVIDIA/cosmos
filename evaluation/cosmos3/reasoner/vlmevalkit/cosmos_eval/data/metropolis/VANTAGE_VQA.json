@@ -1,0 +1,8 @@
+{
+  "class": "MetropolisVQA",
+  "dataset": "VANTAGE_VQA",
+  "fps": 4,
+  "max_frames": 256,
+  "max_pixels": 921600,
+  "total_pixels": 16777216
+}
