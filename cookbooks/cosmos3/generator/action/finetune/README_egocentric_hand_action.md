@@ -1,7 +1,9 @@
 # Egocentric Hand Action Data Processing
 
-This example converts an egocentric hand-pose annotation sample into the raw
-57D Cosmos3 Action representation used by the hand-action policy data path.
+This example converts an egocentric hand-pose annotation sample into a raw
+57-dimensional action array. Each action row describes the camera motion, both
+wrist motions, and five fingertip positions for one transition between
+consecutive video frames.
 
 The script expects one sample in this layout:
 
@@ -14,6 +16,30 @@ example_root/
 ```
 
 The checked-in example sample is `ESCALE_000374`.
+
+## Input Schema
+
+The converter is intentionally small and expects the following JSON fields.
+All pose arrays must have the same first dimension `N`, matching
+`human_annotation/<sample_id>.json["num_frames"]`.
+
+| File | Field | Shape / Type | Meaning |
+| --- | --- | --- | --- |
+| `human_annotation/<sample_id>.json` | `num_frames` | integer | Number of annotated pose frames. |
+| `human_annotation/<sample_id>.json` | `left_hand.hand_keypoints` | `[N, 21, 3]` | Left-hand 3D keypoints in camera coordinates, meters. Joint `0` is the wrist. |
+| `human_annotation/<sample_id>.json` | `right_hand.hand_keypoints` | `[N, 21, 3]` | Right-hand 3D keypoints in camera coordinates, meters. Joint `0` is the wrist. |
+| `human_annotation/<sample_id>.json` | `left_ee_pose` | `[N, 7]` | Left wrist pose as `[qx, qy, qz, qw, x, y, z]` in camera coordinates. |
+| `human_annotation/<sample_id>.json` | `right_ee_pose` | `[N, 7]` | Right wrist pose as `[qx, qy, qz, qw, x, y, z]` in camera coordinates. |
+| `cameras/<sample_id>.json` | `camera.pose_world2cam` | `[N, 7]` | Camera world-to-camera pose as `[qx, qy, qz, qw, x, y, z]`; the script inverts it to camera-to-world. |
+| `cameras/<sample_id>.json` | `camera.focal_length` | `[2]` | `[fx, fy]`; not used by the converter, but included for visualization checks. |
+| `cameras/<sample_id>.json` | `camera.principal_point` | `[2]` | `[cx, cy]`; not used by the converter, but included for visualization checks. |
+| `cameras/<sample_id>.json` | `camera.distortion` | `[4]` | Distortion coefficients; not used by the converter, but included for visualization checks. |
+| `captions/<sample_id>.json` | `vlm_pipeline.long` or `vlm_pipeline.medium` | string | Optional caption copied into the output metadata. |
+| `videos/<sample_id>.mp4` | video file | mp4 | Used only for frame-count reporting by this script. |
+
+By default, wrist translation comes from keypoint `0` in
+`hand_keypoints`. Pass `--wrist-position-source ee_pose` if your source should
+use the translation stored in `left_ee_pose` and `right_ee_pose` instead.
 
 ## Setup
 
@@ -31,20 +57,29 @@ cd ~/projects/cosmos
 
 PYTHONPATH=~/projects/cosmos-framework python \
   cookbooks/cosmos3/generator/action/finetune/data_processing_for_egocentric_hand_action.py \
-  --example-root cookbooks/cosmos3/generator/action/assets/egocentric_hand_action_example \
-  --sample-id ESCALE_000374 \
   --output-dir /tmp/egocentric_hand_action_example
 ```
 
 If you installed `cosmos-framework` into the active Python environment, omit
-the `PYTHONPATH=...` prefix.
+the `PYTHONPATH=...` prefix. The script defaults to the checked-in
+`egocentric_hand_action_example` asset and its single sample, `ESCALE_000374`.
 
-Expected output for `ESCALE_000374`:
+Key output lines for `ESCALE_000374`:
 
 ```text
-raw action: (121, 57)
-fingertip camera L2 max/mean: right about 4.3e-05 m, left about 3.2e-05 m
+sample_id: ESCALE_000374
+pose frames: 122
+video frames: 123
+wrist position source: keypoint (left keypoint-vs-ee mean 0.0435 m, right 0.0435 m)
+raw action: (121, 57) -> /tmp/egocentric_hand_action_example/ESCALE_000374_raw_action_57d.npy
+round-trip check against source annotations:
+  ...
+  fingertip camera L2 max/mean: right 4.2e-05/2.0e-05, left 3.1e-05/1.5e-05
+metadata: /tmp/egocentric_hand_action_example/ESCALE_000374_metadata.json
 ```
+
+Small numerical differences across dependency versions are acceptable; the
+roundtrip fingertip errors should remain below `1e-4` meters.
 
 ## 57D Action Layout
 
@@ -63,6 +98,10 @@ columns of the relative rotation matrix, following the convention implemented by
 
 Fingertip blocks contain five 3D fingertip positions expressed in the
 corresponding wrist frame at the future frame.
+
+The script also writes `<sample_id>_metadata.json`. It records the output
+paths, action shape, frame counts, wrist-position diagnostics, the roundtrip
+verification metrics, and the copied caption text.
 
 ## Coordinate Conventions
 
@@ -90,8 +129,6 @@ model-space action, pass normalization stats from the matching training setup:
 ```bash
 PYTHONPATH=~/projects/cosmos-framework python \
   cookbooks/cosmos3/generator/action/finetune/data_processing_for_egocentric_hand_action.py \
-  --example-root cookbooks/cosmos3/generator/action/assets/egocentric_hand_action_example \
-  --sample-id ESCALE_000374 \
   --output-dir /tmp/egocentric_hand_action_example \
   --normalizer-stats /path/to/action_stats.json \
   --normalizer-stats-key global_raw \
@@ -101,6 +138,26 @@ PYTHONPATH=~/projects/cosmos-framework python \
 
 Use normalization stats from the same dataset/checkpoint configuration you plan
 to train or run. Do not mix unrelated action statistics.
+
+The stats JSON is loaded with
+`cosmos_framework.data.vfm.action.action_processing.load_action_stats`. It must
+contain the keys required by the selected normalization method, either at the
+top level or under `--normalizer-stats-key`. For `quantile` and `quantile_rot`,
+provide `q01` and `q99` arrays of length `57`. For `meanstd`, provide `mean`
+and `std`; for `minmax`, provide `min` and `max`.
+
+## Downstream Use
+
+This script is a data-conversion example for one sample. For training, run the
+same conversion over your dataset, compute normalization statistics over the raw
+57D actions, and connect those actions to the SFT dataset pipeline used by the
+action policy recipe.
+
+The surrounding cookbook entry point is
+[`README.md`](./README.md). The canonical training implementation and config
+reference live in
+[`cosmos-framework`](https://github.com/NVIDIA/cosmos-framework), especially the
+Cosmos3 Action policy post-training and SFT docs linked from the parent README.
 
 ## Verification
 

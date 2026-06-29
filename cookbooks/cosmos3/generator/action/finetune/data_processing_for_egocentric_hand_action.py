@@ -59,6 +59,7 @@ MIDDLE_TIP = 12
 RING_TIP = 16
 PINKY_TIP = 20
 FINGERTIP_JOINTS = (THUMB_TIP, INDEX_TIP, MIDDLE_TIP, RING_TIP, PINKY_TIP)
+DEFAULT_EXAMPLE_ROOT = Path(__file__).resolve().parents[1] / "assets" / "egocentric_hand_action_example"
 
 # Source-specific wrist-frame correction applied as:
 #     wrist_pose_for_action = wrist_pose_from_source @ WRIST_FRAME_ALIGN
@@ -326,7 +327,7 @@ def pick_default_sample_id(root: Path) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--example-root", type=Path, default=Path("HWB_inference_examples"))
+    parser.add_argument("--example-root", type=Path, default=DEFAULT_EXAMPLE_ROOT)
     parser.add_argument("--sample-id", type=str, default=None)
     parser.add_argument("--output-dir", type=Path, default=Path("hand_pose_57d_outputs"))
     parser.add_argument("--pose-convention", choices=["backward_framewise", "backward_anchored"], default="backward_framewise")
