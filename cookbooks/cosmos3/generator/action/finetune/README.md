@@ -6,6 +6,11 @@ This example demonstrates supervised fine-tuning (SFT) of [Cosmos3-Nano](https:/
 | --- | --- | --- | --- |
 | Policy-DROID SFT | `launch_sft_action_policy_droid.sh` | Cosmos3-Nano | [Cosmos3-DROID](https://huggingface.co/datasets/nvidia/Cosmos3-DROID) success split |
 
+For a runnable egocentric hand-pose data conversion example, see
+[`README_egocentric_hand_action.md`](./README_egocentric_hand_action.md). It
+converts a sample video and 3D hand-pose annotation pair into the raw 57D hand
+Action format used by the dataset path.
+
 The recipe uses `[job].task = "vfm"` with the registered `action_policy_droid_nano` experiment. It trains a DROID policy model with `joint_pos` 8-D actions, proprioceptive state, `concat_view` 480p video, chunk length 32, episode-shuffle streaming, and the optional `keep_ranges_1_0_1.json` window filter.
 
 ## Prerequisites
