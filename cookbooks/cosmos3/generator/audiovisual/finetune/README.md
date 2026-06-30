@@ -51,7 +51,7 @@ Use the exported `$RUN_DIR/model` with the [audiovisual inference cookbook](../R
 
 ## Advanced configuration
 
-These recipes are intentionally minimal. For the full post-training reference — raw `torchrun`, resuming, every TOML field, parallelism / LoRA / EMA knobs, and the VFM↔VLM remap — see the canonical framework docs:
+These recipes are intentionally minimal. For the full post-training reference — raw `torchrun`, resuming, every TOML field, parallelism / LoRA / EMA knobs, and the generator↔reasoner remap — see the canonical framework docs:
 
 - [Post-Training (SFT) guide](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/training.md)
 - [SFT structured-TOML config reference](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/sft_config.md)

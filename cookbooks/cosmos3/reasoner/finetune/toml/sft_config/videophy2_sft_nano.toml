@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: OpenMDW-1.1
 
 # videophy2_sft_nano — VLM dialog SFT on VideoPhy-2 via CosmosDataLoader.
-# Base config = cosmos_framework/configs/base/vlm/config.py (selected by [job].task="vlm").
+# Base config = cosmos_framework/configs/base/reasoner/config.py (selected by [job].task="vlm").
 #
 # Dataset prep:
-#   python -m cosmos_framework.scripts.vlm.prepare_videophy2_from_hf \
+#   python -m cosmos_framework.scripts.reasoner.prepare_videophy2_from_hf \
 #       --out_root $VIDEOPHYSICS_ROOT --split train  # and again with --split val
 #
 # Required env at launch: VIDEOPHYSICS_ROOT (read by the experiment Python).
