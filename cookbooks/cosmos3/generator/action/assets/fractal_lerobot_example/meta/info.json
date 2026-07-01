@@ -1,0 +1,132 @@
+{
+  "codebase_version": "v3.0",
+  "robot_type": "google_robot",
+  "total_episodes": 1,
+  "total_frames": 37,
+  "total_tasks": 1,
+  "chunks_size": 1000,
+  "data_files_size_in_mb": 100,
+  "video_files_size_in_mb": 200,
+  "fps": 3,
+  "splits": {
+    "train": "0:1"
+  },
+  "data_path": "data/chunk-{chunk_index:03d}/file-{file_index:03d}.parquet",
+  "video_path": "videos/{video_key}/chunk-{chunk_index:03d}/file-{file_index:03d}.mp4",
+  "features": {
+    "observation.images.image": {
+      "dtype": "video",
+      "shape": [
+        256,
+        320,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 256,
+        "video.width": 320,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 3,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "observation.state": {
+      "dtype": "float32",
+      "shape": [
+        8
+      ],
+      "names": {
+        "motors": [
+          "x",
+          "y",
+          "z",
+          "rx",
+          "ry",
+          "rz",
+          "rw",
+          "gripper"
+        ]
+      }
+    },
+    "action": {
+      "dtype": "float32",
+      "shape": [
+        7
+      ],
+      "names": {
+        "motors": [
+          "x",
+          "y",
+          "z",
+          "roll",
+          "pitch",
+          "yaw",
+          "gripper"
+        ]
+      }
+    },
+    "timestamp": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "frame_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "episode_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "task_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    }
+  },
+  "repo_id": "local/fractal_raw_val_episode_12202",
+  "source_summary": {
+    "source_root": "/mnt/nfs/common/cosmos-eval/datasets/.cache_debug/nv-00-10206-robot/cosmos3_action_data/lerobot_v30/openx/fractal20220817_data",
+    "split": "val",
+    "split_seed": 42,
+    "split_val_ratio": 0.05,
+    "episode_index": 12202,
+    "num_frames": 37,
+    "dataset_name": "fractal20220817_data"
+  },
+  "note": "Fractal (Google RT-1) raw validation tutorial slice: single episode (source episode_index=12202), the first episode of the val split under FractalLeRobotDataset default split_seed=42, split_val_ratio=0.05. Re-indexed to episode_index=0 / chunk-000/file-000 for both data and video.",
+  "video_regeneration": {
+    "observation.images.image": {
+      "source_video": "/mnt/nfs/common/cosmos-eval/datasets/.cache_debug/nv-00-10206-robot/cosmos3_action_data/lerobot_v30/openx/fractal20220817_data/videos/observation.images.image/chunk-000/file-014.mp4",
+      "source_chunk_index": 0,
+      "source_file_index": 14,
+      "from_timestamp_s": 6296.000000000002,
+      "to_timestamp_s": 6308.333333333335,
+      "method": "lerobot.datasets.dataset_tools.split_dataset (PyAV re-encode of the episode segment, libsvtav1/yuv420p), then renamed file-014.mp4 -> file-000.mp4 and file_index patched 14 -> 0 in episode metadata for single-episode chunk-000/file-000 layout"
+    }
+  }
+}
