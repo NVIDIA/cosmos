@@ -1,11 +1,13 @@
 {
+  "name": "transfer_multi_control",
   "model_mode": "video2video",
   "resolution": "720",
+  "aspect_ratio": "16,9",
   "num_frames": 121,
   "fps": 30,
   "shift": 10.0,
   "num_steps": 50,
-  "seed": 2025,
+  "seed": 2026,
   "num_video_frames_per_chunk": 121,
   "num_conditional_frames": 1,
   "num_first_chunk_conditional_frames": 0,
@@ -14,7 +16,15 @@
   "negative_prompt_keep_metadata": false,
   "guidance": 3.0,
   "control_guidance": 1.5,
+  "negative_prompt_file": "../assets/negative_prompt.json",
+  "prompt_path": "../assets/multi_control/prompt.json",
+  "vision_path": "https://github.com/nvidia-cosmos/cosmos-dependencies/raw/2b17a2413bd86b2cf9b03823637108851e4ddf2d/inputs/vision/robot_pouring.mp4",
+  "edge": {
+    "weight": 0.5,
+    "preset_edge_threshold": "medium"
+  },
   "blur": {
+    "weight": 0.5,
     "preset_blur_strength": "medium"
   },
   "emphasize_control_in_prompt": false

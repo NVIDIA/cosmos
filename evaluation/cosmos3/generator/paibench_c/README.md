@@ -27,6 +27,9 @@ export HF_TOKEN=hf_...
 # Quick smoke-test: 4 tasks, edge modality, Cosmos3-Nano (default)
 bash run_paibench_c.sh
 
+# Quick smoke-test: 4 tasks, all 4 modalities, Cosmos3-Nano
+PAIBENCH_C_MODALITIES="edge blur depth seg" bash run_paibench_c.sh
+
 # Full 600-task run, Cosmos3-Nano (run once per modality)
 PAIBENCH_C_NUM_SAMPLES=600 PAIBENCH_C_CHECKPOINT=Cosmos3-Nano PAIBENCH_C_MODALITIES=edge  bash run_paibench_c.sh
 PAIBENCH_C_NUM_SAMPLES=600 PAIBENCH_C_CHECKPOINT=Cosmos3-Nano PAIBENCH_C_MODALITIES=blur  bash run_paibench_c.sh
@@ -56,7 +59,7 @@ with inline video previews and metric display.
 
 - `run_paibench_c.sh` — self-contained bash script; mirrors every step of the notebook.
 - `run_with_cosmos_framework.ipynb` — interactive notebook (demo case + four full-sweep cells).
-- `assets/prompts.json` — 600 task entries, each with:
+- `assets/tasks.json` — 600 task entries, each with:
   - `caption` — the actual generation prompt used in the internal evaluation run (fully upsampled JSON description).
   - `video_path`, `canny_path`, `blur_path`, `depth_path`, `seg_path` — relative paths within the HF dataset to the GT video and each control-signal video.
   - `negative_prompt` — shared negative prompt.
@@ -84,15 +87,19 @@ physical-ai-bench-conditional-generation/
 
 ## Sampling Settings
 
-| Setting          | edge | blur | depth | seg |
-| ---------------- | ---: | ---: | ----: | --: |
-| num_frames       |  121 |  121 |   121 | 121 |
-| fps              |   30 |   30 |    30 |  30 |
-| resolution       | 720p | 720p |  720p | 720p |
-| num_steps        |   50 |   50 |    50 |  50 |
-| guidance         |  3.0 |  3.0 |   3.0 | 3.0 |
-| control_guidance |  1.5 |  1.5 |   1.5 | 2.0 |
-| seed             | 2026 | 2026 |  2026 | 2026 |
+| Setting                    | edge | blur | depth | seg |
+| -------------------------- | ---: | ---: | ----: | --: |
+| num_frames                 |  121 |  121 |   121 | 121 |
+| fps                        |   30 |   30 |    30 |  30 |
+| resolution                 | 720p | 720p |  720p | 720p |
+| num_steps                  |   50 |   50 |    50 |  50 |
+| guidance                   |  3.0 |  3.0 |   3.0 | 3.0 |
+| control_guidance           |  1.5 |  1.5 |   1.5 | 2.0 |
+| seed                       | 2025 | 2025 |  2025 | 2025 |
+| emphasize_control_in_prompt | false | false | false | false |
+
+> `fps`, `aspect_ratio`, and `seed` in the spec are overridden per-task from `assets/tasks.json`.
+> `emphasize_control_in_prompt: false` disables the automatic control-hint suffix appended to the prompt.
 
 ## Reference Scores
 
