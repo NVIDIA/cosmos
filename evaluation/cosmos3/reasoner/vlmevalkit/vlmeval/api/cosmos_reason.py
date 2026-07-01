@@ -313,7 +313,7 @@ class CosmosReason(BaseAPI):
         self._last_error_type = None
 
         super().__init__(wait=wait, retry=retry, system_prompt=system_prompt, verbose=verbose, **kwargs)
-        logger.info(f'Using API Base: {self.api_base}; API Key: {self.key}')
+        logger.info(f'Using API Base: {self.api_base}; API Key: {"set" if self.key else "EMPTY"}')
 
         # Check if endpoint is accessible
         self._check_endpoint_health()

@@ -58,10 +58,14 @@ pip install -r requirements.txt
 #   einops, accelerate   -> imported when vlmevalkit loads its dataset modules
 #   setuptools<81        -> jieba imports pkg_resources, which setuptools>=81 drops
 #                           and Python 3.12 venvs omit
-pip install einops accelerate "setuptools<81"
+#   evaluate             -> TAR (AETCBench_all) scoring metric
+pip install einops accelerate "setuptools<81" evaluate
 
 # install vlmevalkit itself so `import vlmeval` resolves
 pip install -e .
+
+# TAR (AETCBench_all) only: also install `nvdataset` — NVIDIA's INTERNAL DSS client. It fetches
+# the TAR (and cosmos-DVC) data and requires the NVDATASET_TENANTID / NGC_API_KEY credentials in §3.
 ```
 
 Sanity check:
@@ -106,6 +110,9 @@ health-checks the endpoint and auto-detects the served model id from `/v1/models
 export COSMOS_API_BASE=http://<host>:8080/v1/chat/completions
 export COSMOS_MODEL=<served-model-id>      # or any placeholder; auto-detected from /v1/models
 export COSMOS_API_KEY=<key-or-EMPTY>
+
+export NVDATASET_TENANTID=<dss-tenant>   # DSS tenant for the nvdataset client
+export NGC_API_KEY=<ngc-key>             # NGC key for the nvdataset client
 ```
 
 `run_all.py` substitutes `${COSMOS_MODEL}` / `${COSMOS_API_BASE}` into each composed config at launch.
@@ -118,7 +125,7 @@ From the vlmevalkit repo root:
 
 ```bash
 # all benchmarks in the manifest
-python cosmos_eval/run_all.py --model cosmos --concurrency 8 --work-dir ./out
+python cosmos_eval/run_all.py --model cosmos --concurrency 2 --work-dir ./out
 
 # a specific few
 python cosmos_eval/run_all.py --benchmarks VANTAGE_VQA,AETCBench_all --work-dir ./out
@@ -181,3 +188,33 @@ benchmark for benchmark.
 
 Each benchmark dir also keeps `run.log` (full `run.py` output) for debugging; the composed config
 used is under `<work-dir>/_configs/<bench>.json`.
+
+---
+
+## 7. Benchmarks & headline metrics
+
+`parse_score.py` reports each benchmark's headline as **Overall** (0–100) plus all native sub-scores.
+The headline metric and the eval-JSON key it reads, per benchmark:
+
+| Benchmark | Modality | Headline metric | eval-JSON key |
+|---|---|---|---|
+| `VANTAGE_2DPointing` | image | accuracy | (generic) |
+| `VANTAGE_2DGrounding` | image | Mean_IoU | `Mean_IoU` |
+| `VANTAGE_Astro2D` | image | F1 @ IoU=0.5 | `f1` |
+| `VANTAGE_VQA` | video | accuracy | `accuracy` |
+| `VANTAGE_EventVerification` | video | macro-avg F1 | `macro avg--f1-score` |
+| `VANTAGE_Temporal` | video | overall IoU | `overall.iou` |
+| `VANTAGE_DVC` | video | SODA_c (BERTScore-based) | `overall.SODA_c` |
+| `VANTAGE_SOT` | video | mean success-AUC | `Overall` |
+| `AETCBench_all` (TAR) | video | weighted_mean | `weighted_mean` |
+
+---
+
+## 8. Tips for reliable runs
+
+- **Concurrency vs. replicas:** each benchmark already issues ~`api_nproc` parallel requests, so a high
+  `--concurrency` (benchmarks in parallel) can overload a single GPU replica. Keep it modest on one
+  replica and scale up by adding replicas.
+- **Resume:** outputs are isolated under `<work-dir>/<bench>/`; if a run is interrupted, just re-run the
+  affected `--benchmarks`.
+- **Verify before trusting a score:** scan each benchmark's `run.log` for dropped or empty-input warnings.

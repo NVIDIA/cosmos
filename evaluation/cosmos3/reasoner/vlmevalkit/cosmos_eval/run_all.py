@@ -219,7 +219,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--model", default="cosmos", help="model layer (models/<name>.json); default cosmos")
     ap.add_argument("--domains", default=None, help="comma-separated domains (default: all in the manifest)")
     ap.add_argument("--benchmarks", default=None, help="comma-separated benchmark names (default: all in the manifest)")
-    ap.add_argument("--concurrency", type=int, default=4, help="max concurrent run.py subprocesses")
+    ap.add_argument("--concurrency", type=int, default=2, help="max concurrent run.py subprocesses")
     ap.add_argument("--work-dir", default="./cosmos_eval_out", help="run output root")
     ap.add_argument("--dry-run", action="store_true", help="print the run.py commands and exit")
     ap.add_argument("--export-configs", metavar="DIR", help="compose + write each config to DIR, then exit")

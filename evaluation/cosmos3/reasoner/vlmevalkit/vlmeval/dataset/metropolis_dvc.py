@@ -216,9 +216,21 @@ class MetropolisDVC(VideoBaseDataset):
         import glob
 
         events_dir = os.path.join(str(local_dir), 'events')
+        videos_dir = os.path.join(str(local_dir), 'videos')
         rows = []
+        skipped = []
         for ev_path in sorted(glob.glob(os.path.join(events_dir, '*_events.json'))):
             video_id = os.path.basename(ev_path).removesuffix('_events.json')
+            # Resolve the events id to the actual video file. The upstream S3 stage
+            # names events and videos inconsistently (some events carry a trailing
+            # `.mp4`; some are a prefix of the full video filename), so an exact
+            # `<video_id>.mp4` lookup misses ~9/104 and those rows would silently be
+            # sent text-only. Store the resolved stem so the downstream `<stem>.mp4`
+            # resolution in build_prompt/save_video_frames finds the file.
+            video_stem = self._resolve_video_stem(videos_dir, video_id)
+            if video_stem is None:
+                skipped.append(video_id)
+                continue
             try:
                 with open(ev_path) as f:
                     raw = json.load(f)
@@ -249,7 +261,7 @@ class MetropolisDVC(VideoBaseDataset):
 
             rows.append({
                 'index': len(rows),
-                'video': video_id,
+                'video': video_stem,
                 'question': self.QUESTION_TEMPLATE,
                 'answer': json.dumps(normalized),
                 'duration': duration,
@@ -257,9 +269,40 @@ class MetropolisDVC(VideoBaseDataset):
                 'qid': f"{video_id}_0",
             })
 
+        if skipped:
+            print(f"  [VANTAGE_DVC] WARNING: {len(skipped)} events had no matching video "
+                  f"and were dropped (not scored): {skipped}")
         df = pd.DataFrame(rows)
         df.to_csv(str(tsv_path), sep='\t', index=False)
         print(f"Generated VANTAGE_DVC TSV with {len(rows)} videos → {tsv_path}")
+
+    def _resolve_video_stem(self, videos_dir, video_id):
+        """Map an events-derived id to the real video-file stem (name minus `.mp4`).
+
+        Handles the two upstream naming mismatches in the VANTAGE_DVC S3 stage:
+          1. events file named `<name>.mp4_events.json` -> id already ends in `.mp4`;
+             the real file is `<name>.mp4`, so a trailing `.mp4` must be stripped
+             (else the downstream `+ '.mp4'` doubles it to `<name>.mp4.mp4`).
+          2. events id is a prefix of the video filename (truncated timestamp), e.g.
+             id `...T19_03_37` vs file `...T19_03_37.786Z_..._....mp4`.
+        Returns a stem such that `<stem>.mp4` exists under videos_dir, or None.
+        """
+        import glob as _glob
+        vd = str(videos_dir)
+        # exact: <video_id>.mp4
+        if os.path.exists(os.path.join(vd, video_id + '.mp4')):
+            return video_id
+        # events id already carries the extension: the file is <video_id> itself
+        if video_id.endswith('.mp4') and os.path.exists(os.path.join(vd, video_id)):
+            return video_id[:-4]
+        # events id is a prefix of the real filename
+        matches = sorted(_glob.glob(os.path.join(vd, _glob.escape(video_id) + '*.mp4')))
+        if matches:
+            if len(matches) > 1:
+                print(f"  [VANTAGE_DVC] ambiguous video for id '{video_id}': "
+                      f"{len(matches)} matches, using {os.path.basename(matches[0])}")
+            return os.path.basename(matches[0])[:-4]
+        return None
 
     def prepare_dataset(self, dataset_name='MetropolisDVC'):
         """
