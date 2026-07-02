@@ -1,6 +1,6 @@
 # Inference Benchmarks
 
-These tables collect inference benchmarks for Cosmos3. **Generator** sections measure diffusion-path latency (image and video generation via i2v, t2i, and t2v) across PyTorch, vLLM-Omni, and Diffusers. The **Reasoner** section measures VLM serving metrics (TTFT, request latency, throughput) for text outputs from vision and text inputs via vLLM.
+These tables collect inference benchmarks for Cosmos3. **Generator** sections measure diffusion-path latency (image and video generation via i2v, t2i, and t2v) across PyTorch, vLLM-Omni, Diffusers, and NIM. The **Reasoner** section measures VLM serving metrics (TTFT, request latency, throughput) for text outputs from vision and text inputs via vLLM.
 
 Generator results are published incrementally from internal benchmark runs. **Empty cells mean that combination has not been measured yet** — not that it is unsupported. See the notes under each table for workload details and data-source definitions.
 
@@ -36,7 +36,7 @@ Generator results are published incrementally from internal benchmark runs. **Em
 
 These tables report **Cosmos3-Nano** generator latency in seconds for **image-to-video (i2v)**, **text-to-image (t2i)**, and **text-to-video (t2v)** - the primary vision-generation modes of the omni-model. Benchmarks use BF16 precision, batch size 1, and identical prompts, seeds, and sampler settings across engines where noted below. Video workloads follow the standard Cosmos3 generation profile (189 frames at 24 FPS unless a resolution tier limits frame count).
 
-Three integration paths are compared. **PyTorch** reports average generation (sampling) time from OSS reference inference with CUDA Graphs enabled where supported. **vLLM-Omni** reports total pipeline time at **720p** on supported GPUs. **Diffusers** reports end-to-end generation time through the Hugging Face `Cosmos3OmniPipeline` without custom CUDA graphs at **256p/1**, **480p/1**, and **720p/1** (320×192, 832×480, and 1280×720). Empty cells indicate a run has not been completed for that GPU, engine, resolution, or tensor-parallel width - tables are filled in as benchmark campaigns finish.
+Four integration paths are compared. **PyTorch** reports average generation (sampling) time from OSS reference inference with CUDA Graphs enabled where supported. **vLLM-Omni** reports total pipeline time at **720p** on supported GPUs. **Diffusers** reports end-to-end generation time through the Hugging Face `Cosmos3OmniPipeline` without custom CUDA graphs at **256p/1**, **480p/1**, and **720p/1** (320×192, 832×480, and 1280×720). **NIM** reports average diffusion time from PBR fixed-input latency benchmarks using NIM latency profiles. Empty cells indicate a run has not been completed for that GPU, engine, resolution, or tensor-parallel width - tables are filled in as benchmark campaigns finish.
 
 ### Text-to-Video (t2v)
 
@@ -45,27 +45,35 @@ Three integration paths are compared. **PyTorch** reports average generation (sa
 | **RTX PRO 6000 Blackwell** | PyTorch | 13.95 |  | 4.90 | 180.81 |  |  | 786.37 | 225.45 | 127.57 |
 | | vLLM-Omni | 10.65 | 5.06 | 3.78 | 105.61 | 35.93 | 23.76 | 369.67 | 114.30 | 68.66 |
 | | Diffusers | 11.20 | | | 112.00 | | | 392.00 | | |
+| | NIM | 6.89 | 3.73 | 3.05 | 79.80 | 30.75 | 21.71 | 314.91 | 104.21 | 64.96 |
 | **H20** | PyTorch | 30.57 |  |  | 257.51 |  |  | 931.39 | 268.88 | 157.71 |
 | | vLLM-Omni | 28.58 | 10.20 | 7.70 | 256.97 | 77.42 | 47.53 | 929.81 | 260.75 | 148.46 |
 | | Diffusers | 30.20 | | | 258.00 | | | 926.00 | | |
+| | NIM | 16.55 | 6.75 | 5.14 | 188.70 | 59.89 | 38.57 | 766.97 | 219.68 | 128.84 |
 | **H100 NVL** | PyTorch | 10.03 | 4.27 | 3.95 | 84.12 | 29.18 | 21.46 | 297.27 | 94.15 | 61.63 |
 | | vLLM-Omni | 9.25 | 3.68 | 3.15 | 80.75 | 27.48 | 18.77 | 311.13 | 88.25(*) | 54.01(*) |
 | | Diffusers | 11.00 | | | 90.00 | | | 324.20 | | |
+| | NIM | 5.94 | 2.72 | 2.64 | 64.89 | 22.83 | 17.62 | 263.81 | 82.54 | 53.77 |
 | **H200 NVL** | PyTorch | 8.17 |  |  | 69.79 |  |  | 244.39 | 77.35 | 45.70 |
 | | vLLM-Omni | 7.44 | 3.27 | 2.33 | 64.58 | 21.31 | 12.92 | 240.05 | 69.63 | 39.17 |
 | | Diffusers | 9.00 | | | 74.00 | | | 276.20 | | |
+| | NIM | 4.81 | 2.39 | 1.98 | 54.21 | 18.68 | 12.12 | 225.96 | 67.79 | 39.66 |
 | **H100 80GB HBM3** | PyTorch | 7.61 | 3.50 | 3.17 | 59.83 | 21.23 | 14.37 | 207.78 | 66.94 | 41.81 |
 | | vLLM-Omni | 6.97 | 3.45 | 3.49 | 58.17 | 19.95 | 13.46 | 202.29 | 62.82 | 37.80 |
 | | Diffusers | 9.00 | | | 68.00 | | | 240.00 | | |
+| | NIM | 4.54 | 2.22 | 2.04 | 48.45 | 17.35 | 11.75 | 195.48 | 61.51 | 37.69 |
 | **H200 141GB HBM3** | PyTorch | 7.53 | 3.34 | 3.19 | 60.18 | 20.84 | 13.97 | 214.28 | 67.48 | 41.26 |
 | | vLLM-Omni | 6.79 | 3.25 | 3.42 | 58.14 | 19.77 | 12.97 | 208.36 | 63.27 | 37.49 |
 | | Diffusers | 9.00 | | | 67.00 | | | 239.60 | | |
+| | NIM | 4.49 | 2.16 | 1.97 | 48.81 | 17.04 | 11.48 | 196.72 | 61.09 | 37.00 |
 | **B200** | PyTorch | 4.56 | 2.78 | 2.79 | 33.20 | 13.20 | 9.69 | 114.85 | 39.75 | 26.27 |
 | | vLLM-Omni | 4.03 | 2.43 | 3.49 | 32.04 | 12.63 | 10.09 | 107.84 | 35.29 | 22.87 |
 | | Diffusers | 7.00 | | | 36.80 | | | 117.00 | | |
+| | NIM | 2.57 | 1.66 | 1.69 | 23.83 | 9.89 | 7.21 | 89.71 | 31.53 | 20.94 |
 | **B300** | PyTorch | | | | | | | | | |
 | | vLLM-Omni | 4.46 | 4.11 | 5.44 | 32.18 | 13.83 | 11.57 | 102.10 | 35.68 | 24.33 |
 | | Diffusers | 39.40 | | | 63.40 | | | 139.40 | | |
+| | NIM | 2.63 | 2.28 | 2.28 | 23.29 | 10.25 | 7.57 | 85.33 | 31.95 | 21.43 |
 
 ### Image-to-Video (i2v)
 
@@ -74,27 +82,35 @@ Three integration paths are compared. **PyTorch** reports average generation (sa
 | **RTX PRO 6000 Blackwell** | PyTorch |  |  |  | 182.14 |  |  | 788.80 | 226.25 | 127.79 |
 | | vLLM-Omni | 11.04 | 5.48 | 4.24 | 107.77 | 38.05 | 25.95 | 375.01 | 119.27 | 73.57 |
 | | Diffusers | 12.00 | | | 112.00 | | | 397.00 | | |
+| | NIM | 7.21 | 4.33 | 3.66 | 81.76 | 32.96 | 23.89 | 323.37 | 108.73 | 69.81 |
 | **H20** | PyTorch | 31.36 |  |  | 257.10 |  |  | 933.07 | 268.99 | 158.10 |
 | | vLLM-Omni | 29.50 | 11.26 | 8.64 | 261.56 | 81.93 | 52.06 | 940.16 | 271.37 | 158.76 |
 | | Diffusers | 31.00 | | | 258.00 | | | 925.00 | | |
+| | NIM | 17.55 | 7.97 | 6.32 | 192.06 | 64.61 | 43.26 | 770.86 | 230.13 | 139.27 |
 | **H100 NVL** | PyTorch | 10.19 | 4.31 | 3.99 | 84.50 | 28.69 | 21.52 | 298.57 | 95.76 | 60.58 |
 | | vLLM-Omni | 9.62 | 4.11 | 3.63 | 82.61 | 29.35 | 20.73 | 286.33 | 92.23(*) | 58.02(*) |
 | | Diffusers | 11.00 | | | 91.00 | | | 325.20 | | |
+| | NIM | 6.36 | 3.37 | 3.29 | 66.59 | 24.86 | 19.64 | 268.52 | 86.68 | 58.07 |
 | **H200 NVL** | PyTorch | 8.27 |  |  | 69.99 |  |  | 246.62 | 77.69 | 45.99 |
 | | vLLM-Omni | 7.83 | 3.69 | 2.78 | 66.39 | 22.93 | 14.58 | 243.52 | 73.26 | 42.86 |
 | | Diffusers | 9.00 | | | 74.00 | | | 275.20 | | |
+| | NIM | 5.21 | 3.01 | 2.61 | 55.84 | 20.54 | 13.95 | 228.75 | 71.56 | 43.51 |
 | **H100 80GB HBM3** | PyTorch | 7.64 | 3.47 | 3.21 | 59.95 | 21.40 | 14.43 | 207.87 | 67.52 | 41.66 |
 | | vLLM-Omni | 7.37 | 3.81 | 3.97 | 59.77 | 21.68 | 15.12 | 205.97 | 66.52 | 41.51 |
 | | Diffusers | 9.00 | | | 68.00 | | | 239.80 | | |
+| | NIM | 4.95 | 2.84 | 2.68 | 50.01 | 19.18 | 13.59 | 198.68 | 65.24 | 41.36 |
 | **H200 141GB HBM3** | PyTorch | 7.65 | 3.37 | 3.17 | 60.51 | 21.01 | 14.07 | 214.80 | 67.14 | 41.00 |
 | | vLLM-Omni | 7.28 | 3.63 | 3.83 | 59.64 | 21.35 | 14.67 | 209.65 | 66.65 | 40.77 |
 | | Diffusers | 9.00 | | | 67.20 | | | 240.00 | | |
+| | NIM | 4.90 | 2.78 | 2.59 | 50.24 | 18.82 | 13.26 | 199.74 | 64.65 | 40.49 |
 | **B200** | PyTorch | 4.60 | 2.77 | 2.81 |  | 13.07 | 9.66 | 113.90 | 40.01 | 26.58 |
 | | vLLM-Omni | 4.33 | 2.77 | 3.84 | 33.09 | 13.79 | 11.39 | 110.19 | 37.76 | 25.68 |
 | | Diffusers | | | | | | | 116.00 | | |
+| | NIM | 2.86 | 2.23 | 2.32 | 24.89 | 11.30 | 8.65 | 91.91 | 34.22 | 23.72 |
 | **B300** | PyTorch | | | | | | | | | |
 | | vLLM-Omni | 5.61 | 4.67 | 5.90 | 33.45 | 15.06 | 13.13 | 104.75 | 38.27 | 26.87 |
 | | Diffusers | 28.60 | | | 65.60 | | | 139.60 | | |
+| | NIM | 2.92 | 3.00 | 3.02 | 24.55 | 11.82 | 8.96 | 87.81 | 34.81 | 24.35 |
 
 ### Text-to-Image (t2i)
 
@@ -131,13 +147,14 @@ Three integration paths are compared. **PyTorch** reports average generation (sa
 3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo; subject to change before GA. Values marked with (*) are pre-release vLLM-Omni measurements on H100 NVL and may change before GA.
 4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs; reported at 256p/1, 480p/1, and 720p/1 (single-GPU only).
 5. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
-6. At 256p, multi-GPU configurations on B300 may underperform single-GPU due to small-workload TP overhead; single-GPU is recommended at this resolution.</sub>
+6. At 256p, multi-GPU configurations on B300 may underperform single-GPU due to small-workload TP overhead; single-GPU is recommended at this resolution.
+7. NIM numbers use PBR fixed-input latency benchmark results and report `Diffusion Time avg s` from latency profiles.</sub>
 
 ## Cosmos3-Super Generator
 
 These tables report **Cosmos3-Super** generator latency in seconds for **image-to-video (i2v)**, **text-to-image (t2i)**, and **text-to-video (t2v)**. The 32B checkpoint targets higher-quality world generation; expect longer runtimes than Nano at the same resolution. Benchmarks use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings. Video workloads follow the standard Cosmos3 profile (189 frames at 24 FPS where applicable).
 
-As with Nano, three engines are tracked: **PyTorch** (OSS generation/sampling time), **vLLM-Omni** (total pipeline time at 720p on supported GPUs), and **Diffusers** (Hugging Face `Cosmos3OmniPipeline` end-to-end time at **256p/1**, **480p/1**, and **720p/1** — 320×192, 832×480, and 1280×720). Super coverage is narrower than Nano in early releases - for example, vLLM-Omni and Diffusers runs exist primarily on B200 and select H200 configurations. **Empty cells are pending measurements**, not unsupported configurations.
+As with Nano, four engines are tracked: **PyTorch** (OSS generation/sampling time), **vLLM-Omni** (total pipeline time at 720p on supported GPUs), **Diffusers** (Hugging Face `Cosmos3OmniPipeline` end-to-end time at **256p/1**, **480p/1**, and **720p/1** — 320×192, 832×480, and 1280×720), and **NIM** (PBR fixed-input latency benchmark average diffusion time using latency profiles). Super coverage is narrower than Nano in early releases - for example, vLLM-Omni and Diffusers runs exist primarily on B200 and select H200 configurations. **Empty cells are pending measurements**, not unsupported configurations.
 
 ### Text-to-Video (t2v)
 
@@ -146,27 +163,35 @@ As with Nano, three engines are tracked: **PyTorch** (OSS generation/sampling ti
 | **RTX PRO 6000 Blackwell** | PyTorch |  |  |  |  |  |  |  | 789.03 | 427.16 |
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
+| | NIM |  | 11.30 | 12.62 |  | 100.11 | 94.79 |  | 346.68 | 282.12 |
 | **H20** | PyTorch | | | | | | | | | 492.41 |
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
+| | NIM |  | 18.60 | 11.48 |  | 188.19 | 106.32 |  | 730.03 | 391.57 |
 | **H100 NVL** | PyTorch |  |  | 16.83 |  | 101.27 | 64.14 |  | 330.04 | 186.19 |
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
+| | NIM |  | 7.42 | 11.35 |  | 69.56 | 62.10 |  | 263.66 | 192.89 |
 | **H200 NVL** | PyTorch | | | | | | | | 258.34 | 139.37 |
 | | vLLM-Omni | 27.54 | | 5.06 | 252.33 | | 36.66 | 911.49 | 245.51 | 123.85 |
 | | Diffusers | 33.00 | | | 286.80 | | | 1036.00 | | |
+| | NIM | 16.17 | 5.86 | 3.44 | 197.20 | 55.66 | 29.88 | 807.75 | 219.01 | 114.35 |
 | **H100 80GB HBM3** | PyTorch | | | | | | | | | |
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
+| | NIM |  | 5.54 | 4.43 |  | 50.86 | 31.24 |  | 193.25 | 110.55 |
 | **H200 141GB HBM3** | PyTorch |  | 14.82 | 11.82 |  | 70.27 | 41.78 |  | 224.43 | 123.49 |
 | | vLLM-Omni | 25.61 | | 5.87 | 219.11 | | 35.26 | 769.63 | 212.30 | 111.94 |
 | | Diffusers | 31.00 | | | 251.60 | | | 886.20 | | |
+| | NIM | 14.95 | 5.13 | 3.25 | 171.55 | 49.81 | 27.99 | 691.88 | 190.58 | 102.34 |
 | **B200** | PyTorch |  | 5.59 | 4.09 | 114.38 | 35.73 | 21.39 | 407.50 | 118.38 | 65.93 |
 | | vLLM-Omni | 13.84 | | 4.76 | 114.08 | | 22.09 | 390.28 | 113.31 | 62.11 |
 | | Diffusers | | | | 127.20 | | | 414.40 | | |
+| | NIM | 7.85 | 3.08 | 2.35 | 79.51 | 25.04 | 15.03 | 311.08 | 88.65 | 49.76 |
 | **B300** | PyTorch | | | | | | | | | |
 | | vLLM-Omni | 14.57 | | 6.68 | 109.03 | | 22.67 | 366.66 | 108.58 | 60.73 |
 | | Diffusers | 54.20 | | | 155.40 | | | 424.80 | | |
+| | NIM | 7.66 | 3.21 | 3.33 | 75.51 | 24.82 | 15.03 | 287.05 | 87.01 | 49.05 |
 
 ### Image-to-Video (i2v)
 
@@ -175,27 +200,35 @@ As with Nano, three engines are tracked: **PyTorch** (OSS generation/sampling ti
 | **RTX PRO 6000 Blackwell** | PyTorch |  |  |  |  |  |  |  | 795.14 | 427.96 |
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
+| | NIM |  | 11.90 | 13.20 |  | 102.58 | 96.45 |  | 352.63 | 285.73 |
 | **H20** | PyTorch | | | | | | | | 931.74 | |
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
+| | NIM |  | 19.81 | 12.69 |  | 193.07 | 111.01 |  | 740.53 | 401.48 |
 | **H100 NVL** | PyTorch |  | 20.85 | 16.96 |  | 99.56 |  |  | 331.40 | 186.47 |
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
+| | NIM |  | 8.06 | 12.06 |  | 71.86 | 63.95 |  | 267.29 | 197.50 |
 | **H200 NVL** | PyTorch |  |  |  |  |  |  |  | 265.33 | 138.31 |
 | | vLLM-Omni | 27.90 | | 5.52 | 254.29 | | 38.51 | 915.05 | 248.89 | 127.32 |
 | | Diffusers | 33.00 | | | 287.20 | | | 1034.60 | | |
+| | NIM | 16.60 | 6.50 | 4.08 | 198.78 | 57.40 | 31.76 | 814.15 | 222.99 | 117.93 |
 | **H100 80GB HBM3** | PyTorch | | | | | | | | | |
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
+| | NIM |  | 6.16 | 5.07 |  | 52.54 | 33.09 |  | 196.63 | 114.25 |
 | **H200 141GB HBM3** | PyTorch |  | 14.87 | 11.80 |  | 70.45 | 42.10 |  | 224.36 | 123.57 |
 | | vLLM-Omni | 25.47 | | 6.32 | 220.70 | | 36.90 | 766.33 | 215.03 | 117.52 |
 | | Diffusers | 31.00 | | | 249.20 | | | 879.20 | | |
+| | NIM | 15.40 | 5.75 | 3.91 | 173.12 | 51.65 | 29.73 | 695.63 | 194.38 | 106.02 |
 | **B200** | PyTorch | 14.71 | 5.63 | 4.12 |  | 35.70 | 21.25 | 397.31 | 117.98 | 65.91 |
 | | vLLM-Omni | 14.13 | | 5.31 | 115.17 | | 23.26 | 393.02 | 115.69 | 64.82 |
 | | Diffusers | 19.20 | | | | | | 414.80 | | |
+| | NIM | 8.18 | 3.64 | 2.96 | 80.55 | 26.46 | 16.45 | 313.44 | 91.33 | 52.55 |
 | **B300** | PyTorch | | | | | | | | | |
 | | vLLM-Omni | 14.14 | | 7.19 | 111.42 | | 23.91 | 368.73 | 111.41 | 63.25 |
 | | Diffusers | 54.20 | | | 151.80 | | | 425.00 | | |
+| | NIM | 8.02 | 4.02 | 4.03 | 76.38 | 26.35 | 16.55 | 289.52 | 89.16 | 52.04 |
 
 ### Text-to-Image (t2i)
 
@@ -232,7 +265,8 @@ As with Nano, three engines are tracked: **PyTorch** (OSS generation/sampling ti
 3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo; subject to change before GA. Current vLLM-Omni coverage is B200 at 720p.
 4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs; reported at 256p/1, 480p/1, and 720p/1 (single-GPU only).
 5. At 256p, multi-GPU configurations on B300 may underperform single-GPU due to small-workload TP overhead; single-GPU is recommended at this resolution.
-6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.</sub>
+6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
+7. NIM numbers use PBR fixed-input latency benchmark results and report `Diffusion Time avg s` from latency profiles.</sub>
 
 ## Cosmos3-Nano Reasoner
 
