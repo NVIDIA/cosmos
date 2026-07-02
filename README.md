@@ -26,6 +26,7 @@
   - [Quickstart](#quickstart)
     - [Generator with Diffusers](#generator-with-diffusers)
     - [Generator with vLLM-Omni](#generator-with-vllm-omni)
+    - [Generator with NIM](#generator-with-nim)
     - [Reasoner with Transformers](#reasoner-with-transformers)
     - [Reasoner with vLLM](#reasoner-with-vllm)
     - [Reasoner with NIM](#reasoner-with-nim)
@@ -64,7 +65,7 @@ Cosmos 3 exposes two runtime surfaces:
 - **World understanding:** Analyze videos and images for captions, temporal events, next actions, spatial grounding, physical plausibility, and causal outcomes.
 - **World generation:** Produce images, videos, synchronized sound, and action-conditioned rollouts from text, image, video, or action inputs.
 - **Action modeling:** Predict policy actions, inverse dynamics, and forward dynamics for robotics, camera motion, egocentric motion, and autonomous-driving settings.
-- **Research and production paths:** Use Diffusers and Transformers for Python-first development, then vLLM-Omni and vLLM for OpenAI-compatible serving.
+- **Research and production paths:** Use Diffusers and Transformers for Python-first development, vLLM-Omni and vLLM for OpenAI-compatible serving, and NIM containers for turnkey Reasoner serving plus Generator T2V/I2V deployment.
 - **Post-training recipes:** Adapt vision, action, and reasoner workflows with Cosmos Framework training recipes and task-specific evaluation [Coming Soon].
 
 ### Model Architecture
@@ -198,19 +199,22 @@ Write your final answer immediately after the </think> tag.
 
 ### Quickstart
 
-Before running examples, create a Hugging Face access token and then authenticate locally:
+Before running Hugging Face based examples, create a Hugging Face access token and
+then authenticate locally:
 
 ```shell
 uvx hf@latest auth login
 ```
 
-Set `HF_HOME` if you want to use a shared cache or a disk with more space.
+Set `HF_HOME` if you want to use a shared cache or a disk with more space. NIM
+examples use an NGC API key (`NGC_API_KEY`) instead of Hugging Face
+authentication.
 
 Generator requires the Guardrail. Request access to the gated
 [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
-HF repository. To disable the guardrail, set `enable_safety_checker=False` (Diffusers),
-`guardrails: false` (vLLM-Omni `extra_params`/`extra_args`), or
-`--no-guardrails` (Cosmos Framework).
+HF repository for Hugging Face based Generator paths. To disable the guardrail,
+set `enable_safety_checker=False` (Diffusers), `guardrails: false` (vLLM-Omni
+`extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework).
 #### Generator with Diffusers
 
 <details>
@@ -437,6 +441,90 @@ References:
 
 </details>
 
+#### Generator with NIM
+
+<details>
+<summary>Use the prebuilt Cosmos3-Generator NIM for turnkey T2V/I2V video generation.</summary>
+
+Use the `Cosmos3-Generator` NIM for turnkey Generator deployment through an NGC
+container. This NIM serves **Text2Video** and **Image2Video** only. It does not
+expose text-to-image, video-to-video, sound/audio generation, action modes, or
+transfer controls; use [Generator with vLLM-Omni](#generator-with-vllm-omni) or
+Cosmos Framework for those broader Generator workflows.
+
+The Generator NIM API differs from vLLM-Omni: send JSON requests to
+`POST /v1/infer`, and decode the JSON response field `b64_video` to get the MP4
+bytes. The NIM infers the mode automatically from request fields:
+
+| Mode | Request shape | Response |
+| --- | --- | --- |
+| Text2Video | non-empty `prompt`, no `image` | JSON with `b64_video` |
+| Image2Video | `image` provided, optional `prompt` | JSON with `b64_video` |
+
+Authenticate to NGC and launch the default Nano server:
+
+```shell
+export NGC_API_KEY=<your_key>
+echo "$NGC_API_KEY" | docker login nvcr.io --username '$oauthtoken' --password-stdin
+
+export LOCAL_NIM_CACHE="${LOCAL_NIM_CACHE:-$HOME/.cache/nim}"
+mkdir -p "$LOCAL_NIM_CACHE"
+chmod -R 777 "$LOCAL_NIM_CACHE" 2>/dev/null || true
+
+docker run --runtime=nvidia --gpus all \
+  --shm-size=32GB \
+  --ulimit nofile=65536:65536 \
+  -e NGC_API_KEY="$NGC_API_KEY" \
+  -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
+  -p 8000:8000 \
+  nvcr.io/nim/nvidia/cosmos3-generator:1.0.0
+```
+
+For the larger model, add `-e NIM_MODEL_SIZE=super`. The main launch-time knobs
+are `NIM_MODEL_SIZE=nano|super` (default `nano`),
+`NIM_PRECISION=bf16|fp8|nvfp4` (default `fp8`; `nvfp4` requires Blackwell),
+`NIM_PERF_PROFILE=latency|throughput` (default `latency`), and advanced
+`NIM_TAGS_SELECTOR` profile filters.
+
+Wait for readiness:
+
+```shell
+curl -fsS http://127.0.0.1:8000/v1/health/ready
+```
+
+Send a Text2Video request and decode the MP4:
+
+```shell
+curl -sS -X POST http://127.0.0.1:8000/v1/infer \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "prompt": "A humanoid robot walks through a futuristic warehouse, inspecting shelves of mechanical components.",
+    "seed": 42,
+    "guidance_scale": 6.0,
+    "steps": 35,
+    "resolution": "256",
+    "num_output_frames": 25,
+    "fps": 24.0
+  }' | jq -r '.b64_video' | base64 -d > cosmos3_generator_nim_t2v.mp4
+```
+
+For Image2Video, provide `image` as raw base64, a `data:image/...;base64,...` URI,
+or a public URL when URL inputs are enabled.
+
+Request constraints include: `guidance_scale` in `[1.0, 7.0]`, `steps` in
+`[1, 100]`, `num_output_frames` on the `4k+1` cadence (`25, 29, 33, ...`) with
+per-tier caps (`256 <= 397`, `480 <= 297`, `720 <= 197`), and resolution keys
+`256`, `480`, `720` plus optional suffixes `_16_9`, `_1_1`, `_9_16`, `_4_3`, and
+`_3_4`.
+
+See the [Generator NIM cookbook](cookbooks/cosmos3/generator/audiovisual/run_with_nim.ipynb)
+for an end-to-end notebook that launches the container, polls readiness,
+inspects service metadata, runs T2V and I2V, decodes `b64_video`, and previews
+the generated MP4 files.
+
+</details>
+
 #### Reasoner with Transformers
 
 <details>
@@ -446,8 +534,9 @@ Use Hugging Face Transformers for Python-first Reasoner inference. This path
 loads only the Reasoner tower from the unified `nvidia/Cosmos3-Nano` or
 `nvidia/Cosmos3-Super` checkpoint and returns text from text, image, or video
 inputs. It does not load the Generator diffusion, audio, or action heads; use
-[Generator with Diffusers](#generator-with-diffusers) or
-[Generator with vLLM-Omni](#generator-with-vllm-omni) for non-text outputs.
+[Generator with Diffusers](#generator-with-diffusers),
+[Generator with vLLM-Omni](#generator-with-vllm-omni), or
+[Generator with NIM](#generator-with-nim) for supported non-text outputs.
 
 Cosmos3 support first appears in the Transformers `v5.11.0` release tag. Install
 Transformers `5.11.0` or newer:
@@ -555,7 +644,7 @@ installed. For an OpenAI-compatible server, use
 <details>
 <summary>Expand vLLM Reasoner setup, server launch, and configuration</summary>
 
-Use vLLM for Reasoner production inference behind an OpenAI-compatible chat-completions API. This path loads only the reasoner; for generation tasks that return images or video, use [Generator with vLLM-Omni](#generator-with-vllm-omni) instead.
+Use vLLM for Reasoner production inference behind an OpenAI-compatible chat-completions API. This path loads only the reasoner; for generation tasks that return images or video, use [Generator with vLLM-Omni](#generator-with-vllm-omni), or [Generator with NIM](#generator-with-nim) for turnkey T2V/I2V video generation only.
 
 ```shell
 uv venv --python 3.13 --seed --managed-python
@@ -730,7 +819,8 @@ The Cosmos Framework requires `uv >= 0.11.3` (enforced via its `pyproject.toml`)
 | Goal | Use | Notes |
 | --- | --- | --- |
 | Generator research or model development | Diffusers | Python-first path for inspecting and modifying generator behavior |
-| Generator production inference | vLLM-Omni | API path for image, video, sound, and action outputs |
+| Generator broader production/API serving | vLLM-Omni | API path for image, video, sound, and action outputs |
+| Generator turnkey deployment | NIM | Prebuilt NGC container for T2V/I2V video generation only; uses `/v1/infer` and returns JSON `b64_video` |
 | Reasoner research or model development | Transformers | Python-first path for prompts, processors, and model behavior |
 | Reasoner production inference | vLLM | OpenAI-compatible endpoint for text outputs from text and vision inputs |
 | Reasoner turnkey deployment | NIM | Prebuilt, optimized OpenAI-compatible container — no vLLM/CUDA setup |
@@ -745,6 +835,7 @@ We are building examples that show Cosmos 3 capabilities end to end, including w
 | Generator (audiovisual) with Diffusers | Generator | Text-to-image, plus text-to-video and image-to-video each with or without synchronized sound, via `Cosmos3OmniPipeline`. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_diffusers.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_diffusers.ipynb) |
 | Generator (audiovisual) with Cosmos Framework | Generator | Text-to-image, plus text-to-video and image-to-video each with sound on or off, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_cosmos_framework.ipynb) |
 | Generator (audiovisual) with vLLM-Omni | Generator | Text-to-image, plus text-to-video and image-to-video each with sound on or off, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb) |
+| Generator (audiovisual) with NIM | Generator | Text2Video and Image2Video only, against the prebuilt `Cosmos3-Generator` NIM; requests use `POST /v1/infer` and decode JSON `b64_video` responses. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_nim.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_nim.ipynb) |
 | Forward dynamics with Cosmos Framework | Generator | Forward dynamics: action-conditioned future-observation prediction for AV, DROID, and UMI, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/action/run_fd_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_fd_with_cosmos_framework.ipynb) |
 | Forward dynamics with vLLM-Omni | Generator | Forward dynamics: action-conditioned future-observation prediction for AV, DROID, and UMI, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/action/run_fd_with_vllm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_fd_with_vllm.ipynb) |
 | Inverse dynamics with Cosmos Framework | Generator | Inverse dynamics: ego-motion trajectory prediction from input AV video, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/action/run_id_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_id_with_cosmos_framework.ipynb) |
