@@ -32,13 +32,13 @@ import numpy as np
 import torch
 
 try:
-    from cosmos_framework.data.vfm.action.action_processing import (
+    from cosmos_framework.data.generator.action.action_processing import (
         ActionProcessor,
         ActionNormalizationMethod,
         load_action_stats,
         resolve_action_normalization,
     )
-    from cosmos_framework.data.vfm.action.pose_utils import (
+    from cosmos_framework.data.generator.action.pose_utils import (
         build_abs_pose_from_components,
         pose_abs_to_rel,
         pose_rel_to_abs,
