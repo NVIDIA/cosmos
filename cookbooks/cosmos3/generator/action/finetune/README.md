@@ -18,6 +18,13 @@ The LIBERO recipe uses `frame_wise_relative` rot6d 10-D actions, `quantile_rot` 
 - **(A) libero_10-only** — `action_policy_libero_nano` + `launch_sft_action_policy_libero.sh`; trains on `libero_10` alone (max_iter 2000).
 - **(B) libero-all** — `action_policy_libero_all_nano` + `launch_sft_action_policy_libero_all.sh`; equal mix of all 4 LIBERO suites, which needs longer training (max_iter 5000).
 
+For a runnable egocentric hand-pose data conversion example, see
+[`README_egocentric_hand_action.md`](./README_egocentric_hand_action.md). It
+converts a sample video and 3D hand-pose annotation pair into the raw 57D hand
+Action format used by the dataset path.
+
+The recipe uses `[job].task = "vfm"` with the registered `action_policy_droid_nano` experiment. It trains a DROID policy model with `joint_pos` 8-D actions, proprioceptive state, `concat_view` 480p video, chunk length 32, episode-shuffle streaming, and the optional `keep_ranges_1_0_1.json` window filter.
+
 ## Prerequisites
 
 1. **Install cosmos-framework.** This recipe drives `cosmos_framework.scripts.train`, so install a cosmos-framework checkout first — follow the shared [cosmos-framework setup](../../../README.md#cosmos-framework) (clone into `packages/cosmos3`, then `uv sync --all-extras --group=cu130-train`; use `cu128-train` on a CUDA 12.x driver).
