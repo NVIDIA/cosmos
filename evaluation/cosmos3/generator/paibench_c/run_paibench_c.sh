@@ -544,45 +544,140 @@ dst.write_text("\n".join(json.dumps(r) for r in rows))
 print(f"Wrote {len(rows)} rows → {dst}")
 PY
 
-    local _ntasks
-    _ntasks="$PAIBENCH_C_NUM_SAMPLES"
-    log "  Running inference: modality=$MODALITY  tasks=$_ntasks  gpus=$COSMOS3_NUM_GPUS ..."
-    pushd "$COSMOS3_REPO" >/dev/null
-    # Unset vars that can contaminate the cosmos3 Python workers when called from
+    # -------------------------------------------------------------------------
+    # Run inference using N parallel single-GPU workers — one per GPU.
+    # This matches the internal run_transferbench_oss_inference.sh exactly:
+    #   - Each worker owns one GPU (CUDA_VISIBLE_DEVICES=<id>)
+    #   - Each worker processes its interleaved task shard independently
+    #   - Tasks with valid existing outputs are skipped (resume-safe)
+    # Why this avoids GPU OOM: each worker handles only N/NGPU tasks (~150
+    # for 600 tasks total), so accumulated tensors never exhaust VRAM.
+    # With one shared multi-GPU torchrun (--parallelism-preset=latency), all
+    # 600 tasks run in a single process; unreleased diffusion intermediates
+    # accumulate after ~200 tasks and production of empty 7 KB stubs begins.
+    # -------------------------------------------------------------------------
+    local _min_valid_bytes=50000   # < 50 KB → empty/failed video stub
+
+    # Unset vars that can contaminate cosmos3 Python workers when called from
     # a Jupyter/notebook environment.
     unset PYTHONPATH PYTHONSTARTUP PYTHONHOME MPLBACKEND 2>/dev/null || true
     export TORCH_HOME="${TRITON_CACHE_DIR%/triton}"
-    CUDA_VISIBLE_DEVICES="$CUDA_VISIBLE_DEVICES" LD_LIBRARY_PATH= \
-    "$COSMOS3_UV_ENV/bin/torchrun" \
-        --standalone \
-        --nproc-per-node="$COSMOS3_NUM_GPUS" \
-        -m cosmos_framework.scripts.inference \
-        --parallelism-preset=latency \
-        -i "$INPUT_JSONL" \
-        -o "$RAW_DIR" \
-        --checkpoint-path "$PAIBENCH_C_CHECKPOINT" \
-        --no-guardrails
-    popd >/dev/null
+
+    # Parse GPU list from CUDA_VISIBLE_DEVICES (e.g. "0,1,2,3" → array).
+    IFS=',' read -ra _gpu_ids <<< "$CUDA_VISIBLE_DEVICES"
+    local _num_gpus="${#_gpu_ids[@]}"
+    local _py="${COSMOS3_UV_ENV}/bin/python"
+    [[ -x "$_py" ]] || _py="$(command -v python3 || command -v python)"
+
+    log "  Running inference: modality=$MODALITY  tasks=$PAIBENCH_C_NUM_SAMPLES  gpus=$_num_gpus (parallel single-GPU workers) ..."
+
+    # Build per-GPU shard JSONLs — interleaved distribution matches the
+    # internal script: GPU 0 → tasks 0,4,8,…; GPU 1 → tasks 1,5,9,… etc.
+    local -a _shard_jsonls=()
+    local gi
+    for (( gi=0; gi<_num_gpus; gi++ )); do
+        local _shard_jsonl="$OUTPUT_DIR/shard_${gi}.jsonl"
+        _shard_jsonls+=("$_shard_jsonl")
+        PAIBENCH_C_RAW_DIR="$RAW_DIR" \
+        PAIBENCH_C_INPUT_JSONL="$INPUT_JSONL" \
+        PAIBENCH_C_SHARD_JSONL="$_shard_jsonl" \
+        PAIBENCH_C_SHARD_IDX="$gi" \
+        PAIBENCH_C_NUM_SHARDS="$_num_gpus" \
+        PAIBENCH_C_MIN_VALID_BYTES="$_min_valid_bytes" \
+        "$_py" - <<'PY'
+import json, os, pathlib
+
+raw_dir     = pathlib.Path(os.environ["PAIBENCH_C_RAW_DIR"])
+input_jsonl = pathlib.Path(os.environ["PAIBENCH_C_INPUT_JSONL"])
+shard_jsonl = pathlib.Path(os.environ["PAIBENCH_C_SHARD_JSONL"])
+shard_idx   = int(os.environ["PAIBENCH_C_SHARD_IDX"])
+num_shards  = int(os.environ["PAIBENCH_C_NUM_SHARDS"])
+min_bytes   = int(os.environ["PAIBENCH_C_MIN_VALID_BYTES"])
+
+all_rows = [json.loads(l) for l in input_jsonl.read_text().strip().splitlines()]
+# Interleaved: GPU 0 gets rows 0,4,8,…; GPU 1 gets rows 1,5,9,… etc.
+shard_rows = [r for i, r in enumerate(all_rows) if i % num_shards == shard_idx]
+
+pending = []
+for row in shard_rows:
+    name = row["name"]
+    vision_mp4 = raw_dir / name / "vision.mp4"
+    if vision_mp4.exists() and vision_mp4.stat().st_size >= min_bytes:
+        continue  # already generated — skip
+    # Remove stale empty stub so the framework recreates the task dir cleanly.
+    if vision_mp4.exists():
+        vision_mp4.unlink()
+    pending.append(row)
+
+shard_jsonl.write_text("\n".join(json.dumps(r) for r in pending))
+skipped = len(shard_rows) - len(pending)
+print(f"Shard {shard_idx}/{num_shards}: {len(pending)} to generate, {skipped} already done")
+PY
+    done
+
+    # Launch one background Python process per GPU — no torch.distributed.
+    local -a _worker_pids=()
+    for (( gi=0; gi<_num_gpus; gi++ )); do
+        local _shard_jsonl="${_shard_jsonls[$gi]}"
+        local _pending_count
+        _pending_count="$(wc -l < "$_shard_jsonl" | tr -d ' ')"
+        local _gpu_id="${_gpu_ids[$gi]}"
+
+        if [[ "$_pending_count" -eq 0 ]]; then
+            log "  GPU $_gpu_id: all tasks done, skipping"
+            rm -f "$_shard_jsonl"
+            continue
+        fi
+
+        log "  GPU $_gpu_id: $_pending_count tasks (starting background worker) ..."
+        (
+            cd "$COSMOS3_REPO"
+            CUDA_VISIBLE_DEVICES="$_gpu_id" LD_LIBRARY_PATH= \
+            "$COSMOS3_UV_ENV/bin/python" \
+                -m cosmos_framework.scripts.inference \
+                --parallelism-preset=latency \
+                --no-guardrails \
+                -i "$_shard_jsonl" \
+                -o "$RAW_DIR" \
+                --checkpoint-path "$PAIBENCH_C_CHECKPOINT"
+            rm -f "$_shard_jsonl"
+        ) &
+        _worker_pids+=("$!")
+    done
+
+    # Wait for all GPU workers to finish.
+    local _fail=0
+    for _pid in "${_worker_pids[@]}"; do
+        wait "$_pid" || _fail=1
+    done
+    [[ "$_fail" -eq 0 ]] || die "One or more GPU workers failed for modality=$MODALITY"
 
     log "  Flattening outputs → $OUTPUT_DIR/videos/ ..."
-    # Flattening only uses stdlib - fall back to system python3 if the venv python
-    # symlink is broken (uv-managed Python not present on this node).
+    # Copy only valid (non-empty) vision.mp4 files.  Stale stub files from
+    # earlier failed runs are excluded by the min-size guard.
     _py="${COSMOS3_UV_ENV}/bin/python"
     [[ -x "$_py" ]] || _py="$(command -v python3 || command -v python)"
     PAIBENCH_C_RAW_DIR="$RAW_DIR" \
     PAIBENCH_C_VIDEOS_DIR="$OUTPUT_DIR/videos" \
+    PAIBENCH_C_MIN_VALID_BYTES="$_min_valid_bytes" \
     "$_py" - <<'PY'
 import os, shutil, pathlib
-raw  = pathlib.Path(os.environ["PAIBENCH_C_RAW_DIR"])
-vids = pathlib.Path(os.environ["PAIBENCH_C_VIDEOS_DIR"])
+raw      = pathlib.Path(os.environ["PAIBENCH_C_RAW_DIR"])
+vids     = pathlib.Path(os.environ["PAIBENCH_C_VIDEOS_DIR"])
+min_sz   = int(os.environ["PAIBENCH_C_MIN_VALID_BYTES"])
 vids.mkdir(parents=True, exist_ok=True)
-count = 0
+copied = skipped_exists = skipped_empty = 0
 for mp4 in sorted(raw.rglob("vision.mp4")):
     dst = vids / f"{mp4.parent.name}.mp4"
-    if not dst.exists():
-        shutil.copy2(mp4, dst)
-    count += 1
-print(f"Collected {count} video(s) → {vids}")
+    if dst.exists():
+        skipped_exists += 1
+        continue
+    if mp4.stat().st_size < min_sz:
+        skipped_empty += 1
+        continue
+    shutil.copy2(mp4, dst)
+    copied += 1
+print(f"Collected {copied} video(s) → {vids}  (skipped: {skipped_exists} existing, {skipped_empty} empty)")
 PY
     log "  Generation complete: $MODALITY"
 }

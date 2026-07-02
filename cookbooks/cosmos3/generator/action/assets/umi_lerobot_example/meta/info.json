@@ -1,0 +1,125 @@
+{
+  "codebase_version": "v3.0",
+  "robot_type": "UMI",
+  "total_episodes": 1,
+  "total_frames": 417,
+  "total_tasks": 1,
+  "chunks_size": 1000,
+  "data_files_size_in_mb": 100,
+  "video_files_size_in_mb": 200,
+  "fps": 60.0,
+  "splits": {
+    "train": "0:1"
+  },
+  "data_path": "data/chunk-{chunk_index:03d}/file-{file_index:03d}.parquet",
+  "video_path": "videos/{video_key}/chunk-{chunk_index:03d}/file-{file_index:03d}.mp4",
+  "features": {
+    "observation.state.right_main_camera_trajectory_xyz_wxyz": {
+      "dtype": "float32",
+      "shape": [
+        7
+      ],
+      "names": [
+        "observation.state.right_main_camera_trajectory_xyz_wxyz_0",
+        "observation.state.right_main_camera_trajectory_xyz_wxyz_1",
+        "observation.state.right_main_camera_trajectory_xyz_wxyz_2",
+        "observation.state.right_main_camera_trajectory_xyz_wxyz_3",
+        "observation.state.right_main_camera_trajectory_xyz_wxyz_4",
+        "observation.state.right_main_camera_trajectory_xyz_wxyz_5",
+        "observation.state.right_main_camera_trajectory_xyz_wxyz_6"
+      ]
+    },
+    "observation.state.right_gripper_width_m": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "names": [
+        "observation.state.right_gripper_width_m_0"
+      ]
+    },
+    "observation.image.right_main_camera_rgb": {
+      "dtype": "video",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "channels"
+      ],
+      "info": {
+        "video.height": 224,
+        "video.width": 224,
+        "video.codec": "h264",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 60.0,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "timestamp": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "frame_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "episode_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "task_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    }
+  },
+  "repo_id": "local/umi_raw_val_episode_cup_arrangement_0_ep115",
+  "total_videos": 1,
+  "source_summary": {
+    "source_root": "/mnt/nfs/common/cosmos-eval/datasets/.cache/nv-00-10206-robot/cosmos3_action_data/umi/umi/cup_arrangement_0.zarr",
+    "source_format": "zarr (imaginaire4 projects/cosmos3/cosmos3/datasets/action/umi_dataset.py AggregatedDataset)",
+    "shard_requested": "cup_in_the_wild (no exact match under this root; closest available shard used)",
+    "shard_used": "umi/cup_arrangement_0",
+    "split": "val",
+    "val_selection": "get_umi_dataset(dataset_name='umi/cup_arrangement_0', dataset_type='umi', is_val=True, use_grasp_state_repr=False, use_eef_pose=False) with default seed=0, used_episode_ratio=0.99 -> UMISingleTrajDataset.split_unused_episodes(); first val episode = sorted(used_episode_indices)[0]",
+    "episode_index_in_source": 115,
+    "source_frame_range": [
+      45575,
+      45992
+    ],
+    "num_frames": 417,
+    "task": "cup arrangement"
+  },
+  "note": "UMI raw validation tutorial slice: single episode (source episode_index=115 of umi/cup_arrangement_0.zarr), the first episode of the val split under get_umi_dataset(is_val=True) default seed=0/used_episode_ratio=0.99. Converted from zarr (camera0_rgb, robot0_eef_pos, robot0_eef_rot_axis_angle [axis-angle -> quat_wxyz], robot0_gripper_width) into LeRobot v3.0 single-episode chunk-000/file-000 layout, matching the observation.state.right_main_camera_trajectory_xyz_wxyz / observation.state.right_gripper_width_m / observation.image.right_main_camera_rgb schema used by cosmos_framework.data.vfm.action.datasets.umi_lerobot_dataset.UMILeRobotDataset (same schema as the sibling umi_lerobot_example/cup_in_the_wild asset).",
+  "video_regeneration": {
+    "observation.image.right_main_camera_rgb": {
+      "method": "raw camera0_rgb uint8 frames from zarr, encoded directly via imageio/ffmpeg (libx264, crf=18, preset=veryfast, yuv420p) -- no source video decode needed (zarr stores raw frames, not video).",
+      "fps": 60.0,
+      "num_frames": 417
+    }
+  }
+}

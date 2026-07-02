@@ -94,7 +94,7 @@ Each row is:
 
 Pose blocks are `[translation(3), rot6d(6)]`. The `rot6d` block is the first two
 columns of the relative rotation matrix, following the convention implemented by
-`cosmos_framework.data.vfm.action.pose_utils.pose_abs_to_rel`.
+`cosmos_framework.data.generator.action.pose_utils.pose_abs_to_rel`.
 
 Fingertip blocks contain five 3D fingertip positions expressed in the
 corresponding wrist frame at the future frame.
@@ -140,7 +140,7 @@ Use normalization stats from the same dataset/checkpoint configuration you plan
 to train or run. Do not mix unrelated action statistics.
 
 The stats JSON is loaded with
-`cosmos_framework.data.vfm.action.action_processing.load_action_stats`. It must
+`cosmos_framework.data.generator.action.action_processing.load_action_stats`. It must
 contain the keys required by the selected normalization method, either at the
 top level or under `--normalizer-stats-key`. For `quantile` and `quantile_rot`,
 provide `q01` and `q99` arrays of length `57`. For `meanstd`, provide `mean`

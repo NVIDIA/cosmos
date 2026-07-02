@@ -1,0 +1,44 @@
+{
+  "subjects": [
+    {
+      "description": "A white robotic arm with black joints and cables holding a small light-green pitcher",
+      "appearance_details": "Sleek white finish with visible mechanical joints, gripper holding a translucent pitcher containing clear liquid",
+      "relationship": "Central subject performing a precision pouring task above a glass on the table",
+      "location": "Center foreground",
+      "relative_size": "Large within frame",
+      "orientation": "Extended forward, slightly tilted to pour",
+      "pose": "Mid-pour with gripper angled downward",
+      "action": "Carefully pouring liquid into a glass"
+    },
+    {
+      "description": "A clear glass partially filled with a reddish-brown liquid on a white tabletop",
+      "appearance_details": "Transparent glass with a metal spoon inside, reddish-brown liquid filling the lower half",
+      "relationship": "Target vessel receiving the liquid poured by the robot arm",
+      "location": "Center below the robot gripper",
+      "relative_size": "Small within frame",
+      "pose": "Stationary on the table"
+    }
+  ],
+  "background_setting": "A clean, modern indoor setting with a white table surface and soft ambient lighting. A vase with white flowers and a brown couch are partially visible in the background.",
+  "lighting": {
+    "conditions": "Bright indoor lighting",
+    "direction": "Top-front diffused",
+    "shadows": "Soft shadows cast on the white tabletop"
+  },
+  "aesthetics": {
+    "composition": "Medium close-up emphasizing the robot gripper and the glass",
+    "color_scheme": "Clean whites and grays with warm accent tones from the liquid and background",
+    "mood_atmosphere": "Precise, controlled, clinical"
+  },
+  "cinematography": {
+    "camera_motion": "Static",
+    "framing": "Medium shot",
+    "camera_angle": "Slightly above eye-level looking down at the table"
+  },
+  "style_medium": "Live-action video",
+  "artistic_style": "Realistic robotics demonstration",
+  "resolution": {"W": 1280, "H": 720},
+  "aspect_ratio": "16,9",
+  "duration": "4s",
+  "fps": 30
+}

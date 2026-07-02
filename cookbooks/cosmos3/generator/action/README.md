@@ -88,7 +88,6 @@ visualize the generated videos:
   inverse dynamics, predicting ego-motion trajectories from input AV videos using Cosmos3-Nano.
 - [`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID.
 
-
 ## Run with vLLM-Omni
 
 ### Quickstart
@@ -135,7 +134,9 @@ To reproduce our post-training recipe for [Cosmos3-Nano-Policy-DROID](https://hu
 launch-script pattern as the other Cosmos3 finetune cookbooks while delegating
 the canonical training implementation to Cosmos Framework.
 
-
+The same [action-policy SFT cookbook](./finetune/README.md) also covers **LIBERO-10**
+(`launch_sft_action_policy_libero.sh`) — fine-tuning Cosmos3-Nano on the `libero_10`
+simulation benchmark with the same launch-script pattern.
 
 ## TODO
 
