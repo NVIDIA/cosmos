@@ -65,7 +65,7 @@ Cosmos 3 exposes two runtime surfaces:
 - **World understanding:** Analyze videos and images for captions, temporal events, next actions, spatial grounding, physical plausibility, and causal outcomes.
 - **World generation:** Produce images, videos, synchronized sound, and action-conditioned rollouts from text, image, video, or action inputs.
 - **Action modeling:** Predict policy actions, inverse dynamics, and forward dynamics for robotics, camera motion, egocentric motion, and autonomous-driving settings.
-- **Research and production paths:** Use Diffusers and Transformers for Python-first development, vLLM-Omni and vLLM for OpenAI-compatible serving, and NIM containers for turnkey Reasoner serving plus Generator T2V/I2V deployment.
+- **Research and production paths:** Use Diffusers and Transformers for Python-first development, vLLM-Omni and vLLM for OpenAI-compatible serving, and NIM containers for turnkey Reasoner serving or Generator deployment for text to video and image to video generations.
 - **Post-training recipes:** Adapt vision, action, and reasoner workflows with Cosmos Framework training recipes and task-specific evaluation [Coming Soon].
 
 ### Model Architecture

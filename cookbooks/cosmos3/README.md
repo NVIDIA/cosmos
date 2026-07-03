@@ -17,11 +17,10 @@ backend you want to run and follow that one section.
 
 - Linux with NVIDIA GPU access.
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/), `git`, and `git-lfs` installed.
-- Hugging Face access to the gated Cosmos3 model repos for Hugging Face based
-  backends. Generator also requires access to the gated
+- Hugging Face access to the gated Cosmos3 model repos. Generator also requires
+  access to the gated
   [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
-  HF repository for Diffusers, vLLM-Omni, and Cosmos Framework examples.
-  Authenticate once before the first run:
+  HF repository. Authenticate once before the first run:
 
   ```bash
   uvx hf@latest auth login
@@ -32,8 +31,9 @@ backend you want to run and follow that one section.
   To disable the guardrail, set `enable_safety_checker=False` (Diffusers), `guardrails: false`
   (vLLM-Omni `extra_params`/`extra_args`), or
   `--no-guardrails` (Cosmos Framework).
+- NIMs don't need Hugging Face access; instead, an NGC API key is required
+  (used as `NGC_API_KEY`). You can generate one on [build.nvidia.com](https://build.nvidia.com/) or [NGC](https://catalog.ngc.nvidia.com/), then run `docker login nvcr.io` once (username `$oauthtoken`, password = your key). This repository uses the Reasoner NIM image `nvcr.io/nim/nvidia/cosmos3-reasoner` and the Generator NIM image `nvcr.io/nim/nvidia/cosmos3-generator`.
 - For the Cosmos Framework backend: access to `git@github.com:NVIDIA/cosmos-framework.git`.
-- For the NIM backend: an NGC API key (used as `NGC_API_KEY`), which you can generate on [build.nvidia.com](https://build.nvidia.com/) or [NGC](https://catalog.ngc.nvidia.com/), plus a one-time `docker login nvcr.io` (username `$oauthtoken`, password = your key). The HF login above is not needed for NIM. This repository uses the Reasoner NIM image `nvcr.io/nim/nvidia/cosmos3-reasoner` and the Generator NIM image `nvcr.io/nim/nvidia/cosmos3-generator`.
 - Enough local disk for the venv/image, the uv cache, and the model cache. Nano
   downloads plus CUDA dependencies can take tens of GiB.
 
@@ -432,9 +432,9 @@ resolve it dynamically with `client.models.list()`.
 
 ### Generator NIM
 
-A prebuilt container that serves **Cosmos3-Generator Text2Video and Image2Video
+A prebuilt container that serves **Cosmos3-Generator Text-to-Video and Image-to-Video
 only** through `POST /v1/infer`. The NIM infers mode from the request fields:
-non-empty `prompt` with no `image` means T2V; `image` provided means I2V. The
+non-empty `prompt` with no `image` means Text-to-Video; `image` provided means Image-to-Video. The
 response is JSON with a base64-encoded MP4 in `b64_video`.
 
 It does **not** expose text-to-image, video-to-video, sound/audio generation,
