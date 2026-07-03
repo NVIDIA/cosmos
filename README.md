@@ -199,8 +199,7 @@ Write your final answer immediately after the </think> tag.
 
 ### Quickstart
 
-Before running Hugging Face based examples, create a Hugging Face access token and
-then authenticate locally:
+Before running examples, create a Hugging Face access token and then authenticate locally:
 
 ```shell
 uvx hf@latest auth login

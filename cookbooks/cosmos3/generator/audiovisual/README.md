@@ -13,13 +13,15 @@ Environment setup for every backend is centralized in the shared
 links to the section you need. The quickstarts are minimal text-to-video examples
 to get one generation running per backend — run them from this folder.
 
-Hugging Face based Generator backends require the Guardrail. Request access to
-the gated [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
-HF repository before running Diffusers, vLLM-Omni, or Cosmos Framework examples.
-To disable the guardrail, set `enable_safety_checker=False` (Diffusers),
-`guardrails: false` (vLLM-Omni `extra_params`/`extra_args`), or `--no-guardrails`
-(Cosmos Framework). The NIM backend uses NGC authentication and does not require
-local Hugging Face login for this cookbook.
+Generator requires the Guardrail. Request access to the gated
+[nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
+HF repository before running these examples. To disable the guardrail, set
+`enable_safety_checker=False` (Diffusers), `guardrails: false` (vLLM-Omni
+`extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework). For
+Generator NIM set `NIM_ENABLE_TEXT_GUARDRAILS=0 NIM_ENABLE_VIDEO_GUARDRAILS=0`.
+
+NIM backends use NGC authentication instead of Hugging Face login; see the
+[Generator NIM setup](../../README.md#generator-nim) for details.
 
 ## Run with Cosmos Framework
 
