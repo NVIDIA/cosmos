@@ -11,7 +11,8 @@ backend you want to run and follow that one section.
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action) | Generator (Audiovisual, Action) |
-| [NIM](#nim) | Prebuilt NGC containers; Reasoner serving plus Generator audiovisual T2V/I2V only | Reasoner, Generator (Audiovisual) |
+| [Reasoner NIM](#reasoner-nim) | Prebuilt OpenAI-compatible reasoning server (image/video understanding); no venv | Reasoner |
+| [Generator NIM](#generator-nim) | Prebuilt NGC container serving the Cosmos3 Generator for Text-to-Video and Image-to-Video inference | Generator (Audiovisual) |
 
 ## Prerequisites
 
@@ -30,7 +31,7 @@ backend you want to run and follow that one section.
 
   To disable the guardrail, set `enable_safety_checker=False` (Diffusers), `guardrails: false`
   (vLLM-Omni `extra_params`/`extra_args`), or
-  `--no-guardrails` (Cosmos Framework).
+  `--no-guardrails` (Cosmos Framework). For Generator NIM set environment variables `NIM_ENABLE_TEXT_GUARDRAILS=0 NIM_ENABLE_VIDEO_GUARDRAILS=0`.
 - NIMs don't need Hugging Face access; instead, an NGC API key is required
   (used as `NGC_API_KEY`). You can generate one on [build.nvidia.com](https://build.nvidia.com/) or [NGC](https://catalog.ngc.nvidia.com/), then run `docker login nvcr.io` once (username `$oauthtoken`, password = your key). This repository uses the Reasoner NIM image `nvcr.io/nim/nvidia/cosmos3-reasoner` and the Generator NIM image `nvcr.io/nim/nvidia/cosmos3-generator`.
 - For the Cosmos Framework backend: access to `git@github.com:NVIDIA/cosmos-framework.git`.
