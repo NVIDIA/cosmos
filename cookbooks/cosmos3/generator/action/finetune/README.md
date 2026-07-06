@@ -11,7 +11,7 @@ This example demonstrates supervised fine-tuning (SFT) of [Cosmos3-Nano](https:/
 | Policy-LIBERO-10 SFT (A) | `launch_sft_action_policy_libero.sh` | Cosmos3-Nano | [LIBERO_LeRobot_v3](https://huggingface.co/datasets/nvidia/LIBERO_LeRobot_v3) `libero_10` |
 | Policy-LIBERO-all SFT (B) | `launch_sft_action_policy_libero_all.sh` | Cosmos3-Nano | [LIBERO_LeRobot_v3](https://huggingface.co/datasets/nvidia/LIBERO_LeRobot_v3) all 4 suites |
 
-The DROID recipe uses the registered `action_policy_droid_nano` experiment: `joint_pos` 8-D actions, proprioceptive state, `concat_view` 480p video, chunk length 32, episode-shuffle streaming, and the optional `keep_ranges_1_0_1.json` window filter.
+The DROID recipe uses the registered `action_policy_droid_nano` experiment: `joint_pos` 8-D actions, proprioceptive state, `concat_view` 480p video, chunk length 32, episode-shuffle streaming, and the optional `keep_ranges_1_0_1.json` window filter. The reference reproduction runs lr 2e-4 / cycle 10000, global batch 8192 (HSDP 32x8 = 256 ranks; 64x4 on GB200 or 32x8 on H100), for 10000 iters.
 
 The LIBERO recipe uses `frame_wise_relative` rot6d 10-D actions, `quantile_rot` normalization, `concat_view` (third-person + wrist) at 20 fps, lr 5e-5 / warmup 500 / cycle 16000, global batch 2048 (HSDP 2x8). To match the LIBERO-10 results reported in Cosmos3, we provide **two presets**:
 
@@ -73,12 +73,18 @@ export FILTER_PATH=/scratch/droid/keep_ranges_1_0_1.json
 bash launch_sft_action_policy_droid.sh
 ```
 
-To run a short smoke test, keep the same inputs and override the iteration/batch knobs:
+The committed TOML pins the GB200 reference shape (HSDP 32x8 = 256 ranks, global
+batch 8192). To run on a single 8-GPU node — e.g. a short smoke test — drop the
+replicate degree to 1 alongside the iteration/batch knobs:
 
 ```shell
-export EXTRA_TAIL_OVERRIDES="job.wandb_mode=disabled trainer.max_iter=10 checkpoint.save_iter=10 dataloader_train.max_samples_per_batch=32"
+export EXTRA_TAIL_OVERRIDES="job.wandb_mode=disabled trainer.max_iter=10 checkpoint.save_iter=10 model.config.parallelism.data_parallel_replicate_degree=1 dataloader_train.max_samples_per_batch=32"
 bash launch_sft_action_policy_droid.sh
 ```
+
+To reproduce the reference at full global batch 8192 on fewer GPUs, keep
+`data_parallel_replicate_degree=1` and raise `trainer.grad_accum_iter` (32 on one
+8-GPU node) instead of shrinking the batch.
 
 ## LIBERO quick start
 
@@ -120,27 +126,6 @@ Training writes to `outputs/train/<project>/<group>/<name>/`:
 
 - `checkpoints/iter_<N>/` — DCP checkpoint (model / optim / scheduler / trainer state); `checkpoints/latest_checkpoint.txt` names the newest.
 - `config.yaml`, launch metadata, logs, and one directory per registered callback.
-
-## Verifying numerical reproducibility
-
-Before committing to a long run, you can confirm your environment reproduces the
-reference training dynamics bit-for-bit. cosmos-framework ships a deterministic
-regression test that re-runs these exact recipes for 10 iterations and asserts the
-rank-0 per-step loss series against per-arch goldens:
-
-```shell
-# from your cosmos-framework checkout, on a single 4-GPU node
-COSMOS_ACTION_REGRESSION_UPDATE_GOLDENS= \
-    pytest -s tests/action_policy_regression_test.py -k action_policy_libero
-```
-
-The LIBERO-10 spec auto-downloads `libero_10` and needs no extra setup; the DROID
-spec runs only when `DROID_ROOT` points at a staged Cosmos3-DROID root. Goldens are
-captured on H200 (Hopper) with `torch.compile` on, `--deterministic`, and seed 42;
-the reference H200 LIBERO-10 loss series is `[15.81, 15.25, 15.99, 16.53, 14.37,
-16.15, 16.61, 14.88, 16.06, 16.64]`. See the test's module docstring for how goldens
-are keyed by GPU arch and refreshed. This is the companion to cosmos-framework PR
-[#86](https://github.com/NVIDIA/cosmos-framework/pull/86).
 
 ## Export to Hugging Face safetensors
 
