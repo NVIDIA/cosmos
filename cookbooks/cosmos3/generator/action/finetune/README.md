@@ -78,7 +78,13 @@ batch 8192). To run on a single 8-GPU node — e.g. a short smoke test — drop 
 replicate degree to 1 alongside the iteration/batch knobs:
 
 ```shell
-export EXTRA_TAIL_OVERRIDES="job.wandb_mode=disabled trainer.max_iter=10 checkpoint.save_iter=10 model.config.parallelism.data_parallel_replicate_degree=1 dataloader_train.max_samples_per_batch=32"
+export EXTRA_TAIL_OVERRIDES=" \
+  job.wandb_mode=disabled \
+  trainer.max_iter=10 \
+  checkpoint.save_iter=10 \
+  model.config.parallelism.data_parallel_replicate_degree=1 \
+  dataloader_train.max_samples_per_batch=32 \
+"
 bash launch_sft_action_policy_droid.sh
 ```
 
