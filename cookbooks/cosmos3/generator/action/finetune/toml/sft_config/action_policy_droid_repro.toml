@@ -4,10 +4,10 @@
 # ============================================================================
 # DROID action-policy SFT — run config for the `action_policy_droid_nano`
 # experiment. Reproduces the Cosmos3-Nano-Policy-DROID reference run:
-# HSDP 32x8, global batch 8192, lr 2e-4, 10000 iters. The remaining recipe
-# knobs (scheduler type, grad_clip, count-based batch, action-head skip-on-load,
-# dataset knobs) live in the registered experiment; this file pins the run-level
-# scalars that define the reference reproduction.
+# HSDP 32x8, global batch 8192, lr 2e-4, loss_scale 10, 10000 iters. The
+# remaining recipe knobs (grad_clip, count-based batch, action-head
+# skip-on-load, dataset knobs) live in the registered experiment; this file
+# pins the run-level scalars that define the reference reproduction.
 #
 # Env required:
 #   DROID_ROOT=/path/to/droid_lerobot_640x360/success
@@ -38,19 +38,31 @@ save_ops_regex = ["fmha"]
 [model.tokenizer]
 vae_path = "${oc.env:WAN_VAE_PATH}"
 
+[model.rectified_flow_training_config]
+loss_scale = 10.0    # generator (diffusion) loss weight, reference value
+
 [optimizer]
 lr = 2.0e-04
 
 [scheduler]
-cycle_lengths = [10000]   # match max_iter
+cycle_lengths = [100000]   # long cosine cycle: lr decays slowly across the 10000-iter run
 
 [dataloader_train]
 max_samples_per_batch = 32   # samples packed into each per-rank batch (res480)
+
+[dataloader_train.dataloader]
+num_workers     = 16   # decode-worker throughput tuning; adjust to host CPU count
+batch_size      = 16
+prefetch_factor = 2
 
 [trainer]
 max_iter        = 10000
 logging_iter    = 50
 grad_accum_iter = 1       # global batch = max_samples 32 x (shard 8 x replicate 32) x 1 = 8192
+
+[trainer.callbacks.compile_tokenizer]
+enabled            = true      # torch.compile the Wan VAE tokenizer (speed); warms up at res480
+warmup_resolutions = ["480"]
 
 [checkpoint]
 load_path = "${oc.env:BASE_CHECKPOINT_PATH}"
