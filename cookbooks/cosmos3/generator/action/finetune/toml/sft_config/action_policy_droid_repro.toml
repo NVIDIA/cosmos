@@ -29,7 +29,7 @@ precision = "bfloat16"
 
 [model.parallelism]
 data_parallel_shard_degree     = 8     # 8-GPU model shard
-data_parallel_replicate_degree = 32    # HSDP 32x8 = 256 ranks (64x4 on GB200, 32x8 on H100)
+data_parallel_replicate_degree = 32    # HSDP 32x8 = 256 ranks (GB200 reference: 64 nodes x 4)
 
 [model.activation_checkpointing]
 mode           = "full"
