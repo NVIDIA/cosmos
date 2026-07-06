@@ -121,6 +121,27 @@ Training writes to `outputs/train/<project>/<group>/<name>/`:
 - `checkpoints/iter_<N>/` — DCP checkpoint (model / optim / scheduler / trainer state); `checkpoints/latest_checkpoint.txt` names the newest.
 - `config.yaml`, launch metadata, logs, and one directory per registered callback.
 
+## Verifying numerical reproducibility
+
+Before committing to a long run, you can confirm your environment reproduces the
+reference training dynamics bit-for-bit. cosmos-framework ships a deterministic
+regression test that re-runs these exact recipes for 10 iterations and asserts the
+rank-0 per-step loss series against per-arch goldens:
+
+```shell
+# from your cosmos-framework checkout, on a single 4-GPU node
+COSMOS_ACTION_REGRESSION_UPDATE_GOLDENS= \
+    pytest -s tests/action_policy_regression_test.py -k action_policy_libero
+```
+
+The LIBERO-10 spec auto-downloads `libero_10` and needs no extra setup; the DROID
+spec runs only when `DROID_ROOT` points at a staged Cosmos3-DROID root. Goldens are
+captured on H200 (Hopper) with `torch.compile` on, `--deterministic`, and seed 42;
+the reference H200 LIBERO-10 loss series is `[15.81, 15.25, 15.99, 16.53, 14.37,
+16.15, 16.61, 14.88, 16.06, 16.64]`. See the test's module docstring for how goldens
+are keyed by GPU arch and refreshed. This is the companion to cosmos-framework PR
+[#86](https://github.com/NVIDIA/cosmos-framework/pull/86).
+
 ## Export to Hugging Face safetensors
 
 ```shell
