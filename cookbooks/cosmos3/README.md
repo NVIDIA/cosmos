@@ -180,7 +180,7 @@ uv pip install --torch-backend=auto \
   pillow \
   "safetensors>=0.8.0" \
   torch \
-  torchvision \
+  "torchvision==0.25.0" \
   "transformers>=5.11.0"
 ```
 
@@ -279,6 +279,34 @@ Generator cookbooks.
 
 Cosmos3 checkpoints can exceed the default server init timeout — always pass
 `--init-timeout 1800` on every `vllm serve` command below.
+
+### Guardrails (gated dependency)
+
+The vLLM-Omni server loads gated
+[nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
+at startup by default. Without Hugging Face access to that repo, the server
+exits before serving requests. Per-request `guardrails: false` in `extra_params`
+(see [Prerequisites](#prerequisites)) does not fix this — the guardrail models
+must load at startup.
+
+To disable guardrails server-wide (you are responsible for
+[license compliance](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license)),
+add `--no-guardrails` to any `vllm serve` command below:
+
+```bash
+vllm serve nvidia/Cosmos3-Nano \
+  --omni \
+  --model-class-name Cosmos3OmniDiffusersPipeline \
+  --no-guardrails \
+  --allowed-local-media-path / \
+  --port 8000 \
+  --init-timeout 1800
+```
+
+Alternatively, pass a
+[`--deploy-config`](../../README.md#generator-with-vllm-omni) as documented in
+the repository root README. See also the
+[vLLM-Omni Cosmos3-Nano recipe](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md).
 
 ### Option 1: Docker (recommended)
 

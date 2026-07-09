@@ -1,0 +1,5 @@
+# The committed config kit lives here, but the repo-root .gitignore broadly
+# ignores `*json` and `data/`. Re-include this subtree's assets so they track.
+!*.json
+!data/
+!data/**

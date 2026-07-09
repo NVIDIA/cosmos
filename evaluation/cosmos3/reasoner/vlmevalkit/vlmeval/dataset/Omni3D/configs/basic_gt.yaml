@@ -1,0 +1,56 @@
+dataset:
+  generate_dino_oracle_list: false
+  dino_as_input: false
+  previous_metric: true
+  dino_oracle_input: false
+  zero_shot: true
+  zero_shot_dataset: false
+  clamp_bbox_2d: true
+  perturbation_point_prompt: false
+  perturbation_box_prompt: true
+  perturbation_factor: 0.3
+  num_point_prompts: 1
+  generate_point_prompts_via_mask: true
+  max_dets: 50
+  hack_img_path: false
+  hack_point_prompt: false
+  hack_box_prompt: false
+  raw_image_path: s3://cosmos_understanding/benchmark/omni3d_bench/omni3d_images/
+  test:
+    kitti:
+      range:
+        begin: 0
+        end: -1
+        interval: 1
+      json_path: s3://cosmos_understanding/benchmark/omni3d_bench/Omni3D_json/KITTI_test.json
+    nuscenes:
+      range:
+        begin: 0
+        end: -1
+        interval: 1
+      json_path: s3://cosmos_understanding/benchmark/omni3d_bench/Omni3D_json/nuScenes_test.json
+    sunrgbd:
+      range:
+        begin: 0
+        end: -1
+        interval: 1
+      json_path: s3://cosmos_understanding/benchmark/omni3d_bench/Omni3D_json/SUNRGBD_test.json
+    objectron:
+      range:
+        begin: 0
+        end: -1
+        interval: 1
+      metric_scale: 1
+      json_path: s3://cosmos_understanding/benchmark/omni3d_bench/Omni3D_json/Objectron_test.json
+    arkitscenes:
+      range:
+        begin: 0
+        end: -1
+        interval: 1
+      json_path: s3://cosmos_understanding/benchmark/omni3d_bench/Omni3D_json/ARKitScenes_test.json
+    hypersim:
+      range:
+        begin: 0
+        end: -1
+        interval: 1
+      json_path: s3://cosmos_understanding/benchmark/omni3d_bench/Omni3D_json/Hypersim_test.json

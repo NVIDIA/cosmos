@@ -1,0 +1,171 @@
+{
+  "model_family": "cr",
+  "model_key": "cosmos",
+  "class": "CosmosReason2",
+  "defaults": {
+    "api_base": "${COSMOS_API_BASE}",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "max_tokens": 8192,
+    "model": "${COSMOS_MODEL}",
+    "presence_penalty": null,
+    "retry": 10,
+    "seed": 1,
+    "temperature": 0,
+    "timeout": 600,
+    "verbose": false
+  },
+  "benchmarks": {
+    "AETCBench_all": {},
+    "VANTAGE_2DGrounding": {
+      "max_tokens": 4096
+    },
+    "VANTAGE_2DPointing": {
+      "max_tokens": 512
+    },
+    "VANTAGE_Astro2D": {},
+    "VANTAGE_DVC": {
+      "max_tokens": 16384,
+      "total_pixels": 8388608
+    },
+    "VANTAGE_EventVerification": {
+      "total_pixels": 16777216
+    },
+    "VANTAGE_SOT": {
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "sot_predictions",
+          "strict": true,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "frame_1": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "frame_2": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "frame_3": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "frame_4": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "frame_5": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "frame_6": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "frame_7": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "frame_1",
+              "frame_2",
+              "frame_3",
+              "frame_4",
+              "frame_5",
+              "frame_6",
+              "frame_7"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "VANTAGE_Temporal": {
+      "total_pixels": 16777216
+    },
+    "VANTAGE_VQA": {
+      "total_pixels": 16777216
+    }
+  }
+}

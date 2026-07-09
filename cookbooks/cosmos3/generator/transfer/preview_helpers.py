@@ -98,10 +98,11 @@ def make_preview(src: Path, crf: int = 28) -> Path:
 def preview_transfer(control: str, *, model: str | None = None) -> None:
     """Preview control input and generated output for *control*.
 
-    *model* selects which output directory to read (``Cosmos3-Nano`` uses
-    ``<output_root>/<control>/…``; ``Cosmos3-Super`` uses
-    ``<output_root>/<control>_super/…``).  Defaults to the
-    ``COSMOS3_MODEL`` environment variable, falling back to ``Cosmos3-Nano``.
+    *model* selects which output directory to read — e.g. ``Cosmos3-Nano`` or
+    ``Cosmos3-Super``.  Output is read from
+    ``<output_root>/<model>/transfer_<control>/vision.mp4``.
+    Defaults to the ``COSMOS3_MODEL`` environment variable, falling back to
+    ``Cosmos3-Nano``.
     """
     resolved_model = model or os.environ.get("COSMOS3_MODEL", "Cosmos3-Nano")
     spec = load_transfer_spec(control)
@@ -122,6 +123,48 @@ def preview_transfer(control: str, *, model: str | None = None) -> None:
         preview = make_preview(src)
         print(
             f"{control} {label}: {src.name} "
+            f"({src.stat().st_size // 1024} KB -> {preview.stat().st_size // 1024} KB preview)"
+        )
+        if display is not None and Video is not None:
+            display(Video(str(preview), embed=True))
+        else:
+            print(f"  preview path: {preview}")
+
+
+def preview_multi_control(*, model: str | None = None) -> None:
+    """Preview computed control signals and the generated output for multi-control transfer.
+
+    *model* selects which output directory to read (e.g. ``Cosmos3-Nano`` or ``Cosmos3-Super``).
+    Defaults to the ``COSMOS3_MODEL`` environment variable, falling back to ``Cosmos3-Nano``.
+    """
+    resolved_model = model or os.environ.get("COSMOS3_MODEL", "Cosmos3-Nano")
+    out_dir = _output_root() / resolved_model / "transfer_multi_control"
+    vision_path = out_dir / "vision.mp4"
+    if not vision_path.is_file():
+        raise FileNotFoundError(
+            f"missing output: {vision_path}\n"
+            "Run the multi-control inference cell first (§19)."
+        )
+
+    try:
+        from IPython.display import Video, display
+    except ImportError:
+        display = None
+        Video = None
+
+    control_videos = [
+        ("edge control (computed on-the-fly)", out_dir / "control_edge.mp4"),
+        ("blur control (computed on-the-fly)", out_dir / "control_blur.mp4"),
+        ("generated output", vision_path),
+    ]
+
+    for label, src in control_videos:
+        if not src.is_file():
+            print(f"[skip] {label}: {src} not found")
+            continue
+        preview = make_preview(src)
+        print(
+            f"{label}: {src.name} "
             f"({src.stat().st_size // 1024} KB -> {preview.stat().st_size // 1024} KB preview)"
         )
         if display is not None and Video is not None:

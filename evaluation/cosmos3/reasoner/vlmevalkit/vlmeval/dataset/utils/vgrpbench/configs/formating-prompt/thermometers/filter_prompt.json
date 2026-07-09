@@ -1,0 +1,41 @@
+[
+    {
+        "role": "system", 
+        "content": "You are a text formater, your goal is to extract two parts, perception and answer from the answer and put them into a good format. Please according to the conversation history with the user feedback. The desired format is a 2d array, where there is only 0 or s; *, or 0, or _, or -, or e might indicates empty that you should convert to 0. If the perception / answer is not a valid solution or not existe, please put a Wrong there. Your goal is only to format the user's input, not to check if it is correct or not."},
+    {
+        "role": "user",
+        "content": "{\n\"perception\": \"***s*\\n*s***\\n*s*s*\\n**ss*\",\n\"think\": \"To solve this Thermometers puzzle, I need to fill the cells in a way that creates continuous thermometers from the bulbs to the top, without any gaps, and matches the given row and column constraints. I'll analyze each row and column to determine the required filled cells.\",\n\"answer\": \"ssss*\\nssss*\\n*ssss\\n**sse\"\n}"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,s,0],[0,s,0,0,0],[0,s,0,s,0],[0,0,s,s,0]]\nSolution\n[[s,s,s,s,0],[s,s,s,s,0],[0,s,s,s,s],[0,0,s,s,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": \"{{0,0:s},{0,0:s},{0,1:s},{0,1:s},{0,2:s},{0,3:s},{1,0:s},{1,0:s},{1,0:s},{1,0:s},{1,2:s},{1,3:s},{1,3:s},{2,0:s},{2,0:s},{2,1:s},{2,1:s},{2,2:s},{2,2:s},{2,3:s},{2,3:s},{3,0:s},{3,0:s},{3,1:s},{3,1:s},{3,2:s},{3,2:s},{3,3:s},{3,3:s}}\",\n  \"think\": \"The puzzle is a Thermometers puzzle. The numbers on the sides indicate how many filled cells must be in each row and column. The thermometers must be filled from their bulb (start) to their top, without gaps. I will start by filling the cells that are already partially filled. Then, I will look at the rows and columns to see if there are any cells that must be filled based on the numbers on the sides. I will continue this process until all of the thermometers are filled.\",\n  \"answer\": \"{{0,0:s},{0,0:s},{0,1:s},{0,1:s},{0,2:s},{0,3:s},{1,0:s},{1,0:s},{1,0:s},{1,0:s},{1,2:s},{1,3:s},{1,3:s},{2,0:s},{2,0:s},{2,1:s},{2,1:s},{2,2:s},{2,2:s},{2,3:s},{2,3:s},{3,0:s},{3,0:s},{3,1:s},{3,1:s},{3,2:s},{3,2:s},{3,3:s},{3,3:s}}\"\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\nWrong\nSolution\nWrong"
+    },
+    {
+        "role": "user",
+        "content": "Yes, as you cannot extract perception and answer as a 2d array, you have to mark it as Wrong. "
+    },
+    {
+        "role": "user",
+        "content": "{\n\"perception\": \"Row 0: * e * s | Row 1: s e e e | Row 2: * e * s | Row 3: * e * *\",\n\"think\": \"First, check the filled cells needed for each row and column. Row 1 requires all cells filled since it has 4 spaces and needs 4 filled. Row 0 requires 2 more filled cells, and Row 3 requires all 4 cells filled. Column 1 is already fully filled. Proceed to fill the thermometers ensuring continuity without exceeding the required number of filled spaces per row and column.\",\n\"answer\": \"Row 0: s e * s | Row 1: s s s s | Row 2: s e s e | Row 3: s s s s\"\n}"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\n[[0,0,0,s],[s,0,0,0],[0,0,0,s],[0,0,0,0]]\nSolution\n[[s,0,0,s],[s,s,s,s],[s,0,0,0],[s,s,s,s]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes, though the input is not an array, but the message is clear. "
+    }
+]

@@ -1,0 +1,8 @@
+{
+  "class": "MetropolisTemporal",
+  "dataset": "VANTAGE_Temporal",
+  "fps": 10,
+  "max_frames": 256,
+  "max_pixels": 921600,
+  "total_pixels": 16777216
+}

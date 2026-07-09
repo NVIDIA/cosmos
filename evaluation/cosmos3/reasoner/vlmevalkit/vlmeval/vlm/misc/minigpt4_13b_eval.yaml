@@ -1,0 +1,37 @@
+model:
+  arch: minigpt4
+  model_type: pretrain_vicuna_7b
+  max_txt_len: 160
+  end_sym: "###"
+  low_resource: True
+  prompt_template: '###Human: {} ###Assistant: '
+  ckpt: "please set this value to the path of pretrained checkpoint"
+
+  # vit encoder
+  image_size: 224
+  drop_path_rate: 0
+  use_grad_checkpoint: False
+  vit_precision: "fp16"
+  freeze_vit: True
+  freeze_qformer: True
+
+  # Q-Former
+  num_query_token: 32
+
+  # generation configs
+  prompt: ""
+
+  llama_model: "please set this value to the path of vicuna-13b-v0"
+
+datasets:
+  cc_sbu_align:
+    vis_processor:
+      train:
+        name: "blip2_image_eval"
+        image_size: 224
+    text_processor:
+      train:
+        name: "blip_caption"
+
+run:
+  task: image_text_pretrain

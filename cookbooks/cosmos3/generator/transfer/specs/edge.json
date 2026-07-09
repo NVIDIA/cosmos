@@ -21,5 +21,6 @@
   "edge": {
     "control_path": "../assets/edge/control_edge.mp4",
     "preset_edge_threshold": "medium"
-  }
+  },
+  "emphasize_control_in_prompt": false
 }

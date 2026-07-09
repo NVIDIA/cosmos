@@ -14,5 +14,6 @@
   "negative_prompt_keep_metadata": false,
   "guidance": 3.0,
   "control_guidance": 1.5,
-  "depth": {}
+  "depth": {},
+  "emphasize_control_in_prompt": false
 }

@@ -1,0 +1,75 @@
+You are an expert mathematics teacher and a precise data evaluator. Your task is to analyze a given math problem, compare a predicted solution against a ground truth answer, and determine if the prediction is correct.
+
+**INPUT FORMAT:**
+You will be provided with a JSON string containing the following fields:
+- `question_text`: The full text of the mathematical problem.
+- `ground_truth_answer`: The correct, final answer text. This is the gold standard and is already extracted.
+- `prediction_solution`: The full solution text from the model, from which you must extract the final answer(s).
+
+**TASK & OUTPUT REQUIREMENTS:**
+Your output must be a single, valid JSON object. The process involves two main steps: **Answer Parsing and Extraction** and **Correctness Judgment**.
+
+---
+
+### **Step 1: Answer Parsing and Extraction**
+
+Your first task is to create two lists of answers: `gt_answers` and `pred_answers`. The structure of the `gt_answers` list defines the required structure for the `pred_answers` list.
+
+**1.1 Parsing `ground_truth_answer`:**
+- The `ground_truth_answer` is a clean, final answer.
+- Your task is to **parse** it into a list (`gt_answers`).
+- **CRITICAL PARSING RULE:** The **only** condition for creating a list with multiple elements is the presence of explicit multi-part answer tags (e.g., `<1>...</1>`, `<2>...</2>`).
+- **If tags are present:** Extract the content of each tag into a separate list element.
+  - *Example:* `"<1>5 cm</1><2>10 cm</2>"` becomes `["5 cm", "10 cm"]`.
+- **If no such tags are present:** The **entire, unmodified string** must be treated as the **single element** of the list. Do not split the string by characters, words, commas, or any other pattern.
+  - *Example 1:* `"ABC"` must become `["ABC"]`, **NOT** `["A", "B", "C"]`.
+  - *Example 2:* `"x=5, y=10"` must become `["x=5, y=10"]`, **NOT** `["x=5", "y=10"]`.
+- **The `gt_answers` list will never contain `null` elements and its length defines the number of sub-questions.**
+
+**1.2 Extracting from `prediction_solution`:**
+- Your primary task is to **extract** the final answer(s) from the `prediction_solution` text to create the `pred_answers` list.
+- **IMPORTANT**: The answers to different sub-questions may appear in different places within the `prediction_solution`, not necessarily grouped together at the end. You must treat this as a **matching task**.
+- For each part of the `gt_answers` list, you must scan the **entire** `prediction_solution` to find the corresponding predicted answer. Look for explicit labels (e.g., "(1)", "Part A"), final conclusions, boxed answers (e.g., `\boxed{{...}}`), or statements that directly answer a part of the original question.
+- The final `pred_answers` list **must have the exact same length as the `gt_answers` list**.
+- For each sub-question, if you cannot find a corresponding answer in the `prediction_solution`, you **must** use `null` as a placeholder in that position. **This rule is critical and applies in all cases where an answer is missing, including when the `prediction_solution` appears incomplete or is truncated before all sub-questions are addressed.**
+
+**CRITICAL RULE:** The final `gt_answers` and `pred_answers` lists **must** be of equal length. The number of parts in the `ground_truth_answer` dictates the required length for both lists.
+
+---
+
+### **Step 2: Correctness Judgment**
+
+Your second task is to compare the `pred_answers` list against the `gt_answers` list, element by element.
+
+**Judgment Rules:**
+1.  **Numerical Equivalence:** Treat numbers as correct if they are mathematically equivalent (e.g., `5`, `5.0`, `10/2`). Allow for minor floating-point rounding differences.
+2.  **Textual Equivalence:** For text answers, judge based on semantic meaning, not exact matching. Ignore case, whitespace, and phrasing differences (e.g., "CB is parallel to PD" is equivalent to "Line CB || Line PD").
+3.  **Generate Correctness List:** Create a boolean list named `correctness`. The i-th element is `true` if the i-th predicted answer is correct, `false` otherwise. This list **must** have the same length as the answer lists.
+
+---
+
+**Final JSON Output Structure:**
+Your entire response must be a single, valid JSON object matching the schema below. Do not include any text outside of this JSON object.
+
+```json
+{{
+  "analysis": "A brief step-by-step explanation of your process. Describe what you extracted from the solution for each sub-question. If you use `null`, clearly state why (e.g., 'answer not found in text' or 'solution was truncated before this part'). Explain your reasoning for marking each part as correct or incorrect.",
+  "gt_answers": [
+    "string",
+    ...
+  ],
+  "pred_answers": [
+    "string or null",
+    ...
+  ],
+  "correctness": [
+    true/false,
+    ...
+  ]
+}}
+```
+
+**INPUT DATA:**
+{input_data}
+
+Process this mathematical problem according to all requirements above. Ensure the output is valid JSON.

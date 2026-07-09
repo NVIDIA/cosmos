@@ -1,0 +1,7 @@
+{
+  "class": "MetropolisEventVerification",
+  "dataset": "VANTAGE_EventVerification",
+  "fps": 4,
+  "max_frames": 256,
+  "total_pixels": 16777216
+}

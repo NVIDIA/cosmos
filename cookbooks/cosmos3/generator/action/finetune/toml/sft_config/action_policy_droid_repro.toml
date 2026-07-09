@@ -3,10 +3,11 @@
 
 # ============================================================================
 # DROID action-policy SFT — run config for the `action_policy_droid_nano`
-# experiment. The recipe knobs (optimizer/lr, scheduler type, grad_clip,
-# count-based batch, action-head skip-on-load, dataset knobs) live in the
-# registered experiment; this file only sets run-level scalars (iters, ckpt
-# cadence, parallelism shape, wandb, VAE path).
+# experiment. Reproduces the Cosmos3-Nano-Policy-DROID reference run:
+# HSDP 32x8, global batch 8192, lr 2e-4, loss_scale 10, 10000 iters. The
+# remaining recipe knobs (grad_clip, count-based batch, action-head
+# skip-on-load, dataset knobs) live in the registered experiment; this file
+# pins the run-level scalars that define the reference reproduction.
 #
 # Env required:
 #   DROID_ROOT=/path/to/droid_lerobot_640x360/success
@@ -27,8 +28,8 @@ wandb_mode   = "online"
 precision = "bfloat16"
 
 [model.parallelism]
-data_parallel_shard_degree     = 8    # 8-GPU model shard; set replicate for multi-node HSDP
-data_parallel_replicate_degree = 1
+data_parallel_shard_degree     = 8     # 8-GPU model shard
+data_parallel_replicate_degree = 32    # HSDP 32x8 = 256 ranks (GB200 reference: 64 nodes x 4)
 
 [model.activation_checkpointing]
 mode           = "full"
@@ -37,19 +38,37 @@ save_ops_regex = ["fmha"]
 [model.tokenizer]
 vae_path = "${oc.env:WAN_VAE_PATH}"
 
+[model.rectified_flow_training_config]
+loss_scale = 10.0    # generator (diffusion) loss weight, reference value
+
+[optimizer]
+lr = 2.0e-04
+
 [scheduler]
-cycle_lengths = [10000]   # match max_iter
+cycle_lengths = [100000]   # long cosine cycle: lr decays slowly across the 10000-iter run
+
+[dataloader_train]
+max_samples_per_batch = 32   # samples packed into each per-rank batch (res480)
+
+[dataloader_train.dataloader]
+num_workers     = 16   # decode-worker throughput tuning; adjust to host CPU count
+batch_size      = 16
+prefetch_factor = 2
 
 [trainer]
-max_iter     = 10000
-logging_iter = 50
+max_iter        = 10000
+logging_iter    = 50
+grad_accum_iter = 1       # global batch = max_samples 32 x (shard 8 x replicate 32) x 1 = 8192
+
+[trainer.callbacks.compile_tokenizer]
+enabled            = true      # torch.compile the Wan VAE tokenizer (speed); warms up at res480
+warmup_resolutions = ["480"]
 
 [checkpoint]
 load_path = "${oc.env:BASE_CHECKPOINT_PATH}"
 save_iter = 1000
 
-# max_samples_per_batch is 128 in the experiment — samples packed into each per-rank batch
-# (the num_workers x prefetch_factor workers just decode in parallel to keep it fed); res480,
-# reference recipe, validated multi-node on GB200.
-# On lower-memory GPUs, reduce it at launch, e.g.:
-#   --opts dataloader_train.max_samples_per_batch=32
+# The 256-rank HSDP 32x8 shape (global batch 8192) is the GB200 reference. To fit
+# fewer GPUs while keeping global batch 8192, lower data_parallel_replicate_degree
+# and raise grad_accum_iter at launch — e.g. one 8-GPU node:
+#   --opts model.parallelism.data_parallel_replicate_degree=1 trainer.grad_accum_iter=32

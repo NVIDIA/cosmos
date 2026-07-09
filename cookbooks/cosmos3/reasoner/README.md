@@ -272,3 +272,14 @@ To run **Cosmos3-Super**, change `model_id` to `nvidia/Cosmos3-Super`.
 `device_map="auto"` can shard the model across multiple GPUs when Accelerate is
 installed. Use [vLLM](#run-with-vllm) or [NIM](#run-with-nim) when you need an
 OpenAI-compatible server instead of local Python inference.
+
+### Notebook walkthrough
+
+[`run_with_transformers.ipynb`](./run_with_transformers.ipynb) is the Python-first
+counterpart to the server notebooks: instead of launching a server, it installs an
+isolated venv, registers a `Cosmos3 Transformers (Python 3.13)` Jupyter kernel,
+and loads `Cosmos3OmniForConditionalGeneration` in process. A small
+`run_reasoner` helper wraps `apply_chat_template` + `generate`, and the notebook
+then runs the image and video examples shown above. To scale from **Nano** to
+**Super**, change only `model_id` in the load cell and re-run; `device_map="auto"`
+shards Super across multiple GPUs.

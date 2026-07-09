@@ -16,7 +16,7 @@ REASONER_CHECKPOINT="$PWD/checkpoints/Cosmos3-Nano-Reasoner"
 
 # 1. Materialize the VideoPhy-2 dataset (skipped if present).
 if [[ ! -d "$VIDEOPHYSICS_ROOT/videophy2_train" ]]; then
-    python -m cosmos_framework.scripts.vlm.prepare_videophy2_from_hf --out_root "$VIDEOPHYSICS_ROOT" --split both
+    python -m cosmos_framework.scripts.reasoner.prepare_videophy2_from_hf --out_root "$VIDEOPHYSICS_ROOT" --split both
 fi
 
 # 2. Build the Cosmos3-Nano Reasoner checkpoint (skipped if present).

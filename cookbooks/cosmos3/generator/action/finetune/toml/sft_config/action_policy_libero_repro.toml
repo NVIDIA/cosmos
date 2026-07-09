@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# LIBERO-10 action-policy SFT run config for the `action_policy_libero_nano`
+# experiment. Train on libero_10 alone (HSDP 2x8, global batch 2048).
+# Env: LIBERO_ROOT, BASE_CHECKPOINT_PATH, WAN_VAE_PATH, IMAGINAIRE_OUTPUT_ROOT.
+# See docs/action_policy_libero_sft.md.
+
+[job]
+task         = "vfm"
+experiment   = "action_policy_libero_nano"
+project      = "cosmos3_action_libero"
+group        = "action_sft"
+name         = "action_policy_libero_repro"
+wandb_mode   = "online"
+
+[model]
+precision = "bfloat16"
+max_num_tokens_after_packing = 74000
+
+[model.parallelism]
+data_parallel_shard_degree     = 8
+data_parallel_replicate_degree = 2    # HSDP 2x8 = 16 ranks (2 nodes); minimum for gbs 2048 at grad_accum 1
+
+[model.activation_checkpointing]
+mode           = "selective"
+save_ops_regex = ["fmha"]
+
+[model.tokenizer]
+vae_path = "${oc.env:WAN_VAE_PATH}"
+
+[optimizer]
+lr = 5.0e-05
+
+[scheduler]
+cycle_lengths = [16000]
+warm_up_steps = [500]
+
+[trainer]
+max_iter        = 2000
+logging_iter    = 50
+grad_accum_iter = 1       # global batch = max_samples 128 x (shard 8 x replicate 2) x 1 = 2048
+
+[checkpoint]
+load_path = "${oc.env:BASE_CHECKPOINT_PATH}"
+save_iter = 500
