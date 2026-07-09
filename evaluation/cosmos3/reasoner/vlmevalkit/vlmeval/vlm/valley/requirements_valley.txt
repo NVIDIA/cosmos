@@ -25,7 +25,7 @@ requests==2.32.3
 rouge-score==0.1.2
 scikit-image==0.24.0
 scikit-learn==1.5.2
-sentencepiece==0.1.97
+sentencepiece==0.2.1
 timm==1.0.13
 tokenizers==0.21.1
 torchmetrics==1.6.0
