@@ -21,7 +21,7 @@ protobuf==3.20.3
 pyarrow==15.0.0
 pydantic==1.10.14
 qwen-vl-utils==0.0.8
-requests==2.32.3
+requests==2.33.0
 rouge-score==0.1.2
 scikit-image==0.24.0
 scikit-learn==1.5.2
