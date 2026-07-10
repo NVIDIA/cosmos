@@ -1,24 +1,33 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: OpenMDW-1.1
 
-# videophy2_sft_nano — VLM dialog SFT on VideoPhy-2 via CosmosDataLoader.
+# videophy2_sft_super — VLM dialog SFT on VideoPhy-2 via CosmosDataLoader,
+# Cosmos3-Super tier (Qwen3-VL-32B full fine-tune).
 # Base config = cosmos_framework/configs/base/reasoner/config.py (selected by [job].task="vlm").
+#
+# Super-tier counterpart of videophy2_sft_nano: same dataset + dataflow, but the
+# 32B backbone (Qwen/Qwen3-VL-32B-Instruct) and FSDP full-shard across every rank
+# (data_parallel_shard_degree=-1, auto from WORLD_SIZE) so it fits on a 4-GPU
+# (e.g. GB200x4) or 8-GPU allocation. Still a full fine-tune (no LoRA).
 #
 # Dataset prep:
 #   python -m cosmos_framework.scripts.reasoner.prepare_videophy2_from_hf \
 #       --out_root $VIDEOPHYSICS_ROOT --split train  # and again with --split val
 #
 # Required env at launch: VIDEOPHYSICS_ROOT (read by the experiment Python).
+# The launch script auto-builds the merged Cosmos3-Super Reasoner checkpoint
+# (checkpoints/Cosmos3-Super-Reasoner) on first run and passes it to the model
+# via the model.config.policy.backbone.safetensors_path override.
 #
-# Example launch:
-#   bash launch_sft_videophy2_nano.sh
+# Example launch (from cookbooks/cosmos3/reasoner/finetune/):
+#   bash launch_sft_videophy2_super.sh
 
 [job]
 task         = "vlm"
-experiment   = "videophy2_sft_nano"
+experiment   = "videophy2_sft_super"
 project      = "cosmos3"
 group        = "vlm_videophy2_sft"
-name         = "videophy2_sft_nano"
+name         = "videophy2_sft_super"
 wandb_mode   = "disabled"
 
 [model]
@@ -26,7 +35,7 @@ attn_implementation = "cosmos"
 precision           = "bfloat16"                         # was [model.parallelism].precision
 
 [model.backbone]
-model_name = "Qwen/Qwen3-VL-8B-Instruct"
+model_name = "Qwen/Qwen3-VL-32B-Instruct"
 
 [model.ema]
 enabled         = false
@@ -34,9 +43,9 @@ rate            = 0.1
 iteration_shift = 0
 
 [model.parallelism]
-data_parallel_shard_degree      = 8
-data_parallel_replicate_degree  = -1
-context_parallel_shard_degree   = 1
+data_parallel_shard_degree      = -1                     # super: FSDP full shard, auto from WORLD_SIZE (4- or 8-GPU)
+data_parallel_replicate_degree  = 1
+context_parallel_shard_degree   = 1                      # raise to 2 (needs even GPU count) if the 32B run OOMs
 cfg_parallel_shard_degree       = 1
 
 [model.compile]

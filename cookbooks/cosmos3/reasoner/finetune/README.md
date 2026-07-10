@@ -6,8 +6,9 @@ Supervised fine-tuning (SFT) of the Cosmos3 Reasoner on your own data. Tested on
 | --- | --- | --- | --- |
 | Alignment SFT (LLaVA-OneVision) | `launch_sft_llava_ov.sh` | [lmms-lab/LLaVA-OneVision-Data](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-Data) | Streams from HF; Cosmos3-Nano Reasoner checkpoint auto-prepared |
 | Physical-plausibility SFT (VideoPhy-2) | `launch_sft_videophy2_nano.sh` | [videophysics/videophy2_train](https://huggingface.co/datasets/videophysics/videophy2_train) | 1–5 plausibility scoring; dataset + checkpoint auto-prepared |
+| Physical-plausibility SFT (VideoPhy-2, Cosmos3-Super) | `launch_sft_videophy2_super.sh` | [videophysics/videophy2_train](https://huggingface.co/datasets/videophysics/videophy2_train) | Cosmos3-Super tier — Qwen3-VL-32B full fine-tune; dataset + checkpoint auto-prepared |
 
-Both use `[job].task = "vlm"` and bootstrap from a Cosmos3-Nano Reasoner checkpoint, auto-prepared on first run.
+All use `[job].task = "vlm"`. The Nano recipes bootstrap from a Cosmos3-Nano Reasoner checkpoint; the Cosmos3-Super recipe bootstraps from a Cosmos3-Super Reasoner checkpoint (Cosmos3-Super LM merged onto the Qwen3-VL-32B visual tower). Both checkpoints are auto-prepared on first run.
 
 ## Prerequisites
 
@@ -25,6 +26,8 @@ Each launcher is a complete recipe — just run it from this folder:
 bash launch_sft_llava_ov.sh          # alignment SFT; dataset streams from HF, builds the Cosmos3-Nano Reasoner checkpoint, then trains
 # or
 bash launch_sft_videophy2_nano.sh    # first run materializes VideoPhy-2 + builds the Cosmos3-Nano Reasoner checkpoint, then trains
+# or (Cosmos3-Super tier — Qwen3-VL-32B full fine-tune)
+bash launch_sft_videophy2_super.sh   # first run materializes VideoPhy-2 + builds the Cosmos3-Super Reasoner checkpoint, then trains
 ```
 
 The VideoPhy-2 download/convert steps are skipped once their outputs exist. Paths are fixed at the top of each script — edit them there to relocate data or checkpoints.
