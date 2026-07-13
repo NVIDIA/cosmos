@@ -1,0 +1,90 @@
+[
+    {
+        "role": "system", 
+       "content": "You are a text formater, your goal is to extract two parts, perception and answer from the answer and put them into a good format. Please according to the conversation history with the user feedback. The desired format is a 2d array, where there is only two types values 0 or numbers; if you see * or _  or - or e or #, you should convert them into 0. If you see other numbers such as 1, 2, or 3, you just put it there.If the perception / answer is not a valid solution or not existe, please put a Wrong there. Your goal is only to format the user's input, not to check if it is correct or not"
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n  [\"*\", 2, \"*\", \"*\"],\n  [\"*\", \"*\", 5, \"*\"],\n  [\"*\", \"*\", 3, \"*\"],\n  [5, \"*\", \"*\", 2]\n],\n\"think\": \"To solve this KillerSudoku puzzle, I will first analyze the given numbers and cages to identify any constraints or deductions that can be made. Then, I will use logic and the rules of Sudoku to fill in the remaining empty cells.\n\nThe teal cage in the top left has a target sum of 9, with one cell already containing 2. So the other cell must be 7.\n\nThe yellow cage has a target sum of 4, with one cell containing 1. So the other cell must be 3.\n\nThe purple cage has a target sum of 5, but no numbers are given, so I cannot deduce anything yet.\n\nThe red cage has a target sum of 7, with one cell containing 5. So the other cell must be 2.\n\nThe blue cage has a target sum of 4, with one cell containing 4, so the other cell must be filled with the remaining number, which is 1.\n\nThe orange cage has no target sum given, but one cell contains 2. The other cell must be either 1, 3, or 4 based on the remaining numbers.\n\nLooking at the rows, columns, and 2x2 blocks, I can place the remaining numbers while satisfying the Sudoku rules.\",\n\"answer\": [\n  [7, 2, 1, 4],\n  [3, 4, 5, 1],\n  [1, 3, 2, 4],\n  [5, 1, 4, 2]\n]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[0,2,0,0],[0,0,5,0],[0,0,3,0],[5,0,0,2]]\nSolution\n[[7,2,1,4],[3,4,5,1],[1,3,2,4],[5,1,4,2]]"
+    },
+    {
+        "role": "user",
+        "content": "Right"
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [[null, null, null, null], [null, 1, null, null], [null, null, 2, null], [null, 4, null, 3]],\n\"think\": \"Let's start by filling some obvious cells.\\nThe top-left cell must be 2 since it's a single-cell cage with target 7.\\nThe cell at (1, 0) must be 3 since the cage has a target of 4 and the cell at (1, 1) is 1.\\nThe cell at (0, 1) must be 4 since it's a single-cell cage with target 5.\\nThe cell at (0, 3) must be 3 since it's a single-cell cage with target 3.\\nThe cell at (1, 2) must be 5 since the cage has a target of 6 and the cell at (1, 1) is 1.\\nThe cell at (2, 0) must be 1 since it's a single-cell cage with target 3.\\nThe cell at (3, 0) must be 2 since it's a single-cell cage with target 5 and the cell at (3, 1) is 4.\\nThe cell at (2, 3) must be 4 since it's a single-cell cage with target 7 and the cell at (2, 2) is 2.\\nThe cell at (3, 2) must be 1 since it's a single-cell cage with target 5 and the cell at (3, 1) is 4.\\nThe cell at (1, 3) must be 4 since it's a single-cell cage with target 3 and the cell at (0, 3) is 3.\\nThe cell at (2, 1) must be 3 since the cage has a target of 3 and the cell at (2, 0) is 1.\\nThe cell at (0, 2) must be 2 since the cage has a target of 3 and the cell at (0, 3) is 3.\",\n\"answer\": [[2, 4, 2, 3], [3, 1, 5, 4], [1, 3, 2, 4], [2, 4, 1, 3]]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,0],[0,1,0,0],[0,0,2,0],[0,4,0,3]]\nSolution\n[[2,4,2,3],[3,1,5,4],[1,3,2,4],[2,4,1,3]]"
+    },
+    {
+        "role": "user",
+        "content": "Right"
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n[3, 7, 5, 4],\n[6, 1, 2, 5],\n[4, 3, 7, 6],\n[8, 9, 10, 11]\n],\n\"answer\": [\n[3, 7, 5, 4],\n[6, 1, 2, 5],\n[4, 3, 7, 6],\n[8, 9, 10, 11]\n]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[3,7,5,4],[6,1,2,5],[4,3,7,6],[8,9,10,11]]\nSolution\n[[3,7,5,4],[6,1,2,5],[4,3,7,6],[8,9,10,11]]"
+    },
+    {
+        "role": "user",
+        "content": "Right"
+    },
+    {
+        "role": "user",
+        "content": "**Solution to the Killer Sudoku Puzzle**\n\n**Current Game State:**\n\n```\n[2, 4, 3, 5, \n1, 5, 7, 4, \n3, 5, 2, 1, \n9, 4, 9, 8]\n```\n\n**Thinking Process:**\n\nTo solve this Killer Sudoku puzzle, we need to fill in the missing numbers in the grid while satisfying the constraints of each cage. Since the target sums for the cages are not provided, we will focus on using the given numbers to deduce the correct placement.\n\nFirst, let's analyze the top-left 2x2 block. The sum of the numbers in this block is 2 + 4 + 3 + 5 = 14. We can see that the numbers 2, 4, 3, and 5 are already present, leaving only the number 9 to complete the block.\n\nNext, let's examine the middle-left 2x2 block. The sum of the numbers in this block is 1 + 5 + 7 + 4 = 17. We can see that the numbers 1, 5, 7, and 4 are already present, leaving only the number 9 to complete the block.\n\nNow, let's look at the bottom-left 2x2 block. The sum of the numbers in this block is 3 + 5 + 2 + 1 = 11. We can see that the numbers 3, 5, 2, and 1 are already present, leaving only the number 9 to complete the block.\n\nFinally, let's examine the top-right 2x2 block. The sum of the numbers in this block is 9 + 4 + 9 + 8 = 30. We can see that the numbers 9, 4, 9, and 8 are already present, leaving only the number 9 to complete the block.\n\n**Solution:**\n\n```\n[2, 4, 3, 9, \n1, 5, 7, 4, \n3, 5, 2, 1, \n9, 4, 9, 8]\n```\n\nThis solution satisfies all the constraints of the puzzle, including the unique numbers in each row, column, and 2x2 block, as well as the target sums for each cage."
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[2,4,3,5],[1,5,7,4],[3,5,2,1],[9,4,9,8]]\nSolution\n[[2,4,3,9],[1,5,7,4],[3,5,2,1],[9,4,9,8]]"
+    },
+    {
+        "role": "user",
+        "content": "Right "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [[2,1,4,8],[3,2,1,0],[3,2,1,0],[5,4,5,2]],\n\"answer\": [[2,1,4,8],[4,2,1,3],[1,3,2,5],[3,5,2,4]]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[2,1,4,8],[3,2,1,0],[3,2,1,0],[5,4,5,2]]\nSolution\n[[2,1,4,8],[4,2,1,3],[1,3,2,5],[3,5,2,4]]"
+    },
+    {
+        "role": "user",
+        "content": "Right"
+    },
+    {
+        "role": "user",
+        "content":"```json\n{\n\"answer\": [[2, 1, 3, 4],\n           [3, 2, 4, 1],\n           [4, 3, 1, 2],\n           [1, 4, 2, 3]]\n}\n```\n\nThis solution satisfies all the rules:\n1. Each row, column, and 2x2 block contains unique digits from 1 to 4.\n2. The sum of numbers in each cage matches the target sum:\n   - Cage with sum 9: 2 + 1 + 3 = 6\n   - Cage with sum 4: 1 + 3 = 4\n   - Cage with sum 5: 4 + 1 = 5\n   - Cage with sum 5: 2 + 3 = 5\n   - Cage with sum 7: 4 + 1 + 2 = 7\n   - Cage with sum 5: 2 + 3 = 5\n   - Cage with sum 5: 1 + 4 = 5"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\nWrong\nSolution\n[[2,1,3,4],[3,2,4,1],[4,3,1,2],[1,4,2,3]]"
+    },
+    {
+        "role": "user",
+        "content": "Right, "
+    },
+    {
+        "role": "user",
+        "content":"```json\n{\n\"answer\": [\n[2, 1, 3, 4],\n[9, 3, 6, 3],\n[5, 8, 1, 4],\n[1, 4, 7, 2]\n]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\nWrong\nSolution\n[[2,1,3,4],[9,3,6,3],[5,8,1,4],[1,4,7,2]]"
+    },
+    {
+        "role": "user",
+        "content": "Right, "
+    }
+]

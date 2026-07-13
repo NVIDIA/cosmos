@@ -1,0 +1,190 @@
+{
+  "codebase_version": "v3.0",
+  "robot_type": "franka_3rgb",
+  "total_episodes": 1,
+  "total_frames": 90,
+  "total_tasks": 1,
+  "chunks_size": 1000,
+  "data_files_size_in_mb": 100,
+  "video_files_size_in_mb": 200,
+  "fps": 30,
+  "splits": {
+    "train": "0:1"
+  },
+  "data_path": "data/chunk-{chunk_index:03d}/file-{file_index:03d}.parquet",
+  "video_path": "videos/{video_key}/chunk-{chunk_index:03d}/file-{file_index:03d}.mp4",
+  "features": {
+    "observation.images.camera_top": {
+      "dtype": "video",
+      "shape": [
+        720,
+        1280,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 720,
+        "video.width": 1280,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "observation.images.camera_left": {
+      "dtype": "video",
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 480,
+        "video.width": 640,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "observation.images.camera_right": {
+      "dtype": "video",
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 480,
+        "video.width": 640,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "observation.states.end_effector": {
+      "dtype": "float32",
+      "shape": [
+        6
+      ],
+      "names": {
+        "motors": [
+          "x",
+          "y",
+          "z",
+          "r",
+          "p",
+          "y"
+        ]
+      }
+    },
+    "observation.states.joint_position": {
+      "dtype": "float32",
+      "shape": [
+        8
+      ],
+      "names": {
+        "motors": [
+          "joint_0",
+          "joint_1",
+          "joint_2",
+          "joint_3",
+          "joint_4",
+          "joint_5",
+          "joint_6",
+          "gripper"
+        ]
+      }
+    },
+    "actions.joint_position": {
+      "dtype": "float32",
+      "shape": [
+        8
+      ],
+      "names": {
+        "motors": [
+          "joint_0",
+          "joint_1",
+          "joint_2",
+          "joint_3",
+          "joint_4",
+          "joint_5",
+          "joint_6",
+          "gripper"
+        ]
+      }
+    },
+    "timestamp": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "frame_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "episode_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "task_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    }
+  },
+  "repo_id": "local/robomind_franka_raw_val_episode_251",
+  "source_summary": {
+    "source_root": "/mnt/nfs/common/cosmos-eval/datasets/.cache/nv-00-10206-robot/cosmos3_action_data/lerobot_v30/RoboMIND_20251228/benchmark1_0_release/franka_3rgb/241021_close_trash_bin_1",
+    "split": "val",
+    "split_seed": 42,
+    "split_val_ratio": 0.05,
+    "shard_index": 0,
+    "shard_name": "241021_close_trash_bin_1",
+    "episode_index": 251,
+    "dataset_from_index": 27453,
+    "dataset_to_index": 27543,
+    "num_frames": 90,
+    "task": "Close the trash can by pressing down from the back.",
+    "dataset_name": "RoboMIND_20251228 (Franka single-arm embodiment)"
+  },
+  "note": "RoboMIND Franka single-arm raw validation tutorial slice: single episode (source episode_index=251), the first episode of the val split under RoboMINDFrankaDataset default split_seed=42, split_val_ratio=0.05, embodiment_type=robomind-franka (single-arm), from the first Franka shard (FRANKA_LEROBOT_ROOTS[0] = benchmark1_0_release/franka_3rgb/241021_close_trash_bin_1). Distinct from the dual-arm robomind_franka_dual_lerobot_example asset (embodiment_type=robomind-franka-dual, FRANKA_DUAL_LEROBOT_ROOTS). Re-indexed to episode_index=0 / chunk-000/file-000 for data and all three camera videos (camera_top, camera_left, camera_right)."
+}

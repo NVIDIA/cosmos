@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<h1>Page Not Found</h1>
+<p>
+  The page you are looking for cannot be found.
+</p>
+<p>
+  If you just switched documentation versions, it is likely that the page you were on is moved. You can look for it in
+  the content table left, or go to <a href="{{ pathto(root_doc) }}">the homepage</a>.
+</p>
+<!-- <p>
+  If you cannot find documentation you want, please <a
+    href="">open an issue</a> to tell us!
+</p> -->
+
+{% endblock %}

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: OpenMDW-1.1
 
 # pre_exp012_llava_ov — VLM training on lmms-lab/LLaVA-OneVision-Data
-# via CosmosDataLoader. Base config = cosmos_framework/configs/base/vlm/config.py
+# via CosmosDataLoader. Base config = cosmos_framework/configs/base/reasoner/config.py
 # (selected by [job].task="vlm").
 #
 # One knob that the SFTExperimentConfig dataclass does NOT model — supply
@@ -93,7 +93,7 @@ enabled                  = false
 
 [trainer.callbacks.grad_clip]
 clip_norm    = 1.0
-force_finite = false                                # matches VLM default in cosmos_framework/configs/base/vlm/defaults/callbacks.py:55
+force_finite = false                                # matches VLM default in cosmos_framework/configs/base/reasoner/defaults/callbacks.py:55
 
 [checkpoint]
 keys_to_skip_loading = []

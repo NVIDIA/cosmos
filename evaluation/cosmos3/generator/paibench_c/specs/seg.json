@@ -14,5 +14,6 @@
   "negative_prompt_keep_metadata": false,
   "guidance": 3.0,
   "control_guidance": 2.0,
-  "seg": {}
+  "seg": {},
+  "emphasize_control_in_prompt": false
 }

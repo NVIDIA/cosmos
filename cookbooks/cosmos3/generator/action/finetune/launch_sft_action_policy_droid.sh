@@ -2,7 +2,10 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: OpenMDW-1.1
 
-# Complete recipe: DROID action-policy SFT on Cosmos3-Nano (8x H100).
+# Complete recipe: DROID action-policy SFT on Cosmos3-Nano.
+# The TOML pins the GB200 reference shape (HSDP 32x8 = 256 ranks, global batch
+# 8192); on fewer GPUs override data_parallel_replicate_degree / grad_accum_iter
+# (see README). Set NNODES / NODE_RANK / MASTER_ADDR for multi-node.
 # Run from this folder with the cosmos-framework venv active (see README):
 #   bash launch_sft_action_policy_droid.sh
 # It prepares the small dependencies, checks for the staged DROID dataset, and trains.
@@ -48,7 +51,9 @@ if [[ ! -f "$FILTER_PATH" ]]; then
     uvx hf@latest download KarlP/droid keep_ranges_1_0_1.json --local-dir "$(dirname "$FILTER_PATH")"
 fi
 
-# 5. Train (8-GPU FSDP by default). The TOML reads these paths from the environment.
+# 5. Train. torchrun uses NPROC_PER_NODE GPUs (8 by default); the TOML's HSDP 32x8
+#    shape needs 256 ranks, so scale nodes or override parallelism (see README).
+#    The TOML reads these paths from the environment.
 export DROID_ROOT="${DROID_ROOT:-$DATASET_PATH}"
 export BASE_CHECKPOINT_PATH
 export WAN_VAE_PATH

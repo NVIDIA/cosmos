@@ -776,6 +776,7 @@ Post-train Cosmos 3 on your own data with the supervised fine-tuning (SFT) cookb
 | [Policy-DROID SFT](cookbooks/cosmos3/generator/action/finetune/README.md) | Generator | Cosmos3-Nano | Full SFT for action policy on the DROID dataset | [`launch_sft_action_policy_droid.sh`](cookbooks/cosmos3/generator/action/finetune/launch_sft_action_policy_droid.sh) |
 | [Reasoner SFT](cookbooks/cosmos3/reasoner/finetune/README.md) | Reasoner | Cosmos3-Nano | Alignment SFT on LLaVA-OneVision | [`launch_sft_llava_ov.sh`](cookbooks/cosmos3/reasoner/finetune/launch_sft_llava_ov.sh) |
 | [Reasoner SFT](cookbooks/cosmos3/reasoner/finetune/README.md) | Reasoner | Cosmos3-Nano | Physical-plausibility SFT on VideoPhy-2 | [`launch_sft_videophy2_nano.sh`](cookbooks/cosmos3/reasoner/finetune/launch_sft_videophy2_nano.sh) |
+| [Reasoner SFT](cookbooks/cosmos3/reasoner/finetune/README.md) | Reasoner | Cosmos3-Super | Physical-plausibility SFT on VideoPhy-2 | [`launch_sft_videophy2_super.sh`](cookbooks/cosmos3/reasoner/finetune/launch_sft_videophy2_super.sh) |
 
 These cookbooks run on the [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework), NVIDIA's end-to-end Physical AI framework for training and serving world models. For the full post-training reference — every config field, raw `torchrun`, resuming, and advanced parallelism — see the [Cosmos Framework training guide](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/training.md).
 

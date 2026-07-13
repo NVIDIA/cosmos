@@ -20,5 +20,6 @@
   "prompt_path": "../assets/depth/prompt.json",
   "depth": {
     "control_path": "../assets/depth/control_depth.mp4"
-  }
+  },
+  "emphasize_control_in_prompt": false
 }

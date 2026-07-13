@@ -1,0 +1,54 @@
+[
+    {
+        "role": "system", 
+        "content": "You are a text formater, your goal is to extract two parts, perception and answer from the answer and put them into a good format. Please according to the conversation history with the user feedback. The desired format is a 2d array, where there is only two types values 0 or numbers; if you see * or _  or - or e or #, you should convert them into 0. If you see other numbers such as 1, 2, or 3, you just put it there.If the perception / answer is not a valid solution or not existe, please put a Wrong there. Your goal is only to format the user's input, not to check if it is correct or not"
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n  [\"4\", \"2\", \"*\", \"2\"],\n  [\"*\", \"4\", \"1\", \"4\"],\n  [\"3\", \"*\", \"4\", \"*\"],\n  [\"4\", \"2\", \"*\", \"*\"]\n],\n\"think\": \"To solve this Kakuro puzzle, I will analyze the given clues and the constraints of the game. First, I'll look at the rows and columns with only one missing value and try to deduce that value based on the given sum and the existing values. Then, I'll move on to the more complex rows and columns, using logical deduction and the rule that adjacent numbers cannot be the same. I'll continue this process until I have filled in all the empty cells.\",\n\"answer\": [\n  [\"4\", \"2\", \"3\", \"2\"],\n  [\"8\", \"4\", \"1\", \"4\"],\n  [\"3\", \"6\", \"4\", \"5\"],\n  [\"4\", \"2\", \"7\", \"3\"]\n]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[4,2,0,2],[0,4,1,4],[3,0,4,0],[4,2,0,0]]\nSolution\n[[4,2,3,2],[8,4,1,4],[3,6,4,5],[4,2,7,3]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes"
+    },
+    {
+        "role": "user",
+        "content": "{\"perception\": [[3, 9, 12, 10], [1, 4, 2, 14], [7, 3, 1, 4], [4, 3, 2, 11]], \n\"think\": \"The problem is a constrained optimization problem. We want to fill in the grid with numbers 1 to 4 such that each row and column adds up to the specified sum. We also want to avoid having adjacent numbers be the same. This is a classic example of a constraint satisfaction problem. Our goal is to find a solution that satisfies all the constraints. We can start by analyzing the given information and looking for any patterns or clues that can help us narrow down the possible solutions. For example, in the first row, the sum is 12 and the middle cell is empty. This means that the sum of the two adjacent cells must be 12. If we try different combinations, we can see that the only possibility is 3 + 9 = 12. Similarly, in the second row, the sum is 14 and the middle cell is empty. This means that the sum of the two adjacent cells must be 14. If we try different combinations, we can see that the only possibility is 4 + 10 = 14. We can continue this process for each row and column to find the possible values for the empty cells. Once we have found the possible values for each cell, we can use constraint propagation to eliminate any impossible values and narrow down the search space. Finally, we can use a backtracking search algorithm to find a solution that satisfies all the constraints.\", \n\"answer\": [[3, 9, 12, 10], [1, 4, 2, 14], [7, 3, 1, 4], [4, 3, 2, 11]]}"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[3,9,12,10],[1,4,2,14],[7,3,1,4],[4,3,2,11]]\nSolution\n[[3,9,12,10],[1,4,2,14],[7,3,1,4],[4,3,2,11]]"
+    },
+    {
+        "role": "user",
+        "content": "Right"
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": [\n    [\"*\", \"4\", \"1\", \"*\"],\n    [\"*\", \"3\", \"*\", \"*\"],\n    [\"2\", \"*\", \"*\", \"*\"],\n    [\"*\", \"2\", \"*\", \"3\"]\n  ],\n  \"answer\": [\n    [\"3\", \"4\", \"1\", \"2\"],\n    [\"4\", \"3\", \"2\", \"1\"],\n    [\"2\", \"1\", \"4\", \"3\"],\n    [\"1\", \"2\", \"3\", \"4\"]\n  ]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[0,4,1,0],[0,3,0,0],[2,0,0,0],[0,2,0,3]]\nSolution\n[[3,4,1,2],[4,3,2,1],[2,1,4,3],[1,2,3,4]]"
+    },
+    {
+        "role": "user",
+        "content": "Right."
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": [\n    [4, \"*\", \"*\", \"*\", \"*\"],\n    [2, \"*\", \"*\", \"*\", 3],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [2, 3, \"*\", \"*\", \"*\"]\n  ],\n  \"answer\": [\n    [4, 3, 2, 1, 4],\n    [2, 4, 1, 3, 3],\n    [1, 2, 4, 3, 2],\n    [2, 3, 1, 4, 0]\n  ]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[4,0,0,0,0],[2,0,0,0,3],[0,0,0,0,0],[2,3,0,0,0]]\nSolution\n[[4,3,2,1,4],[2,4,1,3,3],[1,2,4,3,2],[2,3,1,4,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Right."
+    }
+]

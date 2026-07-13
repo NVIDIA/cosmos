@@ -1,0 +1,78 @@
+[
+    {
+        "role": "system", 
+        "content": "You are a text formater, your goal is to extract two parts, perception and answer from the answer and put them into a good format. Please according to the conversation history with the user feedback. The desired format is a 2d array, where there is only 0 or s; *, or 0, or _, or -, or e might indicates empty that you should convert to 0. If the perception / answer is not a valid solution or not existe, please put a Wrong there. Your goal is only to format the user's input, not to check if it is correct or not."
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"s\", \"s\"]\n],\n\"think\": \"The image shows a Nonogram puzzle grid with 5 rows and 5 columns. The numbers on the side indicate the lengths of consecutive filled cells in each row and column.\n\nFor the rows:\n- Row 0 has no numbers, so it should be all empty cells.\n- Row 1 also has no numbers, so it should be all empty cells.\n- Row 2 has the number 3, indicating a block of 3 consecutive filled cells.\n- Row 3 has the number 4, indicating a block of 4 consecutive filled cells.\n- Row 4 has the number 5, and the last two cells are already filled, so the first 3 cells should also be filled.\n\nFor the columns:\n- Column 0 has the number 3, indicating a block of 3 consecutive filled cells.\n- Column 1 has the number 3, indicating a block of 3 consecutive filled cells.\n- Column 2 has the number 3, indicating a block of 3 consecutive filled cells.\n- Column 3 has the number 2, indicating a block of 2 consecutive filled cells.\n- Column 4 has the number 1, indicating a single filled cell, which is already given.\n\nBy combining the row and column constraints, we can deduce the solution.\n\",\n\"answer\": [\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\", \"s\", \"e\"],\n    [\"s\", \"s\", \"s\", \"s\", \"s\"]\n]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,s,s]]\nSolution\n[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,s,s],[s,s,s,s,0],[s,s,s,s,s]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": [\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"]\n  ],\n  \"think\": \"Row 0: The clue is 5, meaning all cells in this row must be filled.\\nColumn 0: The clue is 3. Since row 0 is filled, we can fill the first three cells of column 0.\\nColumn 1: The clue is 3. Since row 0 is filled, we can fill the first three cells of column 1.\\nColumn 2: The clue is 3. Since row 0 is filled, we can fill the first three cells of column 2.\\nRow 1: The clue is 4. Since the first three cells of columns 0, 1, and 2 are filled, the first three cells of row 1 must also be filled. The last cell must be empty because column 4 has a clue of 1 and row 0 is already filled.\\nRow 2: The clue is 3. Since the first three cells of columns 0, 1, and 2 are filled, the first three cells of row 2 must also be filled.\\nColumn 3: The clue is 2. Since rows 0 and 1 are filled at column 3, and row 2 is filled in the first three cells, the two filled cells must be in rows 0 and 1.\\nColumn 4: The clue is 1. Since row 0 is filled, the filled cell must be in row 0.\\nRow 3 and Row 4: The clue is 0, meaning all cells in these rows must be empty.\",\n  \"answer\": [\n    [\"s\", \"s\", \"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\", \"s\", \"e\"],\n    [\"s\", \"s\", \"s\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"]\n  ]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]\nSolution\n[[s,s,s,s,s],[s,s,s,s,0],[s,s,s,0,0],[0,0,0,0,0],[0,0,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"]\n],\n\"answer\": [\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"]\n]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]\nSolution\n[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": [[\"s\", \"s\", \"s\", \"e\", \"s\", \"s\", \"e\", \"s\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"s\", \"s\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"s\", \"s\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\"]],\n  \"think\": \"Based on the clues, I need to fill in the rows and columns accordingly. The numbers on the left represent the blocks of filled cells in that row. For instance, row 0 has '3' meaning three filled cells together, which I placed in the first three cells. Row 1 has no filled cells according to the numbers. For row 2, it has '2', indicating two blocks but only one block (2 cells) is filled. I continued this way for each row and then confirmed the columns were also consistent with the clues provided.\",\n  \"answer\": [[\"s\", \"s\", \"s\", \"e\", \"s\", \"s\", \"e\", \"s\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"s\", \"s\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"s\", \"s\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\", \"e\"]]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[s,s,s,0,s,s,0,s,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,s,s,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,s,s,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]\nSolution\n[[s,s,s,0,s,s,0,s,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,s,s,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,s,s,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": [[*3*, *3*, *3*, *3*],\n                  [*3*, 3, *3*, *3*],\n                  [*3*, *3*, *3*, *3*],\n                  [*3*, *3*, *3*, *3*]],\n  \"think\": \"Let's analyze each row one by one. The first row has a single 3-cell block, which suggests that all the cells in that row must be filled. The second row also has a single 3-cell block, so we can fill in the 3 cells from index 0 to 2. The third row has two 3-cell blocks, indicating that there must be at least one empty cell between them. The fourth row also has two 3-cell blocks, and as before, we can fill in the 3 cells from index 0 to 2. The last row has a single 3-cell block, which means that all the cells in that row must be filled.\",\n  \"answer\": [[0, 3, 0, 3],\n                  [3, 3, 0, 3],\n                  [0, 3, 0, 3],\n                  [3, 3, 0, 3]]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[3,3,3,3],[3,3,3,3],[3,3,3,3],[3,3,3,3]]\nSolution\n[[0,3,0,3],[3,3,0,3],[0,3,0,3],[3,3,0,3]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n[\"*\", \"*\", \"*\", \"s\", \"s\"],\n[\"*\", \"*\", \"*\", \"s\", \"*\"],\n[\"*\", \"*\", \"*\", \"*\", \"*\"],\n[\"*\", \"*\", \"*\", \"*\", \"*\"],\n[\"*\", \"*\", \"*\", \"*\", \"*\"]\n],\n\"answer\": [\n[\"e\", \"e\", \"s\", \"s\", \"s\"],\n[\"e\", \"e\", \"s\", \"s\", \"s\"],\n[\"e\", \"e\", \"s\", \"s\", \"s\"],\n[\"e\", \"e\", \"e\", \"e\", \"e\"],\n[\"e\", \"e\", \"e\", \"e\", \"e\"]\n]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,s,s],[0,0,0,s,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]\nSolution\n[[0,0,s,s,s],[0,0,s,s,s],[0,0,s,s,s],[0,0,0,0,0],[0,0,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    }
+]
