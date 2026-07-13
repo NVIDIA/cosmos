@@ -73,7 +73,7 @@ torch>=2.0.1
 torchmetrics
 torchvision>=0.15.2
 tqdm
-transformers==4.57.1 # 5.0 does not work; 4.57.0 is yanked on PyPI
+transformers==5.5.0 # 5.0 does not work; 4.57.0 is yanked on PyPI
 unicodedata2
 validators
 xlsxwriter
