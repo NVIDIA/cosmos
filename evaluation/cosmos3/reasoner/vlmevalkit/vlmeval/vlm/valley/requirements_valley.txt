@@ -29,5 +29,5 @@ sentencepiece==0.1.97
 timm==1.0.13
 tokenizers==0.21.1
 torchmetrics==1.6.0
-transformers==4.51.2
+transformers==5.5.0
 uvicorn==0.30.6
