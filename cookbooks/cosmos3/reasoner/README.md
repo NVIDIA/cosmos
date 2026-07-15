@@ -7,6 +7,27 @@ Environment setup for every backend is centralized in the shared
 [Cosmos3 cookbooks environment setup](../README.md) guide; each backend below
 links to the section you need.
 
+## Choosing a backend (memory footprint)
+
+Cosmos3 ships as a **unified omni checkpoint** (Reasoner + generator/diffusion), so
+how much GPU memory you pay depends on the backend:
+
+- The **Cosmos Framework** backend loads the **full omni weights** (Reasoner *plus*
+  the generator: video VAE, audio tokenizer, and diffusion expert). It therefore
+  uses the most memory — even for text-only reasoner inference. `model_mode=reasoner`
+  only changes the execution path; it does **not** unload the generator weights.
+- The **vLLM**, **Transformers**, and **NIM** backends load **only the Reasoner (VLM)
+  weights**, so they use much less memory.
+
+**If you need to save GPU memory for reasoner-only inference, use vLLM,
+Transformers, or NIM.** Reach for the Cosmos Framework backend only when you also
+need generation.
+
+For example, on a single GPU the **Cosmos3-Nano** Reasoner needs roughly **~34 GB**
+with the Cosmos Framework backend versus **~16–17 GB** with vLLM / Transformers / NIM
+— about half. Larger tiers (e.g. Cosmos3-Super) use more in absolute terms, but the
+same full-omni-vs-reasoner-only gap applies.
+
 ## Reasoner Prompt Guide
 
 See the [Reasoner Prompt Guide](./reasoner_prompt_guide.md).
