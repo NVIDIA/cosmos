@@ -77,15 +77,82 @@ Cosmos 3 is an omnimodal world model built on a unified Mixture-of-Transformers 
 
 ### Model Family
 
-| | [Cosmos3-Super](https://huggingface.co/nvidia/Cosmos3-Super) | [Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) | Cosmos3-Edge |
-|---|---|---|---|
-| **Size** | 64B | 16B | 4B |
-| **Hardware** | H200 / B200 / GB200 etc. | RTX Pro 6000 / H100 / B200 etc. | Jetson AGX Orin / Thor / RTX Pro 6000 etc. |
-| **Input** | Text / image / video / action | Text / image / video / action | Text / image / video / action |
-| **Output** | Text / image / video / sound / action | Text / image / video / sound / action | Text / image / video \* / action |
-| **Suited For** | Data center deployment<br>High quality synthetic data generation<br>Teacher model for distillation | Flexible hardware range<br>Balanced speed & quality<br>Strong base model to post-train | Edge deployment<br>Real-time robotic policy<br>Real-time visual reasoning |
-| **Model Variants** | SoTA image/video generation:<br>• [Cosmos3-Super-Text2Image](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image)<br>• [Cosmos3-Super-Image2Video](https://huggingface.co/nvidia/Cosmos3-Super-Image2Video)<br><br>Close to SoTA with 10-20x speed up:<br>• Cosmos3-Super-Text2Image-4Step<br>• Cosmos3-Super-Image2Video-4Step<br><br>FP8/NVFP4 (coming soon) | SoTA World Action Model:<br>• [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID)<br><br>FP8/NVFP4 (coming soon) | Real-time World Action Model:<br>• Cosmos3-Edge-Policy-DROID<br><br>FP8/NVFP4 (coming soon) |
+<table>
+  <tr>
+    <th></th>
+    <th align="center"><a href="https://huggingface.co/nvidia/Cosmos3-Super">Cosmos3-Super</a></th>
+    <th align="center"><a href="https://huggingface.co/nvidia/Cosmos3-Nano">Cosmos3-Nano</a></th>
+    <th align="center">Cosmos3-Edge</th>
+  </tr>
+  <tr>
+    <th align="center">Size</th>
+    <td align="center">64B</td>
+    <td align="center">16B</td>
+    <td align="center">4B</td>
+  </tr>
+  <tr>
+    <th align="center">Recommended<br>Hardware</th>
+    <td align="center">Data Center<br>E.g. H200 / B200 / GB200</td>
+    <td align="center">Data Center and Workstation<br>E.g. RTX Pro 6000 / H100 / B200</td>
+    <td align="center">Edge and On-Device<br>E.g. Jetson AGX Orin / Thor / RTX Pro 6000</td>
+  </tr>
+  <tr>
+    <th align="center">Input</th>
+    <td align="center">Text / Image / Video / Action</td>
+    <td align="center">Text / Image / Video / Action</td>
+    <td align="center">Text / Image / Video / Action</td>
+  </tr>
+  <tr>
+    <th align="center">Output</th>
+    <td align="center">Text / Image / Video / Sound / Action</td>
+    <td align="center">Text / Image / Video / Sound / Action</td>
+    <td align="center">Text / Image / Video / Action</td>
+  </tr>
+  <tr>
+    <th align="center">Suited For</th>
+    <td>Data center deployment<br>High quality synthetic data generation<br>Teacher model for distillation</td>
+    <td>Flexible hardware range<br>Balanced speed & quality<br>Strong base model to post-train</td>
+    <td>Edge deployment<br>Real-time robotic policy<br>Real-time visual reasoning</td>
+  </tr>
+  <tr>
+    <th align="center">Model Variants</th>
+    <td>SoTA image/video generation:
+      <ul>
+        <li><a href="https://huggingface.co/nvidia/Cosmos3-Super-Text2Image">Cosmos3-Super-Text2Image</a></li>
+        <li><a href="https://huggingface.co/nvidia/Cosmos3-Super-Image2Video">Cosmos3-Super-Image2Video</a></li>
+      </ul>
+      Close to SoTA with up to 25x speed-up:
+      <ul>
+        <li>Cosmos3-Super-Text2Image-4Step</li>
+        <li>Cosmos3-Super-Image2Video-4Step</li>
+      </ul>
+      Less memory, higher speed:
+      <ul>
+        <li>FP8/NVFP4 (coming soon)</li>
+      </ul>
+    </td>
+    <td>SoTA World Action Model:
+      <ul>
+        <li><a href="https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID">Cosmos3-Nano-Policy-DROID</a></li>
+      </ul>
+      Less memory, higher speed:
+      <ul>
+        <li>FP8/NVFP4 (coming soon)</li>
+      </ul>
+    </td>
+    <td>Real-time World Action Model:
+      <ul>
+        <li>Cosmos3-Edge-Policy-DROID</li>
+      </ul>
+      Less memory, higher speed:
+      <ul>
+        <li>FP8/NVFP4 (coming soon)</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
+\* The models generate sound along with the video, not stand alone.<br>
 \* Cosmos3-Edge currently doesn't support video to video transfer
 
 
