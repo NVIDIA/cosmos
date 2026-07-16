@@ -77,13 +77,16 @@ Cosmos 3 is an omnimodal world model built on a unified Mixture-of-Transformers 
 
 ### Model Family
 
-| Model | Size | Primary Capability |
-|---------|---------:|---------|
-| **[Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano)** | 16B | Compact omnimodal world model for multimodal understanding, world simulation, future prediction, action reasoning, and Physical AI. |
-| **[Cosmos3-Super](https://huggingface.co/nvidia/Cosmos3-Super)** | 64B | Frontier-scale omnimodal world model for advanced multimodal understanding, world simulation, future prediction, action reasoning, and Physical AI. |
-| **[Cosmos3-Super-Text2Image](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image)** | 64B | High-fidelity text-to-image generation. |
-| **[Cosmos3-Super-Image2Video](https://huggingface.co/nvidia/Cosmos3-Super-Image2Video)** | 64B | Temporally coherent image-to-video generation. |
-| **[Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID)** | 16B | Vision-language robot policy for DROID manipulation and control. |
+| | [Cosmos3-Super](https://huggingface.co/nvidia/Cosmos3-Super) | [Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) | Cosmos3-Edge |
+|---|---|---|---|
+| **Size** | 64B | 16B | 4B |
+| **Hardware** | H200 / B200 / GB200 etc. | RTX Pro 6000 / H100 / B200 etc. | Jetson AGX Orin / Thor / RTX Pro 6000 etc. |
+| **Input** | Text / image / video / action | Text / image / video / action | Text / image / video / action |
+| **Output** | Text / image / video / sound / action | Text / image / video / sound / action | Text / image / video \* / action |
+| **Suited For** | Data center deployment<br>High quality synthetic data generation<br>Teacher model for distillation | Flexible hardware range<br>Balanced speed & quality<br>Strong base model to post-train | Edge deployment<br>Real-time robotic policy<br>Real-time visual reasoning |
+| **Model Variants** | SoTA image/video generation:<br>• [Cosmos3-Super-Text2Image](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image)<br>• [Cosmos3-Super-Image2Video](https://huggingface.co/nvidia/Cosmos3-Super-Image2Video)<br><br>Close to SoTA with 10-20x speed up:<br>• Cosmos3-Super-Text2Image-4Step<br>• Cosmos3-Super-Image2Video-4Step<br><br>FP8/NVFP4 (coming soon) | SoTA World Action Model:<br>• [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID)<br><br>FP8/NVFP4 (coming soon) | Real-time World Action Model:<br>• Cosmos3-Edge-Policy-DROID<br><br>FP8/NVFP4 (coming soon) |
+
+\* Cosmos3-Edge currently doesn't support video to video transfer
 
 
 ### Supported Generation Settings
