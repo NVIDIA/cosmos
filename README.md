@@ -8,6 +8,7 @@
 <p align="center">
   <a href="https://www.nvidia.com/en-us/ai/cosmos/">Website</a> |
   <a href="https://github.com/NVIDIA/cosmos-framework">Framework</a> |
+  <a href="https://github.com/NVIDIA/cosmos-framework#agent-skills">Agent Skills</a> |
   <a href="https://huggingface.co/collections/nvidia/cosmos3">Models</a>
 </p>
 
@@ -1045,7 +1046,7 @@ Cosmos 3 can produce artifacts in long, high-resolution, or physically complex o
 
 | Project | Purpose |
 | --- | --- |
-| [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) | End-to-end Physical AI framework for training and serving world models, including setup, inference, and training |
+| [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) | End-to-end Physical AI framework for training and serving world models, including setup, inference, and training. Ships [Agent Skills](https://github.com/NVIDIA/cosmos-framework#agent-skills) (`.agents/skills/` and `.claude/skills/`) for AGENTS.md-aware coding agents (Claude Code, Codex CLI, Cursor, etc.). |
 | [Cosmos Curator](https://github.com/NVIDIA/cosmos-curator) | Distributed Physical AI data curation system covering processing, annotation, filtering, and deduplication |
 | [Cosmos Evaluator](https://github.com/NVIDIA/cosmos-evaluator) | Automated Physical AI evaluation system for world generation and world reasoning outputs |
 
