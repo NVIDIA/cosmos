@@ -40,8 +40,7 @@ Set up the environment: [Cosmos Framework setup](../README.md#cosmos-framework).
 This produces the framework venv at `packages/cosmos3/.venv`; run the commands
 below from that checkout (`cd packages/cosmos3`).
 
-Create a Reasoner input file. The `enable_sound=false` field is intentional — it
-avoids a strict argument-validation failure in the current Reasoner path:
+Create a Reasoner input file. The Reasoner does not currently support the audio modality by design, so the `enable_sound=false` field is intentional and required. The framework's strict validation rejects audio requests on a model that doesn't support audio, rather than ignoring the flag: 
 
 ```bash
 mkdir -p outputs/cookbooks/cosmos3/reasoner/inputs
