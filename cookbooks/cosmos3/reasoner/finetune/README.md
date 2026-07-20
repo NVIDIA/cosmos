@@ -7,8 +7,9 @@ Supervised fine-tuning (SFT) of the Cosmos3 Reasoner on your own data. Tested on
 | Alignment SFT (LLaVA-OneVision) | `launch_sft_llava_ov.sh` | [lmms-lab/LLaVA-OneVision-Data](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-Data) | Streams from HF; Cosmos3-Nano Reasoner checkpoint auto-prepared |
 | Physical-plausibility SFT (VideoPhy-2) | `launch_sft_videophy2_nano.sh` | [videophysics/videophy2_train](https://huggingface.co/datasets/videophysics/videophy2_train) | 1–5 plausibility scoring; dataset + checkpoint auto-prepared |
 | Physical-plausibility SFT (VideoPhy-2, Cosmos3-Super) | `launch_sft_videophy2_super.sh` | [videophysics/videophy2_train](https://huggingface.co/datasets/videophysics/videophy2_train) | Cosmos3-Super tier — Qwen3-VL-32B full fine-tune; dataset + checkpoint auto-prepared |
+| Physical-plausibility SFT (VideoPhy-2, Cosmos3-Edge) | `launch_sft_videophy2_edge.sh` | [videophysics/videophy2_train](https://huggingface.co/datasets/videophysics/videophy2_train) | Cosmos3-Edge tier — Nemotron-2B-Dense-VL (SigLIP2 tower, frozen); dataset auto-prepared; reasoner weights load directly from the (ungated) `nvidia/Cosmos3-Edge` snapshot |
 
-All use `[job].task = "vlm"`. The Nano recipes bootstrap from a Cosmos3-Nano Reasoner checkpoint; the Cosmos3-Super recipe bootstraps from a Cosmos3-Super Reasoner checkpoint (Cosmos3-Super LM merged onto the Qwen3-VL-32B visual tower). Both checkpoints are auto-prepared on first run.
+All use `[job].task = "vlm"`. The Nano recipes bootstrap from a Cosmos3-Nano Reasoner checkpoint; the Cosmos3-Super recipe bootstraps from a Cosmos3-Super Reasoner checkpoint (Cosmos3-Super LM merged onto the Qwen3-VL-32B visual tower); the Nano/Super checkpoints are auto-prepared on first run. The Cosmos3-Edge recipe loads its reasoner weights (Edge's own Nemotron-2B-Dense-VL LM + SigLIP2 reasoner tower) directly from the public `nvidia/Cosmos3-Edge` snapshot at startup — no conversion step.
 
 ## Prerequisites
 
@@ -28,9 +29,11 @@ bash launch_sft_llava_ov.sh          # alignment SFT; dataset streams from HF, b
 bash launch_sft_videophy2_nano.sh    # first run materializes VideoPhy-2 + builds the Cosmos3-Nano Reasoner checkpoint, then trains
 # or (Cosmos3-Super tier — Qwen3-VL-32B full fine-tune)
 bash launch_sft_videophy2_super.sh   # first run materializes VideoPhy-2 + builds the Cosmos3-Super Reasoner checkpoint, then trains
+# or (Cosmos3-Edge tier — Nemotron-2B-Dense-VL, 2B; also fits a 4-GPU node)
+bash launch_sft_videophy2_edge.sh    # first run materializes VideoPhy-2, then trains (reasoner weights load directly from nvidia/Cosmos3-Edge)
 ```
 
-The VideoPhy-2 download/convert steps are skipped once their outputs exist. Paths are fixed at the top of each script — edit them there to relocate data or checkpoints.
+The VideoPhy-2 download/convert steps are skipped once their outputs exist (Edge has no convert step — its weights stream from the HF cache). Paths are fixed at the top of each script — edit them there to relocate data or checkpoints.
 
 These recipes default to 8 GPUs. On a 4-GPU node (e.g. GB200×4), set `--nproc_per_node=4` on the `torchrun` line in the launch script.
 

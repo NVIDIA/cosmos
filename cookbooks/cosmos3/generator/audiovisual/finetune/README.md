@@ -6,8 +6,9 @@ Supervised fine-tuning (SFT) of the Cosmos3 video generator on your own captione
 | --- | --- | --- | --- |
 | Vision SFT (full) | `launch_sft_vision_nano.sh` | Cosmos3-Nano | [BridgeData2-Subset-Synthetic-Captions](https://huggingface.co/datasets/nvidia/BridgeData2-Subset-Synthetic-Captions) |
 | Vision SFT (LoRA) | `launch_sft_vision_super.sh` | Cosmos3-Super | same as above |
+| Vision SFT (full) | `launch_sft_vision_edge.sh` | Cosmos3-Edge | same as above |
 
-Both recipes train on structured-JSON captions (`caption_json`, the model's native prompt format), so training stays aligned with inference.
+All recipes train on structured-JSON captions (`caption_json`, the model's native prompt format), so training stays aligned with inference. The Cosmos3-Edge recipe is a full fine-tune of the compact 2B dense Nemotron backbone (no audio/sound tokenizer); at 2B it also fits a 4-GPU node.
 
 ## Prerequisites
 
@@ -25,6 +26,8 @@ Each launcher is a complete recipe — run it from this folder and it downloads 
 bash launch_sft_vision_nano.sh      # full SFT on Cosmos3-Nano
 # or
 bash launch_sft_vision_super.sh     # LoRA SFT on Cosmos3-Super
+# or
+bash launch_sft_vision_edge.sh      # full SFT on Cosmos3-Edge (2B; also fits a 4-GPU node)
 ```
 
 Paths are fixed at the top of each script (under this git-ignored folder) — edit them there to put data or checkpoints on another filesystem.
@@ -48,6 +51,17 @@ python -m cosmos_framework.scripts.export_model \
 ```
 
 Use the exported `$RUN_DIR/model` with the [audiovisual inference cookbook](../README.md).
+
+## Convert to Diffusers
+
+Convert the export into a Diffusers pipeline:
+
+```shell
+python -m cosmos_framework.scripts.convert_model_to_diffusers \
+    --checkpoint-path "$RUN_DIR/model" -o "$RUN_DIR/diffusers"
+```
+
+The input is the Hugging Face directory produced by `export_model` above (not a raw DCP checkpoint), so run the export first. See the [Export and Convert Checkpoints](../../../../../README.md#export-and-convert-checkpoints) overview for details.
 
 ## Advanced configuration
 

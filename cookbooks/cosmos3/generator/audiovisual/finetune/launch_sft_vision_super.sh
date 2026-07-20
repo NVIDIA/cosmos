@@ -38,6 +38,11 @@ export PYTORCH_ALLOC_CONF="expandable_segments:True"
 export DATASET_PATH="$DATASET_DIR/sft_dataset_bridge"
 export BASE_CHECKPOINT_PATH="$CHECKPOINT_DIR"
 export WAN_VAE_PATH="$VAE_PATH"
+# The model configs reference their packaged JSONs relative to the framework
+# root, so run torchrun from there (recipe paths stay pinned to this folder).
+TOML_PATH="$PWD/toml/sft_config/vision_sft_super.toml"
+OUTPUT_ROOT="$PWD/outputs/train"
+cd "$(python -c 'import pathlib, cosmos_framework; print(pathlib.Path(cosmos_framework.__file__).resolve().parents[1])')"
 # On a 4-GPU node (e.g. GB200x4), set --nproc_per_node=4 instead.
-IMAGINAIRE_OUTPUT_ROOT="$PWD/outputs/train" torchrun --nproc_per_node=8 \
-    -m cosmos_framework.scripts.train --sft-toml="toml/sft_config/vision_sft_super.toml"
+IMAGINAIRE_OUTPUT_ROOT="$OUTPUT_ROOT" torchrun --nproc_per_node=8 \
+    -m cosmos_framework.scripts.train --sft-toml="$TOML_PATH"

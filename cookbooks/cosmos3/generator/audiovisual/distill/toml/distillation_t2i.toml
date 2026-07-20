@@ -1,0 +1,68 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# Short DMD2 Text2Image integration smoke. This is not a reproduction recipe.
+mode = "t2i"
+
+[job]
+project = "cosmos3"
+group = "distillation"
+name = "cosmos3_super_t2i_dmd2_smoke"
+wandb_mode = "disabled"
+
+[model]
+resolution = "768"
+max_num_tokens_after_packing = 45056
+lora_enabled = false
+ema_enabled = true
+compile_enabled = true
+base_fps = 24
+rectified_flow_shift = { "256" = 3, "480" = 5, "720" = 5, "768" = 5 }
+rectified_flow_loss_scale = 10.0
+train_time_video_distribution = "waver"
+simulation_mode = "backward"
+teacher_guidance = 6.0
+student_update_freq = 5
+vsd_loss_reduction = "mean"
+fake_score_loss_reduction = "active_mean"
+warmup_student_steps = 0
+warmup_critic_steps = 0
+grad_clip = true
+
+[model.parallelism]
+data_parallel_shard_degree = 32
+context_parallel_shard_degree = 1
+
+[model.fixed_step_sampler]
+sample_type = "sde"
+t_list = [1.0, 0.9375, 0.8333333333333334, 0.625]
+
+[optimizer.net]
+lr = 2.0e-6
+betas = [0.0, 0.999]
+
+[optimizer.fake_score]
+lr = 4.0e-7
+betas = [0.0, 0.999]
+
+[trainer]
+distributed_parallelism = "fsdp"
+grad_accum_iter = 1
+logging_iter = 1
+max_iter = 5
+seed = 42
+recompile_limit = 100
+
+[checkpoint]
+save_iter = 5
+strict_resume = true
+
+[dataloader_train]
+num_video_frames = 1
+append_duration_fps_timestamps = false
+conditioning_fps_noise_std = 0.0
+max_caption_tokens = 2048
+max_samples_per_batch = 1
+batch_size = 1
+num_workers = 4
+prefetch_factor = 4

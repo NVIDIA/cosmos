@@ -7,7 +7,7 @@
 # 8192); on fewer GPUs override data_parallel_replicate_degree / grad_accum_iter
 # (see README). Set NNODES / NODE_RANK / MASTER_ADDR for multi-node.
 # Run from this folder with the cosmos-framework venv active (see README):
-#   bash launch_sft_action_policy_droid.sh
+#   bash launch_sft_action_policy_droid_nano.sh
 # It prepares the small dependencies, checks for the staged DROID dataset, and trains.
 # Paths are fixed under this (git-ignored) folder, matching the reasoner finetune
 # wrappers, while the TOML and tail-overrides match the cosmos-framework example.
@@ -15,7 +15,7 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-TOML_FILE="toml/sft_config/action_policy_droid_repro.toml"
+TOML_FILE="$PWD/toml/sft_config/action_policy_droid_nano.toml"
 : "${DATASET_PATH:=$PWD/data/Cosmos3-DROID/success}"
 : "${BASE_CHECKPOINT_PATH:=$PWD/checkpoints/Cosmos3-Nano}"
 : "${WAN_VAE_PATH:=$PWD/checkpoints/wan22_vae/Wan2.2_VAE.pth}"
@@ -76,6 +76,9 @@ TORCHRUN_ARGS+=(--master_port="${MASTER_PORT:-50012}")
 [[ -n "${MASTER_ADDR:-}" ]] && TORCHRUN_ARGS+=(--master_addr="$MASTER_ADDR")
 
 OUTPUT_ROOT="${OUTPUT_ROOT:-$PWD/outputs/train}"
+# The model configs reference their packaged JSONs relative to the framework
+# root, so run torchrun from there (all recipe paths above are absolute).
+cd "$(python -c 'import pathlib, cosmos_framework; print(pathlib.Path(cosmos_framework.__file__).resolve().parents[1])')"
 IMAGINAIRE_OUTPUT_ROOT="${IMAGINAIRE_OUTPUT_ROOT:-$OUTPUT_ROOT}" torchrun "${TORCHRUN_ARGS[@]}" \
     -m cosmos_framework.scripts.train --sft-toml="$TOML_FILE" \
     -- "${TAIL_OVERRIDES[@]}"

@@ -1,11 +1,14 @@
 # Inference Benchmarks
 
-These tables collect inference benchmarks for Cosmos3. **Generator** sections measure diffusion-path latency (image and video generation via i2v, t2i, and t2v) across PyTorch, vLLM-Omni, and Diffusers. The **Reasoner** section measures VLM serving metrics (TTFT, request latency, throughput) for text outputs from vision and text inputs via vLLM.
+These tables collect inference benchmarks for Cosmos3. **Generator** sections measure visual-generation and world-model latency across PyTorch, vLLM-Omni, Diffusers, and NIM, including image and video generation, forward and inverse dynamics, and policy generation. **Reasoner** sections measure VLM serving and token-generation performance for text, image, and video inputs through vLLM and Hugging Face Transformers.
 
 Generator results are published incrementally from internal benchmark runs. **Empty cells mean that combination has not been measured yet** — not that it is unsupported. See the notes under each table for workload details and data-source definitions.
 
 ## Table of Contents
 
+- [Cosmos3-Edge Generator](#cosmos3-edge-generator)
+  - [vLLM-Omni](#vllm-omni)
+  - [PyTorch](#pytorch)
 - [Cosmos3-Nano Generator](#cosmos3-nano-generator)
   - [Text-to-Video (t2v)](#text-to-video-t2v)
   - [Image-to-Video (i2v)](#image-to-video-i2v)
@@ -14,6 +17,10 @@ Generator results are published incrementally from internal benchmark runs. **Em
   - [Text-to-Video (t2v)](#text-to-video-t2v-1)
   - [Image-to-Video (i2v)](#image-to-video-i2v-1)
   - [Text-to-Image (t2i)](#text-to-image-t2i-1)
+- [Cosmos3-Edge Reasoner](#cosmos3-edge-reasoner)
+  - [RTX PRO 4500 Blackwell Server Edition](#rtx-pro-4500-blackwell-server-edition)
+  - [RTX PRO 6000 Blackwell Server Edition](#rtx-pro-6000-blackwell-server-edition)
+  - [Embedded-Platform Eager Transformers](#embedded-platform-eager-transformers)
 - [Cosmos3-Nano Reasoner](#cosmos3-nano-reasoner)
   - [RTX PRO 6000 Blackwell](#rtx-pro-6000-blackwell)
   - [H20](#h20)
@@ -31,6 +38,51 @@ Generator results are published incrementally from internal benchmark runs. **Em
   - [H200 141GB HBM3](#h200-141gb-hbm3-1)
   - [B200](#b200-1)
   - [B300](#b300-1)
+
+## Cosmos3-Edge Generator
+
+These tables report **Cosmos3-Edge** Generator latency in seconds for **image-to-video**, **forward dynamics**, **inverse dynamics**, and **DROID policy generation**. Measurements use one GPU or one integrated computing platform. Lower latency is better, and empty cells indicate that a run has not been completed.
+
+Unless otherwise noted, visual-generation benchmarks use **480p resolution**, and image-to-video benchmarks generate **189 frames**. vLLM-Omni values report end-to-end latency, while PyTorch values report average generation latency.
+
+### vLLM-Omni
+
+| GPU or Platform | Image-to-Video | Forward Dynamics | Inverse Dynamics | Policy DROID |
+|---|---:|---:|---:|---:|
+| B200 SXM 192 GB |  | 2.44 | 3.98 | 0.99 |
+| H100 SXM 80 GB | 27.64 | 3.91 | 5.60 | 1.41 |
+| H100 NVL 96 GB | 35.60 | 4.73 | 6.39 | 1.37 |
+| H20 SXM 96 GB | 108.16 | 12.77 | 15.49 | 3.41 |
+| RTX PRO 6000 Blackwell Server Edition | 36.29 | 5.65 | 7.46 | 1.87 |
+| DGX Station | 12.17 | 4.33 | 6.34 | 8.11 |
+| DGX Spark | 165.96 | 26.43 | 30.86 | 7.66 |
+| Jetson AGX Thor T5000, 128 GB, MAXN | 137.50 | 6.05 | 7.19 | 6.32 |
+| Jetson T3000, 32 GB, 1100 MHz | 194.76 | 8.67 | 10.25 | 8.63 |
+| Jetson T2000, 16 GB, 702 MHz, THOR_NANO | 101.20 |  |  |  |
+
+### PyTorch
+
+| GPU or Platform | Image-to-Video | Forward Dynamics | Inverse Dynamics | Policy DROID |
+|---|---:|---:|---:|---:|
+| H100 SXM 80 GB | 23.92 | 3.69 | 3.56 | 1.25 |
+| H100 NVL 96 GB | 32.24 | 4.64 | 4.52 | 1.28 |
+| H20 SXM 96 GB | 97.51 | 12.78 | 12.64 | 2.92 |
+| RTX PRO 6000 Blackwell Server Edition | 38.98 | 5.26 | 5.66 | 1.32 |
+| DGX Station | 10.57 | 2.16 | 2.26 | 1.30 |
+| DGX Spark | 179.80 | 24.59 | 26.76 | 5.44 |
+| Jetson AGX Thor T5000, 128 GB, MAXN | 153.00 |  |  |  |
+| Jetson T3000, 32 GB, 1100 MHz | 227.80 |  |  |  |
+
+<sub>Notes:
+1. All measurements use one GPU or one integrated computing platform.
+2. Values are average end-to-end or generation latency in seconds; lower is better.
+3. Unless otherwise specified, visual-generation measurements use **480p resolution**.
+4. Image-to-video measurements generate **189 output frames**.
+5. Jetson AGX Thor T5000 and Jetson T3000 visual-generation measurements use **832 × 480** resolution.
+6. Jetson T2000 visual-generation measurements use **448 × 256** resolution and therefore should not be compared directly with the 480p results. Its image-to-video values are warm-run measurements generating 189 frames.
+7. PyTorch values report average generation latency rather than diffusion-only latency.
+8. Datacenter and enterprise forward- and inverse-dynamics results use the autonomous-driving (`AV`) configuration.
+9. Jetson AGX Thor T5000 and Jetson T3000 forward-dynamics, inverse-dynamics, and policy measurements use the DROID configuration with action chunk `[16, 8]`.</sub>
 
 ## Cosmos3-Nano Generator
 
@@ -267,6 +319,125 @@ As with Nano, four engines are tracked: **PyTorch** (OSS generation/sampling tim
 5. At 256p, multi-GPU configurations on B300 may underperform single-GPU due to small-workload TP overhead; single-GPU is recommended at this resolution.
 6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 7. NIM numbers use latency profiles with FP8 precision and report end-to-end `Request Latency s`, including request processing, video generation, output encoding, and returning the response.</sub>
+
+## Cosmos3-Edge Reasoner
+
+These tables report **Cosmos3-Edge** reasoner serving performance through **vLLM**. Unlike the Generator benchmarks, Reasoner workloads produce autoregressively generated text and measure time to first token (TTFT), end-to-end request latency, request throughput, and output-token throughput. Lower is better for latency metrics; higher is better for throughput.
+
+All vLLM runs use the **`nvidia/Cosmos3-Edge`** checkpoint with one GPU. Metrics were collected at client-side concurrency levels of 1, 64, 128, and 256. Each GPU section contains four workload tables that vary input sequence length, output sequence length, and video frame rate.
+
+### RTX PRO 4500 Blackwell Server Edition
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 165.79 | 8817.33 | 14702.20 | 29482.39 |
+| Request Latency (ms) | 165.79 | 8817.33 | 14702.20 | 29482.39 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 6.00 | 6.55 | 6.55 | 6.52 |
+| Output Token Throughput (Tok/s) | 6.00 | 6.55 | 6.55 | 6.52 |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 371.67 | 20375.98 | 33812.45 | 68201.55 |
+| Request Latency (ms) | 371.67 | 20375.98 | 33812.45 | 68201.55 |
+| Request Count (requests) | 50 | 313 | 249 | 492 |
+| Request Throughput (Req/s) | 2.68 | 2.77 | 2.76 | 2.71 |
+| Output Token Throughput (Tok/s) | 2.68 | 2.77 | 2.76 | 2.71 |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 166.86 | 6900.90 | 19625.83 | 45729.55 |
+| Request Latency (ms) | 764.15 | 16667.01 | 29196.84 | 55749.62 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 1.31 | 3.73 | 3.74 | 3.70 |
+| Output Token Throughput (Tok/s) | 130.63 | 372.40 | 373.98 | 369.87 |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 374.93 | 23526.65 | 47550.99 | 101553.31 |
+| Request Latency (ms) | 1041.29 | 33712.54 | 57641.53 | 111895.20 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.96 | 1.79 | 1.79 | 1.78 |
+| Output Token Throughput (Tok/s) | 95.74 | 178.73 | 178.89 | 178.15 |
+
+### RTX PRO 6000 Blackwell Server Edition
+
+#### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 141.99 | 3213.91 | 5384.51 | 10792.72 |
+| Request Latency (ms) | 141.99 | 3213.91 | 5384.51 | 10792.72 |
+| Request Count (requests) | 50 | 320 | 254 | 512 |
+| Request Throughput (Req/s) | 6.96 | 18.00 | 17.95 | 17.89 |
+| Output Token Throughput (Tok/s) | 6.96 | 18.00 | 17.95 | 17.89 |
+
+#### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 239.86 | 7483.22 | 12552.69 | 25259.11 |
+| Request Latency (ms) | 239.86 | 7483.22 | 12552.69 | 25259.11 |
+| Request Count (requests) | 49 | 303 | 249 | 491 |
+| Request Throughput (Req/s) | 4.06 | 7.28 | 7.49 | 7.34 |
+| Output Token Throughput (Tok/s) | 4.06 | 7.28 | 7.49 | 7.34 |
+
+#### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 138.74 | 943.46 | 2680.17 | 11599.63 |
+| Request Latency (ms) | 503.44 | 6188.90 | 13022.07 | 26388.89 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 1.98 | 10.27 | 9.57 | 8.95 |
+| Output Token Throughput (Tok/s) | 197.75 | 1026.14 | 956.47 | 893.91 |
+
+#### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
+|---|---:|---:|---:|---:|
+| Time To First Token (ms) | 239.24 | 1798.96 | 11644.84 | 33293.32 |
+| Request Latency (ms) | 638.71 | 13599.89 | 26299.90 | 49165.91 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 1.56 | 4.66 | 4.50 | 4.45 |
+| Output Token Throughput (Tok/s) | 155.93 | 465.28 | 449.57 | 444.17 |
+
+### Embedded-Platform Eager Transformers
+
+These preliminary measurements use raw Hugging Face Transformers in eager mode rather than vLLM. They are presented separately because their runtime, workloads, and metric definitions differ from the vLLM serving benchmarks above.
+
+| Board | Specification | Input | Prompt Tokens | Prefill Throughput | Prefill Latency | Decode Throughput | End-to-End Latency |
+|---|---|---|---:|---:|---:|---:|---:|
+| Jetson AGX Thor T5000 | 128 GB / MAXN | Text | 1705 | 8717 Tok/s | 0.20 s | 37.3 Tok/s | 3.60 s |
+| Jetson AGX Thor T5000 | 128 GB / MAXN | Image | 911 | 4845 Tok/s | 0.19 s | 42.6 Tok/s | 3.17 s |
+| Jetson AGX Thor T5000 | 128 GB / MAXN | Video | 1263 | 6032 Tok/s | 0.21 s | 41.8 Tok/s | 3.25 s |
+| Jetson AGX Thor T4000 | 64 GB / MAXN, 1530 MHz | Text | 1705 | 6519 Tok/s | 0.26 s | 34.1 Tok/s | 3.99 s |
+| Jetson AGX Thor T4000 | 64 GB / MAXN, 1530 MHz | Image | 911 | 3471 Tok/s | 0.26 s | 40.3 Tok/s | 3.41 s |
+| Jetson AGX Thor T4000 | 64 GB / MAXN, 1530 MHz | Video | 1263 | 4164 Tok/s | 0.30 s | 38.1 Tok/s | 3.64 s |
+| Jetson Thor T3000 | 32 GB / 1100 MHz | Text | 1705 | 5230 Tok/s | 0.33 s | 29.7 Tok/s | 4.61 s |
+| Jetson Thor T3000 | 32 GB / 1100 MHz | Image | 911 | 2710 Tok/s | 0.34 s | 36.3 Tok/s | 3.83 s |
+| Jetson Thor T3000 | 32 GB / 1100 MHz | Video | 1263 | 3388 Tok/s | 0.37 s | 33.7 Tok/s | 4.14 s |
+| Jetson Thor T2000 | 16 GB / 702 MHz, THOR_NANO | Text | 1705 | 2355 Tok/s | 0.72 s | 15.7 Tok/s | 8.80 s |
+| Jetson Thor T2000 | 16 GB / 702 MHz, THOR_NANO | Image | 911 | 1233 Tok/s | 0.74 s | 19.6 Tok/s | 7.21 s |
+| Jetson Thor T2000 | 16 GB / 702 MHz, THOR_NANO | Video | 1263 | 1543 Tok/s | 0.82 s | 18.0 Tok/s | 7.87 s |
+| Jetson AGX Orin | 64 GB | Text | 1705 | 3260 Tok/s | 0.52 s | 12.3 Tok/s | 10.83 s |
+| Jetson AGX Orin | 64 GB | Image | 911 | 1840 Tok/s | 0.50 s | 12.3 Tok/s | 10.81 s |
+| Jetson AGX Orin | 64 GB | Video | 1263 | 2103 Tok/s | 0.60 s | 12.2 Tok/s | 10.97 s |
+
+<sub>Notes:
+1. Source: vLLM inference benchmarking for `nvidia/Cosmos3-Edge`; metrics were collected with one GPU at client-side concurrency levels of 1, 64, 128, and 256.
+2. **Time To First Token (TTFT)** measures latency until the first output token is emitted. **Request Latency** is end-to-end time per request. For single-token outputs (Output 1), TTFT and request latency are identical.
+3. **Request Throughput** is completed requests per second. **Output Token Throughput** is generated tokens per second. For Output 1 workloads, the two throughput values match.
+4. Concurrency is the number of simultaneous client requests, not tensor-parallel GPU count.
+5. Embedded-platform measurements use Hugging Face Transformers in eager mode and should not be compared directly with the vLLM serving results.</sub>
 
 ## Cosmos3-Nano Reasoner
 

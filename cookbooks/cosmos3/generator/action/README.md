@@ -86,7 +86,7 @@ visualize the generated videos:
   forward dynamics for AV, DROID, and UMI robotics examples using Cosmos3-Nano.
 - [`run_id_with_cosmos_framework.ipynb`](./run_id_with_cosmos_framework.ipynb) —
   inverse dynamics, predicting ego-motion trajectories from input AV videos using Cosmos3-Nano.
-- [`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID.
+- [`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID and Cosmos3-Edge-Policy-DROID.
 
 ## Run with vLLM-Omni
 
@@ -105,8 +105,8 @@ curl http://localhost:8001/v1/models
 Forward-dynamics requests are multipart `POST`s to `/v1/videos` — a start image
 under `files={"input_reference": ...}` plus an `extra_params` payload carrying the
 action trajectory. The vLLM notebooks use these diffusion defaults for action
-generation (see [`run_fd_with_vllm.ipynb`](./run_fd_with_vllm.ipynb) and
-[`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb)):
+generation (see [`run_fd_with_vllm_omni.ipynb`](./run_fd_with_vllm_omni.ipynb) and
+[`run_id_with_vllm_omni.ipynb`](./run_id_with_vllm_omni.ipynb)):
 
 | Field | Value |
 | --- | --- |
@@ -122,9 +122,9 @@ including autoregressive chunked generation for the robotics examples.
 The vLLM-Omni notebooks send requests through the OpenAI-compatible video API and
 write outputs under `outputs/cosmos3_action_vllm/`:
 
-- [`run_fd_with_vllm.ipynb`](./run_fd_with_vllm.ipynb) — forward dynamics for AV,
+- [`run_fd_with_vllm_omni.ipynb`](./run_fd_with_vllm_omni.ipynb) — forward dynamics for AV,
   DROID, and UMI robotics examples.
-- [`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb) — inverse dynamics,
+- [`run_id_with_vllm_omni.ipynb`](./run_id_with_vllm_omni.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
 
 ## Post-Train for Cosmos3-Nano-Policy-DROID
@@ -135,7 +135,7 @@ launch-script pattern as the other Cosmos3 finetune cookbooks while delegating
 the canonical training implementation to Cosmos Framework.
 
 The same [action-policy SFT cookbook](./finetune/README.md) also covers **LIBERO-10**
-(`launch_sft_action_policy_libero.sh`) — fine-tuning Cosmos3-Nano on the `libero_10`
+(`launch_sft_action_policy_libero_10_nano.sh`) — fine-tuning Cosmos3-Nano on the `libero_10`
 simulation benchmark with the same launch-script pattern.
 
 ## TODO

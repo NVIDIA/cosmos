@@ -1,8 +1,9 @@
 # Cosmos3 Generator Audiovisual Examples
 
 Generate images and video (with optional audio) from text or image prompts with
-`Cosmos3-Nano` and `Cosmos3-Super`, across Cosmos Framework, Diffusers,
-vLLM-Omni, and NIM backends. Sample prompts live under [`assets/`](./assets).
+`Cosmos3-Nano`, `Cosmos3-Super`, `Cosmos3-Edge`, and the published four-step
+distilled Cosmos3-Super students across Cosmos Framework, Diffusers, vLLM-Omni,
+and NIM backends. Sample prompts live under [`assets/`](./assets).
 
 > **NIM scope:** `Cosmos3-Generator` NIM currently exposes Text2Video and
 > Image2Video only. It does not expose text-to-image, video-to-video,
@@ -78,12 +79,24 @@ torchrun --nproc-per-node=1 \
 To run **Cosmos3-Super** instead, set `--checkpoint-path Cosmos3-Super` and use
 more GPUs via `--nproc-per-node`.
 
+To run **Cosmos3-Edge** instead, set `--checkpoint-path Cosmos3-Edge`. Edge has
+no audio modules, so keep `"enable_sound": False` in the payload.
+
 ### Notebook walkthrough
 
 [`run_with_cosmos_framework.ipynb`](./run_with_cosmos_framework.ipynb) is the full
 tutorial for the native PyTorch backend: it covers every use case — text-to-image,
 text-to-video, image-to-video, with audio on or off — and includes the detailed,
-environment-aware setup and visualization for each generation.
+environment-aware setup and visualization for each generation. It also includes
+four-GPU inference examples for `nvidia/Cosmos3-Super-Text2Image-4Step` and
+`nvidia/Cosmos3-Super-Image2Video-4Step`.
+
+### Distillation training recipe
+
+[`distill/README.md`](./distill/README.md) documents the short T2I and I2V DMD2
+training, resume, and student-only export workflow. The first supported topology
+is exactly 8 GB200 nodes with 4 GPUs per node. This is an integration smoke
+recipe, not a production reproduction recipe.
 
 ## Run with Diffusers
 

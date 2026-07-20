@@ -75,7 +75,7 @@ The generated text is written to
 ### Notebook walkthrough
 
 [`run_with_cosmos_framework.ipynb`](./run_with_cosmos_framework.ipynb) is the full
-tutorial. It writes text and image smoke tests, then walks through image
+tutorial cover Nano, Super, Edge. It writes text and image smoke tests, then walks through image
 capability sections — detailed captioning, robot task planning, 2D grounding,
 describe-anything, and action-trajectory prompts — rendering the prompt, media
 input, model output, and any parsed boxes or trajectories together for review. It
