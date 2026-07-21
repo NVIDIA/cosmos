@@ -80,7 +80,9 @@ To run **Cosmos3-Super** instead, set `--checkpoint-path Cosmos3-Super` and use
 more GPUs via `--nproc-per-node`.
 
 To run **Cosmos3-Edge** instead, set `--checkpoint-path Cosmos3-Edge`. Edge has
-no audio modules, so keep `"enable_sound": False` in the payload.
+no audio modules, so keep `"enable_sound": False` in the payload. Edge supports
+only 256p/480p, so use Edge's generation settings in the payload:
+`"resolution": "480"`, `"num_frames": 121`, and `"fps": 24`.
 
 ### Notebook walkthrough
 
