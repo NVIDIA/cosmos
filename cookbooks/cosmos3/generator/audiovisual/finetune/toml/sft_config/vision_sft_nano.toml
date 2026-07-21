@@ -50,7 +50,7 @@ keys_to_select = [
     "vae2llm",
     "llm2vae",
 ]
-lr            = 2.0e-5
+lr            = 1.0e-4                                 # tuned via LR sweep: full fine-tune converges faster at 1e-4 than 2e-5 (LoRA super stays 5e-4)
 weight_decay  = 0                                        # int matches legacy YAML repr
 # lr_multipliers intentionally empty for vision SFT (Hydra default {} stands).
 

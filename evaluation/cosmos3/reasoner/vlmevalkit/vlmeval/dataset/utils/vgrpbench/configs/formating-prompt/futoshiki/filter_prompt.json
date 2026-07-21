@@ -1,0 +1,66 @@
+[
+    {
+        "role": "system", 
+        "content": "You are a text formater, your goal is to extract two parts, perception and answer from the answer and put them into a good format. Please according to the conversation history with the user feedback. The desired format is a 2d array, where there is only two types values 0 or numbers; if you see * or _  or - or e or #, you should convert them into 0. If you see other numbers such as 1, 2, or 3, you just put it there.If the perception / answer is not a valid solution or not existe, please put a Wrong there. Your goal is only to format the user's input, not to check if it is correct or not"
+    },
+    {
+        "role": "user",
+        "content": "json\n{\n  \"Initial State\": [[1, 2, \"*\", \"*\"], [2, \"*\", \"*\", \"*\"], [\"*\", \"*\", 1, \"*\"], [\"*\", \"*\", \"*\", \"*\"]],\n  \"Thought\": \"To solve this Sudoku puzzle, I need to fill in the empty cells ensuring that each number from 1 to 4 appears exactly once in each row, column, and 2x2 block. I will start by identifying the possible numbers for each empty cell based on the existing ones.\",\n  \"Solution\": [[1, 2, 4, 3], [2, 3, 4, 1], [3, 4, 1, 2], [4, 1, 2, 4]]\n}\n"
+    },
+    {
+        "role": "assistant",
+        "content": "Perception\n[[1,2,0,0],[2,0,0,0],[0,0,1,0],[0,0,0,0]]\nAnswer\n[[1,2,4,3],[2,3,4,1],[3,4,1,2],[4,1,2,4]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "json\n{\n  \"Initial State\": [[4, 1, \"*\", \"*\"], [2, \"*\", \"*\", \"*\"], [\"*\", \"*\", \"*\", \"*\"], [\"*\", \"*\", \"*\", 1]],\n  \"Thought\": \"The grid consists of a 4x4 layout divided into 2x2 blocks. Considering existing numbers, I will analyze which numbers can fit into the empty cells while ensuring each row, column, and 2x2 block adhere to Sudoku rules. I will start filling from top left to bottom right.\",\n  \"Solution\": [[4, 1, 3, 2], [2, 3, 1, 4], [1, 4, 2, 3], [3, 2, 4, 1]]\n}\n"
+    },
+    {
+        "role": "assistant",
+        "content": "Perception\n[[4,1,0,0],[2,0,0,0],[0,0,0,0],[0,0,0,1]]\nAnswer\n[[4,1,3,2],[2,3,1,4],[1,4,2,3],[3,2,4,1]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"Initial State\": [\n[[\"*\"], [\"*\"], [\"*\"], [\"4\", \"1\"]], \n[[\"*\"], [\"*\"], [\"*\"], [\"1\"]], \n[[\"*\"], [\"*\"], [\"*\"], [\"*\"]], \n[[\"1\"], [\"*\"], [\"*\"], [\"3\"]]\n],\n\n\"Thought\": \"The grid is divided into 2x2 blocks. We need to ensure each block, row, and column contains unique numbers from 1 to 4. The current numbers are 1 and 3 in the top-right block and 4 and 1 in the top-left block. We need to fill the remaining cells with numbers 2 and 4 to make sure each block, row, and column has unique numbers. We can start with placing 2 in the bottom-left cell of the top-right block and 4 in the bottom-right cell of the top-left block.\",\n\"Solution\": {\n\"Thought\": \"Considering the existing numbers and the rule that each block, row, and column must contain unique numbers, we can place the numbers in the remaining cells. The numbers 2 and 4 are available to fill the cells. We need to ensure that each of these numbers is placed in a way that does not violate the Sudoku rules. For example, we can place 2 in the bottom-left cell of the top-right block and 4 in the bottom-right cell of the top-left block.\",\n\"Solution\": {\n\"Thought\": \"In the bottom-left cell of the top-right block, we can place the number 2. In the bottom-right cell of the top-left block, we can place the number 4. Now, we need to fill the remaining cells in the bottom-left block of the top-right block and the top-right cell of the top-left block with the remaining numbers 1 and 3.\",\n\"Solution\": {\n\"Thought\": \"We can place the number 1 in the bottom-left cell of the top-right block and the number 3 in the top-right cell of the top-left block. This will ensure that each block, row, and column contains unique numbers from 1 to 4.\",\n\"Solution\": {\n\"Thought\": \"The solution is to place the numbers as follows: 2 in the bottom-left cell of the top-right block, 4 in the bottom-right cell of the top-left block, 1 in the bottom-left cell of the top-right block, and 3 in the top-right cell of the top-left block.\",\n\"Solution\": {\n\"Thought\": \"The solution to the Sudoku puzzle is as follows: 2 in the bottom-left cell of the top-right block, 4 in the bottom-right cell of the top-left block, 1 in the bottom-left cell of the top-right block, and 3 in the top-right cell of the top-left block. This will ensure that each block, row, and column contains unique numbers from 1 to 4.\",\n\"Solution\": {\n\"Thought\": \"In the bottom-left cell of the top-right block, we can\n``"
+    },
+    {
+        "role": "assistant",
+        "content": "Perception\nWrong\nAnswer\nWrong"
+    },
+    {
+        "role": "user",
+        "content": "Yes. as perception is not a 2D array and answer is missing. For perception, its first row is 3 single item and 1 2-item array, not valid. Thus, putting Wrong for both perception and answer."
+    },
+    {
+        "role": "user",
+        "content": "``\n{\n    \"Initial State\": [\n        [3, \"*\", 2, \"*\"],\n        [\"*\", \"*\", \"*\", \"*\"],\n        [\"*\", 2, 3, \"*\"],\n        [\"*\", \"*\", \"*\", \"*\"]\n    ],\n    \"Thought\": \"The given Sudoku puzzle has some numbers already filled in. We need to fill in the missing numbers such that each row, column, and 2x2 sub-grid contains the numbers 1-4 without repetition.\",\n    \"Solution\": [\n        [3, 1, 2, 4],\n        [4, 3, 1, 2],\n        [1, 2, 3, 4],\n        [2, 4, 4, 1]\n    ]\n}\n```\n\nThe solution is obtained by applying the standard Sudoku solving techniques, such as focusing on the most constrained regions first and using logical deductions to eliminate possibilities."
+    },
+    {
+        "role": "assistant",
+        "content": "Perception\n[[3,0,2,0],[0,0,0,0],[0,2,3,0],[0,0,0,0]]\nAnswer\n[[3,1,2,4],[4,3,1,2],[1,2,3,4],[2,4,4,1]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. ."
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\"perception\": [[3, 1, \"*\", 4], [2, 4, 1, 3], [\"*\", \"*\", 4, \"*\"], [4, \"*\", 3, \"*\"]], \"think\": \"Looking at the first row, the only missing number is 2. \\nLooking at the last row, the missing numbers are 1 and 2. Since the cell at index (3,1) is of the same color as the cell at index (1,1) which contains the number 4, and the cell at index (3,0) contains the number 4, the cell at index (3,1) can only be 1 or 2. Since the cell at index (3,0) already contains 4, the cell at index (3,1) must be 1. Then the cell at index (3,3) must be 2. \\nLooking at the third row, the missing numbers are 1, 2, and 3. Since the cell at index (2,3) is of the same color as the cell at index (0,3) which contains 4, and the cell at index (1,3) contains 3, and the cell at index (2,2) contains 4, the cell at index (2,3) must be 1 or 2. Since the cell at index (3,3) contains 2, the cell at index (2,3) must be 1. Then the cell at index (2,0) must be 3, and the cell at index (2,1) must be 2. \\nTherefore, the solution is [[3, 1, 2, 4], [2, 4, 1, 3], [3, 2, 4, 1], [4, 1, 3, 2]].\", \"answer\": [[3, 1, 2, 4], [2, 4, 1, 3], [3, 2, 4, 1], [4, 1, 3, 2]]}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Perception\n[[3,1,0,4],[2,4,1,3],[0,0,4,0],[4,0,3,0]]\nAnswer\n[[3,1,2,4],[2,4,1,3],[3,2,4,1],[4,1,3,2]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. ."
+    }
+]

@@ -1,6 +1,10 @@
-# Cosmos3-Nano-Policy-DROID server
+# Cosmos3-Policy-DROID server
 
-Cosmos3-Nano-Policy-DROID is served by a policy **Server** that streams actions to a **Client** driving a simulated or real robot. This example uses [`RoboLab`](https://github.com/NVlabs/RoboLab), a simulation benchmark for task-generalist policies, as the client. Start the server first, then connect the client.
+Cosmos 3 offers two post-trained policy models for DROID:
+1. [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID)
+2. [Cosmos3-Edge-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Edge-Policy-DROID)
+
+Each of these policy models is served by a policy **Server** that streams actions to a **Client** driving a simulated or real robot. This example uses [`RoboLab`](https://github.com/NVlabs/RoboLab), a simulation benchmark for task-generalist policies, as the client. Start the server first, then connect the client.
 
 ## Table of Contents
 
@@ -56,10 +60,21 @@ The `--group=cu130-train` line targets a CUDA 13 driver (the default). On CUDA
 
 Inside the container, start the policy server:
 
-```
-python -m cosmos_framework.scripts.action_policy_server_robolab \
-  --port 8000
-```
+1. For [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID), run:
+
+   ```
+   python -m cosmos_framework.scripts.action_policy_server_robolab \
+     --port 8000
+   ```
+
+2. For [Cosmos3-Edge-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Edge-Policy-DROID), run:
+
+   ```
+   python -m cosmos_framework.scripts.action_policy_server_robolab \
+     --checkpoint-path nvidia/Cosmos3-Edge-Policy-DROID \
+     --port 8000 \
+     --format-prompt-as-json True
+   ```
 
 ## Simulation Client
 

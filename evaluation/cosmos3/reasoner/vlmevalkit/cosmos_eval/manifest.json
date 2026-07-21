@@ -1,0 +1,56 @@
+{
+  "metropolis/AETCBench_all": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  },
+  "metropolis/VANTAGE_2DGrounding": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  },
+  "metropolis/VANTAGE_2DPointing": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  },
+  "metropolis/VANTAGE_Astro2D": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  },
+  "metropolis/VANTAGE_DVC": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  },
+  "metropolis/VANTAGE_EventVerification": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  },
+  "metropolis/VANTAGE_SOT": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  },
+  "metropolis/VANTAGE_Temporal": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  },
+  "metropolis/VANTAGE_VQA": {
+    "run": {
+      "api_nproc": 8,
+      "judge_nproc": 4
+    }
+  }
+}

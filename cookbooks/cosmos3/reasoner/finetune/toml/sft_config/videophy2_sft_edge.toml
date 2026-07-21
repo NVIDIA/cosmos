@@ -1,0 +1,106 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# videophy2_sft_edge — VLM dialog SFT on VideoPhy-2 via CosmosDataLoader, on the
+# Cosmos3-Edge reasoner backbone (public nvidia/Cosmos3-Edge, model_type
+# cosmos3_edge). Base config = cosmos_framework/configs/base/reasoner/config.py
+# (selected by [job].task="vlm").
+#
+# Edge-tier counterpart of videophy2_sft_nano: same dataset + dataflow, but the
+# compact 2B Nemotron-2B-Dense-VL LM + SigLIP2 vision tower instead of Qwen3-VL-8B.
+# The SigLIP2 vision tower is frozen; the projector + LM train at a uniform 1e-6.
+# FSDP full-shard across every rank (data_parallel_shard_degree=-1, auto from
+# WORLD_SIZE) so it fits a 4-GPU (e.g. GB200x4) or 8-GPU allocation. Full fine-tune
+# (no LoRA).
+#
+# Dataset prep:
+#   python -m cosmos_framework.scripts.reasoner.prepare_videophy2_from_hf \
+#       --out_root $VIDEOPHYSICS_ROOT --split both
+#
+# Required env at launch: VIDEOPHYSICS_ROOT (read by the experiment Python).
+#
+# Example launch (from cookbooks/cosmos3/reasoner/finetune/):
+#   bash launch_sft_videophy2_edge.sh
+
+[job]
+task         = "vlm"
+experiment   = "videophy2_sft_edge"
+project      = "cosmos3"
+group        = "vlm_videophy2_sft"
+name         = "videophy2_sft_edge"
+wandb_mode   = "disabled"
+
+[model]
+# Edge delta vs nano: the "cosmos" adapter is Qwen3-VL-only and rejects the Edge
+# reasoner's (cosmos3_edge) mask. flash_attention_2 is ~14% faster than sdpa with
+# matching loss curves; set "sdpa" where flash-attn is not installed (portable fallback).
+attn_implementation = "flash_attention_2"
+precision           = "bfloat16"                         # was [model.parallelism].precision
+
+# Supplies arch/config/tokenizer and weights — loaded directly from the snapshot,
+# no converter step. Optional: set safetensors_path here to load local weights instead.
+[model.backbone]
+model_name = "nvidia/Cosmos3-Edge"
+
+[model.ema]
+enabled         = false
+rate            = 0.1
+iteration_shift = 0
+
+[model.parallelism]
+data_parallel_shard_degree      = -1                     # FSDP full shard, auto from WORLD_SIZE (4- or 8-GPU)
+data_parallel_replicate_degree  = 1
+context_parallel_shard_degree   = 1
+cfg_parallel_shard_degree       = 1
+
+[model.compile]
+enabled                         = false                  # was [model.parallelism].use_torch_compile
+compile_dynamic                 = true
+
+[model.activation_checkpointing]
+mode                = "full"
+save_ops_regex      = ["fmha"]
+preserve_rng_state  = true
+determinism_check   = "default"
+
+[optimizer]
+betas         = [0.9, 0.95]
+eps           = 1.0e-8
+fused         = true
+lr            = 1.0e-6
+weight_decay  = 0.1
+# Uniform 1e-6 across projector + LM + lm_head; the SigLIP2 vision tower is frozen
+# in the experiment (frozen_params regex), not via a per-part LR multiplier.
+
+[scheduler]
+cycle_lengths      = [50]
+f_max              = [1.0]
+f_min              = [0.1]
+f_start            = [0.05]
+verbosity_interval = 0
+warm_up_steps      = [5]
+
+[trainer]
+distributed_parallelism = "fsdp"
+grad_accum_iter         = 8
+logging_iter            = 1
+max_iter                = 50
+
+[trainer.callbacks.compile_tokenizer]
+compile_after_iterations = 3
+enabled                  = false
+
+[trainer.callbacks.grad_clip]
+clip_norm    = 1.0
+force_finite = false
+
+[checkpoint]
+keys_to_skip_loading = []
+load_path            = "???"
+save_iter            = 100
+
+[dataloader_train]
+# PATH_REMAPS["vlm"] routes these onto the CosmosDataLoader batcher
+# (max_batch_size / max_tokens).
+max_samples_per_batch = 1
+max_sequence_length   = 16000
