@@ -1,16 +1,24 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: OpenMDW-1.1
 
-# vision_sft_nano — T2V / I2V / V2V vision-only SFT (Qwen3-VL-8B / nano)
+# vision_sft_edge — full T2V/I2V/V2V SFT on Nemotron-2B-Dense-VL (Cosmos3-Edge tier).
 # Consumed by cosmos_framework.configs.toml_config.sft_config.load_experiment_from_toml.
-# Uses PackingDataLoader (no dataloader_train.seed slot — keep it omitted here).
+# Uses PackingDataLoader (no dataloader_train.seed slot — keep it omitted).
+#
+# Edge-tier counterpart of vision_sft_nano: same dataset + dataflow and the same
+# full-SFT knobs (EMA on, moe_gen optimizer allowlist, lr=1e-4), but on the compact
+# 2B dense Nemotron backbone (Cosmos3-Edge, no audio/sound tokenizer). Only 2B, so
+# it fits a 4-GPU (e.g. GB200x4) or 8-GPU allocation.
+#
+# Example launch (from cookbooks/cosmos3/generator/audiovisual/finetune/):
+#   bash launch_sft_vision_edge.sh
 
 [job]
 task         = "vfm"
-experiment   = "vision_sft_nano"
+experiment   = "vision_sft_edge"
 project      = "cosmos3"
 group        = "sft"
-name         = "vision_sft_nano"
+name         = "vision_sft_edge"
 wandb_mode   = "disabled"
 
 [model]
@@ -19,7 +27,7 @@ joint_attn_implementation    = "two_way"
 precision                    = "bfloat16"                # was [model.parallelism].precision
 
 [model.ema]
-enabled         = true
+enabled         = true                                   # edge: full SFT, EMA on (nano parity)
 rate            = 0.1
 iteration_shift = 0
 
@@ -49,6 +57,7 @@ keys_to_select = [
     "time_embedder",
     "vae2llm",
     "llm2vae",
+    "k_norm_und_for_gen",  # und-K norm trains with the gen pathway
 ]
 lr            = 1.0e-4                                 # tuned via LR sweep: full fine-tune converges faster at 1e-4 than 2e-5 (LoRA super stays 5e-4)
 weight_decay  = 0                                        # int matches legacy YAML repr

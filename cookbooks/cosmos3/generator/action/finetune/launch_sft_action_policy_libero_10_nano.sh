@@ -4,7 +4,7 @@
 
 # Complete recipe: LIBERO-10 action-policy SFT on Cosmos3-Nano (HSDP 2x8).
 # Run from this folder with the cosmos-framework venv active (see README):
-#   bash launch_sft_action_policy_libero.sh
+#   bash launch_sft_action_policy_libero_10_nano.sh
 # It prepares the small dependencies, checks for the staged libero_10 dataset, and trains.
 # Paths are fixed under this (git-ignored) folder, matching the reasoner finetune
 # wrappers, while the TOML and tail-overrides match the cosmos-framework example.
@@ -12,7 +12,7 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-TOML_FILE="toml/sft_config/action_policy_libero_repro.toml"
+TOML_FILE="toml/sft_config/action_policy_libero_10_nano.toml"
 : "${LIBERO_ROOT:=$PWD/data/LIBERO_LeRobot_v3/libero_10}"
 : "${BASE_CHECKPOINT_PATH:=$PWD/checkpoints/Cosmos3-Nano}"
 : "${WAN_VAE_PATH:=$PWD/checkpoints/wan22_vae/Wan2.2_VAE.pth}"

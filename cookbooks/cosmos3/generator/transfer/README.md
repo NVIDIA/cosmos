@@ -1,7 +1,7 @@
 # Cosmos3 Generator Transfer Examples
 
 Cosmos3 video **transfer** examples — **Nano** (single GPU) and **Super** (multi-GPU, 32B) — on
-the native PyTorch (Cosmos Framework) path.
+the native PyTorch (Cosmos Framework) path and the OpenAI-compatible vLLM-Omni server path.
 Sample assets under [`assets/`](./assets) cover spatial control signals paired with
 `prompt.json` files:
 
@@ -10,9 +10,11 @@ Sample assets under [`assets/`](./assets) cover spatial control signals paired w
 - **Depth** — depth map control plus caption.
 - **Segmentation** — segmentation map control plus caption.
 - **World scenario (WSM)** — world-scenario map control plus caption.
-- **Multi-control** — two or more hints combined with per-hint weights.
+- **Multi-control** — two or more hints; Cosmos Framework also supports per-hint weights.
 
-vLLM-Omni does not expose transfer controls today.
+Both Cosmos Framework and vLLM-Omni support multi-control transfer. Per-hint
+weighting is supported only by Cosmos Framework; vLLM-Omni accepts multiple
+controls but does not support per-hint weights.
 
 Environment setup is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide.
@@ -20,11 +22,15 @@ Environment setup is centralized in the shared
 ## Transfer Definition
 
 Video transfer generates a target clip from a `prompt.json` caption and one or more
-spatial control signals. Inference uses `model_mode` `video2video`. Control signals can
-be supplied as pre-computed videos (`control_path`) or derived on-the-fly from a raw
-source video (`vision_path`). Output frame count and geometry come from the control
-video; see the spec field reference for how `fps` and `aspect_ratio` are resolved.
-All examples share `assets/negative_prompt.json` for the negative caption.
+spatial control signals. The Framework path uses `model_mode` `video2video` in a local JSON spec.
+The vLLM-Omni path uses `POST /v1/videos/sync` and passes one or more hint keys (`edge`, `blur`,
+`depth`, `seg`, or `wsm`) inside `extra_params`. Cosmos Framework accepts pre-computed
+control videos (`control_path`) or derives active controls from a raw source video
+(`vision_path`). With vLLM-Omni, pass pre-computed controls through `control_path`; edge
+and blur controls can also be derived from an uploaded `input_reference`. Output frame
+count and geometry come from the control video; see the spec field reference for how
+`fps` and `aspect_ratio` are resolved. All examples share `assets/negative_prompt.json`
+for the negative caption.
 
 | Control | Asset folder | Inference input | Generation duration |
 | --- | --- | --- | --- |
@@ -33,9 +39,10 @@ All examples share `assets/negative_prompt.json` for the negative caption.
 | Depth | `assets/depth/` | `control_depth.mp4` + `prompt.json` | 121 frames @ 30 FPS |
 | Segmentation | `assets/seg/` | `control_seg.mp4` + `prompt.json` | 121 frames @ 30 FPS |
 | World scenario (WSM) | `assets/wsm/` | `control_wsm.mp4` + `prompt.json` | 101 frames @ 10 FPS |
-| Multi-control | `assets/multi_control/` | `vision_path` + multiple hints | 121 frames @ 30 FPS |
+| Multi-control | `assets/multi_control/` | `vision_path` + multiple hints (Framework example) | 121 frames @ 30 FPS |
 
-Transfer inference is selected automatically when any hint key is present in the spec.
+Transfer inference is selected automatically when any hint key is present in the
+Framework spec or in vLLM-Omni `extra_params`.
 The same spec files are used for both Nano and Super — model selection is controlled
 entirely by `--checkpoint-path`.
 
@@ -126,133 +133,87 @@ jupyter execute run_video_transfer_with_cosmos_framework.ipynb
 
 Outputs land under `outputs/notebooks/<model>/transfer_<control>/vision.mp4`.
 
----
+## Run with vLLM-Omni
 
-## Multi-Control Transfer
+### Quickstart
 
-Multi-control transfer blends two or more spatial hint streams — for example edge + depth
-— into a single generation pass. Each active hint receives a `weight` that determines its
-relative influence. Weights across all active hints should sum to 1.0 for predictable
-behavior, though the model accepts any positive values.
+vLLM-Omni accepts multiple control hints in one request, but does not support
+the per-hint `weight` field available in Cosmos Framework.
 
-### Concepts
-
-| Field | Description |
-| --- | --- |
-| `edge` / `blur` / `depth` / `seg` | Hint block; set any subset to activate those controls |
-| `weight` | Per-hint blending weight; ratios matter, not absolute values (default `1.0`) |
-| `control_path` | Path to a **pre-computed** control video (optional; see below) |
-| `vision_path` | Raw source video; the framework derives all active controls on-the-fly |
-| `control_guidance` | Global CFG scale across all active control streams (default `1.5`) |
-
-**Two input modes:**
-
-1. **`vision_path` mode** — Provide a raw source video. For `edge` and `blur` hints
-   with no `control_path`, the framework computes the control signal on-the-fly
-   (Canny for `edge`, downscale/upscale for `blur`). `depth` and `seg` always require
-   a pre-computed `control_path` — they depend on DepthAnything and SAM2 which are
-   not bundled in the cosmos-framework.
-
-2. **Pre-computed mode** — Provide a `control_path` inside each hint block. All
-   control videos must be derived from the **same source video** and share identical
-   resolution, fps, and frame count. Use this when you want exact control over the
-   pre-processed signals or to reuse cached extractions across runs.
-
-### Quickstart — Multi-control from a source video
-
-Uses the same env vars as the single-control quickstart (`COSMOS_FRAMEWORK` and `TRANSFER_ROOT`).
-
-#### Cosmos3-Nano (single GPU)
+Set up the environment and start the server:
+[vLLM-Omni setup](../../README.md#vllm-omni). Transfer controls are available from
+vLLM-Omni `main` and the released `vllm/vllm-omni:cosmos3` container. Check the current
+[Cosmos3-Nano recipe](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md)
+before selecting an image. For Docker, run the command from the `cosmos` repo root so
+the repo is mounted at `/workspace` and the server runs from that directory inside the
+container:
 
 ```bash
-cd "$COSMOS_FRAMEWORK"
-
-# edge + blur computed on-the-fly from vision_path (robot_pouring.mp4)
-CUDA_VISIBLE_DEVICES=0 \
-.venv/bin/python -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i "$TRANSFER_ROOT/specs/multi_control.json" \
-  -o "$TRANSFER_ROOT/outputs/Cosmos3-Nano/" \
-  --checkpoint-path Cosmos3-Nano \
-  --seed 2026
+export COSMOS3_WORKDIR="$(pwd)"
+export COSMOS3_HOST_PORT=8000
 ```
 
-Output lands at `outputs/Cosmos3-Nano/transfer_multi_control/vision.mp4`.
+The transfer examples send repo-local `control_path` strings to the server. For
+Docker, those paths must be visible from the server working directory. With the
+shared Docker setup, the checked-in depth control video is:
 
-#### Cosmos3-Super (multi-GPU)
-
-```bash
-cd "$COSMOS_FRAMEWORK"
-
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
-.venv/bin/torchrun --nproc-per-node=4 \
-  --master-addr=127.0.0.1 --master-port=29500 \
-  -m cosmos_framework.scripts.inference \
-  --parallelism-preset=latency \
-  -i "$TRANSFER_ROOT/specs/multi_control.json" \
-  -o "$TRANSFER_ROOT/outputs/Cosmos3-Super/" \
-  --checkpoint-path Cosmos3-Super \
-  --seed 2026
+```text
+cookbooks/cosmos3/generator/transfer/assets/depth/control_depth.mp4
 ```
 
-Output lands at `outputs/Cosmos3-Super/transfer_multi_control/vision.mp4`.
+If your server does not run from the repo root, start it from the repo root or
+adjust `control_path` to a path the server process can read.
 
-### Spec field reference — multi-control
+Transfer requests should also pass the spec `resolution` inside `extra_params`.
+Cosmos3 transfer bucket selection reads `extra_params.resolution` and the
+control/input aspect ratio; set the video API `size` field to the matching
+`<width>x<height>` value for a consistent request.
 
-**`specs/multi_control.json`** (edge dominant + blur secondary, controls derived on-the-fly from `vision_path`):
+Send a depth-transfer request:
 
-```json
-{
-  "name": "transfer_multi_control",
-  "model_mode": "video2video",
-  "resolution": "720",
-  "aspect_ratio": "16,9",
-  "num_frames": 121,
-  "fps": 30,
-  "guidance": 3.0,
-  "control_guidance": 1.5,
-  "negative_prompt_file": "../assets/negative_prompt.json",
-  "prompt_path": "../assets/multi_control/prompt.json",
-  "vision_path": "https://.../robot_pouring.mp4",
-  "edge": {
-    "weight": 0.75,
-    "preset_edge_threshold": "medium"
-  },
-  "blur": {
-    "weight": 0.25,
-    "preset_blur_strength": "medium"
-  }
-}
+```python
+import json
+from pathlib import Path
+
+import requests
+
+transfer_root = Path("cookbooks/cosmos3/generator/transfer")
+prompt = json.dumps(json.load(open(transfer_root / "assets/depth/prompt.json")))
+negative = json.dumps(json.load(open(transfer_root / "assets/negative_prompt.json")))
+control_path = transfer_root / "assets/depth/control_depth.mp4"
+
+response = requests.post(
+    "http://localhost:8000/v1/videos/sync",
+    data={
+        "prompt": prompt,
+        "negative_prompt": negative,
+        "size": "1280x720",
+        "num_frames": "121",
+        "fps": "30",
+        "num_inference_steps": "50",
+        "guidance_scale": "3.0",
+        "flow_shift": "10.0",
+        "seed": "2026",
+        "extra_params": json.dumps(
+            {
+                "use_resolution_template": False,
+                "use_duration_template": False,
+                "guardrails": True,
+                "depth": {"control_path": control_path.as_posix()},
+                "resolution": "720",
+                "control_guidance": 1.5,
+                "num_video_frames_per_chunk": 121,
+                "max_frames": 121,
+            }
+        ),
+    },
+    headers={"Accept": "video/mp4"},
+)
+response.raise_for_status()
+Path("/tmp/cosmos3_transfer_depth.mp4").write_bytes(response.content)
 ```
 
-Only the **ratio** between weights matters — `edge: 3, blur: 1` is equivalent to
-`edge: 0.75, blur: 0.25`. Omitting `weight` defaults to `1.0` (equal contribution).
-
-To use **pre-computed control videos** instead, replace `vision_path` with `control_path`
-inside each hint block. All control videos must be derived from the same source and
-share identical resolution, fps, and frame count:
-
-```json
-{
-  "edge": {
-    "control_path": "/path/to/control_edge.mp4",
-    "weight": 0.75,
-    "preset_edge_threshold": "medium"
-  },
-  "blur": {
-    "control_path": "/path/to/control_blur.mp4",
-    "weight": 0.25,
-    "preset_blur_strength": "medium"
-  }
-}
-```
-
-`control_guidance` scales the influence of all active control streams collectively;
-`weight` distributes that influence among individual hints.
-
----
-
-### Spec field reference — single-control
+### Spec field reference
 
 A representative spec (`specs/edge.json`):
 
@@ -293,6 +254,11 @@ Key fields:
 
 - [`run_video_transfer_with_cosmos_framework.ipynb`](./run_video_transfer_with_cosmos_framework.ipynb) —
   self-contained notebook: §9–§13 Nano single-control, §14–§18 Super single-control, §19 multi-control (Nano). Edit §2, run top-to-bottom.
+- [`run_video_transfer_with_vllm_omni.ipynb`](./run_video_transfer_with_vllm_omni.ipynb) —
+  full tutorial against an already-running vLLM-Omni server: endpoint checks, repo-local
+  control paths, five single-control transfer requests, and compact previews. The API
+  also accepts unweighted multi-control requests by including multiple hint blocks in
+  `extra_params`.
 - [`specs/`](./specs) — checked-in Framework input JSON per control (paths relative to `specs/`).
   Shared by both Nano and Super.
 

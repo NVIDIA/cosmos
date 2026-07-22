@@ -21,7 +21,7 @@ task         = "vfm"
 experiment   = "action_policy_droid_nano"
 project      = "cosmos3_action"
 group        = "action_sft"
-name         = "action_policy_droid_repro"
+name         = "action_policy_droid_nano"
 wandb_mode   = "online"
 
 [model]

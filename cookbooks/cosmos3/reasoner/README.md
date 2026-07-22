@@ -40,8 +40,7 @@ Set up the environment: [Cosmos Framework setup](../README.md#cosmos-framework).
 This produces the framework venv at `packages/cosmos3/.venv`; run the commands
 below from that checkout (`cd packages/cosmos3`).
 
-Create a Reasoner input file. The `enable_sound=false` field is intentional — it
-avoids a strict argument-validation failure in the current Reasoner path:
+Create a Reasoner input file. The Reasoner does not currently support the audio modality by design, so the `enable_sound=false` field is intentional and required. The framework's strict validation rejects audio requests on a model that doesn't support audio, rather than ignoring the flag: 
 
 ```bash
 mkdir -p outputs/cookbooks/cosmos3/reasoner/inputs
@@ -76,7 +75,7 @@ The generated text is written to
 ### Notebook walkthrough
 
 [`run_with_cosmos_framework.ipynb`](./run_with_cosmos_framework.ipynb) is the full
-tutorial. It writes text and image smoke tests, then walks through image
+tutorial cover Nano, Super, Edge. It writes text and image smoke tests, then walks through image
 capability sections — detailed captioning, robot task planning, 2D grounding,
 describe-anything, and action-trajectory prompts — rendering the prompt, media
 input, model output, and any parsed boxes or trajectories together for review. It

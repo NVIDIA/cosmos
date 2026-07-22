@@ -4,7 +4,7 @@
 
 # Complete recipe: LIBERO-all (4-suite) action-policy SFT on Cosmos3-Nano (HSDP 2x8).
 # Run from this folder with the cosmos-framework venv active (see README):
-#   bash launch_sft_action_policy_libero_all.sh
+#   bash launch_sft_action_policy_libero_all_nano.sh
 # Trains on all 4 LIBERO suites (equal mix); it prepares the small dependencies,
 # checks for the staged suites, and trains. The 4-suite mix needs longer training
 # than libero_10-only (max_iter 5000 vs 2000). Paths are fixed under this
@@ -13,7 +13,7 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-TOML_FILE="toml/sft_config/action_policy_libero_all_repro.toml"
+TOML_FILE="toml/sft_config/action_policy_libero_all_nano.toml"
 : "${LIBERO_ROOT:=$PWD/data/LIBERO_LeRobot_v3}"   # PARENT dir of the 4 suites
 : "${BASE_CHECKPOINT_PATH:=$PWD/checkpoints/Cosmos3-Nano}"
 : "${WAN_VAE_PATH:=$PWD/checkpoints/wan22_vae/Wan2.2_VAE.pth}"
