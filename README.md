@@ -299,6 +299,7 @@ HF repository for Hugging Face based Generator paths. To disable the guardrail, 
 `extra_params` (TensorRT-LLM), `guardrails: false` (vLLM-Omni
 `extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework).
 
+#### Generator with Diffusers
 
 <details>
 <summary>Expand Diffusers Generator setup, example, and modes</summary>
