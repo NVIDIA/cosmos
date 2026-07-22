@@ -13,6 +13,7 @@ SCORER_COMMIT=${PAIBENCH_SCORER_COMMIT:-}
 DETECTRON2_REF=${PAIBENCH_DETECTRON2_REF:-main}
 INSTALL_DETECTRON2=${PAIBENCH_INSTALL_DETECTRON2:-0}
 PREPARE_DREAMSIM=${PAIBENCH_PREPARE_DREAMSIM:-1}
+PREPARE_AMT=${PAIBENCH_PREPARE_AMT:-1}
 DINO_GIT_URL=${PAIBENCH_DINO_GIT_URL:-https://github.com/facebookresearch/dino.git}
 DINO_REF=${PAIBENCH_DINO_REF:-main}
 INSTALL_LOG=${PAIBENCH_INSTALL_LOG:-$SCRIPT_DIR/paibench_scorer_install.log}
@@ -129,6 +130,24 @@ if [[ "$PREPARE_DREAMSIM" == "1" ]]; then
     if [[ ! -d "$DINO_CACHE" ]]; then
         git clone --depth 1 --branch "$DINO_REF" "$DINO_GIT_URL" "$DINO_CACHE"
     fi
+fi
+
+# Use the scorer's canonical asset resolver so motion smoothness is ready
+# before a long evaluation starts. The helper is idempotent when cached.
+if [[ "$PREPARE_AMT" == "1" ]]; then
+    echo "Preparing AMT-S motion-smoothness assets"
+    VBENCH_CACHE_DIR="$SCORER_REPO/.vbench_cache" PYTHONNOUSERSITE=1 "$PY" - <<'PY'
+from pathlib import Path
+
+from pbench.utils import init_submodules
+
+assets = init_submodules(["motion_smoothness"], local=True)["motion_smoothness"]
+for label in ("config", "ckpt"):
+    path = Path(assets[label])
+    if not path.is_file():
+        raise FileNotFoundError(f"AMT {label} is missing: {path}")
+    print(f"AMT {label}: {path}")
+PY
 fi
 
 # No generation/pbench runtime module imports Detectron2. It is therefore off

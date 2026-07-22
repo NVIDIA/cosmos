@@ -20,9 +20,17 @@ tasks:
 
 Both tasks generate at 24 FPS, 720p, 16:9, and keep the raw output (no staging).
 
+The optional scoring section stores results under
+`outputs/scores/<model_name>/<task>/`. Most quality dimensions use the
+upstream distributed evaluator. Motion smoothness runs separately with the
+same AMT-S implementation, writes resumable per-worker checkpoints, and emits
+the standard PAI-Bench-G result schema used by the final aggregation cell.
+
 ## Files
 
 - `run_with_cosmos_framework.ipynb` — main notebook (demos for both tasks + two full-sweep cells).
+- `setup_paibench_scorer.sh` — installs the isolated scoring environment and prepares scorer assets.
+- `run_motion_smoothness_sharded.py` — runs the official AMT-S metric with resumable workers across the visible GPUs.
 - `assets/i2v_prompts.json` — 1044 I2V entries with `json_upsampled_prompt` and `negative_prompt`.
 - `assets/t2v_prompts.json` — 1044 T2V entries with `json_upsampled_prompt` and `negative_prompt`.
 
