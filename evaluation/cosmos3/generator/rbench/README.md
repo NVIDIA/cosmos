@@ -27,7 +27,7 @@ Generation is at 24 FPS, 720p, 16:9, and the raw output is kept (no staging).
 
 The condition images come from the Hugging Face dataset
 [`DAGroup-PKU/RBench`](https://huggingface.co/datasets/DAGroup-PKU/RBench),
-cloned via `git clone` (Git LFS, ~22 GB). Only the condition images are read
+cloned via `git clone` (Git LFS). Only the condition images are read
 from the dataset; the prompts come from the local `assets/prompts/` files.
 
 ## Sampling settings
@@ -44,7 +44,7 @@ from the dataset; the prompts come from the local `assets/prompts/` files.
 
 ## Requirements
 
-- 4-GPU Linux node (configurable via `COSMOS3_NUM_GPUS`, default 4)
+- 8-GPU Linux node (configurable via `COSMOS3_NUM_GPUS`, default 8)
 - `uv >= 0.11.3`
 - `git`, `git-lfs`
 - Hugging Face access to the Cosmos3 model family

@@ -45,7 +45,7 @@ dataset; the prompts come from the local `assets/` files.
 
 ## Requirements
 
-- 4-GPU Linux node (configurable via `COSMOS3_NUM_GPUS`, default 4)
+- 8-GPU Linux node (configurable via `COSMOS3_NUM_GPUS`, default 8)
 - `uv >= 0.11.3`
 - `git`, `git-lfs`
 - Hugging Face access to the Cosmos3 model family

@@ -105,6 +105,25 @@ uv pip install \
     "qwen-vl-utils>=0.0.8" \
     "transformers>=4.49,<5"
 
+SCORER_REPO="$SCORER_REPO" PYTHONNOUSERSITE=1 "$PY" - <<'PY'
+import os
+from pathlib import Path
+
+source_root = Path(os.environ["SCORER_REPO"]) / "eval" / "5_tasks"
+old_import = "from torchvision.io import write_video"
+new_import = (
+    "try:\n"
+    "    from torchvision.io import write_video\n"
+    "except Exception:\n"
+    "    write_video = None"
+)
+
+for source_path in source_root.glob("*.py"):
+    source = source_path.read_text()
+    if old_import in source:
+        source_path.write_text(source.replace(old_import, new_import))
+PY
+
 echo "Validating RBench scorer environment"
 PYTHONNOUSERSITE=1 "$PY" - <<'PY'
 import importlib.metadata as metadata
