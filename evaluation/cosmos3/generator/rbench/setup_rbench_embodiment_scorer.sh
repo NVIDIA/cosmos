@@ -17,6 +17,7 @@ TORCH_CUDA_ARCH_LIST=${RBENCH_OPS_CUDA_ARCH_LIST:-9.0}
 MAX_JOBS=${MAX_JOBS:-16}
 DOWNLOAD_CHECKPOINTS=${RBENCH_DOWNLOAD_CHECKPOINTS:-1}
 INSTALL_LOG=${RBENCH_OPS_INSTALL_LOG:-$SCRIPT_DIR/rbench_ops_install.log}
+QALIGN_DECODE_PATCH="$SCRIPT_DIR/patches/revidgen-qalign-decode-once.patch"
 
 export CUDA_HOME TORCH_CUDA_ARCH_LIST MAX_JOBS
 exec > >(tee -a "$INSTALL_LOG") 2>&1
@@ -43,6 +44,25 @@ command -v g++ >/dev/null || { echo "ERROR: g++ is required"; exit 1; }
     echo "Run setup_rbench_scorer.sh first."
     exit 1
 }
+[[ -f "$QALIGN_DECODE_PATCH" ]] || {
+    echo "ERROR: missing Q-Align decode patch: $QALIGN_DECODE_PATCH"
+    exit 1
+}
+
+# ReVidgen decodes every overlapping Q-Align window independently. For a
+# 121-frame video with window_size=3, that issues 121 Decord get_batch calls and
+# repeatedly decodes the same frames. Apply the repository-local decode-once
+# patch idempotently before validating the scorer scripts.
+if git -C "$REVIDGEN_REPO" apply --reverse --check "$QALIGN_DECODE_PATCH" >/dev/null 2>&1; then
+    echo "Q-Align decode-once patch already applied"
+elif git -C "$REVIDGEN_REPO" apply --check "$QALIGN_DECODE_PATCH"; then
+    git -C "$REVIDGEN_REPO" apply "$QALIGN_DECODE_PATCH"
+    echo "Applied Q-Align decode-once patch"
+else
+    echo "ERROR: Q-Align decode-once patch does not apply cleanly"
+    git -C "$REVIDGEN_REPO" diff -- eval/4_embodiments/6_motion_smoothness.py || true
+    exit 1
+fi
 
 unset UV_PROJECT_ENVIRONMENT VIRTUAL_ENV CONDA_PREFIX
 
