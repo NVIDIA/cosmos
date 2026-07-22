@@ -22,6 +22,8 @@ Generation is at 24 FPS, 720p, 16:9, and the raw output is kept (no staging).
 - `run_with_cosmos_framework.ipynb` — main notebook (demo case + full-sweep cell).
 - `assets/prompts/*.json` — 9 category files, 650 entries total, each with
   `json_upsampled_prompt` and `negative_prompt`.
+- `setup_rbench_scorer.sh` — isolated GPT/local-Qwen VQA environment.
+- `setup_rbench_embodiment_scorer.sh` — isolated motion-metric environment.
 
 ## Dataset
 
@@ -48,3 +50,39 @@ from the dataset; the prompts come from the local `assets/prompts/` files.
 - `uv >= 0.11.3`
 - `git`, `git-lfs`
 - Hugging Face access to the Cosmos3 model family
+
+## Scoring evaluators
+
+The notebook uses GPT as the default VLM evaluator for both the five-task split
+and the three VQA metrics in the four-embodiment split. Configure an
+OpenAI-compatible endpoint before enabling scoring:
+
+```bash
+export OPENAI_BASE_URL=https://your-openai-compatible-endpoint/v1
+export OPENAI_MODEL=your-endpoint-model-id
+export RBENCH_VLM_API_KEY=your-api-key
+```
+
+`OPENAI_API_KEY` is accepted as a fallback key variable. If neither key
+variable is set, the notebook requests the key through a hidden input prompt;
+do not save a literal key in the notebook. The dated public ReVidgen model,
+`gpt-5-2025-08-07`, remains the default model when `OPENAI_MODEL` is unset.
+
+To use local Qwen instead:
+
+```bash
+export RBENCH_USE_GPT=False
+export QWEN_MODEL_PATH=Qwen/Qwen2.5-VL-72B-Instruct
+```
+
+GPT results are written under `gpt` and local-Qwen results under
+`qwen_local`; their summaries and overall-score files are also kept
+separate. GPT outputs are validated strictly against the upstream ReVidgen
+schema. Only local Qwen enables the narrow `action_effectiveness` compatibility
+mapping for the two task categories whose prompt terminology and example JSON
+field names differ.
+
+VQA scoring uses `.venv-rbench-scorer`. The motion amplitude and smoothness
+metrics are evaluator-independent and continue to use `.venv-rbench-ops`.
+Changing the VLM evaluator does not affect generation or require regenerating
+videos.
