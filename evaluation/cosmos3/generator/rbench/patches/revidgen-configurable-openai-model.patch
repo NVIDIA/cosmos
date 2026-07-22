@@ -1,0 +1,59 @@
+diff --git a/eval/4_embodiments/1_robot_subject_stability.py b/eval/4_embodiments/1_robot_subject_stability.py
+index 6294922..e47ae66 100644
+--- a/eval/4_embodiments/1_robot_subject_stability.py
++++ b/eval/4_embodiments/1_robot_subject_stability.py
+@@ -22 +22 @@ def create_llm_client(model_name, api_key):
+-        ), "gpt-5-2025-08-07"
++        ), os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07"
+diff --git a/eval/4_embodiments/2_physical_plausibility.py b/eval/4_embodiments/2_physical_plausibility.py
+index dc6b5dd..3100535 100644
+--- a/eval/4_embodiments/2_physical_plausibility.py
++++ b/eval/4_embodiments/2_physical_plausibility.py
+@@ -19 +19 @@ def create_llm_client(model_name, api_key):
+-        ), "gpt-5-2025-08-07"
++        ), os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07"
+diff --git a/eval/4_embodiments/3_task_adherence_consistency.py b/eval/4_embodiments/3_task_adherence_consistency.py
+index a4f7a9d..4d3b8f7 100644
+--- a/eval/4_embodiments/3_task_adherence_consistency.py
++++ b/eval/4_embodiments/3_task_adherence_consistency.py
+@@ -20 +20 @@ def create_llm_client(model_name, api_key):
+-        return OpenAI(api_key=api_key), "gpt-5-2025-08-07"
++        return OpenAI(api_key=api_key), os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07"
+diff --git a/eval/5_tasks/common_manipulation.py b/eval/5_tasks/common_manipulation.py
+index e320539..94d763e 100644
+--- a/eval/5_tasks/common_manipulation.py
++++ b/eval/5_tasks/common_manipulation.py
+@@ -271 +271 @@ def process_single_image_gpt(args_tuple):
+-            model="gpt-5-2025-08-07",
++            model=os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07",
+diff --git a/eval/5_tasks/long-horizon_planning.py b/eval/5_tasks/long-horizon_planning.py
+index 8cc1057..67b0800 100644
+--- a/eval/5_tasks/long-horizon_planning.py
++++ b/eval/5_tasks/long-horizon_planning.py
+@@ -293 +293 @@ def process_single_image_gpt(args_tuple):
+-            model="gpt-5-2025-08-07",
++            model=os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07",
+diff --git a/eval/5_tasks/multi-entity_collaboration.py b/eval/5_tasks/multi-entity_collaboration.py
+index 1e8058a..68ff50b 100644
+--- a/eval/5_tasks/multi-entity_collaboration.py
++++ b/eval/5_tasks/multi-entity_collaboration.py
+@@ -287 +287 @@ def process_single_image_gpt(args_tuple):
+-            model="gpt-5-2025-08-07",
++            model=os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07",
+diff --git a/eval/5_tasks/spatial_relationship.py b/eval/5_tasks/spatial_relationship.py
+index e8029ec..6984251 100644
+--- a/eval/5_tasks/spatial_relationship.py
++++ b/eval/5_tasks/spatial_relationship.py
+@@ -286 +286 @@ def process_single_image_gpt(args_tuple):
+-            model="gpt-5-2025-08-07",
++            model=os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07",
+diff --git a/eval/5_tasks/visual_reasoning.py b/eval/5_tasks/visual_reasoning.py
+index 5169b0a..6d44d7f 100644
+--- a/eval/5_tasks/visual_reasoning.py
++++ b/eval/5_tasks/visual_reasoning.py
+@@ -310 +310 @@ def process_single_image_gpt(args_tuple):
+-            model="gpt-5-2025-08-07",
++            model=os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07",
+@@ -330 +330 @@ def process_single_image_gpt(args_tuple):
+-            model="gpt-5-2025-08-07",
++            model=os.environ.get("OPENAI_MODEL") or "gpt-5-2025-08-07",

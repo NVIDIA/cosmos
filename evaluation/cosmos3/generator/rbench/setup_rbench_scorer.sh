@@ -13,6 +13,7 @@ TORCH_BACKEND=${RBENCH_TORCH_BACKEND:-cu128}
 TORCH_VERSION=${RBENCH_TORCH_VERSION:-2.9.1}
 TORCHVISION_VERSION=${RBENCH_TORCHVISION_VERSION:-0.24.1}
 INSTALL_LOG=${RBENCH_INSTALL_LOG:-$SCRIPT_DIR/rbench_scorer_install.log}
+OPENAI_MODEL_PATCH="$SCRIPT_DIR/patches/revidgen-configurable-openai-model.patch"
 
 exec > >(tee -a "$INSTALL_LOG") 2>&1
 
@@ -51,6 +52,23 @@ if [[ ! -f "$SCORER_REPO/requirements_vlm.txt" ]]; then
 fi
 if [[ ! -d "$SCORER_REPO/eval/5_tasks" ]]; then
     echo "ERROR: missing $SCORER_REPO/eval/5_tasks"
+    exit 1
+fi
+if [[ ! -f "$OPENAI_MODEL_PATCH" ]]; then
+    echo "ERROR: missing configurable OpenAI model patch: $OPENAI_MODEL_PATCH"
+    exit 1
+fi
+
+# The public ReVidgen commit hard-codes the dated GPT-5 snapshot. Preserve that
+# value as the default while allowing OpenAI-compatible gateways to select the
+# model identifier they expose through OPENAI_MODEL.
+if git -C "$SCORER_REPO" apply --unidiff-zero --reverse --check "$OPENAI_MODEL_PATCH" >/dev/null 2>&1; then
+    echo "Configurable OpenAI model patch already applied"
+elif git -C "$SCORER_REPO" apply --unidiff-zero --check "$OPENAI_MODEL_PATCH"; then
+    git -C "$SCORER_REPO" apply --unidiff-zero "$OPENAI_MODEL_PATCH"
+    echo "Applied configurable OpenAI model patch"
+else
+    echo "ERROR: configurable OpenAI model patch does not apply cleanly"
     exit 1
 fi
 
