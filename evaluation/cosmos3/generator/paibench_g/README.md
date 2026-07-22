@@ -4,8 +4,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Cosmos3 PAI-Bench (Generation) Reproduction
 
 End-to-end recipe for generating the PAI-Bench (Physical AI Bench) generation
-set with Cosmos3-Super using the native Cosmos Framework PyTorch entrypoint
-(`python -m cosmos_framework.scripts.inference`).
+set with Cosmos3-Nano or Cosmos3-Super using the native Cosmos Framework
+PyTorch entrypoint (`python -m cosmos_framework.scripts.inference`). The
+notebook defaults to Cosmos3-Nano; set `PAIBENCH_MODEL_VARIANT=Super` to run
+Cosmos3-Super instead.
 
 PAI-Bench covers Physical AI domains (AV driving, robotics, industry, physics,
 human, common sense) across 1044 samples. The notebook runs both generation
