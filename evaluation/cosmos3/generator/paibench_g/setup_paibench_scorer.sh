@@ -17,6 +17,7 @@ DINO_GIT_URL=${PAIBENCH_DINO_GIT_URL:-https://github.com/facebookresearch/dino.g
 DINO_REF=${PAIBENCH_DINO_REF:-main}
 INSTALL_LOG=${PAIBENCH_INSTALL_LOG:-$SCRIPT_DIR/paibench_scorer_install.log}
 COMPAT_PATCH=${PAIBENCH_COMPAT_PATCH:-$SCRIPT_DIR/patches/physical-ai-bench-vllm-dense-model.patch}
+OBJECT_GATHER_PATCH=${PAIBENCH_OBJECT_GATHER_PATCH:-$SCRIPT_DIR/patches/physical-ai-bench-object-gather.patch}
 
 exec > >(tee -a "$INSTALL_LOG") 2>&1
 
@@ -62,6 +63,23 @@ if [[ -f "$COMPAT_PATCH" ]]; then
         echo "ERROR: compatibility patch does not match scorer checkout"
         exit 1
     fi
+fi
+
+# The pinned scorer manually serializes per-video result dictionaries into CUDA
+# byte tensors before gathering them. A corrupted gathered size can therefore
+# trigger a multi-terabyte allocation. Use PyTorch's object collective for this
+# small metadata payload while leaving the generic tensor gather unchanged.
+if [[ ! -f "$OBJECT_GATHER_PATCH" ]]; then
+    echo "ERROR: missing object-gather patch: $OBJECT_GATHER_PATCH"
+    exit 1
+fi
+if git -C "$SCORER_REPO" apply --check "$OBJECT_GATHER_PATCH" 2>/dev/null; then
+    git -C "$SCORER_REPO" apply "$OBJECT_GATHER_PATCH"
+elif git -C "$SCORER_REPO" apply --reverse --check "$OBJECT_GATHER_PATCH" 2>/dev/null; then
+    echo "Distributed object-gather patch already applied"
+else
+    echo "ERROR: object-gather patch does not match scorer checkout"
+    exit 1
 fi
 
 # Never let a notebook-exported generation environment capture this sync.
@@ -131,8 +149,10 @@ fi
 echo "Validating scorer environment"
 PYTHONNOUSERSITE=1 "$PY" - <<'PY'
 import importlib.metadata as metadata
+import inspect
 import os
 
+from pbench.distributed import gather_list_of_dict
 import cv2
 import decord
 import dreamsim
@@ -157,6 +177,9 @@ print("visible GPUs:", torch.cuda.device_count())
 assert int(numpy.__version__.split(".", 1)[0]) < 2, "PAIBench requires NumPy < 2"
 assert torch.cuda.is_available(), "PyTorch cannot access CUDA"
 assert torch.cuda.device_count() >= 1, "No GPU is visible"
+assert "all_gather_object" in inspect.getsource(gather_list_of_dict), (
+    "PAIBench distributed object-gather patch is not active"
+)
 
 try:
     torchao_version = metadata.version("torchao")
