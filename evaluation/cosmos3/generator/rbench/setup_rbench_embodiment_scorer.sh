@@ -5,6 +5,9 @@
 
 set -euo pipefail
 
+# Never inherit Jupyter's inline Matplotlib backend in this headless scorer.
+export MPLBACKEND=Agg
+
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REVIDGEN_REPO=${REVIDGEN_REPO:-$SCRIPT_DIR/scorers/ReVidgen}
 OPS_ENV=${RBENCH_OPS_ENV:-$REVIDGEN_REPO/.venv-rbench-ops}
