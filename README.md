@@ -42,6 +42,8 @@
   - [Examples](#examples)
   - [Inference Benchmarks](#inference-benchmarks)
   - [Finetune](#finetune)
+    - [Cosmos Framework](#cosmos-framework)
+    - [TAO agent skills](#tao-agent-skills)
   - [Export and Convert Checkpoints](#export-and-convert-checkpoints)
   - [Distill](#distill)
   - [Limitations](#limitations)
@@ -1149,6 +1151,10 @@ Cosmos 3 latency and serving results live in [`inference_benchmarks.md`](inferen
 
 ### Finetune
 
+There are two ways to post-train Cosmos 3: work directly with the open Cosmos Framework or automate supported workflows with TAO agent skills.
+
+#### Cosmos Framework
+
 Post-train Cosmos 3 on your own data with the supervised fine-tuning (SFT) cookbooks below. Each recipe is a self-contained launch script: a single `bash launch_sft_<recipe>.sh` prepares or validates the data, prepares any needed base checkpoint, and runs 8×H100 training.
 
 | Example | Surface | Model | What it covers | Script |
@@ -1163,6 +1169,15 @@ Post-train Cosmos 3 on your own data with the supervised fine-tuning (SFT) cookb
 | [Reasoner SFT](cookbooks/cosmos3/reasoner/finetune/README.md) | Reasoner | Cosmos3-Edge | Physical-plausibility SFT on VideoPhy-2 | [`launch_sft_videophy2_edge.sh`](cookbooks/cosmos3/reasoner/finetune/launch_sft_videophy2_edge.sh) |
 
 These cookbooks run on the [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework), NVIDIA's end-to-end Physical AI framework for training and serving world models. For the full post-training reference — every config field, raw `torchrun`, resuming, and advanced parallelism — see the [Cosmos Framework training guide](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/training.md).
+
+#### TAO agent skills
+
+You can also post-train the Cosmos3 with [NVIDIA TAO agent skills](https://github.com/NVIDIA-TAO/tao-skills-bank). TAO agent skills help a coding agent automate data validation, configuration, container execution, evaluation, and hyperparameter optimization.
+
+- [Post-train Cosmos 3 on video question answering with LoRA and AutoML](https://github.com/NVIDIA-TAO/tao-tutorials/blob/main/tutorials/tao_agent_skills_examples/post_train_cosmos3/post_train_cosmos3_lora.md)
+- [Post-train Cosmos 3 for Automated Optical Inspection (AOI)](https://github.com/NVIDIA-TAO/tao-tutorials/blob/main/tutorials/tao_agent_skills_examples/post_train_cosmos3/post_train_cosmos3_aoi.md)
+
+See [Post-Train NVIDIA Cosmos 3 in One Day Using Agent Skills](https://developer.nvidia.com/blog/post-train-nvidia-cosmos-3-in-one-day-using-agent-skills/) for an end-to-end overview.
 
 ### Export and Convert Checkpoints
 
