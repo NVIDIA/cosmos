@@ -378,9 +378,9 @@ See the [Cosmos 3 Diffusers documentation](https://huggingface.co/docs/diffusers
 
 Use vLLM-Omni for Generator production inference behind an OpenAI-compatible API. This integration loads the full Cosmos 3 checkpoint, including the Qwen3-VL-based reasoner path and the diffusion generation path. For understanding-only tasks that return text, use [Reasoner with vLLM](#reasoner-with-vllm) instead, which loads only the reasoner.
 
-> **Compatibility status:** Cosmos 3 Generator support has landed in [vllm-project/vllm-omni](https://github.com/vllm-project/vllm-omni) `main`: text-to-image, text-to-video, and image-to-video ([#3454](https://github.com/vllm-project/vllm-omni/pull/3454)) and video-with-sound ([#4073](https://github.com/vllm-project/vllm-omni/pull/4073)) are merged; action (policy / forward-dynamics) is in review ([#4102](https://github.com/vllm-project/vllm-omni/pull/4102)) and video-to-video is planned. The `vllm/vllm-omni:cosmos3` Docker image remains the easiest all-in-one build. For current setup and per-modality usage, see the maintained recipes: [Cosmos3-Nano](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md) and [Cosmos3-Super](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Super.md).
+> **Compatibility status:** Cosmos 3 Generator support is available in [vllm-project/vllm-omni](https://github.com/vllm-project/vllm-omni) `main` for text-to-image, text-to-video, image-to-video, video-to-video, transfer-control video-to-video, video-with-sound, and action generation. For current setup and per-modality usage, see the maintained recipes: [Cosmos3-Nano](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md) and [Cosmos3-Super](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Super.md).
 
-Start the server from the Docker image (all modalities). Mount any directory that contains local media or action files you want the server to read.
+Start the server from the `vllm/vllm-omni:cosmos3` Docker image. Mount any directory that contains local media or action files you want the server to read. The command below runs from `/workspace`, so repo-local paths such as `cookbooks/...` resolve inside the container.
 
 ```shell
 docker run --runtime nvidia --gpus all \
@@ -388,6 +388,7 @@ docker run --runtime nvidia --gpus all \
   -v "$(pwd):/workspace" \
   -p 8000:8000 \
   --ipc=host \
+  -w /workspace \
   vllm/vllm-omni:cosmos3 \
   vllm serve nvidia/Cosmos3-Nano \
   --omni \
@@ -413,7 +414,7 @@ Additional parallelism options:
 
 When combining parallelism options, ensure the server has enough GPUs for the product of the enabled degrees (`tensor_parallel_size` × `cfg_parallel_size` × `ulysses_degree`).
 
-To install vLLM-Omni from `main` instead of using the Docker image (text-to-image, text-to-video, image-to-video, and video-with-sound are merged there; see the [Cosmos3-Nano](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md) and [Cosmos3-Super](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Super.md) recipes for per-modality usage), create a venv and install, choosing the CUDA build that matches your driver:
+To install vLLM-Omni from `main` instead of using the Docker image, create a venv and install, choosing the CUDA build that matches your driver. This path uses the same request formats as the Docker image; see the [Cosmos3-Nano](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md) and [Cosmos3-Super](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Super.md) recipes for per-modality usage:
 
 ```shell
 uv venv --python 3.13 --seed --managed-python
@@ -436,7 +437,8 @@ Vision endpoints:
 | Text to video | `POST /v1/videos/sync` | Blocks and returns the MP4 bytes directly |
 | Image to video | `POST /v1/videos/sync` | Upload the conditioning image with `input_reference` |
 | Video to video | `POST /v1/videos/sync` | Upload a source video and choose which frames stay as clean conditioning |
-| Video with sound | `POST /v1/videos/sync` | Add `generate_sound=true` to produce a soundtrack alongside the video |
+| Transfer video to video | `POST /v1/videos/sync` | Pass one or more transfer hints such as `edge`, `blur`, `depth`, `seg`, or `wsm` in `extra_params` |
+| Video with sound | `POST /v1/videos/sync` | Add `generate_sound=true` to supported text-to-video or image-to-video requests |
 
 Action modes use Cosmos 3 as a world model: they condition on an embodiment (`domain_name`) and exchange video and action sequences. Policy and inverse dynamics return a predicted action chunk, so send those through the asynchronous `POST /v1/videos` job and read the action data from the completed result; forward dynamics returns only video and can use synchronous `POST /v1/videos/sync`.
 
@@ -465,6 +467,43 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync \
   -o cosmos3_t2v_output.mp4
 ```
 
+Example video-to-video request:
+
+```shell
+curl -sS -X POST http://localhost:8000/v1/videos/sync \
+  -H "Accept: video/mp4" \
+  --form-string "prompt=Continue the same driving scene with smooth natural motion." \
+  --form-string "negative_prompt=blurry, distorted, low quality, jittery, deformed" \
+  --form-string "size=832x480" \
+  --form-string "num_frames=61" \
+  --form-string "fps=10" \
+  --form-string "num_inference_steps=35" \
+  --form-string "guidance_scale=6.0" \
+  --form-string "flow_shift=10.0" \
+  --form-string "seed=2222" \
+  --form-string 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true,"condition_frame_indexes_vision":[0,1],"condition_video_keep":"first"}' \
+  -F "input_reference=@cookbooks/cosmos3/generator/action/assets/videos/av_0.mp4;type=video/mp4" \
+  -o cosmos3_v2v_output.mp4
+```
+
+Example transfer-control request:
+
+```shell
+curl -sS -X POST http://localhost:8000/v1/videos/sync \
+  -H "Accept: video/mp4" \
+  --form-string "prompt=Generate a realistic scene following the provided depth control video." \
+  --form-string "negative_prompt=blurry, distorted, low quality" \
+  --form-string "size=1280x720" \
+  --form-string "num_frames=121" \
+  --form-string "fps=30" \
+  --form-string "num_inference_steps=50" \
+  --form-string "guidance_scale=3.0" \
+  --form-string "flow_shift=10.0" \
+  --form-string "seed=2026" \
+  --form-string 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true,"depth":{"control_path":"cookbooks/cosmos3/generator/transfer/assets/depth/control_depth.mp4"},"resolution":"720","control_guidance":1.5,"num_video_frames_per_chunk":121,"max_frames":121}' \
+  -o cosmos3_transfer_depth.mp4
+```
+
 Use `--form-string` for text fields (`prompt`, `negative_prompt`, `extra_params`) rather than `-F`: with `-F`, `curl` treats `;` as a content-type separator and silently truncates any value that contains one.
 
 Common request fields (the image endpoint follows the [Image Generation API](https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/image_generation_api/), and the video endpoints follow the [Videos API](https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/videos_api/#request-parameters)):
@@ -481,7 +520,8 @@ Common request fields (the image endpoint follows the [Image Generation API](htt
 | `seed` | Reproducibility seed |
 | `max_sequence_length` | Maximum number of prompt tokens kept for conditioning (Cosmos 3 default `512`); longer prompts are truncated with a warning, shorter ones padded |
 | `input_reference` | Uploaded image or video for image-to-video, video-to-video, and action requests |
-| `extra_params` | JSON-encoded Cosmos 3-specific options: action settings (`action_mode`, `domain_name`, `raw_action_dim`, `action_chunk_size`, `action_path`), video-to-video conditioning (`condition_frame_indexes_vision`, `condition_video_keep`), prompt-template toggles (`use_resolution_template`, `use_duration_template`), and the per-request `guardrails` toggle |
+| `video_reference` | JSON-safe video reference for video-to-video requests, such as `{"video_url":"https://..."}`; do not combine with `input_reference` or `image_reference` |
+| `extra_params` | JSON-encoded Cosmos 3-specific options: action settings (`action_mode`, `domain_name`, `raw_action_dim`, `action_chunk_size`, `action_path`), video-to-video conditioning (`condition_frame_indexes_vision`, `condition_video_keep`), transfer hints (`edge`, `blur`, `depth`, `seg`, `wsm`) and transfer bucket `resolution`, prompt-template toggles (`use_resolution_template`, `use_duration_template`), and the per-request `guardrails` toggle |
 | `extra_args` | JSON object for Cosmos 3-specific image-endpoint options such as `use_resolution_template` |
 
 Disabling guardrails: Cosmos 3 ships safety guardrails that screen prompts and blur faces in generated output. Disable them per request by adding `guardrails: false` to `extra_params`:
@@ -1081,17 +1121,18 @@ We are building examples that show Cosmos 3 Super/Nano/Edge capabilities end to 
 | --- | --- | --- | --- | --- |
 | Generator (audiovisual) with Diffusers | Generator | Text-to-image, plus text-to-video and image-to-video each with or without synchronized sound, via `Cosmos3OmniPipeline`. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_diffusers.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_diffusers.ipynb) |
 | Generator (audiovisual) with Cosmos Framework | Generator | Text-to-image, plus text-to-video and image-to-video each with sound on or off, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_cosmos_framework.ipynb) |
-| Generator (audiovisual) with vLLM-Omni | Generator | Text-to-image, plus text-to-video and image-to-video each with sound on or off, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb) |
 | Generator (audiovisual) with TensorRT-LLM | Generator | Text-to-image, text-to-video, and image-to-video against an OpenAI-compatible TensorRT-LLM VisualGen server. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_trt_llm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_trt_llm.ipynb) |
+| Generator (audiovisual) with vLLM-Omni | Generator | Text-to-image, text-to-video, image-to-video, and video-to-video, with supported sound modes, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb) |
 | Generator (audiovisual) with NIM | Generator | Text2Video and Image2Video only, against the prebuilt `Cosmos3-Generator` NIM; requests use `POST /v1/infer` and decode JSON `b64_video` responses. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_nim.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_nim.ipynb) |
 | Generator (audiovisual) with SGLang | Generator | Text-to-image, plus text-to-video and image-to-video each with sound on or off, against an OpenAI-compatible SGLang server. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_sglang.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_sglang.ipynb) |
-| Forward dynamics with Cosmos Framework | Generator | Forward dynamics: action-conditioned future-observation prediction for AV, DROID, and UMI, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/action/run_fd_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_fd_with_cosmos_framework.ipynb) |
-| Forward dynamics with vLLM-Omni | Generator | Forward dynamics: action-conditioned future-observation prediction for AV, DROID, and UMI, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/action/run_fd_with_vllm_omni.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_fd_with_vllm_omni.ipynb) |
+| Forward dynamics with Cosmos Framework | Generator | Forward dynamics: action-conditioned future-observation prediction for AV, DROID, UMI, and human hand pose, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/action/run_fd_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_fd_with_cosmos_framework.ipynb) |
+| Forward dynamics with vLLM-Omni | Generator | Forward dynamics: action-conditioned future-observation prediction for AV, DROID, UMI, and human hand pose, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/action/run_fd_with_vllm_omni.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_fd_with_vllm_omni.ipynb) |
 | Forward dynamics with SGLang | Generator | Forward dynamics: action-conditioned future-observation prediction for AV, DROID, and UMI, against an OpenAI-compatible SGLang server. | [Notebook](cookbooks/cosmos3/generator/action/run_fd_with_sglang.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_fd_with_sglang.ipynb) |
 | Inverse dynamics with Cosmos Framework | Generator | Inverse dynamics: ego-motion trajectory prediction from input AV video, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/action/run_id_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_id_with_cosmos_framework.ipynb) |
 | Inverse dynamics with vLLM-Omni | Generator | Inverse dynamics: ego-motion trajectory prediction from input AV video, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/action/run_id_with_vllm_omni.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_id_with_vllm_omni.ipynb) |
 | Inverse dynamics with SGLang | Generator | Inverse dynamics: ego-motion trajectory prediction from input AV video, against an OpenAI-compatible SGLang server. | [Notebook](cookbooks/cosmos3/generator/action/run_id_with_sglang.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_id_with_sglang.ipynb) |
 | Transfer with Cosmos Framework | Generator | Video transfer: edge, blur, depth, segmentation, and world-scenario controls with captions, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/transfer/run_video_transfer_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/transfer/run_video_transfer_with_cosmos_framework.ipynb) |
+| Transfer with vLLM-Omni | Generator | Video transfer: edge, blur, depth, segmentation, and world-scenario controls with captions, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/transfer/run_video_transfer_with_vllm_omni.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/transfer/run_video_transfer_with_vllm_omni.ipynb) |
 | Reasoner with Cosmos Framework | Reasoner | Text and image reasoning: detailed captioning, robot task planning, 2D grounding, describe-anything, and action-trajectory prompts, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/reasoner/run_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_cosmos_framework.ipynb) |
 | Reasoner with vLLM | Reasoner | Image and video reasoning: captioning, temporal localization, embodied reasoning, common-sense reasoning, 2D grounding, describe-anything, action CoT, driving scenes, physical-plausibility, and situation understanding, against an OpenAI-compatible vLLM server (Cosmos3-Super on 4 GPUs by default; switch to Nano per the cookbook README). | [Notebook](cookbooks/cosmos3/reasoner/run_with_vllm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_vllm.ipynb) |
 | Reasoner with NIM | Reasoner | The same image and video reasoning examples as the vLLM notebook, run against the prebuilt, OpenAI-compatible [Cosmos 3 Reasoner NIM](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner) container; local media is sent as base64 data URIs. | [Notebook](cookbooks/cosmos3/reasoner/run_with_nim.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_nim.ipynb) |
