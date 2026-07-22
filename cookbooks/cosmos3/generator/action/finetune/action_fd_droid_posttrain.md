@@ -20,7 +20,7 @@ It trains Cosmos3-DROID forward dynamics in `cosmos_framework`.
 ## Prerequisites
 
 - Install cosmos-framework as described in the shared
-  [setup instructions](cookbooks/cosmos3/README.md), then activate its
+  [setup instructions](../../../README.md), then activate its
   virtual environment.
 - Authenticate with Hugging Face (`uvx hf@latest auth login` or `HF_TOKEN`) and
   accept the terms for the required model and dataset repositories.
