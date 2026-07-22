@@ -166,7 +166,7 @@ uv pip uninstall --python "$PY" bitsandbytes opencv-python || true
 uv pip install --python "$PY" --reinstall-package opencv-python-headless "opencv-python-headless==4.11.0.86"
 
 if [[ "$DOWNLOAD_CHECKPOINTS" == "1" ]]; then
-    echo "Downloading RBench operator checkpoints (approximately 21.8 GB)"
+    echo "Downloading RBench operator checkpoints"
     REVIDGEN_REPO="$REVIDGEN_REPO" PYTHONNOUSERSITE=1 "$PY" - <<'PY'
 import os
 from huggingface_hub import snapshot_download

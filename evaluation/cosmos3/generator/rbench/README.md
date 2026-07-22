@@ -4,8 +4,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Cosmos3 RBench Reproduction
 
 End-to-end recipe for generating the RBench robotics video-generation benchmark
-with Cosmos3-Super using the native Cosmos Framework PyTorch entrypoint
-(`python -m cosmos_framework.scripts.inference`).
+with Cosmos3-Nano or Cosmos3-Super using the native Cosmos Framework PyTorch
+entrypoint (`python -m cosmos_framework.scripts.inference`). The notebook
+defaults to Cosmos3-Nano; set `RBENCH_MODEL_VARIANT=Super` to run
+Cosmos3-Super instead.
 
 RBench is an **Image-to-Video (I2V)** benchmark of 650 cases across 9 categories
 (`common_manipulation`, `dual_arm`, `humanoid`, `long-horizon_planning`,
@@ -16,6 +18,8 @@ RBench is an **Image-to-Video (I2V)** benchmark of 650 cases across 9 categories
   (`imgs/<image_path>`); generate 121 frames (1 conditioning + 120 generated).
 
 Generation is at 24 FPS, 720p, 16:9, and the raw output is kept (no staging).
+Generated inputs and videos are stored under `outputs/<model_name>/` so runs
+from different model variants remain separate.
 
 ## Files
 
