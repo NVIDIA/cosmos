@@ -10,7 +10,7 @@ backend you want to run and follow that one section.
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
-| [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action) | Generator (Audiovisual, Action) |
+| [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action/transfer) | Generator (Audiovisual, Action, **Transfer**) |
 | [Reasoner NIM](#reasoner-nim) | Prebuilt OpenAI-compatible reasoning server (image/video understanding); no venv | Reasoner |
 | [Generator NIM](#generator-nim) | Prebuilt NGC container serving the Cosmos3 Generator for Text-to-Video and Image-to-Video inference | Generator (Audiovisual) |
 
@@ -289,7 +289,7 @@ graphs compile.
 
 ## vLLM-Omni
 
-OpenAI-compatible **generation** server (image/video/audio/action) for the
+OpenAI-compatible **generation** server (image/video/audio/action/transfer) for the
 Generator cookbooks.
 
 Cosmos3 checkpoints can exceed the default server init timeout — always pass
@@ -325,8 +325,8 @@ the repository root README. See also the
 
 ### Option 1: Docker (recommended)
 
-The prebuilt image `vllm/vllm-omni:cosmos3` supports every Generator modality
-(including action). Pull once:
+The released image `vllm/vllm-omni:cosmos3` supports the Generator modalities,
+including transfer controls. Pull once:
 
 ```bash
 docker pull vllm/vllm-omni:cosmos3
@@ -342,7 +342,8 @@ export COSMOS3_HOST_PORT="${COSMOS3_HOST_PORT:-8000}"
 
 The container listens on port 8000; `-p "${COSMOS3_HOST_PORT}:8000"` publishes it
 on the host. Generator notebooks often use `COSMOS3_HOST_PORT=8001` so port 8000
-stays free for a Reasoner server.
+stays free for a Reasoner server. The Docker commands run from `/workspace`, so
+repo-local paths such as `cookbooks/...` resolve inside the container.
 
 **Cosmos3-Nano** (single GPU):
 
@@ -352,6 +353,7 @@ docker run --runtime nvidia --gpus '"device=0"' \
   -v "${HF_HOME}:/root/.cache/huggingface" \
   -v "${COSMOS3_WORKDIR}:/workspace" \
   -p "${COSMOS3_HOST_PORT}:8000" --ipc=host \
+  -w /workspace \
   vllm/vllm-omni:cosmos3 \
   vllm serve nvidia/Cosmos3-Nano \
     --omni \
@@ -368,6 +370,7 @@ docker run --runtime nvidia --gpus all \
   -v "${HF_HOME}:/root/.cache/huggingface" \
   -v "${COSMOS3_WORKDIR}:/workspace" \
   -p "${COSMOS3_HOST_PORT}:8000" --ipc=host \
+  -w /workspace \
   vllm/vllm-omni:cosmos3 \
   vllm serve nvidia/Cosmos3-Super \
     --omni \
@@ -437,11 +440,10 @@ filesystem should be readable.
 
 vLLM-Omni prints `Application startup complete.` when the API is ready.
 
-### Option 2: Native venv (limited modalities)
+### Option 2: Native venv
 
-To install from the upstreaming PR branch instead of Docker (text-to-image,
-text-to-video, and image-to-video only — not action or sound yet), create a venv
-and pick the CUDA build that matches your driver (see
+To install from `main` instead of Docker, create a venv and pick the CUDA build
+that matches your driver (see
 [CUDA driver and the `cuXXX` backend](#cuda-driver-and-the-cuxxx-backend)):
 
 ```bash
@@ -450,11 +452,11 @@ source .venv/bin/activate
 
 # CUDA 13 driver:
 uv pip install --torch-backend=cu130 \
-  "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@refs/pull/3454/head"
+  "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@main"
 
 # CUDA 12.x driver:
 # uv pip install --torch-backend=cu128 \
-#   "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@refs/pull/3454/head"
+#   "vllm-omni @ git+https://github.com/vllm-project/vllm-omni.git@main"
 ```
 
 Run the same `vllm serve` arguments as in the Docker commands above, directly on

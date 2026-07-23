@@ -51,6 +51,7 @@ fingers.
 | Autonomous vehicle | Ego pose (9D) | 9D | Meter | Normalization | 60 frames @ 10FPS |
 | [DROID](https://arxiv.org/abs/2403.12945) | End-effector pose (9D) + gripper grasp state (1D) | 10D | Meter | Multiview concatenation, `to-OpenCV`, normalization | 16 frames @ 15FPS |
 | UMI | End-effector pose (9D) + gripper grasp state (1D) | 10D | Meter | Normalization | 16 frames @ 20FPS |
+| Human hand pose | Ego pose (9D) + right wrist (9D) + right fingertips (15D) + left wrist (9D) + left fingertips (15D) | 57D | Meter | Wrist-frame alignment, normalization | 16 frames @ 15FPS |
 
 Action data samples across different embodiments can be inspected interactively in the [Cosmos3 Action Viewer](https://huggingface.co/spaces/nvidia/Cosmos3-Action-Viewer) Hugging Face Space.
 
@@ -73,7 +74,7 @@ torchrun --nproc-per-node=1 \
 ```
 
 The input spec pairs a start image with an action trajectory. The notebooks
-assemble ready-to-run specs for AV, DROID, and UMI examples from the checked-in
+assemble ready-to-run specs for AV, DROID, UMI, and human hand-pose examples from the checked-in
 assets under [`assets/`](./assets). Outputs are written under the framework
 checkout.
 
@@ -83,7 +84,7 @@ The Cosmos Framework build their input spec, run inference, and
 visualize the generated videos:
 
 - [`run_fd_with_cosmos_framework.ipynb`](./run_fd_with_cosmos_framework.ipynb) —
-  forward dynamics for AV, DROID, and UMI robotics examples using Cosmos3-Nano.
+  forward dynamics for AV, DROID, UMI, and human hand-pose examples using Cosmos3-Nano.
 - [`run_id_with_cosmos_framework.ipynb`](./run_id_with_cosmos_framework.ipynb) —
   inverse dynamics, predicting ego-motion trajectories from input AV videos using Cosmos3-Nano.
 - [`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID and Cosmos3-Edge-Policy-DROID.
@@ -114,7 +115,7 @@ generation (see [`run_fd_with_vllm_omni.ipynb`](./run_fd_with_vllm_omni.ipynb) a
 | `guidance_scale` | `1.0` |
 | `flow_shift` | `10.0` |
 
-The notebooks build the full request body for AV, DROID, and UMI examples,
+The notebooks build the full request body for AV, DROID, UMI, and human hand-pose examples,
 including autoregressive chunked generation for the robotics examples.
 
 ### VLLM-Omni Notebook Walkthrough
@@ -123,7 +124,7 @@ The vLLM-Omni notebooks send requests through the OpenAI-compatible video API an
 write outputs under `outputs/cosmos3_action_vllm/`:
 
 - [`run_fd_with_vllm_omni.ipynb`](./run_fd_with_vllm_omni.ipynb) — forward dynamics for AV,
-  DROID, and UMI robotics examples.
+  DROID, UMI, and human hand-pose examples.
 - [`run_id_with_vllm_omni.ipynb`](./run_id_with_vllm_omni.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
 

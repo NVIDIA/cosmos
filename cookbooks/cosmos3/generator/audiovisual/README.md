@@ -1,6 +1,6 @@
 # Cosmos3 Generator Audiovisual Examples
 
-Generate images and video (with optional audio) from text or image prompts with
+Generate images and video (with optional audio) from text, image or video prompts with
 `Cosmos3-Nano`, `Cosmos3-Super`, `Cosmos3-Edge`, and the published four-step
 distilled Cosmos3-Super students across Cosmos Framework, Diffusers, vLLM-Omni,
 and NIM backends. Sample prompts live under [`assets/`](./assets).
@@ -80,7 +80,9 @@ To run **Cosmos3-Super** instead, set `--checkpoint-path Cosmos3-Super` and use
 more GPUs via `--nproc-per-node`.
 
 To run **Cosmos3-Edge** instead, set `--checkpoint-path Cosmos3-Edge`. Edge has
-no audio modules, so keep `"enable_sound": False` in the payload.
+no audio modules, so keep `"enable_sound": False` in the payload. Edge supports
+only 256p/480p, so use Edge's generation settings in the payload:
+`"resolution": "480"`, `"num_frames": 121`, and `"fps": 24`.
 
 ### Notebook walkthrough
 
@@ -197,12 +199,49 @@ Path("/tmp/cosmos3_t2v.mp4").write_bytes(response.content)
 
 For image-to-video, post to the same endpoint with an image under
 `files={"input_reference": ...}`. For audio, add `"generate_sound": "true"`.
+For video-to-video, upload a source video under `input_reference` and choose the
+clean conditioning frames through `extra_params`:
+
+```python
+from pathlib import Path
+
+source_video = Path("../action/assets/videos/av_0.mp4").resolve()
+with source_video.open("rb") as video_file:
+    response = requests.post(
+        "http://localhost:8000/v1/videos/sync",
+        data={
+            "prompt": "Continue the same driving scene with smooth natural motion.",
+            "negative_prompt": "blurry, distorted, low quality, jittery, deformed",
+            "size": "832x480",
+            "num_frames": "61",
+            "fps": "10",
+            "num_inference_steps": "35",
+            "guidance_scale": "6.0",
+            "flow_shift": "10.0",
+            "seed": "2222",
+            "extra_params": json.dumps(
+                {
+                    "use_resolution_template": False,
+                    "use_duration_template": False,
+                    "guardrails": True,
+                    "condition_frame_indexes_vision": [0, 1],
+                    "condition_video_keep": "first",
+                }
+            ),
+        },
+        files={"input_reference": (source_video.name, video_file, "video/mp4")},
+        headers={"Accept": "video/mp4"},
+    )
+response.raise_for_status()
+Path("/tmp/cosmos3_v2v.mp4").write_bytes(response.content)
+```
 
 ### Notebook walkthrough
 
 [`run_with_vllm_omni.ipynb`](./run_with_vllm_omni.ipynb) is the full tutorial for
 the vLLM-Omni backend: it walks through text-to-image, text-to-video, and
-image-to-video requests with audio on or off. Server launch options (Nano and
+image-to-video requests with audio on or off plus standard video-to-video
+requests. Server launch options (Nano and
 Super, tensor parallelism, layerwise offload, and CFG-parallel variants) live in
 the [shared environment setup guide](../../README.md#vllm-omni).
 
