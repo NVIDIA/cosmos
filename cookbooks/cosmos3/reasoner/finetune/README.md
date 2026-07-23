@@ -64,3 +64,12 @@ These recipes are intentionally minimal. For the full post-training reference �
 - [JSONL dataset format](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/dataset_jsonl.md) · [environment variables](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/environment_variables.md) · [FAQ / OOM during SFT](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/faq.md)
 
 > SFT here is a multi-GPU `torchrun` job, so these cookbooks ship as launch scripts + this README rather than a one-click notebook.
+
+## TAO agent skills
+
+You can also post-train the Cosmos 3 Reasoner with [NVIDIA TAO agent skills](https://github.com/NVIDIA-TAO/tao-skills-bank). TAO agent skills help a coding agent automate data validation, configuration, container execution, evaluation, and hyperparameter optimization.
+
+- [Post-train Cosmos 3 on video question answering with LoRA and AutoML](https://github.com/NVIDIA-TAO/tao-tutorials/blob/main/tutorials/tao_agent_skills_examples/post_train_cosmos3/post_train_cosmos3_lora.md)
+- [Post-train Cosmos 3 for Automated Optical Inspection (AOI)](https://github.com/NVIDIA-TAO/tao-tutorials/blob/main/tutorials/tao_agent_skills_examples/post_train_cosmos3/post_train_cosmos3_aoi.md)
+
+See [Post-Train NVIDIA Cosmos 3 in One Day Using Agent Skills](https://developer.nvidia.com/blog/post-train-nvidia-cosmos-3-in-one-day-using-agent-skills/) for an end-to-end overview.
