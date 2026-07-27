@@ -1,0 +1,406 @@
+{
+  "codebase_version": "v3.0",
+  "robot_type": "franka_fr3_dual",
+  "total_episodes": 1,
+  "total_frames": 477,
+  "total_tasks": 1,
+  "chunks_size": 1000,
+  "data_files_size_in_mb": 100,
+  "video_files_size_in_mb": 200,
+  "fps": 10.0,
+  "splits": {
+    "train": "0:116",
+    "validation": "116:129"
+  },
+  "data_path": "data/chunk-{episode_chunk:03d}/file-{episode_file:03d}.parquet",
+  "video_path": "videos/{video_key}/chunk-{episode_chunk:03d}/file-{episode_file:03d}.mp4",
+  "features": {
+    "observation.states.end_effector": {
+      "dtype": "float32",
+      "shape": [
+        12
+      ],
+      "names": null
+    },
+    "actions.joint_position": {
+      "dtype": "float32",
+      "shape": [
+        16
+      ],
+      "names": null
+    },
+    "observation.images.camera_front": {
+      "dtype": "video",
+      "shape": [
+        720,
+        1280,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 720,
+        "video.width": 1280,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "observation.images.camera_left": {
+      "dtype": "video",
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 480,
+        "video.width": 640,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "observation.images.camera_right": {
+      "dtype": "video",
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 480,
+        "video.width": 640,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "timestamp": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "frame_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "episode_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "task_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    }
+  },
+  "repo_id": "local/robomind_franka_dual_raw_val_episode",
+  "total_videos": 3,
+  "source_summary": {
+    "source_root": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/RoboMIND_20251228/benchmark1_1_release/franka_fr3_dual/both_pour_water",
+    "split": "val",
+    "shard_index": 0,
+    "shard_name": "both_pour_water",
+    "episode_index": 60,
+    "dataset_from_index": 27212,
+    "dataset_to_index": 27689,
+    "num_frames": 477,
+    "valid_training_action_count": 476,
+    "task": "pour water with both arm"
+  },
+  "note": "RoboMIND Franka Dual raw validation slice. Default MP4s are viewer-friendly; lossless RGB debug MP4s are retained for dataloader cross-validation.",
+  "copied_video_files": {
+    "observation.images.camera_front": "videos/observation.images.camera_front/chunk-000/file-000.mp4",
+    "observation.images.camera_left": "videos/observation.images.camera_left/chunk-000/file-000.mp4",
+    "observation.images.camera_right": "videos/observation.images.camera_right/chunk-000/file-000.mp4",
+    "observation.images.video_concat_view": "videos/observation.images.video_concat_view/chunk-000/file-000.mp4"
+  },
+  "lossless_debug_video_files": {
+    "observation.images.camera_front": "videos/observation.images.camera_front/chunk-000/file-000.lossless_rgb.mp4",
+    "observation.images.camera_left": "videos/observation.images.camera_left/chunk-000/file-000.lossless_rgb.mp4",
+    "observation.images.camera_right": "videos/observation.images.camera_right/chunk-000/file-000.lossless_rgb.mp4",
+    "observation.images.video_concat_view": "videos/observation.images.video_concat_view/chunk-000/file-000.lossless_rgb.mp4"
+  },
+  "video_regeneration": {
+    "observation.images.camera_front": {
+      "source_video": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/RoboMIND_20251228/benchmark1_1_release/franka_fr3_dual/both_pour_water/videos/observation.images.camera_front/chunk-000/file-004.mp4",
+      "start_s": 135.1,
+      "end_s": 151.0,
+      "first_timestamp_s": 135.1,
+      "last_timestamp_s": 182.7,
+      "num_frames": 477,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.camera_front/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "10",
+          "base_rate": "10",
+          "frames": 477,
+          "duration_s": 47.7,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 10.0
+        },
+        "verified_frames": 477,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 19,
+          "mean_abs": 1.6364253759384155
+        },
+        "bytes": 24741792,
+        "sha256": "e8e83d80d6a240d1497db0ae1a44f84a2b5ad1527dfb505bf8e05503c48a3c6a"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.camera_front/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "10",
+          "base_rate": "10",
+          "frames": 477,
+          "duration_s": 47.7,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 10.0
+        },
+        "verified_frames": 477,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 255,
+          "mean_abs": 16.022090911865234
+        },
+        "bytes": 376678277,
+        "sha256": "4de37cf2f45a5e2ad19cd5101456e7a2e35877fb453ba24c4782f6418f764ca2"
+      }
+    },
+    "observation.images.camera_left": {
+      "source_video": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/RoboMIND_20251228/benchmark1_1_release/franka_fr3_dual/both_pour_water/videos/observation.images.camera_left/chunk-000/file-002.mp4",
+      "start_s": 185.96666666666667,
+      "end_s": 201.86666666666667,
+      "first_timestamp_s": 185.96666666666667,
+      "last_timestamp_s": 233.56666666666666,
+      "num_frames": 477,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.camera_left/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "10",
+          "base_rate": "10",
+          "frames": 477,
+          "duration_s": 47.7,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 10.0
+        },
+        "verified_frames": 477,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 23,
+          "mean_abs": 1.6554046869277954
+        },
+        "bytes": 9263950,
+        "sha256": "5a8b2615517cd6ff05b9d0ec2f28dcb2158c6c32eb34ecf484ef2905bcc5cc95"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.camera_left/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "10",
+          "base_rate": "10",
+          "frames": 477,
+          "duration_s": 47.7,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 10.0
+        },
+        "verified_frames": 477,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 254,
+          "mean_abs": 17.030132293701172
+        },
+        "bytes": 145680663,
+        "sha256": "ea6c79012c8ed36fe4ce040a359fdca884821f02a082396b0e1eb651404af261"
+      }
+    },
+    "observation.images.camera_right": {
+      "source_video": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/RoboMIND_20251228/benchmark1_1_release/franka_fr3_dual/both_pour_water/videos/observation.images.camera_right/chunk-000/file-001.mp4",
+      "start_s": 309.2,
+      "end_s": 325.09999999999997,
+      "first_timestamp_s": 309.2,
+      "last_timestamp_s": 356.8,
+      "num_frames": 477,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.camera_right/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "10",
+          "base_rate": "10",
+          "frames": 477,
+          "duration_s": 47.7,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 10.0
+        },
+        "verified_frames": 477,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 19,
+          "mean_abs": 1.639259934425354
+        },
+        "bytes": 6953206,
+        "sha256": "12d9cf62c08057c9cd2c7d4e2b40cc4d8f3176d50374c06020dc3f0c042d6f1c"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.camera_right/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "10",
+          "base_rate": "10",
+          "frames": 477,
+          "duration_s": 47.7,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 10.0
+        },
+        "verified_frames": 477,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 254,
+          "mean_abs": 22.75687026977539
+        },
+        "bytes": 120426622,
+        "sha256": "b84a155de9bd5bbd0ddd0b4ba29b32a1ec253c2a3f7ff2d4b519c4004c94e1fc"
+      }
+    },
+    "observation.images.video_concat_view": {
+      "source_video": "composite of camera_front full-res top row + camera_left/camera_right half-res bottom row",
+      "num_frames": 477,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.video_concat_view/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "10",
+          "base_rate": "10",
+          "frames": 477,
+          "duration_s": 47.7,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 10.0
+        },
+        "verified_frames": 477,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 33,
+          "mean_abs": 1.6719084978103638
+        },
+        "bytes": 35905053,
+        "sha256": "e9b477f4071484e0f2183ab50b1289d5c58c5c2fa1018c1561d347b350d0f5e2"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.video_concat_view/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "10",
+          "base_rate": "10",
+          "frames": 477,
+          "duration_s": 47.7,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 10.0
+        },
+        "verified_frames": 477,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 255,
+          "mean_abs": 17.21295166015625
+        },
+        "bytes": 581095770,
+        "sha256": "1516f29c026c70e650d53973f6dc95166a8f86d24b5319de0a9488d79e8ef9b4"
+      }
+    }
+  }
+}

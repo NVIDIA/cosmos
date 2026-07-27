@@ -11,13 +11,14 @@ The rest of this doc shows how to run these modes on selected embodiments direct
 
 ## Table of Contents
 
-- [Overview](#examples-overview)
+- [Overview](#overview)
 - [Run with Cosmos Framework](#run-with-cosmos-framework)
   - [Quickstart](#quickstart)
   - [Cosmos Framework Walkthrough](#cosmos-framework-walkthrough)
 - [Run with vLLM-Omni](#run-with-vllm-omni)
   - [Quickstart](#quickstart-1)
-  - [Notebook walkthrough](#notebook-walkthrough)
+  - [Notebook walkthrough](#vllm-omni-notebook-walkthrough)
+- [Post-Train for Cosmos3-Nano-Policy-DROID](#post-train-for-cosmos3-nano-policy-droid)
 
 ## Overview
 
@@ -50,6 +51,7 @@ fingers.
 | Autonomous vehicle | Ego pose (9D) | 9D | Meter | Normalization | 60 frames @ 10FPS |
 | [DROID](https://arxiv.org/abs/2403.12945) | End-effector pose (9D) + gripper grasp state (1D) | 10D | Meter | Multiview concatenation, `to-OpenCV`, normalization | 16 frames @ 15FPS |
 | UMI | End-effector pose (9D) + gripper grasp state (1D) | 10D | Meter | Normalization | 16 frames @ 20FPS |
+| Human hand pose | Ego pose (9D) + right wrist (9D) + right fingertips (15D) + left wrist (9D) + left fingertips (15D) | 57D | Meter | Wrist-frame alignment, normalization | 16 frames @ 15FPS |
 
 Action data samples across different embodiments can be inspected interactively in the [Cosmos3 Action Viewer](https://huggingface.co/spaces/nvidia/Cosmos3-Action-Viewer) Hugging Face Space.
 
@@ -72,7 +74,7 @@ torchrun --nproc-per-node=1 \
 ```
 
 The input spec pairs a start image with an action trajectory. The notebooks
-assemble ready-to-run specs for AV, DROID, and UMI examples from the checked-in
+assemble ready-to-run specs for AV, DROID, UMI, and human hand-pose examples from the checked-in
 assets under [`assets/`](./assets). Outputs are written under the framework
 checkout.
 
@@ -82,11 +84,10 @@ The Cosmos Framework build their input spec, run inference, and
 visualize the generated videos:
 
 - [`run_fd_with_cosmos_framework.ipynb`](./run_fd_with_cosmos_framework.ipynb) —
-  forward dynamics for AV, DROID, and UMI robotics examples using Cosmos3-Nano.
+  forward dynamics for AV, DROID, UMI, and human hand-pose examples using Cosmos3-Nano.
 - [`run_id_with_cosmos_framework.ipynb`](./run_id_with_cosmos_framework.ipynb) —
   inverse dynamics, predicting ego-motion trajectories from input AV videos using Cosmos3-Nano.
-- [`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID.
-
+- [`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID and Cosmos3-Edge-Policy-DROID.
 
 ## Run with vLLM-Omni
 
@@ -105,8 +106,8 @@ curl http://localhost:8001/v1/models
 Forward-dynamics requests are multipart `POST`s to `/v1/videos` — a start image
 under `files={"input_reference": ...}` plus an `extra_params` payload carrying the
 action trajectory. The vLLM notebooks use these diffusion defaults for action
-generation (see [`run_fd_with_vllm.ipynb`](./run_fd_with_vllm.ipynb) and
-[`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb)):
+generation (see [`run_fd_with_vllm_omni.ipynb`](./run_fd_with_vllm_omni.ipynb) and
+[`run_id_with_vllm_omni.ipynb`](./run_id_with_vllm_omni.ipynb)):
 
 | Field | Value |
 | --- | --- |
@@ -114,7 +115,7 @@ generation (see [`run_fd_with_vllm.ipynb`](./run_fd_with_vllm.ipynb) and
 | `guidance_scale` | `1.0` |
 | `flow_shift` | `10.0` |
 
-The notebooks build the full request body for AV, DROID, and UMI examples,
+The notebooks build the full request body for AV, DROID, UMI and human hand-pose examples,
 including autoregressive chunked generation for the robotics examples. Policy
 inference uses async `POST /v1/videos` to retrieve a rollout video plus
 top-level `action` metadata.
@@ -124,14 +125,23 @@ top-level `action` metadata.
 The vLLM-Omni notebooks send requests through the OpenAI-compatible video API and
 write outputs under `outputs/cosmos3_action_vllm/`:
 
-- [`run_fd_with_vllm.ipynb`](./run_fd_with_vllm.ipynb) — forward dynamics for AV,
-  DROID, and UMI robotics examples.
-- [`run_id_with_vllm.ipynb`](./run_id_with_vllm.ipynb) — inverse dynamics,
+- [`run_fd_with_vllm_omni.ipynb`](./run_fd_with_vllm_omni.ipynb) — forward dynamics for AV,
+  DROID, UMI, and human hand-pose examples.
+- [`run_id_with_vllm_omni.ipynb`](./run_id_with_vllm_omni.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
 - [`run_policy_with_vllm.ipynb`](./run_policy_with_vllm.ipynb) — policy
   inference for DROID through the async video API.
 
+## Post-Train for Cosmos3-Nano-Policy-DROID
 
+To reproduce our post-training recipe for [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID), use the
+[Cosmos3-Nano-Policy-DROID SFT cookbook](./finetune/README.md). It follows the same
+launch-script pattern as the other Cosmos3 finetune cookbooks while delegating
+the canonical training implementation to Cosmos Framework.
+
+The same [action-policy SFT cookbook](./finetune/README.md) also covers **LIBERO-10**
+(`launch_sft_action_policy_libero_10_nano.sh`) — fine-tuning Cosmos3-Nano on the `libero_10`
+simulation benchmark with the same launch-script pattern.
 
 ## TODO
 

@@ -1,0 +1,434 @@
+{
+  "codebase_version": "v3.0",
+  "robot_type": "a2d",
+  "total_episodes": 1,
+  "total_frames": 1353,
+  "total_tasks": 1,
+  "chunks_size": 1000,
+  "data_files_size_in_mb": 100,
+  "video_files_size_in_mb": 200,
+  "fps": 30.0,
+  "splits": {
+    "train": "0:209"
+  },
+  "data_path": "data/chunk-{episode_chunk:03d}/file-{episode_file:03d}.parquet",
+  "video_path": "videos/{video_key}/chunk-{episode_chunk:03d}/file-{episode_file:03d}.mp4",
+  "features": {
+    "observation.states.effector.position": {
+      "dtype": "float32",
+      "shape": [
+        2
+      ],
+      "names": null
+    },
+    "observation.states.joint.position": {
+      "dtype": "float32",
+      "shape": [
+        14
+      ],
+      "names": null
+    },
+    "observation.states.head.position": {
+      "dtype": "float32",
+      "shape": [
+        2
+      ],
+      "names": null
+    },
+    "observation.states.waist.position": {
+      "dtype": "float32",
+      "shape": [
+        2
+      ],
+      "names": null
+    },
+    "observation.states.robot.position": {
+      "dtype": "float32",
+      "shape": [
+        3
+      ],
+      "names": null
+    },
+    "observation.states.robot.orientation": {
+      "dtype": "float32",
+      "shape": [
+        4
+      ],
+      "names": null
+    },
+    "observation.images.head": {
+      "dtype": "video",
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 480,
+        "video.width": 640,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "observation.images.hand_left": {
+      "dtype": "video",
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 480,
+        "video.width": 640,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "observation.images.hand_right": {
+      "dtype": "video",
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 480,
+        "video.width": 640,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 30,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "timestamp": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "frame_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "episode_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "task_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    }
+  },
+  "repo_id": "local/agibotworld_beta_raw_val_episode_task327_72",
+  "total_videos": 3,
+  "source_summary": {
+    "source_root": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/AgiBotWorld-Beta_20260102/agibotworld/task_327",
+    "split": "val",
+    "shard_index": 0,
+    "shard_name": "task_327",
+    "episode_index": 72,
+    "dataset_from_index": 83249,
+    "dataset_to_index": 84602,
+    "num_frames": 1353,
+    "valid_training_action_count": 1352,
+    "task": "Pickup items in the supermarket | The robot is positioned in front of the fruit stand in the supermarket environment.",
+    "dataset_name": "agibotworld_beta"
+  },
+  "note": "Raw validation tutorial slice. Default MP4s are viewer-friendly; lossless RGB debug MP4s are retained for dataloader cross-validation.",
+  "copied_video_files": {
+    "observation.images.head": "videos/observation.images.head/chunk-000/file-000.mp4",
+    "observation.images.hand_left": "videos/observation.images.hand_left/chunk-000/file-000.mp4",
+    "observation.images.hand_right": "videos/observation.images.hand_right/chunk-000/file-000.mp4",
+    "observation.images.video_concat_view": "videos/observation.images.video_concat_view/chunk-000/file-000.mp4"
+  },
+  "lossless_debug_video_files": {
+    "observation.images.head": "videos/observation.images.head/chunk-000/file-000.lossless_rgb.mp4",
+    "observation.images.hand_left": "videos/observation.images.hand_left/chunk-000/file-000.lossless_rgb.mp4",
+    "observation.images.hand_right": "videos/observation.images.hand_right/chunk-000/file-000.lossless_rgb.mp4",
+    "observation.images.video_concat_view": "videos/observation.images.video_concat_view/chunk-000/file-000.lossless_rgb.mp4"
+  },
+  "video_regeneration": {
+    "observation.images.head": {
+      "source_video": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/AgiBotWorld-Beta_20260102/agibotworld/task_327/videos/observation.images.head/chunk-000/file-009.mp4",
+      "start_s": 239.33333333333337,
+      "end_s": 284.4333333333334,
+      "first_timestamp_s": 239.33333333333337,
+      "last_timestamp_s": 284.40000000000003,
+      "num_frames": 1353,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.head/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "30",
+          "base_rate": "30",
+          "frames": 1353,
+          "duration_s": 45.1,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 30.0
+        },
+        "verified_frames": 1353,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 29,
+          "mean_abs": 2.341815233230591
+        },
+        "bytes": 7090125,
+        "sha256": "07196beadcbc1fe4f689fdad5e47e2093d004b312b7e4078ef6430fd684b6153"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.head/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "30",
+          "base_rate": "30",
+          "frames": 1353,
+          "duration_s": 45.1,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 30.0
+        },
+        "verified_frames": 1353,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "bytes": 305449011,
+        "sha256": "360a238b36ede58408be3a1912e3401126d4af64a10c46d46051fa232de621c0"
+      }
+    },
+    "observation.images.hand_left": {
+      "source_video": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/AgiBotWorld-Beta_20260102/agibotworld/task_327/videos/observation.images.hand_left/chunk-000/file-007.mp4",
+      "start_s": 281.1,
+      "end_s": 326.20000000000005,
+      "first_timestamp_s": 281.1,
+      "last_timestamp_s": 326.1666666666667,
+      "num_frames": 1353,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.hand_left/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "30",
+          "base_rate": "30",
+          "frames": 1353,
+          "duration_s": 45.1,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 30.0
+        },
+        "verified_frames": 1353,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 32,
+          "mean_abs": 2.183212995529175
+        },
+        "bytes": 7626187,
+        "sha256": "f793d130603f6550016d928f168cca470ac93be2c98af64f32228021031d6dfb"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.hand_left/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "30",
+          "base_rate": "30",
+          "frames": 1353,
+          "duration_s": 45.1,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 30.0
+        },
+        "verified_frames": 1353,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "bytes": 301800548,
+        "sha256": "6b266f1d70e9c0f5ab3cdd34ee76ac8bc365ccd3e1e71a9c8058028467e82cae"
+      }
+    },
+    "observation.images.hand_right": {
+      "source_video": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/AgiBotWorld-Beta_20260102/agibotworld/task_327/videos/observation.images.hand_right/chunk-000/file-005.mp4",
+      "start_s": 0.0,
+      "end_s": 45.1,
+      "first_timestamp_s": 0.0,
+      "last_timestamp_s": 45.06666666666667,
+      "num_frames": 1353,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.hand_right/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "30",
+          "base_rate": "30",
+          "frames": 1353,
+          "duration_s": 45.1,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 30.0
+        },
+        "verified_frames": 1353,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 28,
+          "mean_abs": 2.0636653900146484
+        },
+        "bytes": 11497483,
+        "sha256": "162dd0c1ca1d2ca21f284b912a7db0bafd76b50f893cea52c22314e8e59893ca"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.hand_right/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "30",
+          "base_rate": "30",
+          "frames": 1353,
+          "duration_s": 45.1,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 30.0
+        },
+        "verified_frames": 1353,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "bytes": 390803181,
+        "sha256": "7996aabeeeed7265f2047fb83aa703842762dfe6aabd5f681712bfb2d8262d1a"
+      }
+    },
+    "observation.images.video_concat_view": {
+      "source_video": "composite view generated from camera streams",
+      "num_frames": 1353,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.video_concat_view/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "30",
+          "base_rate": "30",
+          "frames": 1353,
+          "duration_s": 45.1,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 30.0
+        },
+        "verified_frames": 1353,
+        "first_frame_diff_vs_lossless": {
+          "equal": false,
+          "max_abs": 58,
+          "mean_abs": 2.576530694961548
+        },
+        "bytes": 12626410,
+        "sha256": "7612721d73e59c9f03d7b71fbe3a6522228dd54bd0c9b01b9293139822702b87"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.video_concat_view/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "30",
+          "base_rate": "30",
+          "frames": 1353,
+          "duration_s": 45.1,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 30.0
+        },
+        "verified_frames": 1353,
+        "first_frame_diff_vs_composite_source": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_composite_source": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "bytes": 504659020,
+        "sha256": "6460e1d3809ff2740a343f8f10c70d30040f25f95ada9737f22db7b8579a52ac"
+      }
+    }
+  }
+}

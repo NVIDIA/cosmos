@@ -1,0 +1,79 @@
+[
+    {
+        "role": "system", 
+        "content": "You are a text formater, your goal is to extract two parts, perception and answer from the answer and put them into a good format. Please according to the conversation history with the user feedback. The desired format is a 2d array, where there is only 0 or r, t these three characters; *, or 0, or _, or -, or e might indicates empty that you should convert to 0. tr means tree, and should be converted to r. tt means tent, and should be converted to t. It is possible that perception and / or answer is missing or invalid, you just put a Wrong for the wrong / both.  Your goal is only to format the user's input, not to check if it is correct or not."},
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n  [\"*\", \"*\", \"*\", \"tr\", \"tr\"],\n  [\"*\", \"*\", \"*\", \"*\", \"*\"],\n  [\"*\", \"tr\", \"*\", \"*\", \"*\"],\n  [\"*\", \"*\", \"tr\", \"*\", \"*\"],\n  [\"tr\", \"tr\", \"*\", \"*\", \"*\"]\n],\n\"answer\": [\n  [\"e\", \"e\", \"e\", \"tt\", \"tt\"],\n  [\"e\", \"e\", \"e\", \"e\", \"e\"],\n  [\"e\", \"tt\", \"e\", \"e\", \"e\"],\n  [\"e\", \"e\", \"tt\", \"e\", \"e\"],\n  [\"tt\", \"tt\", \"e\", \"e\", \"e\"]\n]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,r,r],[0,0,0,0,0],[0,r,0,0,0],[0,0,r,0,0],[r,r,0,0,0]]\nSolution\n[[0,0,0,t,t],[0,0,0,0,0],[0,t,0,0,0],[0,0,t,0,0],[t,t,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": \"[[e, e, e, tr, tr], [e, e, e, e, e], [e, tr, e, e, e], [e, e, tr, e, e], [tt, tr, e, e, e]]\",\n  \"think\": \"The constraints are that each tree must have exactly one tent next to it, horizontally or vertically. Tents cannot be adjacent to each other.  Looking at the bottom row, there's a tent and a tree. The tree at (4,1) needs a tent. The only place to put it is (3,1). Then, the tree at (2,1) needs a tent, and the only place is (2,0). The tree at (1,4) needs a tent, and the only place is (1,3). The tree at (0,4) needs a tent, and the only place is (0,3). This satisfies all constraints.\",\n  \"answer\": \"[[e, e, e, tt, tt], [e, e, e, e, e], [e, tt, e, e, e], [e, e, tr, e, e], [tt, tr, e, e, e]]\"\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,r,r],[0,0,0,0,0],[0,r,0,0,0],[0,0,r,0,0],[t,r,0,0,0]]\nSolution\n[[0,0,0,t,t],[0,0,0,0,0],[0,t,0,0,0],[0,0,r,0,0],[t,r,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [[\"tt\", \"*\", \"*\", \"*\", \"tr\", \"tr\"], [\"*\", \"*\", \"*\", \"*\", \"*\", \"*\"], [\"*\", \"tr\", \"*\", \"*\", \"*\", \"*\"], [\"*\", \"*\", \"tr\", \"*\", \"*\", \"*\"], [\"*\", \"*\", \"*\", \"*\", \"*\", \"*\"], [\"*\", \"tr\", \"*\", \"*\", \"*\", \"*\"]],\n\"answer\": [[\"tt\", \"e\", \"e\", \"e\", \"tr\", \"tr\"], [\"e\", \"e\", \"e\", \"tt\", \"e\", \"tt\"], [\"tt\", \"tr\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"tr\", \"e\", \"e\", \"e\"], [\"e\", \"tt\", \"e\", \"e\", \"e\", \"e\"], [\"tt\", \"tr\", \"e\", \"e\", \"e\", \"e\"]]\n}\n```"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\n[[t,0,0,0,r,r],[0,0,0,0,0,0],[0,r,0,0,0,0],[0,0,r,0,0,0],[0,0,0,0,0,0],[0,r,0,0,0,0]]\nSolution\n[[t,0,0,0,r,r],[0,0,0,t,0,t],[t,r,0,0,0,0],[0,0,r,0,0,0],[0,t,0,0,0,0],[t,r,0,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes, though the input is not an array, but the message is clear. "
+    },
+    {
+        "role": "user",
+        "content": "```\n{\n  \"perception\": \"The current state of the game is as follows:\n  2 trees in the top left,\n  1 tree in the top right,\n  4 trees in the bottom left,\n  1 tree in the bottom right,\n  1 tent in the bottom left.\n\n  The numbers on the sides indicate that there should be 2 tents in the first row,\n  2 tents in the second row,\n  1 tent in the third row,\n  0 tents in the fourth row.\",\n  \"think\": \"To find a valid solution, we need to place tents such that each tree is paired with exactly one tent. Tents cannot touch each other, even diagonally.\n  \n  Let's start by placing tents next to the trees in the bottom left corner. Since there are 4 trees, we can place 4 tents.\n  \n  Next, we can place the tent next to the tree in the top right. Since there is only one tree in this column, we can place one tent here.\n  \n  Now, we need to place tents in the second row. We have already placed one tent in the bottom left. Since there are 2 trees in this row, we need to place 2 more tents in this row. We can place them next to the trees that are not paired yet.\n  \n  Finally, we need to place the tent in the third row next to the tree that is not paired yet.\n  \n  Since there are no more trees to pair with tents, and we have already placed the required number of tents in each row, our solution is complete.\",\n  \"answer\": \"trtrtrtrtt**\n  11e**\n  11e**\n  0000\"\n}\n```"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\nWrong\nSolution\nWrong"
+    },
+    {
+        "role": "user",
+        "content": "Yes, as the perception is far from a 2d array, and the output contains unrecoginizable values 1, so you just put a Wrong"
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"think\": \"To solve this Trees and Tents puzzle, I need to place tents on the grid such that each tree is adjacent to exactly one tent, and no tents touch each other, even diagonally. The row and column clues provide the number of tents that must be placed in each row and column, respectively.\n\nI'll start by analyzing the given clues:\nRow clues: [1, 0, 2, 0, 2]\n- Row 0 has 1 tent\n- Row 1 has no tents\n- Row 2 has 2 tents\n- Row 3 has no tents\n- Row 4 has 2 tents\n\nColumn clues: [0, 1, 2, 1, 1]\n- Column 0 has no tents\n- Column 1 has 1 tent\n- Column 2 has 2 tents\n- Column 3 has 1 tent\n- Column 4 has 1 tent\n\nNext, I'll place the tents based on the given board state and clues:\n- Row 0: The only possible position for the tent is (0, 2) since it's the only empty cell.\n- Row 1: No tents need to be placed.\n- Row 2: The two tents must be placed at (2, 1) and (2, 3) to be adjacent to the trees.\n- Row 3: No tents need to be placed.\n- Row 4: The two tents must be placed at (4, 0) and (4, 2) to be adjacent to the trees and satisfy the column clues.\n\nThe final solution is:\n\",\n\"answer\": [\n    [\"e\", \"e\", \"tt\", \"tr\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"tr\"],\n    [\"e\", \"tr\", \"tt\", \"tt\", \"e\"],\n    [\"e\", \"e\", \"e\", \"tr\", \"e\"],\n    [\"tr\", \"tt\", \"tt\", \"e\", \"e\"]\n]\n}\n```"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\nWrong\nSolution\n[[0,0,t,r,0],[0,0,0,0,r],[0,r,t,t,0],[0,0,0,r,0],[r,t,t,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes, perception is missing so you put a Wrong, but the solution is valid."
+    },
+
+    {
+        "role": "user",
+        "content": "```json\n{\"answer\": [[\"e\", \"e\", \"tt\", \"tr\", \"e\"], [\"e\", \"e\", \"e\", \"e\", \"tr\"], [\"e\", \"tr\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"e\", \"tr\", \"e\"], [\"tr\", \"tt\", \"e\", \"e\", \"e\"]]}\n```"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\nWrong\nSolution\n[[0,0,t,r,0],[0,0,0,0,r],[0,r,0,0,0],[0,0,0,r,0],[r,t,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes, perception is missing so you put a Wrong, but the solution is valid."
+    }
+    
+]

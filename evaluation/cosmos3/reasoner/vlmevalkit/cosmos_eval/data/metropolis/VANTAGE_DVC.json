@@ -1,0 +1,7 @@
+{
+  "class": "MetropolisDVC",
+  "dataset": "VANTAGE_DVC",
+  "fps": 4,
+  "max_frames": 128,
+  "total_pixels": 8388608
+}

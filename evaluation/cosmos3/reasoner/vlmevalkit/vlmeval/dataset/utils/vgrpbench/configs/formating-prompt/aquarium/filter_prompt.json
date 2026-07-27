@@ -1,0 +1,118 @@
+[
+    {
+        "role": "system", 
+        "content": "You are a text formater, your goal is to extract two parts, perception and answer from the answer and put them into a good format. Please according to the conversation history with the user feedback. The desired format is a 2d array, where there is only 0, e, or s; *, or 0, or _, or -, or e might indicates empty that you should convert to 0. If the perception / answer is not a valid solution or not existe, please put a Wrong there. Sometimes perception is not given but answer is there, you should put a Wrong for perception and process the answer. Your goal is only to format the user's input, not to check if it is correct or not."},
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n  [\"*\", \"*\", \"*\", \"*\"],\n  [\"*\", \"*\", \"*\", \"*\"],\n  [\"*\", \"*\", \"*\", \"*\"],\n  [\"*\", \"*\", \"*\", \"*\"]\n],\n\"think\": \"Based on the numbers given on the sides, each row and column must have 2 filled cells. To ensure contiguity at the bottom, the filled cells should be placed in the bottom two rows. The first and third columns have a constraint of 4 filled cells, so those columns must have the bottom two cells filled. The second and fourth columns can have any two cells filled in the bottom two rows.\",\n\"answer\": [\n  [\"e\", \"e\", \"e\", \"e\"],\n  [\"e\", \"e\", \"e\", \"e\"],\n  [\"s\", \"s\", \"s\", \"s\"],\n  [\"s\", \"e\", \"s\", \"e\"]\n]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]\nSolution\n[[0,0,0,0],[0,0,0,0],[s,s,s,s],[s,0,s,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": [\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"]\n  ],\n  \"think\": \"The puzzle is a 4x5 grid. Each column and row has a number indicating how many cells should be filled in that row/column. The filled cells must be contiguous. \\nLet's start with the first column which has 4 filled cells. Since the filled cells must be contiguous, we can fill the bottom four cells of the first column. Similarly, the last column also has 4 filled cells, so we fill the bottom four cells. The second and third columns have 2 filled cells each. We can fill the bottom two cells in each of these columns. This satisfies the column constraints. Now let's check the row constraints. The bottom two rows have 4 filled cells each, which is satisfied by our current solution. The top two rows have 2 filled cells each, which is also satisfied. Therefore, this is the solution.\",\n  \"answer\": [\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"s\", \"s\", \"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\", \"s\", \"s\"]\n  ]\n}\n```"
+    },
+    {
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]\nSolution\n[[0,0,0,0,0],[0,0,0,0,0],[s,s,s,s,s],[s,s,s,s,s],[s,s,s,s,s]]"
+
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content":"```json\n{\n\"perception\": [[\"*\", \"*\", \"*\", \"*\"], [\"*\", \"*\", \"*\", \"*\"], [\"*\", \"*\", \"*\", \"*\"], [\"*\", \"*\", \"*\", \"*\"]],\n\"answer\": [[\"s\", \"s\", \"e\", \"e\"], [\"s\", \"s\", \"e\", \"e\"], [\"e\", \"e\", \"s\", \"s\"], [\"e\", \"e\", \"s\", \"s\"]]\n}\n```"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\n[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]\nSolution\n[[s,s,0,0],[s,s,0,0],[0,0,s,s],[0,0,s,s]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user", 
+        "content": "**Current Game State:**\n```json\n{\n\"perception\": [\n[\"s\", \"e\", \"e\", \"e\"],\n[\"e\", \"e\", \"e\", \"s\"],\n[\"e\", \"s\", \"e\", \"s\"],\n[\"e\", \"e\", \"e\", \"s\"],\n[\"s\", \"e\", \"s\", \"e\"],\n[\"e\", \"s\", \"e\", \"e\"],\n[\"e\", \"e\", \"e\", \"s\"]\n]\n}\n```\n\n**Solution:**\n```json\n{\n\"answer\": [\n[\"s\", \"s\", \"e\", \"s\"],\n[\"e\", \"s\", \"s\", \"s\"],\n[\"e\", \"s\", \"e\", \"s\"],\n[\"e\", \"e\", \"s\", \"s\"],\n[\"s\", \"s\", \"e\", \"e\"],\n[\"e\", \"s\", \"e\", \"s\"],\n[\"s\", \"e\", \"e\", \"s\"]\n]\n}\n```\n\n**Final Answer:**\nThe solution is represented by the \"answer\" array, where \"s\" denotes filled cells and \"e\" denotes empty cells."
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\n[[s,0,0,0],[0,0,0,s],[0,s,0,s],[0,0,0,s],[s,0,s,0],[0,s,0,0],[0,0,0,s]]\nSolution\n[[s,s,0,s],[0,s,s,s],[0,s,0,s],[0,0,s,s],[s,s,0,0],[0,s,0,s],[s,0,0,s]]"
+
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user", 
+        "content": "```json\n{\n\"perception\": [\n[0, 0, 0, 0, 0],\n[0, 0, 0, 0, 0],\n[0, 0, 0, 0, 0],\n[0, 0, 0, 0, 0],\n[0, 0, 0, 0, 0]\n],\n\"think\": \"The grid is initially empty. We need to fill the aquariums to satisfy the given row and column constraints. The numbers on the sides indicate the total number of filled cells in each row and column. We can start by placing the first filled cell in each row and column as shown in the solution. Then, we can fill the remaining cells while ensuring that each aquarium's water cells are contiguous at the bottom of that region.\",\n\"answer\": [\n[0, 0, 0, 0, 0],\n[0, 1, 1, 0, 0],\n[0, 1, 1, 0, 0],\n[0, 1, 1, 0, 0],\n[0, 1, 1, 0, 0]\n]\n}"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\n[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]\nSolution\nWrong"
+
+    },
+    {
+        "role": "user",
+        "content": "Yes. Because 1 is undefined, so put a Wrong there"
+    },
+    {
+        "role": "user", 
+        "content": "```json\n{\n\"perception\": [\n[0, 0, 0, 0],\n[0, 0, 0, 0],\n[0, 2, 2, 0],\n[0, 2, 2, 0]\n],\n\"answer\": [\n[0, 0, s, s],\n[0, 0, s, s],\n[0, s, s, 0],\n[0, s, s, 0]\n]\n}\n```"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\nWrong\nSolution\n[[0,0,s,s],[0,0,s,s],[0,s,s,0],[0,s,s,0]]"
+
+    },
+    {
+        "role": "user",
+        "content": "Yes. As 2 is not defined"
+    },
+    {
+        "role": "user", 
+        "content": "```json\n{\n\"answer\": [\n    [\"e\", \"e\", \"s\", \"s\"],\n    [\"e\", \"s\", \"s\", \"e\"],\n    [\"s\", \"s\", \"e\", \"e\"],\n    [\"s\", \"e\", \"e\", \"e\"]\n]\n}\n```\n\nThis solution satisfies the given constraints:\n\n1. Each aquarium's water cells are contiguous at the bottom of that region.\n2. The row counts match the number of filled cells in each row: [0, 2, 2, 2].\n3. The column counts match the number of filled cells in each column: [2, 2, 2, 2].\n\nThe aquariums are filled as follows:\n- Aquarium 1: [[2, 0], [1, 0], [0, 0]]\n- Aquarium 2: [[2, 1], [2, 2]]\n- Aquarium 3: [[1, 3], [0, 3], [0, 2], [1, 2], [1, 1], [0, 1]]\n- Aquarium 4: [[2, 3], [3, 3], [3, 2]]"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\nWrong\nSolution\n[[0,0,s,s],[0,s,s,0],[s,s,0,0],[s,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. there is no perception, but the answer is valid, so put it there."
+    },
+    {
+        "role": "user", 
+        "content": "```json\n{\n  \"think\": \"To solve this puzzle, I will first identify the filled cells and their positions in the given board state. Then, I will use these positions to fill the aquariums with water according to the given row and column counts. Finally, I will check if the solution is correct by ensuring that the water cells are contiguous at the bottom of each region.\",\n  \"answer\": [\n    [\"s\", \"s\", \"e\", \"e\"],\n    [\"s\", \"s\", \"e\", \"e\"],\n    [\"s\", \"s\", \"e\", \"e\"],\n    [\"e\", \"s\", \"e\", \"s\"]\n  ]\n}\n```"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\nWrong\nSolution\n[[s,s,0,0],[s,s,0,0],[s,s,0,0],[0,s,0,s]]"
+
+    },
+    {
+        "role": "user",
+        "content": "Yes. there is no perception, but the answer is valid, so put it there."
+    },
+    {
+        "role": "user", 
+        "content": "```json\n{\n\"answer\": [\n[1, 1, 1, 1],\n[1, 0, 0, 1],\n[1, 0, 0, 1],\n[1, 0, 0, 1]\n]\n}\n```"
+    },
+    {
+        "role": "assistant", 
+        "content": "Initial State\nWrong\nSolution\nWrong"
+    },
+    {
+        "role": "user",
+        "content": "Yes. there is no perception, so Wrong; for answer, 1 is not defined."
+    }
+]

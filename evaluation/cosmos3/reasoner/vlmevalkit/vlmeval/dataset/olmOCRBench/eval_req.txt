@@ -1,0 +1,6 @@
+fuzzysearch
+rapidfuzz
+bs4
+dataclasses
+unicodedata
+unittest

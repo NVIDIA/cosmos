@@ -1,0 +1,6 @@
+# Runtime outputs and caches — not committed
+outputs/
+.cache/
+physical-ai-bench-conditional-generation/
+*_executed.ipynb
+physical-ai-bench/

@@ -1,0 +1,92 @@
+[
+    {
+        "role": "system", 
+        "content": 
+        "You are a text formater, your goal is to extract two parts, perception and answer from the answer and put them into a good format. Please according to the conversation history with the user feedback. The desired format is a 2d array, where there is only w or 0 or s; *, or 0, or _, or -, or e might indicates empty that you should convert to 0. If you see numbers other than 2, you should convert them to w. If the perception / answer is not a valid solution or not existe, please put a Wrong there. Your goal is only to format the user's input, not to check if it is correct or not."
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n    [\"s\", \"w\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"w\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\"]\n],\n\"answer\": [\n    [\"s\", \"w\", \"e\", \"s\"],\n    [\"e\", \"s\", \"e\", \"e\"],\n    [\"e\", \"e\", \"w\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\"]\n]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[s,w,0,0],[0,0,0,0],[0,0,w,0],[0,0,0,0]]\nSolution\n[[s,w,0,s],[0,s,0,0],[0,0,w,0],[0,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "The current state of the grid in the screenshot is:\n\n```\n{\n\"perception\": [\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"2\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\", \"*\"]\n],\n\"answer\": [\n    [\"s\", \"s\", \"e\", \"e\", \"e\"],\n    [\"s\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"e\"],\n    [\"e\", \"e\", \"e\", \"e\", \"s\"],\n    [\"e\", \"e\", \"e\", \"s\", \"e\"]\n]\n}\n```\n\nThis solution satisfies all the rules of the game. The numbered wall has exactly two bulbs adjacent to it, and all empty cells are illuminated. The bulbs do not illuminate each other."
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,0,0,0,0],[0,w,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]\nSolution\n[[s,s,0,0,0],[s,0,0,0,0],[0,0,0,0,0],[0,0,0,0,s],[0,0,0,s,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [[\"s\", \"2\", \"*\", \"*\"], [\"w\", \"*\", \"*\", \"*\"], [\"*\", \"*\", \"w\", \"*\"], [\"*\", \"*\", \"*\", \"*\"]],\n\"answer\": [[\"s\", \"e\", \"s\", \"e\"], [\"e\", \"e\", \"e\", \"s\"], [\"s\", \"e\", \"e\", \"e\"], [\"e\", \"s\", \"e\", \"e\"]]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[s,w,0,0],[w,0,0,0],[0,0,w,0],[0,0,0,0]]\nSolution\n[[s,0,s,0],[0,0,0,s],[s,0,0,0],[0,s,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n  \"perception\": [\n    [\"s\", \"*\", \"w\", \"*\"],\n    [\"w\", \"2\", \"*\", \"*\"],\n    [\"*\", \"*\", \"w\", \"*\"],\n    [\"*\", \"*\", \"*\", \"*\"]\n  ],\n  \"think\": \"1. Start by placing bulbs around the '2' wall. Positions (0,1) and (1,2) work because they don't conflict with any other constraints and fulfill the wall's requirement.\\n2. Check other empty cells to ensure they are illuminated without overlapping bulbs.\\n3. Place bulbs in (2,0) and (3,2) to cover remaining empty areas left by previous placements, ensuring no bulbs are facing directly toward each other.\",\n  \"answer\": [\n    [\"s\", \"s\", \"w\", \"s\"],\n    [\"w\", \"2\", \"s\", \"e\"],\n    [\"s\", \"e\", \"w\", \"s\"],\n    [\"e\", \"e\", \"s\", \"e\"]\n  ]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[s,0,w,0],[w,w,0,0],[0,0,w,0],[0,0,0,0]]\nSolution\n[[s,s,w,s],[w,w,s,0],[s,0,w,s],[0,0,s,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "The current state of the grid as a 2D array is:\n```json\n[\n    [\".\", \"2\", \"s\"],\n    [\"s\", \".\", \"s\"],\n    [\"s\", \".\", \"s\"],\n    [\"s\", \".\", \"s\"],\n    [\"s\", \".\", \"s\"],\n    [\"s\", \".\", \"s\"],\n    [\"s\", \".\", \"s\"],\n    [\"s\", \".\", \"s\"],\n    [\"s\", \".\", \"s\"],\n    [\"s\", \".\", \"s\"]\n]\n```\nThe perception is that all cells are empty except for the two cells marked with \"2\", which must have exactly that number of bulbs adjacent to them. The numbered walls must have exactly that many bulbs adjacent to them, and bulbs cannot illuminate each other.\n\nThe think is that the only possible solution is to place a bulb in the cell adjacent to the \"2\" on the top left corner, and then place bulbs in the cells adjacent to the \"2\" on the top right corner. This will illuminate all empty cells without violating any of the rules.\n\nThe answer is:\n```json\n[\n    [\"s\", \"2\", \"s\"],\n    [\"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\"],\n    [\"s\", \"s\", \"s\"]\n]\n```\nThis solution satisfies all the rules and illuminates all empty cells."
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,w,s],[s,0,s],[s,0,s],[s,0,s],[s,0,s],[s,0,s],[s,0,s],[s,0,s],[s,0,s],[s,0,s],[s,0,s]]\nSolution\n[[s,w,s],[s,s,s],[s,s,s],[s,s,s],[s,s,s],[s,s,s],[s,s,s],[s,s,s],[s,s,s],[s,s,s]]"
+
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [\n    [\"*\", \"w\", \"*\", \"*\"],\n    [\"*\", \"2\", \"*\", \"*\"], \n    [\"s\", \"*\", \"w\", \"*\"],\n    [\"*\", \"s\", \"*\", \"*\"]\n],\n\"answer\": [\n    [\"e\", \"w\", \"s\", \"e\"],\n    [\"e\", \"2\", \"e\", \"e\"],\n    [\"s\", \"e\", \"w\", \"e\"], \n    [\"e\", \"s\", \"e\", \"e\"]\n]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,w,0,0],[0,w,0,0],[s,0,w,0],[0,s,0,0]]\nSolution\n[[0,w,s,0],[0,2,0,0],[s,0,w,0],[0,s,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    },   
+    {
+        "role": "user",
+        "content": "```json\n{\n\"perception\": [[\"*\", \"2\", \"*\", \"*\", \"*\"], [\"w\", \"*\", \"*\", \"*\", \"*\"], [\"*\", \"*\", \"w\", \"*\", \"*\"], [\"*\", \"s\", \"*\", \"*\", \"*\"]],\n\"answer\": [[\"e\", \"2\", \"e\", \"s\", \"e\"], [\"w\", \"e\", \"e\", \"e\", \"e\"], [\"e\", \"e\", \"w\", \"e\", \"e\"], [\"e\", \"s\", \"e\", \"e\", \"e\"]]\n}\n```"
+    },
+    {  
+        "role": "assistant",
+        "content": "Initial State\n[[0,w,0,0,0],[w,0,0,0,0],[0,0,w,0,0],[0,s,0,0,0]]\nSolution\n[[0,w,0,s,0],[w,0,0,0,0],[0,0,w,0,0],[0,s,0,0,0]]"
+    },
+    {
+        "role": "user",
+        "content": "Yes. "
+    }   
+]

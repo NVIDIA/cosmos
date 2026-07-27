@@ -1,0 +1,175 @@
+{
+  "codebase_version": "v3.0",
+  "robot_type": null,
+  "total_episodes": 1,
+  "total_frames": 29,
+  "total_tasks": 1,
+  "chunks_size": 1000,
+  "data_files_size_in_mb": 100,
+  "video_files_size_in_mb": 200,
+  "fps": 5.0,
+  "splits": {
+    "train": "0:50415"
+  },
+  "data_path": "data/chunk-{episode_chunk:03d}/file-{episode_file:03d}.parquet",
+  "video_path": "videos/{video_key}/chunk-{episode_chunk:03d}/file-{episode_file:03d}.mp4",
+  "features": {
+    "observation.state": {
+      "dtype": "float32",
+      "shape": [
+        7
+      ],
+      "names": null
+    },
+    "action": {
+      "dtype": "float32",
+      "shape": [
+        7
+      ],
+      "names": null
+    },
+    "observation.images.image_0": {
+      "dtype": "video",
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "names": [
+        "height",
+        "width",
+        "rgb"
+      ],
+      "info": {
+        "video.height": 480,
+        "video.width": 640,
+        "video.codec": "av1",
+        "video.pix_fmt": "yuv420p",
+        "video.is_depth_map": false,
+        "video.fps": 5,
+        "video.channels": 3,
+        "has_audio": false
+      }
+    },
+    "timestamp": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "frame_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "episode_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    },
+    "task_index": {
+      "dtype": "int64",
+      "shape": [
+        1
+      ],
+      "names": null
+    }
+  },
+  "repo_id": "local/bridge_raw_val_episode_46137",
+  "total_videos": 1,
+  "source_summary": {
+    "source_root": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/bridge_raw",
+    "split": "val",
+    "shard_index": 0,
+    "shard_name": "bridge_raw",
+    "episode_index": 46137,
+    "dataset_from_index": 1631665,
+    "dataset_to_index": 1631694,
+    "num_frames": 29,
+    "valid_training_action_count": 28,
+    "task": "Put the pot to the left of the purple item.",
+    "dataset_name": "bridge"
+  },
+  "note": "Raw validation tutorial slice. Default MP4s are viewer-friendly; lossless RGB debug MP4s are retained for dataloader cross-validation.",
+  "copied_video_files": {
+    "observation.images.image_0": "videos/observation.images.image_0/chunk-000/file-000.mp4"
+  },
+  "lossless_debug_video_files": {
+    "observation.images.image_0": "videos/observation.images.image_0/chunk-000/file-000.lossless_rgb.mp4"
+  },
+  "video_regeneration": {
+    "observation.images.image_0": {
+      "source_video": "/lustre/fsw/portfolios/cosmos/projects/cosmos_base_training/cosmos3_action_datasets/bridge_raw/videos/observation.images.image_0/chunk-000/file-136.mp4",
+      "start_s": 542.2,
+      "end_s": 548.0,
+      "first_timestamp_s": 542.2,
+      "last_timestamp_s": 547.8000000000001,
+      "num_frames": 29,
+      "viewer_friendly": {
+        "relative_path": "videos/observation.images.image_0/chunk-000/file-000.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "average_rate": "5",
+          "base_rate": "5",
+          "frames": 29,
+          "duration_s": 5.8,
+          "start_time_s": 0.0,
+          "has_b_frames": true
+        },
+        "torchvision_info": {
+          "video_fps": 5.0
+        },
+        "verified_frames": 29,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": false,
+          "max_abs": 22,
+          "mean_abs": 1.6652495861053467
+        },
+        "bytes": 651159,
+        "sha256": "83a7dd5e49cfa7abd782ecc9b6784c3d5155c933639c5c2e1e3786117108dd97"
+      },
+      "lossless_rgb": {
+        "relative_path": "videos/observation.images.image_0/chunk-000/file-000.lossless_rgb.mp4",
+        "stream_info": {
+          "codec": "h264",
+          "pix_fmt": "gbrp",
+          "average_rate": "5",
+          "base_rate": "5",
+          "frames": 29,
+          "duration_s": 5.8,
+          "start_time_s": 0.0,
+          "has_b_frames": false
+        },
+        "torchvision_info": {
+          "video_fps": 5.0
+        },
+        "verified_frames": 29,
+        "first_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "all_frame_diff_vs_exact_dataloader": {
+          "equal": true,
+          "max_abs": 0,
+          "mean_abs": 0.0
+        },
+        "bytes": 7247629,
+        "sha256": "adfb7d9e9e610494b8e04b30aef6dd230b720336a1462f73974b05cb990cbc92"
+      }
+    }
+  }
+}

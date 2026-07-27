@@ -1,0 +1,45 @@
+ScreenSpot:
+  template_zeroshot: |-
+    Based on the screenshot of the page, I give a text description and you give the bounding box coordinate of the region this sentence describes: {task}
+  template: |-
+    {task}
+  placeholders:
+    - task
+
+ScreenSpot_Pro:
+  template_zeroshot: |-
+    Based on the screenshot of the page, I give a text description and you give the bounding box coordinate of the region this sentence describes: {task}
+  template: |-
+    {task}
+  placeholders:
+    - task
+
+ScreenSpot_v2:
+  template_zeroshot: |-
+    Based on the screenshot of the page, I give a text description and you give the bounding box coordinate of the region this sentence describes: {task}
+  template: |-
+    {task}
+  placeholders:
+    - task
+
+MM_Mind2Web:
+  system_prompt: |-
+    You are a GUI agent. You are given a task and a screenshot of the screen. You need to perform a series of pyautogui actions to complete the task.
+
+    You have access to the following functions:
+    - {"name": "mobile.swipe", "description": "swipe on the screen", "parameters": {"type": "object", "properties": {"from_coord": {"type": "array", "items": {"type": "number"}, "description": "The starting coordinates of the swipe"}, "to_coord": {"type": "array", "items": {"type": "number"}, "description": "The ending coordinates of the swipe"}}, "required": ["from_coord", "to_coord"]}}
+    - {"name": "mobile.home", "description": "Press the home button"}
+    - {"name": "mobile.back", "description": "Press the back button"}
+
+  template: |-
+    Please generate the next move according to the ui screenshot, instruction and previous actions.
+
+    Instruction:
+    {task}.
+
+    Previous actions:
+    {history}.
+
+  placeholders:
+    - task
+    - history

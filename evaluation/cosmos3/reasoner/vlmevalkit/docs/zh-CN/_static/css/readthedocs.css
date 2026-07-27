@@ -1,0 +1,63 @@
+.header-logo {
+  background-image: url("../image/logo.svg");
+  background-size: 275px 80px;
+  height: 80px;
+  width: 275px;
+}
+
+
+@media screen and (min-width: 1100px) {
+  .header-logo {
+    top: -25px;
+  }
+}
+
+pre {
+    white-space: pre;
+}
+
+@media screen and (min-width: 2000px) {
+  .pytorch-content-left {
+    width: 1200px;
+    margin-left: 30px;
+  }
+  article.pytorch-article {
+    max-width: 1200px;
+  }
+  .pytorch-breadcrumbs-wrapper {
+    width: 1200px;
+  }
+  .pytorch-right-menu.scrolling-fixed {
+    position: fixed;
+    top: 45px;
+    left: 1580px;
+  }
+}
+
+
+article.pytorch-article section code {
+  padding: .2em .4em;
+  background-color: #f3f4f7;
+  border-radius: 5px;
+}
+
+/* Disable the change in tables */
+article.pytorch-article section table code {
+  padding: unset;
+  background-color: unset;
+  border-radius: unset;
+}
+
+table.autosummary td {
+  width: 50%
+}
+
+img.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+article.pytorch-article p.rubric {
+  font-weight: bold;
+}

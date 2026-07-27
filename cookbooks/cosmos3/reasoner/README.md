@@ -7,6 +7,27 @@ Environment setup for every backend is centralized in the shared
 [Cosmos3 cookbooks environment setup](../README.md) guide; each backend below
 links to the section you need.
 
+## Choosing a backend (memory footprint)
+
+Cosmos3 ships as a **unified omni checkpoint** (Reasoner + generator/diffusion), so
+how much GPU memory you pay depends on the backend:
+
+- The **Cosmos Framework** backend loads the **full omni weights** (Reasoner *plus*
+  the generator: video VAE, audio tokenizer, and diffusion expert). It therefore
+  uses the most memory — even for text-only reasoner inference. `model_mode=reasoner`
+  only changes the execution path; it does **not** unload the generator weights.
+- The **vLLM**, **Transformers**, and **NIM** backends load **only the Reasoner (VLM)
+  weights**, so they use much less memory.
+
+**If you need to save GPU memory for reasoner-only inference, use vLLM,
+Transformers, or NIM.** Reach for the Cosmos Framework backend only when you also
+need generation.
+
+For example, on a single GPU the **Cosmos3-Nano** Reasoner needs roughly **~34 GB**
+with the Cosmos Framework backend versus **~16–17 GB** with vLLM / Transformers / NIM
+— about half. Larger tiers (e.g. Cosmos3-Super) use more in absolute terms, but the
+same full-omni-vs-reasoner-only gap applies.
+
 ## Reasoner Prompt Guide
 
 See the [Reasoner Prompt Guide](./reasoner_prompt_guide.md).
@@ -19,8 +40,7 @@ Set up the environment: [Cosmos Framework setup](../README.md#cosmos-framework).
 This produces the framework venv at `packages/cosmos3/.venv`; run the commands
 below from that checkout (`cd packages/cosmos3`).
 
-Create a Reasoner input file. The `enable_sound=false` field is intentional — it
-avoids a strict argument-validation failure in the current Reasoner path:
+Create a Reasoner input file. The Reasoner does not currently support the audio modality by design, so the `enable_sound=false` field is intentional and required. The framework's strict validation rejects audio requests on a model that doesn't support audio, rather than ignoring the flag: 
 
 ```bash
 mkdir -p outputs/cookbooks/cosmos3/reasoner/inputs
@@ -55,7 +75,7 @@ The generated text is written to
 ### Notebook walkthrough
 
 [`run_with_cosmos_framework.ipynb`](./run_with_cosmos_framework.ipynb) is the full
-tutorial. It writes text and image smoke tests, then walks through image
+tutorial cover Nano, Super, Edge. It writes text and image smoke tests, then walks through image
 capability sections — detailed captioning, robot task planning, 2D grounding,
 describe-anything, and action-trajectory prompts — rendering the prompt, media
 input, model output, and any parsed boxes or trajectories together for review. It
@@ -184,5 +204,102 @@ assets are sent as base64 data URIs; video frame sampling is controlled with
 
 ## Run with Transformers
 
-Support for Transformers-based Reasoner inference is coming soon — see
-[Transformers setup](../README.md#transformers-coming-soon).
+### Quickstart
+
+Set up the environment: [Transformers setup](../README.md#transformers). This
+installs a Transformers release with the Cosmos3 integration.
+
+Run **Cosmos3-Nano** Reasoner inference in process:
+
+```python
+from pathlib import Path
+
+import torch
+from transformers import AutoProcessor, Cosmos3OmniForConditionalGeneration
+
+model_id = "nvidia/Cosmos3-Nano"
+image_path = Path("assets/robot_153.jpg").resolve()
+
+processor = AutoProcessor.from_pretrained(model_id)
+model = Cosmos3OmniForConditionalGeneration.from_pretrained(
+    model_id,
+    dtype=torch.bfloat16,
+    device_map="auto",
+)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "path": str(image_path)},
+            {"type": "text", "text": "Caption the image in detail."},
+        ],
+    }
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    tokenize=True,
+    add_generation_prompt=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device, torch.bfloat16)
+
+generated_ids = model.generate(**inputs, do_sample=False, max_new_tokens=512)
+generated_ids_trimmed = [
+    out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+]
+output = processor.batch_decode(
+    generated_ids_trimmed,
+    skip_special_tokens=True,
+    clean_up_tokenization_spaces=False,
+)
+print(output[0])
+```
+
+The Transformers integration loads only the Reasoner tower from the unified
+checkpoint and drops Generator, audio, and action parameters. It returns text for
+text, image, and video understanding tasks; it does not generate images, videos,
+audio, or actions.
+
+For video inputs, use a `video` content block and pass a sampling rate to
+`apply_chat_template`:
+
+```python
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "video", "path": "assets/video_caption.mp4"},
+            {"type": "text", "text": "Describe the notable events in this video."},
+        ],
+    }
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    fps=2,
+    tokenize=True,
+    add_generation_prompt=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device, torch.bfloat16)
+```
+
+Then reuse the `model.generate` and `batch_decode` block from the image example.
+
+To run **Cosmos3-Super**, change `model_id` to `nvidia/Cosmos3-Super`.
+`device_map="auto"` can shard the model across multiple GPUs when Accelerate is
+installed. Use [vLLM](#run-with-vllm) or [NIM](#run-with-nim) when you need an
+OpenAI-compatible server instead of local Python inference.
+
+### Notebook walkthrough
+
+[`run_with_transformers.ipynb`](./run_with_transformers.ipynb) is the Python-first
+counterpart to the server notebooks: instead of launching a server, it installs an
+isolated venv, registers a `Cosmos3 Transformers (Python 3.13)` Jupyter kernel,
+and loads `Cosmos3OmniForConditionalGeneration` in process. A small
+`run_reasoner` helper wraps `apply_chat_template` + `generate`, and the notebook
+then runs the image and video examples shown above. To scale from **Nano** to
+**Super**, change only `model_id` in the load cell and re-run; `device_map="auto"`
+shards Super across multiple GPUs.
