@@ -1,0 +1,112 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+"""Run one Cosmos3 transfer request using a precomputed or derived control."""
+
+import argparse
+import json
+import os
+from pathlib import Path
+
+import requests
+from common import decode_video, media_to_data_url
+
+NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
+COSMOS3_ROOT = Path(__file__).resolve().parents[2]
+TRANSFER_ROOT = COSMOS3_ROOT / "generator" / "transfer" / "assets"
+DERIVED_VIDEO = (
+    COSMOS3_ROOT
+    / "generator"
+    / "audiovisual"
+    / "assets"
+    / "videos"
+    / "car_driving_plain.mp4"
+)
+OUTPUTS = Path(__file__).parent / "outputs"
+PRECOMPUTED_HINTS = ("edge", "blur", "depth", "seg", "wsm")
+CASES = tuple(f"precomputed_{hint}" for hint in PRECOMPUTED_HINTS) + (
+    "derived_edge",
+    "derived_blur",
+)
+
+
+def precomputed_request(hint: str) -> dict:
+    prompt_path = TRANSFER_ROOT / hint / "prompt.json"
+    prompt = json.dumps(
+        json.loads(prompt_path.read_text(encoding="utf-8")), separators=(",", ":")
+    )
+    control_path = TRANSFER_ROOT / hint / f"control_{hint}.mp4"
+    return {
+        "prompt": prompt,
+        "transfer": {
+            hint: {"video": media_to_data_url(control_path)},
+            "control_guidance": (
+                3.0 if hint == "wsm" else 2.0 if hint == "seg" else 1.5
+            ),
+            "num_conditional_frames": 1,
+            "num_first_chunk_conditional_frames": 0,
+            "num_video_frames_per_chunk": 121,
+        },
+        "resolution": "720_4_3" if hint == "blur" else "720_16_9",
+        "num_output_frames": 101 if hint == "wsm" else 121,
+        "fps": 10.0 if hint == "wsm" else 30.0,
+        "steps": 50,
+        "guidance_scale": 1.0 if hint == "wsm" else 3.0,
+        "flow_shift": 10.0,
+        "seed": 0,
+    }
+
+
+def derived_request(hint: str) -> dict:
+    preset = (
+        {"preset_edge_threshold": "medium"}
+        if hint == "edge"
+        else {"preset_blur_strength": "medium"}
+    )
+    return {
+        "prompt": (
+            "A red sports car drives through a dramatic landscape with stable "
+            "geometry, realistic motion, and cinematic lighting."
+        ),
+        "video": media_to_data_url(DERIVED_VIDEO),
+        "transfer": {
+            hint: preset,
+            "control_guidance": 1.5,
+            "num_conditional_frames": 1,
+            "num_first_chunk_conditional_frames": 0,
+            "num_video_frames_per_chunk": 121,
+        },
+        "resolution": "720_16_9",
+        "num_output_frames": 121,
+        "fps": 30.0,
+        "steps": 50,
+        "guidance_scale": 3.0,
+        "flow_shift": 10.0,
+        "seed": 0,
+    }
+
+
+def build_request(case: str) -> dict:
+    if case.startswith("precomputed_"):
+        return precomputed_request(case.removeprefix("precomputed_"))
+    return derived_request(case.removeprefix("derived_"))
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--case", choices=CASES, default="precomputed_edge")
+    case = parser.parse_args().case
+
+    response = requests.post(
+        f"{NIM_URL}/v1/infer", json=build_request(case), timeout=1800
+    )
+    response.raise_for_status()
+
+    OUTPUTS.mkdir(exist_ok=True)
+    output = OUTPUTS / f"transfer_{case}.mp4"
+    output.write_bytes(decode_video(response.json()["b64_video"]))
+    print(f"Saved video to {output}")
+
+
+if __name__ == "__main__":
+    main()

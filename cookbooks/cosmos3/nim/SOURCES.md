@@ -1,6 +1,10 @@
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: OpenMDW-1.1 -->
+
 # Cosmos3 Certified NIM documentation source map
 
-> Local authoring artifact. Do not commit this file.
+> Source-provenance artifact committed on the local `egor/nim_docs` branch.
+> This is an authoring reference, not an end-user guide.
 >
 > Purpose: preserve source locations, authority, discrepancies, and the agreed
 > information architecture while the public documentation is researched and
@@ -10,7 +14,7 @@
 
 Produce standalone, human- and AI-readable documentation for the unified
 Cosmos3 Certified NIM under `cookbooks/cosmos3/nim` on branch
-`egor/cosmos3_nim_docs`.
+`egor/nim_docs`.
 
 The final guide set must cover deployment and NGC authentication, the Generator
 and Reasoner runtime surfaces, generation, reasoning, action, transfer,
@@ -19,8 +23,9 @@ third-party acknowledgements. It should reuse established Cosmos cookbook
 conventions without inheriting obsolete API or product limitations, and must
 meet the previous official Generator documentation's topic-coverage floor.
 
-This discovery phase does not replace the public `README.md` or draft the public
-guides. It establishes the evidence map and page boundaries first.
+The initial discovery phase established the evidence map and page boundaries
+before public drafting. Authoring was subsequently authorized; the public
+guides now use this file as their provenance and coverage ledger.
 
 ## Reviewed repository snapshots
 
@@ -28,10 +33,16 @@ Reviewed on 2026-07-27.
 
 | Repository | Local path | Branch | Reviewed commit | Role |
 | --- | --- | --- | --- | --- |
-| Cosmos cookbook | `/Users/ekrivov/projects/cosmos` | `egor/cosmos3_nim_docs` | `8061d42e261b666e2c7718a5fed63674f60c3db7` | Target and cookbook consistency references |
+| Cosmos cookbook | `/Users/ekrivov/projects/cosmos` | `egor/nim_docs` | `eb5bf7940ec902bf44791126691b6242a7cd7b3b` | Target baseline before public authoring edits |
 | Cosmos3 Certified NIM | `/Users/ekrivov/projects/cosmos-genai-nim` | `cosmos3` | `63578446d6c6eaeffc4b2a378f24bf1c9027494b` | Current product implementation and primary authority |
 | NIM product documentation | `/Users/ekrivov/projects/documentation` | `main` | `9a81f6952ca0567b616ca7ce5c412950613e8dc7` | Previous Generator and Reasoner documentation |
 | Cosmos framework | `/Users/ekrivov/projects/cosmos-framework` | `main` | `fbb5c9bf4b1298a09cabbe8d60389ef06ab60821` | Model terminology and non-NIM behavior only |
+
+The runnable examples documented by this guide are maintained locally under
+`cookbooks/cosmos3/nim/examples`. Their request shapes are validated against the
+current API models, runtime behavior, tests, and live OpenAPI when available.
+They are independently maintained. Reviewed Cosmos3 NIM examples were consulted
+only as high-level research context, not as an ongoing behavioral contract.
 
 Before authoring or updating public docs, refresh the commit values and inspect
 changes to the primary source files listed below.
@@ -44,23 +55,24 @@ Use this order whenever sources disagree:
    and tests in `cosmos-genai-nim/cosmos3`.
 2. OpenAPI returned by the reviewed Certified NIM image at runtime, when the
    image is available for validation.
-3. Current scripts under `cosmos-genai-nim/cosmos3/examples`.
-4. Current `cosmos-genai-nim/cosmos3/documentation.md`.
-5. Previous public Generator and Reasoner product documentation.
-6. Current Cosmos cookbook NIM and vLLM-Omni examples.
-7. Cosmos Framework docs and examples for model concepts only.
+3. Current `cosmos-genai-nim/cosmos3/documentation.md`.
+4. Previous public Generator and Reasoner product documentation.
+5. Current Cosmos cookbook documentation and approved assets.
+6. Cosmos Framework documentation for model concepts only.
 
 Rules:
 
 - Treat implementation and validation tests as API truth.
-- Treat examples as the preferred source for minimal, known-good request bodies.
+- Validate local cookbook request bodies against the API contract rather than
+  another repository's example implementation.
+- Treat reviewed Cosmos3 NIM examples as high-level research context only. Do
+  not describe their implementation or infer a stable contract from them.
 - Treat `documentation.md` as a broad operational inventory, not as an exact
   schema when it conflicts with code.
 - Treat previous product docs as reusable explanations and information
   architecture, not as current names, defaults, limits, or support claims.
-- Treat vLLM-Omni examples as workflow analogues. Never copy its endpoints or
-  request field names into Certified NIM docs without translating and verifying
-  them.
+- Treat other backend materials as conceptual research only. Never copy their
+  endpoints or request fields into Certified NIM docs without verification.
 - Record unresolved release facts in the TBD ledger. Do not publish guesses.
 
 ## Resolved facts for source snapshot `63578446`
@@ -165,7 +177,6 @@ Primary evidence:
 - `serving_stack/data_models/responses.py:20-34`
 - `serving_stack/reasoner_inference.py:39-44,472-603`
 - `serving_stack/environment.py:186-216`
-- `examples/README.md:19-80`
 
 ### Authoring-ready Generator API contract
 
@@ -176,15 +187,15 @@ should not reproduce Pydantic implementation details or error-message text.
 All Generator capabilities use `POST /v1/infer`. Unknown fields are rejected.
 The mode is inferred from the request shape:
 
-| Mode | Required discriminator/input | Forbidden or mode-specific rule | Current example |
+| Mode | Required discriminator/input | Forbidden or mode-specific rule | Local cookbook example |
 | --- | --- | --- | --- |
-| T2V | Non-empty `prompt`; no media | Ordinary generation frame rules apply | `examples/t2v.py`; smaller smoke request in `examples/low_payload.py` |
-| I2V | `image` | `image` and `video` are mutually exclusive | `examples/i2v.py` |
-| V2V | `video` without `transfer` or `action_params` | V2V conditioning controls are valid only here | `examples/v2v.py` |
-| Transfer | Non-empty `transfer` | Cannot combine with `image`, `action_params`, or V2V conditioning controls | `examples/transfer.py` |
-| Forward dynamics | `image` plus `action_params.mode=forward_dynamics` | Requires an input action trajectory | `examples/action.py` |
-| Policy | `image` plus `action_params.mode=policy` | Produces rather than accepts an action trajectory | `examples/action.py` |
-| Inverse dynamics | `video` plus `action_params.mode=inverse_dynamics` | Produces rather than accepts an action trajectory | `examples/action.py` |
+| T2V | Non-empty `prompt`; no media | Ordinary generation frame rules apply | `cookbooks/cosmos3/nim/examples/t2v.py` |
+| I2V | `image` | `image` and `video` are mutually exclusive | `cookbooks/cosmos3/nim/examples/i2v.py` |
+| V2V | `video` without `transfer` or `action_params` | V2V conditioning controls are valid only here | `cookbooks/cosmos3/nim/examples/v2v.py` |
+| Transfer | Non-empty `transfer` | Cannot combine with `image`, `action_params`, or V2V conditioning controls | `cookbooks/cosmos3/nim/examples/transfer.py` |
+| Forward dynamics | `image` plus `action_params.mode=forward_dynamics` | Requires an input action trajectory | `cookbooks/cosmos3/nim/examples/action.py` |
+| Policy | `image` plus `action_params.mode=policy` | Produces rather than accepts an action trajectory | `cookbooks/cosmos3/nim/examples/action.py` |
+| Inverse dynamics | `video` plus `action_params.mode=inverse_dynamics` | Produces rather than accepts an action trajectory | `cookbooks/cosmos3/nim/examples/action.py` |
 
 Shared top-level request fields:
 
@@ -251,7 +262,6 @@ Primary evidence:
 
 - `serving_stack/data_models/actions.py:24-167,169-307`
 - `serving_stack/data_models/generation.py:232-239,337-345`
-- `examples/action.py:35-140`
 
 ### Authoring-ready Transfer contract
 
@@ -287,7 +297,6 @@ edge-family defaults rather than combining per-control defaults.
 Primary evidence:
 
 - `serving_stack/data_models/transfer.py:28-169,172-253`
-- `examples/transfer.py:23-181`
 
 ### Authoring-ready response and Reasoner contract
 
@@ -306,12 +315,12 @@ text.
 Reasoner profiles expose OpenAI-compatible completion APIs rather than
 `/v1/infer`. The authoring baseline is:
 
-| Surface | Proven behavior/example |
+| Surface | Proven behavior and local cookbook coverage |
 | --- | --- |
-| `POST /v1/chat/completions` | Image and video messages, non-streaming; `examples/reasoner.py`. |
-| `POST /v1/chat/completions` with `stream=true` | Streaming deltas; `examples/reasoner_stream.py`. |
-| `POST /v1/completions` | Registered and passed through the same normalization/validation middleware; no first-party example yet. |
-| `POST /v1/responses` | Image input using `input_image` before `input_text`; `examples/reasoner_responses.py`. |
+| `POST /v1/chat/completions` | Image and video messages, non-streaming; `cookbooks/cosmos3/nim/examples/reasoner.py`. |
+| `POST /v1/chat/completions` with `stream=true` | Streaming deltas; `cookbooks/cosmos3/nim/examples/reasoner_stream.py`. |
+| `POST /v1/completions` | Registered and passed through the same normalization/validation middleware; no local cookbook example is provided. |
+| `POST /v1/responses` | Image input using `input_image` before `input_text`; `cookbooks/cosmos3/nim/examples/reasoner_responses.py`. |
 | `GET /v1/responses/{response_id}` | Registered through NIMlib when Responses routes are enabled; requires stored state for meaningful retrieval. |
 | `POST /v1/responses/{response_id}/cancel` | Registered through NIMlib when Responses routes are enabled; background/stored response behavior depends on storage configuration. |
 
@@ -322,7 +331,7 @@ integer >= 1. It normalizes OpenAI `response_format` and legacy guided-decoding
 fields into vLLM structured outputs. The full inherited request/response schema
 must come from the released image's live OpenAPI instead of being hand-copied.
 
-Current first-party examples establish these multimodal shapes:
+Runtime routing, normalization, and tests establish these multimodal shapes:
 
 - Chat image: `image_url` content before `text`, with a data URL.
 - Chat video: `video_url` content before `text`, with per-request
@@ -345,33 +354,15 @@ Primary evidence:
 - `serving_stack/reasoner_inference.py:39-50,332-388,391-587`
 - `serving_stack/environment.py:419-508`
 - `serving_stack/tests/test_reasoner_inference.py:760-792`
-- `examples/reasoner.py:15-57`
-- `examples/reasoner_stream.py:21-82`
-- `examples/reasoner_responses.py:15-35`
-- `examples/README.md:56-68`
 
-### Example coverage and cookbook adaptation rules
+### Local cookbook example design
 
-| First-party source example | Coverage to preserve in cookbook form |
-| --- | --- |
-| `examples/t2v.py` | Canonical 720p/189-frame T2V request with an explicit seed. |
-| `examples/low_payload.py` | Faster 480p/49-frame smoke request. Keep it distinct from the full-quality example. |
-| `examples/i2v.py` | Local image converted to a data URL, then I2V request. |
-| `examples/v2v.py` | Pinned public video URL plus explicit latent conditioning controls. |
-| `examples/action.py` | Three AV forward trajectories, AV policy, and Bridge inverse dynamics. |
-| `examples/transfer.py` | Five precomputed control types plus server-derived edge and blur. |
-| `examples/reasoner.py` | Chat image caption and Chat video caption via the OpenAI client. |
-| `examples/reasoner_stream.py` | Streaming Chat image caption. |
-| `examples/reasoner_responses.py` | Responses API image caption with stateless storage setting. |
-| `examples/common.py` | Readiness check, media-to-data-URL helper, long timeout, request/response validation, and artifact layout. |
-
-Cookbook scripts should be standalone copies adapted to the cookbook directory,
-not imports from the private NIM source tree. Preserve explicit request
-dictionaries, a deterministic seed for Generator examples, readiness checks,
-large-request timeouts, compact logging for base64 inputs, exact request
-artifacts, decoded `vision.mp4`, predicted `action.json`, and full Reasoner
-response artifacts. Centralize those mechanics in `examples/common.py` so each
-task script stays readable.
+The scripts under `cookbooks/cosmos3/nim/examples` are independently maintained
+teaching examples. They keep request construction, the API call, status
+handling, and primary output visible in each task script. Only strict local
+media encoding and video decoding are shared. Their contracts are checked
+against runtime code, request models, tests, and live release evidence rather
+than another repository's example implementation.
 
 ### Ports and identity caveat
 
@@ -460,13 +451,9 @@ Generator Pydantic models. Verify it using these sources together:
 | --- | --- |
 | `serving_stack/reasoner_inference.py` | Enabled routes, engine arguments, model-name resolution, normalization, errors, and streaming behavior |
 | `serving_stack/environment.py` (`ReasonerEngineOptions`) | Prompt media limits and Reasoner-specific runtime variables |
-| `examples/reasoner.py` | Image and video Chat Completions requests |
-| `examples/reasoner_stream.py` | Streaming Chat Completions request and delta handling |
-| `examples/reasoner_responses.py` | Responses API image request |
 | `serving_stack/tests/test_reasoner_inference.py` | Route inheritance, disable flags, normalization, errors, and streaming coverage |
-| `serving_stack/tests/test_examples.py` | Request ordering, local assets, model names, and example execution behavior |
 
-Known current Reasoner routes from the examples and tests:
+Known current Reasoner routes from runtime code and tests:
 
 - `POST /v1/chat/completions`
 - `POST /v1/responses`
@@ -478,25 +465,19 @@ Known current Reasoner routes from the examples and tests:
 The Responses storage/retrieve/background features depend on runtime flags. Do
 not imply persistent response storage is on by default.
 
-### Canonical runnable examples
+### Local cookbook runnable examples
 
 | Source | Capability |
 | --- | --- |
-| `examples/t2v.py` | Text-to-video |
-| `examples/low_payload.py` | Minimal/default-heavy Generator request |
-| `examples/i2v.py` | Image-to-video using local media |
-| `examples/v2v.py` | Video-to-video using URL media |
-| `examples/reasoner.py` | Image and video Chat Completions |
-| `examples/reasoner_stream.py` | Reasoner streaming |
-| `examples/reasoner_responses.py` | Reasoner Responses API |
-| `examples/action.py` | AV forward dynamics, AV policy, and Bridge inverse dynamics |
-| `examples/transfer.py` | Precomputed and server-derived transfer controls |
-| `examples/common.py` | Readiness, request transport, OpenAI client adaptation, output decoding, and artifact layout |
-| `examples/README.md` | Intended execution flow, server URL, output artifacts, limits, and route notes |
-
-Prefer the dictionaries in these files over examples embedded in
-`documentation.md` when they differ. The scripts are covered offline by
-`serving_stack/tests/test_examples.py`.
+| `cookbooks/cosmos3/nim/examples/t2v.py` | Text-to-video |
+| `cookbooks/cosmos3/nim/examples/i2v.py` | Image-to-video using local media |
+| `cookbooks/cosmos3/nim/examples/v2v.py` | Video-to-video using local media |
+| `cookbooks/cosmos3/nim/examples/reasoner.py` | Image and video Chat Completions |
+| `cookbooks/cosmos3/nim/examples/reasoner_stream.py` | Reasoner streaming |
+| `cookbooks/cosmos3/nim/examples/reasoner_responses.py` | Reasoner Responses API |
+| `cookbooks/cosmos3/nim/examples/action.py` | Forward dynamics, policy, and inverse dynamics |
+| `cookbooks/cosmos3/nim/examples/transfer.py` | Precomputed and derived transfer controls |
+| `cookbooks/cosmos3/nim/examples/common.py` | Strict media encoding and video decoding |
 
 ### Current `documentation.md` is a first-party coverage floor
 
@@ -506,23 +487,23 @@ with code or the current profile export.
 
 | Source-guide section | Required treatment | Planned destination/status |
 | --- | --- | --- |
-| 1. Overview and prerequisites | Rewrite around the unified selected Generator/Reasoner runtime; preserve prerequisites categories but not unverified counts, versions, or stale Generator-only profile summaries | `README.md`, `deployment.md`; release identity/support values TBD |
+| 1. Overview and prerequisites | Rewrite around the unified selected Generator/Reasoner runtime; preserve prerequisites categories but not unverified counts, versions, or stale Generator-only profile summaries | `README.md`, `prerequisites.md`; release identity/support values TBD |
 | 2. Endpoints at a glance | Separate endpoints by active runtime and distinguish shared management routes from Generator/Reasoner inference | `api-reference.md`, `operations.md`; live OpenAPI capture pending |
 | 3. T2V/I2V quickstart | Preserve minimal requests and MP4 decoding; use the portable Python encoder/decoder and add V2V/current modes elsewhere | `README.md`, `generation.md`, `examples/` |
-| 4. Request reference | Rebuild from current Pydantic models, including `video`, action, and transfer; correct the stale 2,000-character heading | `api-reference.md` |
-| 5. Frame-count math | Preserve 4k+1 explanation, per-tier caps, and action/transfer-specific frame rules | `api-reference.md`, summarized in task guides |
-| 6. Image input requirements | Preserve raw base64/data URL/public URL concepts and media size/error behavior; prefer MIME-aware helpers | `api-reference.md`, `generation.md` |
-| 7. Supported resolutions | Generate exact key-to-pixel mappings from `resolutions.py` and distinguish ordinary generation from action templates | `api-reference.md` |
-| 8. Response format | Preserve `b64_video`, optional action metadata, decoding, artifact output, and playback caveat | `api-reference.md`, `examples/common.py`, `operations.md` |
-| 9. Validation cheat sheet | Replace the T2V/I2V-only table with mode-complete current constraints and link task-specific rules | `api-reference.md`, task guides |
-| 10. Error envelope | Preserve stable status/type semantics without copying exact mutable messages; add Reasoner 400/422 behavior | `api-reference.md`, `operations.md` |
+| 4. Request reference | Keep common Generator fields compact; place complete nested and Reasoner contracts with their tasks; correct the stale 2,000-character heading | `api-reference.md`, `generation.md`, `action.md`, `transfer.md`, `reasoning.md` |
+| 5. Frame-count math | Preserve 4k+1 explanation, per-tier caps, and action/transfer-specific frame rules | `generation.md`, `action.md`, `transfer.md` |
+| 6. Image input requirements | Preserve raw base64/data URL/public URL concepts and media size/error behavior; prefer MIME-aware helpers | `generation.md`, `reasoning.md`, `support-matrix.md` |
+| 7. Supported resolutions | Generate exact key-to-pixel mappings from `resolutions.py` and distinguish ordinary generation from action templates | `generation.md`, `action.md` |
+| 8. Response format | Preserve `b64_video`, optional action metadata, decoding, output files, and playback caveat | `api-reference.md`, `generation.md`, `action.md`, task scripts |
+| 9. Validation cheat sheet | Replace the T2V/I2V-only table with mode-complete current constraints on their canonical task pages | `generation.md`, `action.md`, `transfer.md`, `reasoning.md` |
+| 10. Error envelope | Preserve stable status/type semantics without copying exact mutable messages; add Reasoner 400/422 behavior | `operations.md` |
 | 11. Deployment | Preserve NGC login, cache, ports, Docker flags, single/multi-GPU concepts, throughput/latency, cleanup, and cold-start notes | `deployment.md`; image/profile values release-gated |
-| 12. Environment variables | Re-audit every variable against `environment.py`; split launch/profile settings from diagnostics and backend tuning | `deployment.md`, `operations.md` |
-| 12.1 Prompt upsampling | Document the current optional, Generator-only T2V/I2V flow, secret handling, supported template styles, failure fallback, and non-applicable modes | `deployment.md`, `generation.md`, `operations.md` |
+| 12. Environment variables | Re-audit every variable against `environment.py`; split canonical configuration from operational subsets | `configuration.md`, `operations.md` |
+| 12.1 Prompt upsampling | Document the current optional, Generator-only T2V/I2V flow, secret handling, supported template styles, failure fallback, and non-applicable modes | `configuration.md`, `generation.md`, `operations.md` |
 | 13. Profile selection | Preserve selectors, conflicts, pinning, soft defaults, layouts, and selection cascade from current code | `deployment.md`; released manifest recheck required |
-| 14. Support matrix | Replace the stale prose grid with the released manifest-derived tested/compatible matrix | `deployment.md`; release matrix TBD |
-| 15. BYOC | Preserve layout, mount, selector cross-check, verification, and operational notes; state Generator/diffusion-only boundary | `deployment.md`; published BYOC statement TBD |
-| 16. Helm/Kubernetes | Preserve topic and operational categories but not placeholder chart identity or unverified values | `deployment.md`; chart/values TBD |
+| 14. Support matrix | Replace the stale prose grid with the released manifest-derived tested/compatible matrix | `support-matrix.md`; release matrix TBD |
+| 15. BYOC | Preserve layout, mount, selector cross-check, verification, and operational notes; state Generator/diffusion-only boundary | `bring-your-own-checkpoint.md`; published BYOC statement TBD |
+| 16. Helm/Kubernetes | Preserve topic and operational categories but not placeholder chart identity or unverified values | `helm.md`; chart/values TBD |
 | 17. Observability | Preserve inspection, log, distributed-diagnostic, and Prometheus/Grafana workflows; capture current endpoints/metrics from release | `operations.md`; live scrape/log validation pending |
 | 18. Guardrails | Preserve text/video/SigLIP controls, ordering, 422 behavior, BYOC separation, and risk of disabling; scope to Generator runtime | `operations.md` |
 | 19. Troubleshooting | Preserve symptom/cause/fix organization, revalidate every command/variable, and add current Reasoner/action/transfer failures | `operations.md` |
@@ -564,43 +545,11 @@ Primary evidence:
 - `serving_stack/tests/test_prompt_upsampling.py:38-307`
 - `documentation.md:513-549`
 
-### First-party example adaptation matrix
+### Local cookbook asset policy
 
-| First-party source | Public treatment | Asset/port/runtime correction |
-| --- | --- | --- |
-| `examples/README.md` | Preserve directly editable dictionaries, output-artifact contract, route notes, media limits, and URL policy | Rewrite for cookbook execution; do not expose `make reasoner-brr` or NIM developer setup |
-| `examples/common.py` | Adapt readiness, portable data URLs, JSON transport, OpenAI extension handling, base64 MP4/action/text artifact writing, and summarized logs | Default public `NIM_URL` to `http://localhost:8000`; use target-repo license and dependencies |
-| `examples/low_payload.py` | Merge its short/default-heavy request into the landing or generation quickstart | Do not create a second near-duplicate T2V script unless review finds a distinct user need |
-| `examples/t2v.py` | Adapt as the canonical complete T2V script | Keep deterministic seed and current NIM field names |
-| `examples/i2v.py` | Adapt as the canonical I2V script | Use an existing approved cookbook image rather than copying the NIM-only `sports_car.png` blindly |
-| `examples/v2v.py` | Adapt as the canonical V2V script | Preserve conditioning controls; use local/pinned approved media and validate URL policy |
-| `examples/action.py` | Adapt all three modes; retain one AV forward case rather than three directions in the default run | Correct source prose: policy is AV and inverse dynamics is Bridge; reuse existing cookbook AV assets |
-| `examples/transfer.py` | Adapt one request per distinct precomputed/derived shape and expose direct case selection instead of always running seven expensive cases | Reuse existing cookbook prompts/control videos; do not copy the moving `main` asset URL as if pinned |
-| `examples/reasoner.py` | Adapt image/video Chat Completions | Reuse existing cookbook media; discover the served model dynamically |
-| `examples/reasoner_stream.py` | Adapt streaming delta handling | Keep separate from non-streaming artifact helper for clarity |
-| `examples/reasoner_responses.py` | Adapt the non-streaming image Responses request and state caveats | Keep video on Chat Completions until current Responses video support is proven |
-| `examples/__init__.py` | No public artifact required | Public scripts can import sibling `common.py` using the documented execution directory |
-
-### Reuse existing cookbook assets instead of copying private-source files
-
-Static SHA-256 comparison confirmed these first-party NIM assets are already
-present byte-for-byte in the target cookbook repository:
-
-| NIM example asset | Existing cookbook asset |
-| --- | --- |
-| `av_action.jpg` | `generator/action/assets/images/av_0.jpg` |
-| `av_forward_trajectory.json` | `generator/action/assets/actions/av_traj_forward.json` |
-| `av_left_trajectory.json` | `generator/action/assets/actions/av_traj_left.json` |
-| `av_right_trajectory.json` | `generator/action/assets/actions/av_traj_right.json` |
-| `robot_153.jpg` | `reasoner/assets/robot_153.jpg` |
-| `video_caption.mp4` | `reasoner/assets/video_caption.mp4` |
-| Five transfer `prompt.json` files | Matching `generator/transfer/assets/<hint>/prompt.json` files |
-
-The cookbook also already contains the corresponding transfer control videos
-and suitable audiovisual conditioning images. Prefer reading these existing
-paths and converting them to data URLs at runtime. Do not copy files from the
-proprietary NIM source tree into the public cookbook merely because their bytes
-match; retain the target repository's existing provenance and license history.
+Use assets already present in the cookbook repository and retain their existing
+provenance and license history. Convert local media to data URLs at runtime
+where required; do not copy private-source assets into the public cookbook.
 
 ## Previous product documentation
 
@@ -659,8 +608,8 @@ Parity matrix:
 | Safety and guardrails | Explain text guardrails, output-video checks/face handling, failure behavior, and the risk of disabling controls | `operations.md` |
 | API Catalog, NGC Catalog, and container security reports | Link to the final release catalog/model-card pages once known | `README.md`; release URL TBD |
 | NVIDIA Developer Program / entitlement context | Provide a concise external link if still applicable to the released NIM | `README.md`; wording/link recheck required |
-| Hardware prerequisites | CPU architecture, RAM, disk, shared memory, supported GPU architecture/count, homogeneity, and VRAM floors | `deployment.md`; release matrix TBD |
-| Software prerequisites | Linux, driver, Docker, NVIDIA Container Toolkit, and setup verification with `nvidia-smi` | `deployment.md`; exact versions TBD |
+| Hardware prerequisites | CPU architecture, RAM, disk, shared memory, supported GPU architecture/count, homogeneity, and VRAM floors | `prerequisites.md`, `support-matrix.md`; release values TBD |
+| Software prerequisites | Linux, driver, Docker, NVIDIA Container Toolkit, and setup verification with `nvidia-smi` | `prerequisites.md`; exact versions TBD |
 | NGC credential creation | Explain how to create an NGC personal API key with NGC Catalog access | `deployment.md` |
 | Credential export and safe handling | Use `NGC_API_KEY`; never place a real key in examples, logs, source control, notebooks, or output artifacts | `README.md`, `deployment.md` |
 | Docker authentication | Preserve `echo "$NGC_API_KEY" \| docker login nvcr.io --username '$oauthtoken' --password-stdin` and explain the special username | `README.md`, `deployment.md` |
@@ -672,34 +621,34 @@ Parity matrix:
 | First T2V and I2V requests | Preserve short curl/Python examples and base64 MP4 decoding | `README.md`, `generation.md` |
 | Local media encoding | Cover data URLs/base64 and public URL inputs without shell-specific base64 assumptions | `generation.md`, `reasoning.md`, shared `examples/common.py` |
 | Stopping and cleaning up | Cover `docker stop`, and only mention kill/removal as recovery/cleanup | `deployment.md` |
-| GPU selection | Cover `--gpus`, `CUDA_VISIBLE_DEVICES`, homogeneous devices, and selector-visible GPU count | `deployment.md` |
-| IPC/shared memory | Explain `--shm-size`, when `--ipc=host` is relevant, and `/dev/shm` media staging | `deployment.md`; release values TBD |
-| Environment-variable reference | Include shared NIM variables plus Generator- and Reasoner-specific variables with defaults, scope, and conflicts | `deployment.md`, `operations.md` |
+| GPU selection | Cover `--gpus`, homogeneous devices, selector-visible GPU count, and released compatibility | `deployment.md`, `prerequisites.md`, `support-matrix.md` |
+| IPC/shared memory | Explain `--shm-size` launch usage and `/dev/shm` media staging requirements | `prerequisites.md`, `deployment.md`; release values TBD |
+| Environment-variable reference | Include shared NIM variables plus Generator- and Reasoner-specific variables with defaults, scope, and conflicts | `configuration.md`; operational subsets in `operations.md` |
 | Model/profile selectors | Cover `NIM_MODEL_TYPE`, size, precision, Generator performance profile/offload, exact profile pinning, tag selectors, and parallelism aliases | `deployment.md` |
-| Volumes | Cover persistent cache and read-only BYOC mounts separately | `deployment.md` |
-| Sampling reference | Preserve lookup tables for defaults, ranges, constraints, media types, frame cadence, resolutions, and errors; expand for V2V/Action/Transfer | `api-reference.md` and task guides |
+| Volumes | Cover persistent cache and read-only BYOC mounts separately | `deployment.md`, `bring-your-own-checkpoint.md` |
+| Sampling reference | Preserve common Generator fields in the compact API reference and mode-specific defaults/ranges with their tasks | `api-reference.md`, `generation.md`, `reasoning.md`, `action.md`, `transfer.md` |
 | Endpoint inventory | Separate shared management endpoints, Generator `/v1/infer`, and Reasoner OpenAI-compatible routes | `api-reference.md`, `operations.md` |
 | Request and response examples | Include complete request bodies, expected status/shape, decoding, and saved artifacts | Every task guide plus `examples/` |
-| Error handling | Cover stable 4xx/5xx semantics and mode-specific validation without promising exact error strings | `api-reference.md`, task guides, `operations.md` |
+| Error handling | Cover stable 4xx/5xx semantics and mode-specific validation without promising exact error strings | `operations.md` and task guides |
 | OpenAPI | Explain live `/openapi.json`; capture/validate it under both Generator and Reasoner profiles | `api-reference.md`; runtime capture pending |
-| Resolution and frame-cap tables | Preserve exact key-to-WxH shapes and per-tier frame caps | `api-reference.md`, summarized in `generation.md` |
-| Model sizes, precisions, and VRAM | Provide the release manifest-derived matrix, tested versus compatible distinction, and compute-capability gates | `deployment.md`; release matrix TBD |
+| Resolution and frame-cap tables | Preserve exact key-to-WxH shapes and per-tier frame caps | `generation.md` |
+| Model sizes, precisions, and VRAM | Provide the release manifest-derived matrix, tested versus compatible distinction, and compute-capability gates | `support-matrix.md`; release matrix TBD |
 | Parallelism/profile selection | Explain latency versus throughput, replicas/sharding, offload, selection cascade, and explicit pinning | `deployment.md` |
-| Input/output codecs | State VP9-in-MP4 output and validate all claimed image/video inputs against the release | `api-reference.md`, `generation.md`, `operations.md` |
-| BYOC | Preserve mount pattern, expected checkpoint layout, profile cross-check, readiness, cache/ulimits, path rules, and metadata verification | `deployment.md`; Generator-only unless release proves more |
-| Helm prerequisites and chart selection | Cover GPU Operator/cluster needs and select the released chart version | `deployment.md`; chart name/version TBD |
-| Kubernetes NGC secrets | Cover both the `nvcr.io` image-pull secret and the generic secret whose key is `NGC_API_KEY` | `deployment.md` |
-| Helm values and GPU resources | Provide NIM-specific image, secret, cache, ports, environment, GPU count, probes, and service values | `deployment.md`; validate against released chart |
-| Kubernetes storage | Cover PVC/RWX implications and persistent model-cache tradeoffs; link to chart documentation for generic values | `deployment.md` |
-| Kubernetes monitoring | Cover ServiceMonitor/metrics and OpenTelemetry only if the released chart/runtime supports the documented settings | `deployment.md`, `operations.md`; release validation pending |
-| Helm launch, readiness, port-forward, and inference | Preserve a minimal end-to-end deployment verification flow | `deployment.md` |
+| Input/output codecs | State current VP9-in-MP4 output and validate all claimed image/video inputs against the release | `support-matrix.md`, `generation.md` |
+| BYOC | Preserve mount pattern, expected checkpoint layout, profile cross-check, readiness, cache/ulimits, path rules, and metadata verification | `bring-your-own-checkpoint.md`; Generator-only unless release proves more |
+| Helm prerequisites and chart selection | Cover GPU Operator/cluster needs and select the released chart version | `helm.md`; chart name/version TBD |
+| Kubernetes NGC secrets | Cover both the `nvcr.io` image-pull secret and the generic secret whose key is `NGC_API_KEY` | `helm.md` |
+| Helm values and GPU resources | Provide NIM-specific image, secret, cache, ports, environment, GPU count, probes, and service values | `helm.md`; validate against released chart |
+| Kubernetes storage | Cover PVC/RWX implications and persistent model-cache tradeoffs; link to chart documentation for generic values | `helm.md` |
+| Kubernetes monitoring | Cover monitoring concepts only if the released chart/runtime supports the documented settings | `helm.md`, `operations.md`; release validation pending |
+| Helm launch, readiness, port-forward, and inference | Preserve a minimal end-to-end deployment verification flow | `helm.md` |
 | Helm troubleshooting | Cover pending pods, GPU scheduling, storage mounts, and startup-probe failures | `operations.md` |
 | Metrics endpoint and metric families | Document endpoint(s) and release-observed metrics; do not copy stale metric names without scraping the released image | `operations.md` |
 | Prometheus and Grafana | Include a minimal scrape example and dashboard workflow; avoid pinning old tool versions unnecessarily | `operations.md` |
 | Inspection endpoints | Cover health, metrics, metadata, models, manifest, version, and license per active runtime | `api-reference.md`, `operations.md` |
 | Logging and distributed diagnostics | Cover service/backend log levels, JSON logs, NCCL/debug knobs, and performance costs | `operations.md` |
 | Troubleshooting | Preserve prerequisite, Docker, profile, NGC download, readiness, BYOC, OOM, timeout, metrics, air-gap/cache, and playback cases; add current mode/API failures | `operations.md` |
-| Release notes | Identify the documented release and link to authoritative release notes; summarize only changes relevant to these cookbooks | `README.md`; optional `release-notes.md` remains TBD |
+| Release notes | Identify the documented release and link to authoritative release notes; summarize only changes relevant to these cookbooks | `release-notes.md`; content remains TBD |
 | EULA/license notice | Link to the repository license, NGC model card, and the running NIM's `/v1/license`; do not copy a mutable legal agreement into the cookbook | `README.md`, `operations.md` |
 | Third-party acknowledgements | Provide a dedicated acknowledgement destination sourced from the released image/build's approved notice inventory | Planned `acknowledgements.md`; content/source TBD |
 
@@ -776,24 +725,24 @@ current authority, explicitly marked TBD, or explained as superseded.
 | NGC authentication, cache, shared memory, UID, and Docker launch | Merge with the unified launch flow and use `NGC_API_KEY`; explain cold-start materialization and writable cache permissions | `README.md`, `deployment.md` |
 | Liveness, readiness, and startup delay | Preserve the distinction and explain that model download/load can outlast liveness | `README.md`, `deployment.md`, `operations.md` |
 | Chat Completions with curl | Provide one complete non-streaming multimodal request against `/v1/chat/completions` | `reasoning.md` |
-| OpenAI Python client | Use `base_url=<NIM_URL>/v1`, a non-secret placeholder client key, model discovery, and current `extra_body` handling | `reasoning.md`, `examples/common.py`, `examples/reasoner.py` |
-| Streaming Chat Completions | Current first-party example assembles `delta.content`; retain both incremental output and final assembly | `reasoning.md`, `examples/reasoner_stream.py` |
+| OpenAI Python client | Use `base_url=<NIM_URL>/v1`, a non-secret placeholder client key, model discovery, and explicit `extra_body` handling | `reasoning.md`, `examples/reasoner.py` |
+| Streaming Chat Completions | Runtime tests establish streamed deltas; the local example prints them incrementally | `reasoning.md`, `examples/reasoner_stream.py` |
 | Image by public URL | Retain only after release smoke testing of remote URL access and failure behavior | `reasoning.md`; live validation pending |
-| Image by data URL/base64 | Current first-party example proves request construction with `image_url`; document MIME-aware data URLs and media-before-text ordering | `reasoning.md`, `examples/reasoner.py` |
-| Accepted image formats | Historical JPG/JPEG/PNG claims are not a current release contract | `api-reference.md`; exact release formats TBD |
+| Image by data URL/base64 | Runtime handling and tests support `image_url`; document MIME-aware data URLs and media-before-text ordering | `reasoning.md`, `examples/reasoner.py` |
+| Accepted image formats | Historical JPG/JPEG/PNG claims are not a current release contract | `support-matrix.md`; exact release formats TBD |
 | Video by public URL | Retain only after release smoke testing of download, timeout, and decode behavior | `reasoning.md`; live validation pending |
-| Video by data URL/base64 | Current first-party example proves request construction with `video_url`; document payload-size implications | `reasoning.md`, `examples/reasoner.py` |
-| Accepted video containers/codecs | Do not copy the historical MP4/MKV/FLV/3GP and H264/H265/VP9/FLV matrix; validate the released decoder path | `api-reference.md`, `operations.md`; exact matrix TBD |
-| Pre-decoded `video_frames` input | Present only in the historical page; no current first-party example or test establishes it | Omit from runnable guidance until live verification; support TBD |
-| Media before prompt text | Current cookbook prompt guide and first-party requests both place image/video content before text | `reasoning.md` |
-| Request-level video sampling | Current example uses `media_io_kwargs.video.fps`; current startup default is 4 FPS | `reasoning.md`, `api-reference.md` |
-| `fps` versus `num_frames` constraints | Historical docs say the fields are mutually exclusive; confirm accepted shape, bounds, and precedence against the released API | `api-reference.md`; live validation pending |
-| `mm_processor_kwargs` pixel budgets | Historical-only in reviewed sources; current NIM environment/options and example helper do not expose it | Do not publish as supported until live validation; support/defaults TBD |
-| Operator-level `NIM_MEDIA_IO_KWARGS` | Current Reasoner engine accepts the JSON object and the startup layer provides a complete 4-FPS `pynvvc` video default; make clear that an operator override replaces the complete object | `deployment.md`, `operations.md` |
-| Per-prompt media limits | Current defaults are five images and one video, configurable with `NIM_MAX_IMAGES_PER_PROMPT` and `NIM_MAX_VIDEOS_PER_PROMPT` | `reasoning.md`, `api-reference.md`, `deployment.md` |
-| Sampling defaults and validation | Current normalization supplies temperature 0.7, top-k 20, and top-p 0.8; current validation defines their accepted ranges | `api-reference.md`, summarized in `reasoning.md` |
-| `extra_body` request extensions | Current helper routes `media_io_kwargs`, `top_k`, structured-output fields, and `nvext` through the OpenAI client `extra_body` | `reasoning.md`, `examples/common.py` |
-| Structured/JSON outputs | Current middleware supports `response_format`, `structured_outputs`, and legacy guided-output normalization for completion routes | `reasoning.md`, `api-reference.md`; add a current example |
+| Video by data URL/base64 | Runtime handling and tests support `video_url`; document payload-size implications | `reasoning.md`, `examples/reasoner.py` |
+| Accepted video containers/codecs | Do not copy the historical MP4/MKV/FLV/3GP and H264/H265/VP9/FLV matrix; validate the released decoder path | `support-matrix.md`; exact matrix TBD |
+| Pre-decoded `video_frames` input | Present only in the historical page; current runtime evidence does not establish it | Omit from runnable guidance until live verification; support TBD |
+| Media before prompt text | Current prompt guidance and local cookbook requests place image/video content before text | `reasoning.md` |
+| Request-level video sampling | The local cookbook example uses `media_io_kwargs.video.fps`; current startup default is 4 FPS | `reasoning.md` |
+| `fps` versus `num_frames` constraints | Historical docs say the fields are mutually exclusive; confirm accepted shape, bounds, and precedence against the released API | `reasoning.md`; live validation pending |
+| `mm_processor_kwargs` pixel budgets | Historical-only in reviewed sources; current runtime options do not expose it | Do not publish as supported until live validation; support/defaults TBD |
+| Operator-level `NIM_MEDIA_IO_KWARGS` | Current Reasoner engine accepts the JSON object and the startup layer provides a complete 4-FPS `pynvvc` video default; make clear that an operator override replaces the complete object | `configuration.md`, `operations.md` |
+| Per-prompt media limits | Current defaults are five images and one video, configurable with `NIM_MAX_IMAGES_PER_PROMPT` and `NIM_MAX_VIDEOS_PER_PROMPT` | `reasoning.md`, `configuration.md` |
+| Sampling defaults and validation | Current normalization supplies temperature 0.7, top-k 20, and top-p 0.8; current validation defines their accepted ranges | `reasoning.md` |
+| `extra_body` request extensions | Pass `media_io_kwargs`, `top_k`, structured-output fields, and `nvext` explicitly through the OpenAI client `extra_body` | `reasoning.md`, `examples/reasoner.py` |
+| Structured/JSON outputs | Current middleware supports `response_format`, `structured_outputs`, and legacy guided-output normalization for completion routes | `reasoning.md`; add a current example |
 | Responses API | Current NIM exposes create/retrieve/cancel routes through NIMlib; use the standard `input_image`/`input_text` request shape | `reasoning.md`, `examples/reasoner_responses.py` |
 | Responses storage/background features | Storage is disabled by default and release behavior is still an explicit validation item | `reasoning.md`, `operations.md`; published-image validation pending |
 | Reasoning prompt format and `<think>` output | The historical page and current cookbook prompt guide contain explicit reasoning traces; do not promise hidden chain-of-thought or reproduce it as a general API guarantee. Document task prompting and final-answer schemas with approved wording | `reasoning.md`; product/policy wording review required |
@@ -802,11 +751,11 @@ current authority, explicitly marked TBD, or explained as superseded.
 | Synthetic-data critic / physical plausibility | Preserve as a task example without implying a separate endpoint or deterministic judgment | `reasoning.md` |
 | Embodied, common-sense, planning, and situation-understanding prompts | Preserve representative examples and link to the detailed prompt guide rather than duplicating its full gallery | `reasoning.md` |
 | 2D grounding and action trajectories | Preserve the normalized 0-1000 coordinate convention, output schema, and pixel-conversion explanation after model-release verification | `reasoning.md` |
-| Text-only queries | Historical support is plausible but is not covered by the current first-party examples/tests reviewed here | `reasoning.md`; release smoke test pending |
-| Media and sampling errors | Current interface maps media-related failures to 422 and sampling/validation failures to 400; document stable semantics, not exact messages | `api-reference.md`, `operations.md` |
-| Profiles, GPU/precision support, and KV-cache behavior | Replace the historical Reasoner 1.7.0 hardware tables with the exact released manifest and distinguish tested from merely compatible configurations | `deployment.md`; release matrix TBD |
-| Environment-variable reference | Carry forward only variables present in the current runtime; include request logging, caching, sequence/token limits, media limits, video preprocessing, compilation, and attention controls | `deployment.md`, `operations.md` |
-| Metrics, logging, Helm, and troubleshooting | Reuse the surrounding VLM guide's organization, but validate endpoints, chart values, metric names, and failure modes against this release | `deployment.md`, `operations.md`; release validation pending |
+| Text-only queries | Historical support is plausible but lacks reviewed released-image evidence | `reasoning.md`; release smoke test pending |
+| Media and sampling errors | Current interface maps media-related failures to 422 and sampling/validation failures to 400; document stable semantics, not exact messages | `reasoning.md`, `operations.md` |
+| Profiles, GPU/precision support, and KV-cache behavior | Replace the historical Reasoner 1.7.0 hardware tables with the exact released manifest and distinguish tested from merely compatible configurations | `support-matrix.md`; release matrix TBD |
+| Environment-variable reference | Carry forward only variables present in the current runtime; include request logging, caching, sequence/token limits, media limits, video preprocessing, compilation, and attention controls | `configuration.md`, operational subsets in `operations.md` |
+| Metrics, logging, Helm, and troubleshooting | Reuse the surrounding VLM guide's organization, but validate endpoints, chart values, metric names, and failure modes against this release | `helm.md`, `operations.md`; release validation pending |
 
 Primary current evidence:
 
@@ -815,11 +764,6 @@ Primary current evidence:
 - `cosmos3/serving_stack/profile_selection/startup.py:25-46`
 - `cosmos3/serving_stack/patches/vllm/README.md:29-42`
 - `cosmos3/serving_stack/tests/test_reasoner_inference.py:620-934`
-- `cosmos3/examples/README.md:19-68`
-- `cosmos3/examples/common.py:22-33,355-455`
-- `cosmos3/examples/reasoner.py:15-56`
-- `cosmos3/examples/reasoner_responses.py:15-39`
-- `cosmos3/examples/reasoner_stream.py:21-86`
 - `cookbooks/cosmos3/reasoner/reasoner_prompt_guide.md:6-99,101-659`
 
 Before publication, audit every row against the completed guides just as for
@@ -841,140 +785,19 @@ Repository root: `/Users/ekrivov/projects/cosmos`.
 | --- | --- |
 | `README.md` | Public project tone, model-family overview, integration matrix, and cookbook index |
 | `cookbooks/cosmos3/README.md` | Shared environment/setup conventions and cross-cookbook linking style |
-| `cookbooks/cosmos3/generator/audiovisual/README.md` | Generator workflow headings, quickstart/table style, and current legacy Generator NIM example |
-| `cookbooks/cosmos3/reasoner/README.md` | Reasoner task organization and current legacy Reasoner NIM example |
+| `cookbooks/cosmos3/generator/audiovisual/README.md` | Generator workflow headings and quickstart/table style |
+| `cookbooks/cosmos3/reasoner/README.md` | Reasoner task organization and guide style |
 | `cookbooks/cosmos3/generator/transfer/README.md` | Transfer terminology, controls, and troubleshooting style |
 | `cookbooks/cosmos3/generator/action/README.md` | Action capability organization and domain terminology |
 | `cookbooks/cosmos3/reasoner/reasoner_prompt_guide.md` | Prompt and media ordering guidance |
 
-### Existing NIM examples
+### Prior cookbook research
 
-| Source | Reuse carefully |
-| --- | --- |
-| `cookbooks/cosmos3/generator/audiovisual/run_with_nim.ipynb` | Container launch, readiness, base64 video decoding, and visual walkthrough |
-| `cookbooks/cosmos3/reasoner/run_with_nim.ipynb` | OpenAI client setup, image/video encoding, and Reasoner tasks |
-
-These notebooks target the previous separate Generator and Reasoner NIMs. They
-are not authorities for the unified image, profile selector, or current feature
-surface.
-
-### vLLM and vLLM-Omni analogues
-
-| Source | Conceptual use |
-| --- | --- |
-| `cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb` | T2V, I2V, V2V workflow and media/output handling |
-| `cookbooks/cosmos3/generator/transfer/run_video_transfer_with_vllm_omni.ipynb` | Transfer control cases and assets |
-| `cookbooks/cosmos3/generator/action/run_fd_with_vllm_omni.ipynb` | Forward dynamics domains and autoregressive action workflows |
-| `cookbooks/cosmos3/generator/action/run_id_with_vllm_omni.ipynb` | Inverse dynamics workflow |
-| `cookbooks/cosmos3/reasoner/run_with_vllm.ipynb` | OpenAI-compatible Reasoner tasks and sampling controls |
-
-Translation warning: vLLM-Omni generation commonly uses
-`/v1/videos` or `/v1/videos/sync` with multipart fields and `extra_params`; the
-Certified NIM Generator uses JSON `POST /v1/infer` and returns `b64_video`.
-
-### vLLM/vLLM-Omni to Certified NIM translation contract
-
-The vLLM and vLLM-Omni notebooks are workflow and asset sources, not request
-templates for the Certified NIM. Translate every example at the semantic level.
-
-Generator field mapping:
-
-| vLLM-Omni field or behavior | Certified NIM equivalent | Translation rule |
-| --- | --- | --- |
-| `POST /v1/videos` or `/v1/videos/sync` | `POST /v1/infer` | Replace the endpoint; do not preserve async video-job semantics |
-| Multipart `data` plus `files` | One JSON request body | Encode local media as a data URL/base64 string or use a validated public URL |
-| `prompt` | `prompt` | Same concept; preserve structured prompt content only if it remains within the NIM prompt contract |
-| `negative_prompt` | `negative_prompt` | Same concept and spelling; confirm default behavior in the NIM reference |
-| `size="<width>x<height>"` | `resolution` enum such as `720_16_9` | Translate to an accepted NIM key; never pass an arbitrary vLLM size string |
-| `num_frames` | `num_output_frames` | Rename and revalidate 4k+1 cadence and per-resolution caps |
-| `num_inference_steps` | `steps` | Rename and revalidate the NIM range/default |
-| `guidance_scale` | `guidance_scale` | Same spelling, but use NIM mode-specific defaults/limits |
-| `flow_shift` | `flow_shift` | Same spelling, but use NIM mode-specific defaults/limits |
-| `fps` | `fps` | Same spelling; revalidate mode constraints |
-| `seed` | `seed` | Same spelling; retain deterministic examples |
-| Multipart `input_reference` image | Top-level `image` | Use a data URL/base64 or validated public URL, not a host filesystem upload |
-| Multipart `input_reference` video | Top-level `video` | Use a data URL/base64 or validated public URL |
-| `extra_params.action_mode` | `action_params.mode` | Move into the typed nested action block and use `forward_dynamics`, `policy`, or `inverse_dynamics` |
-| Other action `extra_params` | Typed `action_params` fields | Translate only fields accepted by `ActionParams`; unknown fields are rejected |
-| Transfer hint `control_path` | `transfer.<hint>.video` | Replace server-local paths with a data URL/base64 or validated public URL |
-| Transfer controls in `extra_params` | Typed top-level `transfer` block | Keep only fields exposed by `TransferParams`; move resolution to the top-level request |
-| vLLM `guardrails` request flag | Operator-level NIM guardrail configuration | Do not send it in `/v1/infer`; current request models reject unknown fields |
-| Direct MP4 response from `/videos/sync` | JSON `b64_video` | Decode base64 and save the MP4 explicitly |
-| Async video id, status polling, content download | One synchronous `/v1/infer` response | Remove create/poll/content loops from NIM examples |
-
-Fields that look similar still require NIM validation. In particular, a vLLM
-notebook's successful `num_frames`, resolution, or control combination does not
-prove that the same value is accepted by the NIM request model or released
-profile.
-
-Workflow-by-workflow reuse matrix:
-
-| Cookbook source | Reuse | Translate or exclude |
-| --- | --- | --- |
-| Audiovisual vLLM-Omni notebook | Structured prompts, negative prompts, T2V/I2V assets, sampling intent, output preview patterns | Translate multipart video requests to JSON `/v1/infer`; use NIM resolution keys and field names. Exclude text-to-image and sound because the current NIM surface does not expose them. Use current first-party NIM `v2v.py` for V2V rather than inferring it from this notebook. |
-| Forward-dynamics vLLM-Omni notebook | AV, DROID, and UMI action data concepts; chunk validation; extracting the last generated frame for client-side autoregressive continuation; video stitching/preview ideas | Move action fields under `action_params`; omit `view_point` and request-level `guardrails`; do not copy polling routes. `hand_pose` is not in the current NIM domain enum. Make clear that multi-chunk continuation is client orchestration, not one server request. |
-| Inverse-dynamics vLLM-Omni notebook | Video-in/action-out workflow, AV action visualization, artifact layout | Use top-level `video` plus `action_params.mode="inverse_dynamics"`; remove multipart upload, async polling, and vLLM response reshaping. Respect the NIM domain-to-`raw_action_dim` contract. |
-| Transfer vLLM-Omni notebook | Edge, blur, depth, segmentation, and WSM assets/prompts; per-control workflow intent; compact preview code | Replace `control_path` with nested `video`; omit vLLM-only `max_frames`, `share_vision_temporal_positions`, `show_*`, nested `resolution`, and `guardrails`. Use the current NIM examples for derived edge/blur and the exact supported multi-control rules. |
-| Reasoner vLLM notebook | OpenAI client pattern, `/v1/models` discovery, media-before-text order, task prompts, 0-1000 visualization logic, output parsing ideas | Do not copy the standalone vLLM launch, HF model names, Edge model assumption, `file://` media paths, or `mm_processor_kwargs`. Use NIM data/public URLs, current served names/discovery, and request-level `media_io_kwargs` only where currently supported. Apply the approved reasoning-trace policy. |
-
-Action-specific differences requiring explicit review:
-
-- Current NIM action domains are `av`, `umi`, `bridge_orig_lerobot`, and
-  `droid_lerobot`. The vLLM-Omni notebook's `hand_pose` case is not portable.
-- `view_point` is present in vLLM-Omni notebook records but absent from the
-  current NIM `ActionParams`; do not include it.
-- `guardrails` is a vLLM-Omni request extension. Certified NIM guardrail
-  controls are operator configuration and must not be placed in `/v1/infer`.
-- NIM forward dynamics requires an action array whose row count equals
-  `action_chunk_size` and whose width matches the selected domain's
-  `raw_action_dim`. `num_output_frames` must equal `action_chunk_size + 1`.
-- NIM policy and inverse dynamics return the predicted action in the synchronous
-  response; forward dynamics does not return a predicted action.
-- The autoregressive DROID/UMI notebook loops are reusable as advanced client
-  orchestration only after each individual NIM request shape is validated.
-
-Transfer-specific differences requiring explicit review:
-
-- Precomputed controls become `transfer.<hint>.video`; they are not server-local
-  `control_path` values.
-- Derived edge and blur use a top-level input `video` plus an edge/blur boolean
-  or preset. Depth, segmentation, and WSM require precomputed control video.
-- Current NIM `TransferParams` exposes `control_guidance`,
-  `num_video_frames_per_chunk`, `num_conditional_frames`, and
-  `num_first_chunk_conditional_frames`. Other vLLM-Omni `extra_params` are not
-  automatically part of the NIM contract.
-- Multi-control behavior must come from current NIM validation and a release
-  smoke test, not the vLLM-Omni notebook's broader statement.
-
-Reasoner-specific differences requiring explicit review:
-
-- The OpenAI Chat Completions shape is largely reusable, including dynamic
-  `/v1/models` discovery and media-before-text ordering.
-- The notebook's `file://` URLs rely on a separately launched vLLM container
-  with `--allowed-local-media-path`; use data URLs or validated public URLs in
-  Certified NIM examples.
-- The notebook sends `mm_processor_kwargs`. Current first-party NIM code and
-  helpers do not establish that extension; use the proven
-  `media_io_kwargs.video.fps` shape and keep `mm_processor_kwargs` TBD.
-- The notebook's direct HF model names and Edge/Super launch options are not NIM
-  profile or served-model names.
-- Prompt/task galleries and coordinate visualization code are reusable, but
-  explicit `<think>` parsing is not a general API guarantee and requires the
-  approved reasoning-output policy described above.
-
-Primary evidence:
-
-- `cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb:30,444-576`
-- `cookbooks/cosmos3/generator/action/run_fd_with_vllm_omni.ipynb:403-466,684-792,982-1188,1357-1414`
-- `cookbooks/cosmos3/generator/action/run_id_with_vllm_omni.ipynb:272-326`
-- `cookbooks/cosmos3/generator/transfer/run_video_transfer_with_vllm_omni.ipynb:139-320`
-- `cookbooks/cosmos3/reasoner/run_with_vllm.ipynb:108-230,287-443,471-1104`
-- `cosmos3/serving_stack/data_models/generation.py:52-401`
-- `cosmos3/serving_stack/data_models/actions.py:24-232`
-- `cosmos3/serving_stack/data_models/transfer.py:28-252`
-- `cosmos3/serving_stack/data_models/responses.py:20-34`
-- `cosmos3/examples/{t2v,i2v,v2v,action,transfer,reasoner}.py`
-- `cosmos3/examples/common.py:62-97,164-224,302-325`
+Existing Cosmos3 cookbook material was consulted for terminology, task
+taxonomy, presentation conventions, and approved asset reuse. Those external
+examples are not reproduced or described here and are not API authorities.
+All public request and response guidance is validated independently against the
+Certified NIM runtime contract.
 
 ## Cookbook consistency and repository integration
 
@@ -1001,7 +824,7 @@ facts.
 | Large `<details>` blocks in the root README | Avoid inside focused guides | Hidden/collapsed content is less discoverable and unnecessary when pages are already split by concern |
 | Repeating complete backend setup in multiple READMEs | Avoid | One canonical deployment page prevents image, selector, and credential drift |
 | Unqualified model size/count and hardware claims | Avoid | Use released manifest/model-card evidence or an explicit TBD |
-| Backend-specific request examples copied between integrations | Avoid | Use the translation contract above; preserve workflow intent, not transport syntax |
+| Backend-specific request examples copied between integrations | Avoid | Validate each local example against the Certified NIM contract |
 
 ### File and example presentation rules
 
@@ -1028,9 +851,9 @@ facts.
 - Prefer vendored small assets. For large remote media, pin the URL to an
   immutable commit or artifact version and record provenance/licensing before
   publication. Never silently rely on a moving `main` branch asset.
-- Save each run's exact request, response or compact metadata, decoded media,
-  and predicted action where applicable. Keep full base64 values out of console
-  summaries.
+- Save the primary generated media and predicted action where applicable. Keep
+  Reasoner output visible in the terminal and avoid auxiliary artifact layers
+  that obscure the request/response flow.
 - `examples/outputs/` is covered by the repository-wide `outputs/` ignore rule;
   confirm with `git check-ignore` after the directory exists.
 - Do not add nbviewer links for plain Python scripts. Link the script directly
@@ -1071,24 +894,24 @@ Primary style/integration evidence:
 | Capability or topic | Primary source | Supporting source | Public destination |
 | --- | --- | --- | --- |
 | Unified image and profile-selected runtime mode | `serving_stack/inference.py`, profile code | `AGENTS.md`, `documentation.md` | `README.md`, `deployment.md` |
-| NGC authentication, cache, ports, first launch | `documentation.md`, runtime configuration | Previous quickstart, existing cookbook launch cells | `README.md`, `deployment.md` |
-| Catalog/model-card identity and release notes | Published NGC release | Previous introduction/release notes | `README.md`; release URL/version TBD |
-| Hardware and profile selection | `make_profiles.py`, profile selection, exported profiles | `documentation.md`, support matrices | `deployment.md` |
-| Shared management endpoints | live OpenAPI, `api_spec.yaml`, NIM interface | `documentation.md` | `api-reference.md`, `operations.md` |
-| Generator request/response and validation | `data_models/*.py`, tests | current examples | `api-reference.md` |
-| T2V, I2V, V2V | `generation.py`, `t2v.py`, `i2v.py`, `v2v.py` | vLLM-Omni audiovisual cookbook | `generation.md` |
-| Generator prompt upsampling | `prompt_upsampling.py`, `generator_inference.py`, `environment.py`, tests | `documentation.md` | `deployment.md`, `generation.md`, `operations.md` |
-| Chat Completions | `reasoner_inference.py`, `reasoner.py`, tests | previous Reasoner API page | `reasoning.md` |
-| Responses API | `reasoner_responses.py`, Reasoner tests | NIMlib behavior noted in examples README | `reasoning.md` |
-| Reasoner streaming | `reasoner_stream.py`, Reasoner tests | previous Reasoner API page | `reasoning.md` |
-| Reasoner media limits/preprocessing | `environment.py`, current examples/tests | previous Reasoner API page, prompt guide | `reasoning.md`, `api-reference.md` |
-| Forward dynamics | `actions.py`, `action.py`, tests | action/vLLM-Omni cookbook | `action.md` |
-| Policy | `actions.py`, `action.py`, tests | action cookbooks | `action.md` |
-| Inverse dynamics | `actions.py`, `action.py`, tests | action/vLLM-Omni cookbook | `action.md` |
-| Transfer controls | `transfer.py`, example and tests | transfer/vLLM-Omni cookbook | `transfer.md` |
-| Environment variables | `environment.py` and NIM framework contract | `documentation.md`, previous config pages | `deployment.md`, `operations.md` |
-| BYOC | BYOC validation in `environment.py` | `documentation.md`, previous BYOC page | `deployment.md` |
-| Helm/Kubernetes | released chart contract when confirmed | previous Helm page, `documentation.md` | `deployment.md` |
+| NGC authentication, cache, ports, first launch | `documentation.md`, runtime configuration | Previous product quickstart | `README.md`, `deployment.md` |
+| Catalog/model-card identity and release notes | Published NGC release | Previous introduction/release notes | `release-notes.md`, `README.md`; release URL/version TBD |
+| Hardware and profile selection | `make_profiles.py`, profile selection, exported profiles | `documentation.md`, support matrices | `support-matrix.md`, `deployment.md` |
+| Shared management endpoints | live OpenAPI, `api_spec.yaml`, NIM interface | `documentation.md` | `operations.md`; compact index in `api-reference.md` |
+| Generator shared request/response envelope | `data_models/generation.py`, tests | Local cookbook examples | `api-reference.md` |
+| T2V, I2V, V2V | `generation.py`, Generator runtime/tests | Local cookbook examples | `generation.md` |
+| Generator prompt upsampling | `prompt_upsampling.py`, `generator_inference.py`, `environment.py`, tests | `documentation.md` | `configuration.md`, `generation.md`, `operations.md` |
+| Chat Completions | `reasoner_inference.py`, tests | Previous Reasoner API page and local cookbook example | `reasoning.md` |
+| Responses API | `reasoner_inference.py`, Reasoner tests | Local cookbook example | `reasoning.md` |
+| Reasoner streaming | `reasoner_inference.py`, Reasoner tests | Local cookbook example | `reasoning.md` |
+| Reasoner media limits/preprocessing | `environment.py`, runtime tests | Previous Reasoner API page and prompt guide | `reasoning.md`, `configuration.md` |
+| Forward dynamics | `actions.py`, runtime/tests | Local cookbook example and task documentation | `action.md` |
+| Policy | `actions.py`, runtime/tests | Local cookbook example and task documentation | `action.md` |
+| Inverse dynamics | `actions.py`, runtime/tests | Local cookbook example and task documentation | `action.md` |
+| Transfer controls | `transfer.py`, runtime/tests | Local cookbook example and task documentation | `transfer.md` |
+| Environment variables | `environment.py` and NIM framework contract | `documentation.md`, previous config pages | `configuration.md`, operational subsets in `operations.md` |
+| BYOC | BYOC validation in `environment.py` | `documentation.md`, previous BYOC page | `bring-your-own-checkpoint.md` |
+| Helm/Kubernetes | released chart contract when confirmed | previous Helm page, `documentation.md` | `helm.md` |
 | Health, metrics, logging, guardrails | runtime code and NIM interface | `documentation.md`, previous observability page | `operations.md` |
 | Troubleshooting | actual validation/errors/tests | source guide and previous troubleshooting pages | `operations.md` |
 | License/EULA notice | Published release/model card and `/v1/license` | Previous EULA page, repository `LICENSE` | `README.md`, `operations.md` |
@@ -1116,10 +939,12 @@ Consequences of the chosen structure:
 - `README.md` acts as both human landing page and AI-readable document index.
 - Each focused page is independently understandable: it states its runtime
   mode, endpoint, prerequisites, inputs, output, and links to canonical fields.
-- The complete API tables live in `api-reference.md`; task pages contain only
-  the subset needed to explain a workflow.
-- Deployment owns launch-time configuration. Operations owns observation,
-  diagnostics, failure recovery, and production caveats.
+- `api-reference.md` owns only runtime routing and the common Generator
+  envelope. Generation, Action, Transfer, and Reasoning own their detailed
+  task contracts.
+- Focused pages own prerequisites, configuration, support, Helm, and BYOC.
+  Deployment owns the Docker launch workflow. Operations owns observation,
+  generic errors, diagnostics, failure recovery, and production caveats.
 - Runnable scripts are the canonical complete examples. Embedded snippets stay
   short but must remain directly runnable and consistent with those scripts.
 - Release-dependent facts remain visibly marked `TBD (release-dependent)` until
@@ -1144,28 +969,60 @@ Keep this page concise. It is a landing page, not the full reference.
 
 ### `deployment.md`
 
-- Prerequisites and version requirements.
 - NGC API key and Docker login.
 - Cache and volume permissions.
 - Container image, ports, shared memory, and ulimits.
 - Choosing `generator` or `reasoner`, model size, precision, performance profile,
   GPU exposure, and explicit profile selection.
-- Nano/Super and supported-hardware tables.
 - Readiness and cold-start expectations.
-- Optional Generator prompt-upsampling configuration, including the separate
-  external-service secret and supported endpoint contract.
-- BYOC, clearly scoped to supported runtime modes.
-- Helm/Kubernetes deployment and persistent cache.
+- Links to focused requirements, configuration, support, Helm, and BYOC pages.
+
+### `release-notes.md`
+
+- Released version/date and image tag.
+- Compatibility changes, known limitations, and upgrade guidance.
+- Release-owned URLs and support statements; all remain TBD until approved.
+
+### `prerequisites.md`
+
+- CPU/GPU, RAM, disk, shared-memory, Linux, driver, Docker, and toolkit
+  requirements.
+- Network and NGC access requirements.
+- Host and container-runtime verification.
+
+### `configuration.md`
+
+- Shared, Generator, Reasoner, and profile-selection environment variables.
+- Defaults, scope, conflicts, and secret handling.
+- Prompt-upsampling launch configuration and external-service secret.
+
+### `support-matrix.md`
+
+- Released model/precision/GPU/VRAM/profile and offload compatibility.
+- Tested-versus-compatible distinctions.
+- Released image/video formats and codecs.
+
+### `helm.md`
+
+- Cluster and GPU Operator prerequisites.
+- Chart discovery, NGC secrets, values, storage, GPUs, probes, and services.
+- Install/upgrade, rollout, port-forwarding, and verification.
+
+### `bring-your-own-checkpoint.md`
+
+- Generator-only current boundary and explicit Reasoner exclusion.
+- Checkpoint layout, read-only mount, selectors, profile cross-check, cache,
+  readiness, verification, and common failures.
+- Explicit rejection of unsupported historical Transfer BYOC variables.
 
 ### `api-reference.md`
 
 - Endpoint matrix separated by runtime mode.
-- Shared management endpoints.
-- Generator `/v1/infer` top-level request fields.
-- Nested action and transfer schema links, with summary tables only.
-- Generator response and optional action output.
-- Accepted image/video representations and URL-input policy.
-- Validation behavior and error envelope.
+- Compact management-endpoint index linking to operations.
+- Common Generator `/v1/infer` top-level request fields and strict JSON types.
+- Common Generator response envelope.
+- Links to canonical Generation, Action, Transfer, and Reasoning contracts.
+- Live OpenAPI inspection.
 - Model discovery and live `/openapi.json` usage.
 
 This is the canonical location for field defaults, ranges, and constraints.
@@ -1238,8 +1095,8 @@ Workflow pages should link here instead of repeating full field tables.
 - Content must come from the approved release/build acknowledgement inventory,
   not from package inference, source-tree dependency files, or the previous
   38,574-line Generator acknowledgement artifact.
-- Until that release artifact is supplied, keep the page in the plan and the
-  content explicitly TBD; do not create a public placeholder yet.
+- Until that release artifact is supplied, keep the public page explicitly TBD
+  and do not infer or copy a component inventory.
 - Keep the product EULA/license separate: link to repository/NGC terms and the
   running NIM's `/v1/license` endpoint from `README.md` and `operations.md`.
 
@@ -1263,6 +1120,40 @@ Planned scripts:
 Each public guide also embeds one short curl or Python example so it remains
 useful without opening a second file.
 
+## Structural redistribution record
+
+The 2026-07-27 split changes page ownership without dropping coverage. This
+table supersedes earlier planning references that assigned all deployment and
+API material to two large pages.
+
+| Previous section | Canonical destination |
+| --- | --- |
+| `deployment.md` — Prerequisites | `prerequisites.md` |
+| `deployment.md` — NGC key, image, cache, Docker launch/flags, readiness, selectors, shutdown | `deployment.md` |
+| `deployment.md` — Configuration reference | `configuration.md` |
+| `deployment.md` — Prompt upsampling configuration | `configuration.md`; workflow in `generation.md`, diagnostics in `operations.md` |
+| `deployment.md` — Hardware/profile and offload compatibility | Selection mechanics in `deployment.md`; released rows in `support-matrix.md` |
+| `deployment.md` — Bring your own checkpoint | `bring-your-own-checkpoint.md` |
+| `deployment.md` — Kubernetes and Helm | `helm.md`; failures in `operations.md` |
+| `api-reference.md` — Runtime and endpoint model | Compact routing table in `api-reference.md`; management semantics in `operations.md` |
+| `api-reference.md` — Common Generator fields and strict types | `api-reference.md` |
+| `api-reference.md` — Frame cadence, resolution keys, media representations | `generation.md`; released codecs in `support-matrix.md` |
+| `api-reference.md` — Action fields and predicted-action response | `action.md` |
+| `api-reference.md` — Transfer fields and defaults | `transfer.md` |
+| `api-reference.md` — Reasoner APIs, sampling, streaming, and Responses | `reasoning.md` |
+| `api-reference.md` — Generic errors | `operations.md` |
+| `api-reference.md` — OpenAPI inspection | Compact command in `api-reference.md`; operational capture in `operations.md` |
+
+The split also adds `release-notes.md` as the sole destination for published
+version history, image tags, compatibility changes, known limitations, and
+upgrade guidance. Its initial content remains release-dependent.
+
+Historical Transfer BYOC variables (`NIM_EDGE_CHECKPOINT`,
+`NIM_VIS_CHECKPOINT`, `NIM_DEPTH_CHECKPOINT`, and `NIM_SEG_CHECKPOINT`) remain
+explicitly excluded because the current Certified NIM source does not expose
+them. Only the current Generator `NIM_FT_CHECKPOINT` path is documented, and
+Reasoner BYOC remains unproven.
+
 ## Page-level authoring contracts
 
 These contracts define what each public artifact owns, which sources establish
@@ -1271,17 +1162,23 @@ handoff from research to drafting.
 
 | Artifact | Canonical ownership | Primary current evidence | Release/TBD inputs | Non-goals |
 | --- | --- | --- | --- | --- |
-| `README.md` | Product scope, selected-runtime mental model, capability/endpoint index, minimum launch, first Generator/Reasoner requests, navigation | `serving_stack/inference.py`, profile export/selection, current examples, `documentation.md` | Final image/tag, product/model-card/release URLs, approved public naming | Exhaustive fields, full environment reference, profile internals, long troubleshooting |
-| `deployment.md` | Prerequisites, NGC key and login, cache/permissions, Docker flags, ports, selectors, profiles/hardware, readiness, prompt-upsampling launch configuration, BYOC, Helm | `documentation.md`, `environment.py`, `prompt_upsampling.py`, profile-selection code, `make_profiles.py`, `profiles.json`, BYOC and prompt-upsampling tests | Driver/toolkit floor, released profile matrix, image/tag, chart/version/values, published BYOC boundary, released external-endpoint compatibility | Request field tables, task prompt galleries, metrics interpretation |
-| `api-reference.md` | Endpoint inventory, canonical request/response fields, defaults/ranges, media representations, validation/error semantics, model/OpenAPI discovery | `data_models/*.py`, `reasoner_inference.py`, data-model/Reasoner tests, current examples | Generator and Reasoner live OpenAPI, released media/codec support, public-URL behavior | End-to-end deployment, repeated task walkthroughs, generic OpenAI documentation |
-| `generation.md` | T2V/I2V/V2V workflows, conditioning media, optional T2V/I2V prompt upsampling, output decoding, reproducibility, generation-specific caveats | `data_models/generation.py`, `generator_inference.py`, `prompt_upsampling.py`, `examples/{t2v,i2v,v2v,common}.py`, tests | Published capability set, live media/URL validation, prompt-upsampling integration smoke test, validated output playback | Full schema tables, action/transfer modes, vLLM-Omni endpoints |
-| `reasoning.md` | Chat Completions, Responses, streaming, media ordering, task prompts, structured outputs, Reasoner-specific sampling/media guidance | `reasoner_inference.py`, Reasoner environment/startup, Reasoner examples/tests, current prompt guide | Text-only/public-URL/media-format checks, Responses state features, approved reasoning-trace wording | Generic vLLM tuning reference, unsupported legacy `video_frames`/`mm_processor_kwargs`, hidden chain-of-thought promises |
-| `action.md` | Shared action contract and forward-dynamics, policy, inverse-dynamics workflows and validation | `data_models/actions.py`, `examples/action.py`, data-model/example tests, current action cookbooks | Published-image/profile smoke tests and released domain/model boundary | General generation tutorial, one page per action asset, framework/vLLM-Omni request syntax |
-| `transfer.md` | Transfer control taxonomy, precomputed/server-derived controls, combinations, media/chunking fields, distinct request shapes | `data_models/transfer.py`, `examples/transfer.py`, tests, current transfer cookbook | Published-image/profile smoke tests, exact supported combination matrix | Duplicate example for every asset, vLLM-Omni multipart syntax, generic video generation reference |
-| `operations.md` | Health/readiness, inspection endpoints, metrics/logs, guardrails, prompt-upsampling failure/fallback diagnostics, profile confirmation, production diagnostics, troubleshooting | Runtime interface/environment/prompt-upsampling code, `documentation.md`, tests, previous operations docs | Live metrics scrape, log/error samples, prompt-upsampling failure sample, chart probes, release limitations | Basic launch tutorial, duplicate schema tables, unverified metric names, secret values |
+| `README.md` | Product scope, selected-runtime mental model, capability/endpoint index, minimum launch, first Generator/Reasoner requests, navigation | `serving_stack/inference.py`, profile export/selection, local cookbook examples, `documentation.md` | Final image/tag, product/model-card/release URLs, approved public naming | Exhaustive fields, full environment reference, profile internals, long troubleshooting |
+| `release-notes.md` | Released versions, image tags, compatibility changes, known limitations, and upgrade notes | Approved published release inventory | Entire initial entry remains TBD until supplied | Inferred versioning, development-branch changelog |
+| `prerequisites.md` | Host hardware/software, memory/storage/shared-memory, NGC access, and verification | Released support statement, current source requirements, previous prerequisite organization | Exact architecture, resource, driver, Docker, and toolkit floors | Profile selector details, Docker launch tutorial |
+| `deployment.md` | NGC key and login, cache/permissions, Docker flags, ports, selectors, readiness, and shutdown | `documentation.md`, runtime/profile-selection code, previous quickstart | Final image/tag and release URLs | Full environment tables, support matrix, Helm, BYOC contract |
+| `configuration.md` | Shared, selection, Generator, Reasoner, and prompt-upsampling environment variables | `environment.py`, prompt-upsampling code/tests, framework contract | Released defaults and external endpoint compatibility | Complete launch commands, runtime troubleshooting |
+| `support-matrix.md` | Model, precision, GPU, VRAM, profile, offload, and media/codec compatibility | Released manifest/test inventory; current profile generation as pre-release evidence | Entire public matrix and tested SKU boundary | Launch tutorial, inferred support from development rows |
+| `helm.md` | Cluster prerequisites, chart discovery, secrets, values, GPU resources, storage, probes, rollout, and verification | Released chart contract; previous Helm organization | Chart identity/version/schema and monitoring integration | Copied complete values catalogue, Docker deployment |
+| `bring-your-own-checkpoint.md` | Generator BYOC boundary, layout, mount, profile cross-check, cache, launch, verification, and failures | `environment.py`, source guide, BYOC tests, previous BYOC page | Published format and runtime boundary | Historical Transfer checkpoint variables, Reasoner BYOC claims |
+| `api-reference.md` | Runtime routing, common Generator fields, strict JSON typing, common response, task links, and live OpenAPI | Generator request model/tests and routing code | Generator and Reasoner live OpenAPI | Detailed Action/Transfer/Reasoner tables, management semantics, generic errors |
+| `generation.md` | T2V/I2V/V2V workflows, frame/resolution/media rules, conditioning, optional prompt upsampling, decoding, reproducibility | `data_models/generation.py`, `generator_inference.py`, `prompt_upsampling.py`, tests, and local cookbook examples | Published capability set, live media/URL validation, prompt-upsampling smoke test, output playback | Action/transfer contracts, operator configuration tables |
+| `reasoning.md` | Chat Completions, Responses, streaming, media ordering, task prompts, structured outputs, Reasoner-specific sampling/media guidance | `reasoner_inference.py`, Reasoner environment/startup, tests, local cookbook examples, and current prompt guide | Text-only/public-URL/media-format checks, Responses state features, approved reasoning-trace wording | Generic vLLM tuning reference, unsupported legacy `video_frames`/`mm_processor_kwargs`, hidden chain-of-thought promises |
+| `action.md` | Complete action contract plus forward dynamics, policy, inverse dynamics, response, and validation | `data_models/actions.py`, runtime/tests, and the local cookbook example | Published-image/profile smoke tests and released domain/model boundary | General generation tutorial, framework/vLLM-Omni syntax |
+| `transfer.md` | Complete transfer contract, control taxonomy, defaults, precomputed/derived forms, combinations, and validation | `data_models/transfer.py`, runtime/tests, and the local cookbook example | Published-image/profile smoke tests, exact supported combination matrix | Duplicate example for every asset, vLLM-Omni multipart syntax |
+| `operations.md` | Health/readiness, management endpoints, generic errors, metrics/logs, guardrails, diagnostics, and troubleshooting | Runtime interface/environment/prompt-upsampling code, `documentation.md`, tests, previous operations docs | Live metrics, log/error samples, chart probes, release limitations | Basic launch tutorial, duplicate task-schema tables, secret values |
 | `acknowledgements.md` | Third-party components and notices for the exact released image | Approved release/build acknowledgement inventory only | Entire content remains TBD until that artifact is supplied and approved | Product EULA copy, inferred dependency inventory, historical Generator notice reuse |
-| `examples/common.py` | Shared URL, health check, media encoding, request dispatch, response decoding, safe artifact writing | Current NIM `examples/common.py`, current cookbook helpers | Final default host-port convention and live response shapes | Large CLI framework, implicit downloads, embedded secrets |
-| Task example scripts | One editable, complete, representative request per distinct request shape | Current first-party NIM examples plus translated cookbook/vLLM-Omni workflows | Live release smoke results and stable asset locations | Exhaustive parameter combinations, duplicated common helpers, notebook-only execution |
+| `examples/common.py` | Strict local-media-to-data-URL conversion and video decoding | Current cookbook helper and runtime media contract | Final supported media types | Request dispatch, CLI framework, downloads, credentials |
+| Task example scripts | One editable request with the API call and primary response handling visible in the same file | Current API models, runtime/tests, and local cookbook workflows | Live release smoke results and stable asset locations | Exhaustive parameter combinations, multi-level runner helpers, notebook-only execution |
 
 ### Canonical fact ownership
 
@@ -1289,12 +1186,20 @@ Use this table during drafting and review to resolve tempting duplication:
 
 | Fact class | Canonical owner | Allowed repetition elsewhere |
 | --- | --- | --- |
-| Product identity, release compatibility, guide navigation | `README.md` | One-sentence context and links |
-| Image name/tag, prerequisites, Docker/Helm launch, selectors, hardware profiles, launch-time environment | `deployment.md` | Minimal quickstart subset in `README.md`; no copied full tables |
-| Endpoint list, request/response fields, defaults, ranges, media types, HTTP semantics | `api-reference.md` | Task-specific subsets with links to the canonical rows |
+| Product identity and guide navigation | `README.md` | One-sentence context and links |
+| Release versions, compatibility changes, and limitations | `release-notes.md` | Release-status link/summary |
+| Host hardware/software and verification | `prerequisites.md` | Minimal pre-launch reminder |
+| Image, NGC login, cache, Docker launch, selectors, and readiness | `deployment.md` | Minimal quickstart subset in `README.md` |
+| Environment variables and prompt-upsampling launch configuration | `configuration.md` | Workflow-specific subset with link |
+| Released hardware/profile/offload/media compatibility | `support-matrix.md` | One-row selection context; no copied matrix |
+| Kubernetes/Helm deployment | `helm.md` | Troubleshooting symptoms in `operations.md` |
+| Generator BYOC setup and contract | `bring-your-own-checkpoint.md` | Configuration row and operations symptoms |
+| Runtime routing and common Generator envelope | `api-reference.md` | Task-specific request subsets |
+| Frame/resolution/media rules | `generation.md` | Common field links from API reference |
+| Detailed Action, Transfer, and Reasoner contracts | Corresponding task guide | Endpoint links and runnable subsets |
 | Workflow order, task intent, representative payload, artifact handling | Corresponding task guide | One minimal first request in `README.md` |
-| Reusable complete request/decoder implementation | `examples/` | Short synchronized snippets in guides |
-| Health interpretation, metrics, logs, guardrails, diagnostics, known limitations | `operations.md` | Readiness command in quickstarts and links for detail |
+| Reusable complete request/decoder implementation | `examples/` | Matching short snippets in guides |
+| Health, management endpoints, generic errors, metrics, logs, guardrails, and diagnostics | `operations.md` | Readiness command and contextual links |
 | Legal/product license location | `README.md` and `operations.md` links | Do not reproduce mutable legal text |
 | Third-party notice inventory | `acknowledgements.md` | Link only |
 
@@ -1345,15 +1250,21 @@ claim or command that needs the missing fact. Use these readiness labels:
 | Artifact | Readiness | Draftable from current evidence | Must remain TBD or validation-gated |
 | --- | --- | --- | --- |
 | `README.md` | Ready with TBDs | Unified selected-runtime model, capability/endpoint index, NGC credential flow, guide navigation, minimal request shapes | Final image/tag, approved product wording, catalog/model-card/release URLs, final support summary |
-| `deployment.md` | Ready with TBDs | Docker/cache/credential mechanics, selector behavior, current profile model, readiness concepts, prompt-upsampling configuration/secret separation, current Generator BYOC boundary | Final image/tag, driver/toolkit floors, released profile matrix, Helm chart/values, published prompt-upsampling endpoint compatibility, published BYOC statement |
-| `api-reference.md` | Source-ready with live gates | Generator models, current Reasoner normalization/routes, defaults, ranges, validation, response shapes | Live OpenAPI for both modes, media URL behavior, exact released formats/codecs, NIMlib-generated route details |
+| `release-notes.md` | Artifact-dependent | Page purpose and initial TBD structure | Version/date, image/tag, compatibility changes, limitations, and upgrade notes |
+| `prerequisites.md` | Ready with TBDs | Requirement categories, NGC/network needs, verification workflow | Exact CPU/GPU, RAM/disk/shared-memory, driver, Docker, and toolkit values |
+| `deployment.md` | Ready with TBDs | Docker/cache/credential mechanics, selectors, profile-selection concepts, readiness, shutdown | Final image/tag and release URLs |
+| `configuration.md` | Source-ready with live gates | Current shared/Generator/Reasoner/prompt-upsampling variables and conflicts | Released defaults and external endpoint compatibility |
+| `support-matrix.md` | Ready with TBDs | Matrix semantics, current profile concepts, offload and media categories | Released rows, tested SKUs, VRAM, compute floors, codecs |
+| `helm.md` | Ready with TBDs | Required concepts, secret separation, storage/probe/rollout workflow | Chart identity/version/schema and monitoring values |
+| `bring-your-own-checkpoint.md` | Source-ready with live gates | Current Generator boundary, layout, mount, cross-check, verification, failures | Released checkpoint formats and supported profile boundary |
+| `api-reference.md` | Source-ready with live gates | Runtime routing, common Generator envelope, strict typing, response, task links | Live OpenAPI for both modes and generated route inventory |
 | `generation.md` | Source-ready with live gates | T2V/I2V/V2V request construction, current fields/constraints, prompt-upsampling mode boundary and fallback, base64 response decoding, deterministic-seed guidance | Published-image capability and prompt-upsampling smoke results, remote-input behavior, playback/codec observations |
 | `reasoning.md` | Ready with TBDs | Chat Completions, Responses create flow, streaming, data URLs, media ordering, sampling, structured outputs, task taxonomy | Text-only and public-URL smoke tests, exact media formats, Responses persistence features, approved reasoning-trace wording |
 | `action.md` | Source-ready with live gates | Forward dynamics, policy, inverse dynamics, action shapes/domains, current representative payloads | Published-profile availability and one smoke result per documented mode/domain boundary |
 | `transfer.md` | Source-ready with live gates | Precomputed and derived controls, current fields/validators, representative request shapes | Published-profile availability, exact supported combination matrix, smoke results |
-| `operations.md` | Ready with TBDs | Health/readiness concepts, current environment controls, stable error classes, prompt-upsampling failure/fallback semantics, historical troubleshooting categories | Live endpoint inventory, metrics scrape, log and prompt-upsampling failure samples, chart probes, release-specific known limitations |
+| `operations.md` | Ready with TBDs | Health/readiness, management endpoints, stable error classes, current controls, prompt-upsampling fallback, troubleshooting | Live endpoint inventory, metrics scrape, log/failure samples, chart probes, release limitations |
 | `acknowledgements.md` | Artifact-dependent | Page purpose and link placement only | Entire third-party inventory and notice text until the approved released-image artifact exists |
-| `examples/` | Source-ready with live gates | Adaptable current NIM request dictionaries/helpers and cookbook assets/workflows | Final host-port convention, image-dependent model/profile selection, live response verification |
+| `examples/` | Source-ready with live gates | Local request scripts, helpers, and cookbook assets/workflows | Final host-port convention, image-dependent model/profile selection, live response verification |
 
 ### Recommended authoring order
 
@@ -1361,16 +1272,16 @@ When the user authorizes drafting, use this dependency order:
 
 1. Refresh the reviewed snapshots and reconcile any source drift.
 2. Create only the agreed file scaffold and relative navigation targets.
-3. Draft `api-reference.md` from current request models and Reasoner routing;
-   this establishes the canonical field names, defaults, and error semantics.
-4. Adapt `examples/common.py` and the task scripts from the current first-party
-   examples, preserving complete editable request dictionaries.
-5. Draft `generation.md`, `reasoning.md`, `action.md`, and `transfer.md` against
-   the canonical API tables and runnable scripts. Keep prompt upsampling in the
-   generation/deployment/operations pages rather than treating it as a new
-   generation endpoint.
-6. Draft `deployment.md`, keeping final image, released hardware, driver, chart,
-   and release URLs explicitly TBD where evidence is unavailable.
+3. Draft the compact `api-reference.md` for runtime routing and the common
+   Generator envelope; assign task contracts to their corresponding guides.
+4. Maintain local task scripts with complete editable request dictionaries and
+   direct API calls; share only the strict local-media encoder and video decoder
+   in `examples/common.py`.
+5. Draft `generation.md`, `reasoning.md`, `action.md`, and `transfer.md` as the
+   canonical task contracts against current models and runnable scripts.
+6. Draft `release-notes.md`, `prerequisites.md`, `configuration.md`,
+   `support-matrix.md`, `helm.md`, `bring-your-own-checkpoint.md`, and the
+   focused Docker `deployment.md`; keep release-owned values explicitly TBD.
 7. Draft `operations.md` from current controls and historical coverage, marking
    live metrics, logs, probes, and release limitations as validation-gated.
 8. Assemble `README.md` last so its guide index, capability matrix, and minimal
@@ -1380,9 +1291,8 @@ When the user authorizes drafting, use this dependency order:
 10. Run the parity, link, syntax, secret, placeholder, and live-validation gates
     in the checklist below.
 
-The scaffold in step 2 must not be created during the current discovery-only
-phase. The order is recorded now so a later authoring turn can proceed without
-re-deciding page dependencies.
+The scaffold restriction applied during the discovery-only phase. The scaffold
+was created only after the user explicitly authorized public authoring.
 
 ### Source refresh procedure
 
@@ -1391,8 +1301,8 @@ Before the first public edit and again before publication:
 1. Record `git rev-parse HEAD`, branch, and tracked worktree state for all four
    reviewed repositories.
 2. Diff the current NIM commit against the snapshot recorded above, scoped to:
-   `cosmos3/documentation.md`, `cosmos3/examples/`,
-   `cosmos3/serving_stack/data_models/`, `reasoner_inference.py`,
+   `cosmos3/documentation.md`, `cosmos3/serving_stack/data_models/`,
+   `reasoner_inference.py`,
    `environment.py`, profile selection/generation files, tests, and the exported
    profile manifest.
 3. Diff the cookbook target and referenced Generator/Reasoner/vLLM-Omni pages
@@ -1438,21 +1348,22 @@ remain TBD by agreement.
 | Old cookbook uses separate `cosmos3-generator` and `cosmos3-reasoner` images | existing NIM notebooks and setup | Confirm final unified Certified NIM image name/tag and profile selectors |
 | Static `api_spec.yaml` predates recent action, transfer, and Reasoner work | file history and missing dynamic routes | Generate/capture live OpenAPI for both Generator and Reasoner profiles |
 | Product/model parameter counts differ across sources | NIM source guide and public Cosmos README | Use approved public naming/size language; avoid counts until reconciled |
-| Source examples default to port 18000 while public cookbook examples commonly use 8000 | `examples/common.py`, cookbook NIM pages | Standardize docs on `NIM_URL`, defaulting to `http://localhost:8000`; explain host-port remapping once |
+| Source examples default to port 18000 while public cookbook examples commonly use 8000 | Source task scripts, cookbook NIM pages | Standardize docs on `NIM_URL`, defaulting to `http://localhost:8000`; explain host-port remapping once |
 | Generated profile export includes Generator BF16, FP8, and FP8 offload rows while `documentation.md` says the active Generator grid is BF16-only | `profiles.json`, `vram_profiles.yaml`, documentation overview/support matrix | Use the release manifest for the published table; treat the current prose table as stale |
 | Developer README says text generation lives in a separate Reasoner NIM while the current manifest and dispatcher include Reasoner profiles in the same image | `README.md:3` vs `profiles.json`, `inference.py`, `documentation.md:25` | Describe one-profile-at-a-time unified behavior only after confirming the published image; retain this as a release identity conflict |
 | Local NIM identities and versions disagree | `nim-config.yaml`, Makefile, build-context `VERSION` | Never derive the public image/tag from local build defaults; obtain it from the published NIM/NIMCraft release |
 | Hardware/profile tables are generated and release-sensitive | profile generator/export vs older documentation | Derive tables from the release manifest and record the reviewed version |
+| Historical prerequisites and the current source guide disagree on some CPU/RAM/disk and compute-capability values | previous `prerequisites.rst` vs current `documentation.md` and profile gates | Keep public numeric requirements TBD until the released support statement resolves the conflict; record final values in `prerequisites.md` and `support-matrix.md` |
 | Helm URL and some launch values are placeholders in `documentation.md` | outstanding TBDs | Confirm released chart and image details before publication |
 | Reasoner routes are dynamic and not fully represented by Generator OpenAPI | Reasoner NIMlib interface | Validate live OpenAPI separately under a Reasoner profile |
-| Historical Reasoner docs claim `video_frames` and `mm_processor_kwargs`, but current first-party code/examples do not establish them | old Reasoner API page vs current Reasoner options/helper | Keep both out of supported guidance until a published-image smoke test proves the exact request shapes |
+| Historical Reasoner docs claim `video_frames` and `mm_processor_kwargs`, but current runtime evidence does not establish them | old Reasoner API page vs current Reasoner options and tests | Keep both out of supported guidance until a published-image smoke test proves the exact request shapes |
 | Historical Reasoner media support matrix belongs to release 1.7.0 | old VLM support matrix | Rebuild image/video format and codec claims from the released image; leave them TBD meanwhile |
 | Historical and current prompt guides show explicit `<think>` traces | Reasoner API page and current prompt guide | Preserve task and output-format guidance, but obtain approved wording before documenting reasoning traces or chain-of-thought behavior |
-| Current vLLM/vLLM-Omni cookbooks expose broader transports, fields, domains, and modalities than the Certified NIM request models | audiovisual/action/transfer/Reasoner notebooks vs current NIM models/examples | Reuse workflow intent and assets only through the translation contract above; never treat backend parity as API parity |
+| Other backends expose broader transports, fields, domains, and modalities than the Certified NIM request models | current NIM models and runtime tests | Validate every local request against the Certified NIM contract; never infer backend parity |
 | Source-guide prompt-upsampling example names a provider-specific native endpoint, while the implementation normalizes and calls an OpenAI-compatible Chat Completions endpoint | `documentation.md` vs `prompt_upsampling.py` | Document the generic OpenAI-compatible contract; do not claim native provider compatibility without a published-image integration test |
 | Existing inbound cookbook/root documentation duplicates separate legacy NIM launches and limitations | root README, shared Cosmos3 setup, audiovisual and Reasoner READMEs | Make the new guide canonical and, if scope permits, replace duplicated details with current summaries and links; otherwise report the remaining contradictions explicitly |
 | BYOC material is Generator/diffusion-specific | environment code and source guide | Do not imply Reasoner BYOC unless current implementation and release support it |
-| Broader Cosmos3 supports audio/image generation, but current Certified NIM examples center on video, text, and action | model docs vs current NIM request/response | Document only capabilities proven by the Certified NIM runtime and release profile |
+| Broader Cosmos3 supports audio/image generation beyond the currently established Certified NIM surface | model docs vs current NIM request/response contract | Document only capabilities proven by the Certified NIM runtime and release profile |
 
 ## Release-dependent TBD ledger
 
@@ -1489,34 +1400,30 @@ Do not close these from memory or legacy docs:
 - Approved license/EULA links and whether the cookbook should link only to the
   model card and `/v1/license` or also include product-specific terms.
 
-## Validation performed during discovery
+## Validation performed during discovery and implementation
 
-- Parsed 22 relevant implementation and example Python files with the standard
-  library AST parser; all parsed successfully.
+- Parsed the relevant implementation and local cookbook Python files with the
+  standard library AST parser; all parsed successfully.
 - Loaded `profiles.json`, confirmed 39 rows (32 Generator, 7 Reasoner), and
   checked every row's positive VRAM floor and
   `n_gpus = nim_dp * nim_gp * nim_up * nim_tp` invariant.
 - Confirmed every Reasoner row omits the performance-profile axis, fixes
   `nim_dp=nim_gp=nim_up=1`, and satisfies `n_gpus=nim_tp`.
-- Confirmed the checked-in tests cover all Generator example payloads, all
-  action modes, all transfer cases, Reasoner media ordering, streaming,
-  Responses routes, route disabling, normalization, and error behavior.
-- Re-audited the authoring-ready contract tables against the current field
-  declarations, validators, runtime defaults, response models, and all ten
-  first-party example/helper scripts. Confirmed that every cited source file
-  exists in the reviewed NIM snapshot.
+- Confirmed the checked-in tests cover Generator validation, action modes,
+  transfer cases, Reasoner media handling, streaming, Responses routes, route
+  disabling, normalization, and error behavior.
+- Re-audited the authoring-ready contract tables against current field
+  declarations, validators, runtime defaults, response models, and local
+  cookbook requests.
 - Audited all 21 numbered sections (including section 12.1) of the current
   first-party `documentation.md` and assigned each to a planned page,
-  correction, release gate, or explicit TBD. Separately inventoried all 12
-  entries in `examples/`, including the helper, README, and package marker.
+  correction, release gate, or explicit TBD.
 - Traced prompt upsampling through startup validation, request dispatch,
   external request construction, and tests. Confirmed it is optional,
   Generator-only, limited to T2V/I2V, uses a separate secret, and falls back to
   the original prompt on request-time failures.
-- Compared first-party example media against existing cookbook assets by
-  SHA-256. Confirmed byte-identical AV action inputs, two Reasoner media files,
-  and five transfer prompts can be reused from their existing public-repository
-  locations instead of copied from the NIM source.
+- Confirmed that local cookbook examples reuse existing public-repository
+  assets and preserve their established provenance.
 - Audited all 16 previous official Generator user-guide/notices source files
   referenced by `docs/cosmos/index.rst` or the Generator source inventory and
   mapped 49 durable topic groups to a planned page, external authority, or
@@ -1528,14 +1435,9 @@ Do not close these from memory or legacy docs:
   an explicit release-validation/TBD state. Confirmed that `video_frames`,
   `mm_processor_kwargs`, historical codec tables, and release 1.7.0 hardware
   rows cannot be carried forward as current facts.
-- Audited all five current vLLM/vLLM-Omni notebooks named in the source map,
-  including their request-construction cells, endpoint/transport behavior,
-  response handling, task fields, assets, and client-side orchestration. Mapped
-  20 Generator transport/field behaviors and five workflow families to current
-  NIM equivalents or explicit exclusions. Confirmed that `/v1/videos*`,
-  multipart `input_reference`, async polling, server-local `control_path`,
-  `view_point`, request-level `guardrails`, text-to-image/sound, Reasoner
-  `file://` media, and `mm_processor_kwargs` must not be copied literally.
+- Reviewed surrounding cookbook material for terminology, task taxonomy,
+  presentation conventions, and approved asset reuse without treating other
+  backend examples as API authorities.
 - Audited the root README, shared Cosmos3 setup guide, and four nearby
   audiovisual/Reasoner/action/transfer READMEs for heading, setup, link, code
   fence, table, asset, output, and license-header conventions. Identified six
@@ -1547,12 +1449,22 @@ Do not close these from memory or legacy docs:
   `test_profile_selection.py`. Test collection did not start because building
   internal `nim-sdk==0.12.5` requires the unavailable private Cargo registry
   `sw-nemollm-rust` in this host environment.
-- Verified that the failed environment setup and all static checks left the NIM
-  tracked worktree unchanged.
+- Ran Python compilation, Ruff lint/format checks, embedded-JSON parsing,
+  relative Markdown link checks, and `git diff --check` for the changed
+  surfaces.
+- After the structural split, rechecked every old deployment/API heading
+  against the redistribution record. Recursively validated all local Markdown
+  targets and anchors, all Markdown SPDX headers, nine JSON fences, five Python
+  fences, 46 shell fences, two YAML fences, all cookbook example modules, and
+  `git diff --check`.
+- Confirmed `api-reference.md` no longer contains complete Action, Transfer, or
+  Reasoner tables; their task pages now own those contracts. Confirmed
+  prerequisites, configuration, support, Helm, and BYOC details no longer
+  remain as duplicate sections in `deployment.md`.
 
-Do not report the unit tests as passing. Runtime/API validation remains pending
-until the internal dependency environment or a published release image is
-available.
+Do not report the complete project suite or live runtime/API validation as
+passing. Those remain pending until the internal dependency environment and a
+published release image are available.
 
 ## Authoring and validation checklist
 
@@ -1569,9 +1481,8 @@ Before drafting:
   may be silently dropped.
 - Treat the previous Reasoner/VLM parity matrix as the same kind of minimum
   coverage gate; unresolved release facts remain visible TBDs.
-- Treat the current `documentation.md` and first-party example adaptation
-  matrices as coverage gates too; every row must be implemented, corrected,
-  intentionally excluded, or visibly deferred.
+- Treat the current `documentation.md` coverage matrix as a gate too; every row
+  must be implemented, corrected, intentionally excluded, or visibly deferred.
 - Confirm whether the documentation change may update stale inbound README
   sections outside `cookbooks/cosmos3/nim`. If scope is path-only, preserve them
   but list the unresolved contradictions in the handoff/PR description.
@@ -1616,14 +1527,15 @@ Before publication:
   remaining placeholder must map to this file's TBD ledger, be visibly labeled
   in public prose, and avoid implying a usable value; publication does not
   require inventing or prematurely resolving release-owned facts.
-- Search Generator examples for vLLM-Omni-only transport or fields:
+- Search local cookbook Generator examples for vLLM-Omni-only transport or fields:
   `input_reference`, `extra_params`, `control_path`, `view_point`, request-level
   `guardrails`, async video polling, `text2image`, and sound-generation fields.
   Any occurrence must be explanatory comparison text, not a NIM request.
-- Search Reasoner examples for local `file://` media and
+- Search local cookbook Reasoner examples for local `file://` media and
   `mm_processor_kwargs`; neither is part of supported guidance without the
   release validation recorded in the TBD ledger.
-- Confirm `SOURCES.md` remains ignored and untracked.
+- Keep `SOURCES.md` as the tracked authoring provenance and coverage record;
+  do not link it as an end-user runtime guide.
 - Confirm `examples/outputs/` is ignored before running examples and that no
   generated payload, response, media, preview, or credential artifact is
   tracked.

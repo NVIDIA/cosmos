@@ -1,6 +1,10 @@
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: OpenMDW-1.1 -->
+
 # Cosmos3 Certified NIM documentation creation plan
 
-> Local authoring artifact. Do not commit this file.
+> Authoring artifact committed on the local `egor/nim_docs` branch. This is a
+> project execution plan, not an end-user guide.
 >
 > This plan defines the execution order, page ownership, validation gates, and
 > completion criteria for the public documentation. See [SOURCES.md](SOURCES.md)
@@ -10,23 +14,23 @@
 ## Current status and authorization boundary
 
 - Source discovery and information-architecture planning are complete.
-- Public documentation drafting has not started.
-- `README.md` must remain `# TBD` until the user explicitly authorizes drafting.
-- Release-owned facts may remain `TBD (release-dependent)` while other sections
-  are drafted from current implementation evidence.
+- Public documentation drafting is complete for the current source snapshot.
+- Static validation is complete; released-image validation remains pending.
+- Release-owned facts remain `TBD (release-dependent)` until authoritative
+  release evidence is available.
 
 ## Objective
 
 Create standalone, human- and AI-readable documentation for the unified Cosmos3
 Certified NIM under `cookbooks/cosmos3/nim` on branch
-`egor/cosmos3_nim_docs`.
+`egor/nim_docs`.
 
 The final guide set must:
 
 - cover no less than the durable user-facing topics in the previous official
   Cosmos3 Generator documentation;
 - preserve the applicable historical Reasoner/VLM coverage;
-- cover every current first-party `documentation.md` section and example by
+- cover every current first-party `documentation.md` section by
   documenting, correcting, intentionally excluding, or visibly deferring it;
 - describe only API behavior supported by the current Certified NIM source or
   validated released image;
@@ -42,7 +46,13 @@ The final guide set must:
 ```text
 cookbooks/cosmos3/nim/
 ├── README.md
+├── release-notes.md
+├── prerequisites.md
 ├── deployment.md
+├── configuration.md
+├── support-matrix.md
+├── helm.md
+├── bring-your-own-checkpoint.md
 ├── api-reference.md
 ├── generation.md
 ├── reasoning.md
@@ -72,15 +82,21 @@ or a hand-maintained machine-readable manifest.
 | Artifact | Canonical responsibility |
 | --- | --- |
 | `README.md` | Product scope, selected Generator/Reasoner runtime model, capability/endpoint index, minimum launch and first requests, guide navigation |
-| `deployment.md` | Prerequisites, `NGC_API_KEY`, Docker login, cache, launch flags, ports, selectors, profiles/hardware, prompt-upsampling configuration, readiness, BYOC, Helm |
-| `api-reference.md` | Endpoint inventory, request/response fields, defaults, ranges, media forms, validation, HTTP semantics, model and OpenAPI discovery |
-| `generation.md` | T2V, I2V, V2V, conditioning media, prompt upsampling, output decoding, reproducibility, generation failures |
+| `release-notes.md` | Released versions, image tags, compatibility changes, limitations, and upgrade guidance |
+| `prerequisites.md` | Host hardware/software, storage, shared memory, NGC access, and setup verification |
+| `deployment.md` | `NGC_API_KEY`, Docker login, cache, launch flags, ports, selectors, readiness, and shutdown |
+| `configuration.md` | Shared, Generator, Reasoner, selection, and prompt-upsampling environment variables |
+| `support-matrix.md` | Released model, precision, GPU, VRAM, profile, offload, and codec compatibility |
+| `helm.md` | Kubernetes prerequisites, secrets, values, GPUs, storage, probes, rollout, and verification |
+| `bring-your-own-checkpoint.md` | Generator BYOC boundary, layout, mount, profile validation, launch, and verification |
+| `api-reference.md` | Runtime routing, common Generator top-level fields, strict JSON behavior, common response, and live schema |
+| `generation.md` | T2V, I2V, V2V, conditioning media, frame/resolution rules, prompt upsampling, output decoding, reproducibility, generation failures |
 | `reasoning.md` | Chat Completions, Responses, streaming, image/video media, sampling, structured outputs, prompt/task guidance |
-| `action.md` | Forward dynamics, policy, inverse dynamics, domains, action shapes, chunk/frame constraints |
-| `transfer.md` | Edge, blur, depth, segmentation, WSM, derived/precomputed controls, combinations, chunking |
-| `operations.md` | Health/readiness, inspection endpoints, metrics, logs, guardrails, prompt-upsampling fallback, diagnostics, troubleshooting |
+| `action.md` | Complete `action_params` contract, forward dynamics, policy, inverse dynamics, domains, action shapes, and response |
+| `transfer.md` | Complete `transfer` contract, controls, defaults, derived/precomputed forms, combinations, and chunking |
+| `operations.md` | Health/readiness, management endpoints, generic errors, metrics, logs, guardrails, diagnostics, and troubleshooting |
 | `acknowledgements.md` | Approved third-party notices for the exact released image only |
-| `examples/` | Complete editable requests, shared media encoding, request transport, response decoding, safe artifact output |
+| `examples/` | Minimal editable requests with API calls and primary response handling visible in each script; only strict local-media encoding and video decoding are shared |
 
 When a workflow needs a fact owned by another page, summarize only what is
 needed and link to the canonical section. Do not duplicate full field,
@@ -94,7 +110,7 @@ environment-variable, profile, or troubleshooting tables.
    product-documentation, and framework repositories.
 2. Diff the current NIM against the snapshots in `SOURCES.md`, focusing on:
    request models, Reasoner routing, environment variables, prompt upsampling,
-   profiles, tests, `documentation.md`, and `examples/`.
+   profiles, tests, and `documentation.md`.
 3. Update the resolved contracts, coverage matrices, discrepancies, and TBD
    ledger before public drafting.
 4. If a release image is available, capture Generator and Reasoner evidence
@@ -114,35 +130,37 @@ Gate: every changed source fact is reconciled or explicitly deferred.
 
 Gate: all navigation targets exist; no placeholder implies a usable value.
 
-### Phase 2: Establish the API contract
+### Phase 2: Establish shared and task API contracts
 
-Draft `api-reference.md` first from current request models, routing code, tests,
-and live OpenAPI when available.
+Draft the compact `api-reference.md` and task-owned contracts from current
+request models, routing code, tests, and live OpenAPI when available.
 
 It must define:
 
-- shared management endpoints versus the active Generator or Reasoner API;
-- Generator `/v1/infer`, all current request modes, nested action/transfer
-  structures, response shapes, defaults, ranges, conflicts, and errors;
-- Reasoner Chat Completions, streaming, Responses routes, sampling/media
-  extensions, model discovery, and validation boundaries; and
-- accepted media representations while leaving unverified formats/codecs and
-  public-URL behavior visibly gated.
+- runtime routing and common Generator `/v1/infer` fields in
+  `api-reference.md`;
+- frame/resolution/media rules in `generation.md`;
+- complete nested Action and Transfer contracts in their task pages;
+- complete Reasoner API behavior in `reasoning.md`; and
+- management endpoints and generic errors in `operations.md`.
 
-Gate: task pages can reference one canonical field contract without inventing
-or duplicating schema facts.
+Gate: every field and endpoint has one canonical owner; the compact API page
+does not repeat task-specific tables.
 
-### Phase 3: Adapt runnable examples
+### Phase 3: Create runnable cookbook examples
 
-1. Adapt `common.py` for readiness, MIME-aware data URLs, JSON/OpenAI requests,
-   base64 MP4 decoding, action/text output, and safe artifact paths.
-2. Adapt one script for each planned task surface.
-3. Reuse existing cookbook assets; do not copy files from the proprietary NIM
-   source tree.
+1. Keep `common.py` limited to strict MIME-aware local-media encoding and strict
+   video decoding.
+2. Maintain one local script for each planned task surface, showing its URL/client,
+   request call, status handling, and primary output directly.
+3. Reuse existing cookbook assets.
 4. Use `http://localhost:8000` as the documented default through `NIM_URL`,
    unless the final release convention changes.
 5. Use dynamic `/v1/models` discovery for Reasoner examples where appropriate.
-6. Exclude internal commands, moving `main` URLs presented as pinned, local
+6. Treat reviewed Cosmos3 NIM examples as research context only. Validate the
+   local scripts independently against current API models, runtime routing,
+   tests, and live OpenAPI when available.
+7. Exclude internal commands, moving `main` URLs presented as pinned, local
    `file://` media, vLLM-Omni multipart endpoints, and unsupported fields.
 
 Gate: every script parses, uses complete editable request dictionaries, names
@@ -162,27 +180,33 @@ and endpoint, one minimal complete request, response/artifact handling,
 task-specific parameters, common failures, and links to the API reference and
 complete scripts.
 
-Prompt upsampling belongs in generation, deployment, and operations; it is not
-a separate generation endpoint. Document it as optional, Generator-only,
+Prompt upsampling belongs in generation, configuration, and operations; it is
+not a separate generation endpoint. Document it as optional, Generator-only,
 limited to T2V/I2V, using a separate external-service secret, and falling back
 to the original prompt on request-time failures.
 
-Gate: every first-party example has been adapted, merged deliberately, excluded
-with a reason, or left behind an explicit release-validation gate.
+Gate: every documented workflow has a local cookbook example or an explicit
+reason why a runnable example is not currently provided.
 
-### Phase 5: Write deployment
+### Phase 5: Write release, prerequisites, deployment, and platform pages
 
-Draft `deployment.md` with:
+Draft:
 
-- prerequisites and release-dependent version placeholders;
-- creation and safe handling of an NGC personal API key;
-- runtime variable `NGC_API_KEY` and Docker username literal `$oauthtoken`;
-- image pull, cache permissions, GPU exposure, shared memory, ulimits, ports,
-  cold-start behavior, readiness, cleanup, and profile selectors;
-- Generator versus Reasoner selection and released hardware/profile tables;
-- prompt-upsampling endpoint/model/template/secret configuration;
-- Generator-scoped BYOC unless the release proves a wider boundary; and
-- Helm/Kubernetes setup with chart-owned values left TBD until confirmed.
+- `release-notes.md` with release-owned identity and compatibility placeholders;
+- `prerequisites.md` with host requirements and verification;
+- `support-matrix.md` with release-gated hardware/profile/media tables;
+- `configuration.md` with environment-variable contracts;
+- `helm.md` with Kubernetes setup and chart-owned values left TBD;
+- `bring-your-own-checkpoint.md` with Generator-scoped BYOC unless the release
+  proves a wider boundary; and
+- `deployment.md` with:
+  - creation and safe handling of an NGC personal API key;
+  - runtime variable `NGC_API_KEY` and Docker username literal `$oauthtoken`;
+  - image pull, cache permissions, GPU exposure, shared memory, ulimits, ports,
+    cold-start behavior, readiness, cleanup, and profile selectors;
+  - Generator versus Reasoner selection; and
+  - links to the focused requirement, configuration, support, Helm, and BYOC
+    pages.
 
 Do not use `NGC_TOKEN` as a runtime variable. Do not invent the final image URL,
 tag, driver floor, support matrix, or Helm identity.
@@ -257,7 +281,7 @@ Run all applicable gates:
 7. Compare all defaults, ranges, routes, profiles, and media claims with current
    code and released-image evidence.
 8. Audit all 49 previous Generator topic groups, all 36 Reasoner/VLM groups,
-   all 21 current source-guide sections, and every first-party example.
+   all 21 current source-guide sections, and every local cookbook example.
 9. Search for legacy images, vLLM-only endpoints/fields, `NGC_TOKEN`, local
    paths, internal commands, credentials, and unledgered placeholders.
 10. Confirm acknowledgements and legal links use approved release artifacts.
@@ -307,9 +331,54 @@ The documentation project is complete only when:
 
 - [x] Inventory source repositories and authority order.
 - [x] Audit previous Generator and Reasoner/VLM documentation floors.
-- [x] Audit the current source guide and all first-party examples.
+- [x] Audit the current source guide and API implementation.
 - [x] Map capabilities and facts to canonical pages.
 - [x] Record discrepancies, reusable assets, and release-dependent TBDs.
 - [x] Agree on the hub-and-spoke information architecture.
-- [ ] Receive explicit authorization to draft public documentation.
-- [ ] Refresh sources and complete phases 1-10 above.
+- [x] Receive explicit authorization to draft public documentation.
+- [x] Refresh source snapshots; no reviewed repository had relevant commit drift.
+- [x] Create the public scaffold, API reference, and nine Python examples.
+- [x] Write the generation, reasoning, action, and transfer guides.
+- [x] Write deployment, operations, acknowledgements, and the overview.
+- [x] Split release notes, prerequisites, configuration, support matrix, Helm,
+  and BYOC into focused canonical pages.
+- [x] Reduce `api-reference.md` to shared routing and Generator envelope
+  material; move mode-specific contracts to task and operations pages.
+- [x] Keep provisional profile details structural and release-owned values TBD.
+- [x] Validate Markdown links/anchors, fence labels, embedded JSON, SPDX headers,
+  Python syntax, offline asset resolution, and request construction.
+- [x] Run a 70-topic public coverage probe spanning the previous Generator,
+  Reasoner/VLM, and current first-party guide requirements; every probe passed.
+- [x] Statically check 13 Generator payloads against field names extracted from
+  the authoritative request classes plus frame/action-shape invariants.
+- [x] Establish independently maintained cookbook teaching examples with direct
+  API calls, shallow media helpers, and one selected action/transfer request per
+  invocation.
+- [ ] Validate both runtimes against the final released image and resolve or
+  retain the release-dependent TBD ledger.
+- [ ] Update stale inbound cookbook/root NIM summaries if that broader scope is
+  authorized; otherwise report them as known follow-up work.
+
+## Authoring execution record
+
+Public drafting was authorized and completed on 2026-07-27. Static validation
+passed for the source available in this checkout.
+
+The repository-prescribed locked NIM environment still cannot start because
+building `nim-sdk` needs the unavailable private `sw-nemollm-rust` registry.
+Static validation compiled every local cookbook example, checked public payload
+fields and invariants, and exercised request builders that do not require a
+live NIM.
+
+The focused-page restructuring was completed in the same authoring pass.
+`deployment.md` was reduced to Docker deployment and profile selection, while
+`api-reference.md` was reduced to routing and the shared Generator envelope.
+The split added release notes, prerequisites, configuration, support matrix,
+Helm, and BYOC pages. Recursive links/anchors, SPDX headers, JSON, Python,
+shell, YAML, example compilation, credential terminology, and
+`git diff --check` were revalidated after redistribution.
+
+Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
+validation remains release-dependent and is labeled as such in the public
+guides. No value from an older separate Generator or Reasoner NIM was used to
+silently fill those gaps.

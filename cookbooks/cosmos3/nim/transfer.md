@@ -1,0 +1,183 @@
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: OpenMDW-1.1 -->
+
+# Control video generation with Cosmos3 Transfer
+
+Use this page to guide Generator output with edge, blur, depth, segmentation,
+or world-space-map (WSM) video controls. Transfer uses synchronous JSON
+`POST /v1/infer` with a top-level `transfer` object.
+
+> **Release status:** The current source implements every control below.
+> Published profile availability and the exact released multi-control matrix
+> remain **TBD (release-dependent)**.
+
+See [deployment.md](deployment.md) to start a compatible Generator profile.
+This page is the canonical contract for the `transfer` object.
+
+## Control types
+
+| Control | Precomputed video | Server-derived from top-level video | Preset |
+| --- | --- | --- | --- |
+| `edge` | Yes | Yes | `very_low`, `low`, `medium`, `high`, `very_high` |
+| `blur` | Yes | Yes | `none`, `very_low`, `low`, `medium`, `high`, `very_high` |
+| `depth` | Required | No | None |
+| `seg` | Required | No | None |
+| `wsm` | Required | No | None |
+
+At least one control must be enabled. Precomputed control media uses the same
+base64/data-URL/allowed-public-URL contract as top-level `video`.
+
+## Run the examples
+
+The script reuses prompts and control videos already tracked by the transfer
+cookbook. Choose one case so a single command does not run seven expensive
+generations:
+
+```bash
+export NIM_URL=${NIM_URL:-http://localhost:8000}
+python -m pip install requests
+
+python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_edge
+python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_blur
+python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_depth
+python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_seg
+python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_wsm
+python cookbooks/cosmos3/nim/examples/transfer.py --case derived_edge
+python cookbooks/cosmos3/nim/examples/transfer.py --case derived_blur
+```
+
+The decoded result is written to
+`cookbooks/cosmos3/nim/examples/outputs/transfer_<case>.mp4`.
+
+## Precomputed control
+
+Put the control media inside the matching nested object. Do not use a
+server-local `control_path` from a vLLM-Omni example:
+
+```json
+{
+  "prompt": "A cinematic scene that follows the supplied edge structure.",
+  "transfer": {
+    "edge": {
+      "video": "data:video/mp4;base64,<BASE64_EDGE_CONTROL>"
+    },
+    "control_guidance": 1.5,
+    "num_conditional_frames": 1,
+    "num_first_chunk_conditional_frames": 0,
+    "num_video_frames_per_chunk": 121
+  },
+  "resolution": "720_16_9",
+  "num_output_frames": 121,
+  "fps": 30.0,
+  "steps": 50,
+  "guidance_scale": 3.0,
+  "flow_shift": 10.0,
+  "seed": 0
+}
+```
+
+Replace `edge` with `blur`, `depth`, `seg`, or `wsm` and provide the matching
+control. The complete script converts the existing local control video to the
+data URL automatically.
+
+## Derived edge or blur
+
+For server-derived controls, send the source video at top level and omit the
+nested control video:
+
+```json
+{
+  "prompt": "A red sports car drives through a dramatic snowy landscape.",
+  "video": "data:video/mp4;base64,<BASE64_SOURCE_VIDEO>",
+  "transfer": {
+    "edge": {
+      "preset_edge_threshold": "medium"
+    },
+    "control_guidance": 1.5,
+    "num_conditional_frames": 1,
+    "num_first_chunk_conditional_frames": 0,
+    "num_video_frames_per_chunk": 121
+  },
+  "resolution": "720_16_9",
+  "num_output_frames": 121,
+  "fps": 30.0,
+  "steps": 50,
+  "guidance_scale": 3.0,
+  "seed": 0
+}
+```
+
+`"edge": true` and `"blur": true` select the corresponding derived control
+without an explicit preset. A preset applies only to a derived control and
+cannot accompany nested `video`.
+
+Depth, segmentation, and WSM cannot be derived by the server; supply a
+precomputed control video.
+
+## Transfer tuning
+
+| Field | Constraint | Current effective default |
+| --- | --- | --- |
+| `control_guidance` | Number `[0.0,10.0]` | 1.5 generally, 2.0 segmentation-only, 3.0 WSM-only |
+| `num_video_frames_per_chunk` | Integer `>= 1` | 93 generally, 101 WSM-only |
+| `num_conditional_frames` | Integer `>= 0` and smaller than chunk size | 1 |
+| `num_first_chunk_conditional_frames` | Integer `>= 0`; bounded by chunk and output | 0 |
+
+`num_first_chunk_conditional_frames > 0` requires top-level `video`.
+
+Current defaults by family:
+
+| Request family | Frames | FPS | Guidance | Control guidance |
+| --- | ---: | ---: | ---: | ---: |
+| Edge, blur, depth, or mixed | 121 | 30 | 3.0 | 1.5 |
+| Segmentation-only | 121 | 30 | 3.0 | 2.0 |
+| WSM-only | 101 | 10 | 1.0 | 3.0 |
+
+All current transfer families default to 50 denoising steps and flow shift
+10.0. Explicit request values override defaults when valid. Treat these as the
+current source contract, not a promise that every release or model profile has
+identical quality-optimal settings.
+
+## Multiple controls
+
+The request schema can enable more than one control in the same `transfer`
+object. Current default selection deliberately uses the general edge-family
+defaults for mixed requests rather than combining defaults from each control.
+
+The exact combinations validated and supported by the published image remain
+**TBD (release-dependent)**. Until that matrix is available, use one control per
+production request and smoke-test any multi-control payload on the target
+release before documenting or automating it.
+
+## Media and output
+
+Control and top-level videos accept raw base64, a video data URL, or an allowed
+HTTP(S) URL, with the current 100,000,000-character encoded ceiling. Prefer
+data URLs for reproducible local assets. Exact released container/codec support
+and remote-fetch behavior remain validation-gated.
+
+The response has the normal Generator shape: `b64_video` plus `action: null`.
+The public script decodes it to `transfer_<case>.mp4`.
+
+## Validation and common failures
+
+Transfer rejects:
+
+- an empty `transfer` object;
+- top-level `image`;
+- `action_params`;
+- V2V fields `condition_frame_indexes_vision` and `condition_video_keep`;
+- derived edge/blur without top-level `video`;
+- depth/seg/WSM without a nested non-empty control video;
+- a nested precomputed edge/blur video combined with its preset; and
+- chunk/conditioning values that violate their bounds.
+
+| Failure | Fix |
+| --- | --- |
+| HTTP 422 says derived control needs `video` | Add top-level source video or provide a nested precomputed edge/blur video |
+| HTTP 422 says control video required | Add nested video for depth, segmentation, or WSM |
+| Unknown `control_path`, `max_frames`, or `show_*` field | Remove vLLM-Omni-only fields and use the typed transfer object |
+| Control/output lengths are incompatible | Recheck frame cadence, chunk size, and conditional frame values |
+| Request works in vLLM-Omni but not NIM | Translate semantics rather than copying multipart transport or `extra_params` |
+
+For service-level failures, see [operations.md](operations.md#troubleshooting).
