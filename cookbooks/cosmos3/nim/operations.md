@@ -65,7 +65,6 @@ Common controls:
 | --- | --- | --- |
 | `NIM_LOG_LEVEL` | `INFO` | Service/NIMlib log threshold |
 | `NIM_LOGGING_JSONL` | false | JSON-line logs for aggregation |
-| `TLLM_LOG_LEVEL` | `ERROR` | Generator TRT-LLM/engine detail |
 | `NIM_TRITON_LOG_VERBOSE` | 0 | Generator backend verbosity |
 | `NIM_DISABLE_LOG_REQUESTS` | true | Reasoner request-body logging control |
 
