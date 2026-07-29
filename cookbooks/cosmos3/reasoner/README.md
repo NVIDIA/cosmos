@@ -16,17 +16,17 @@ how much GPU memory you pay depends on the backend:
   the generator: video VAE, audio tokenizer, and diffusion expert). It therefore
   uses the most memory — even for text-only reasoner inference. `model_mode=reasoner`
   only changes the execution path; it does **not** unload the generator weights.
-- The **vLLM**, **Transformers**, and **NIM** backends load **only the Reasoner (VLM)
-  weights**, so they use much less memory.
+- The **vLLM**, **TensorRT-LLM**, **Transformers**, and **NIM** backends load
+  **only the Reasoner (VLM) weights**, so they use much less memory.
 
 **If you need to save GPU memory for reasoner-only inference, use vLLM,
-Transformers, or NIM.** Reach for the Cosmos Framework backend only when you also
-need generation.
+TensorRT-LLM, Transformers, or NIM.** Reach for the Cosmos Framework backend only
+when you also need generation.
 
 For example, on a single GPU the **Cosmos3-Nano** Reasoner needs roughly **~34 GB**
-with the Cosmos Framework backend versus **~16–17 GB** with vLLM / Transformers / NIM
-— about half. Larger tiers (e.g. Cosmos3-Super) use more in absolute terms, but the
-same full-omni-vs-reasoner-only gap applies.
+with the Cosmos Framework backend versus **~16–17 GB** with vLLM / TensorRT-LLM /
+Transformers / NIM — about half. Larger tiers (e.g. Cosmos3-Super) use more in
+absolute terms, but the same full-omni-vs-reasoner-only gap applies.
 
 ## Reasoner Prompt Guide
 
@@ -303,3 +303,56 @@ and loads `Cosmos3OmniForConditionalGeneration` in process. A small
 then runs the image and video examples shown above. To scale from **Nano** to
 **Super**, change only `model_id` in the load cell and re-run; `device_map="auto"`
 shards Super across multiple GPUs.
+
+## Run with TensorRT-LLM
+
+### Quickstart
+
+Set up the environment and start the server with the shared
+[TensorRT-LLM Reasoner setup](../README.md#tensorrt-llm-reasoner). It covers the
+prebuilt release container or a local source installation, Hugging Face
+authentication, and launch commands for **Cosmos3-Nano** on one GPU or
+**Cosmos3-Super** on four GPUs.
+
+The [`run_with_tensorrt_llm.ipynb`](./run_with_tensorrt_llm.ipynb) notebook
+publishes the selected server on host port **8001** and waits for `/health`
+before running the request examples. Point standalone clients at
+`http://localhost:8001/v1`.
+
+Once the server is ready, query it with the OpenAI client:
+
+```python
+from pathlib import Path
+import openai
+
+image_path = Path("assets/robot_153.jpg").resolve()
+image_url = image_path.as_uri()
+
+client = openai.OpenAI(api_key="EMPTY", base_url="http://localhost:8001/v1")
+
+response = client.chat.completions.create(
+    model=client.models.list().data[0].id,
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": image_url}},
+                {"type": "text", "text": "Caption the image in detail."},
+            ],
+        }
+    ],
+    max_tokens=4096,
+    seed=0,
+)
+
+print(response.choices[0].message.content)
+```
+
+### Notebook walkthrough
+
+[`run_with_tensorrt_llm.ipynb`](./run_with_tensorrt_llm.ipynb) launches either
+**Cosmos3-Nano** or **Cosmos3-Super**, waits for the server to become healthy,
+and walks through image and video examples covering detailed captioning,
+temporal localization, embodied reasoning, common-sense reasoning, 2D
+grounding, describe-anything, action CoT trajectories, driving scenes,
+physical plausibility, and situation understanding.

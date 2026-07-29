@@ -8,7 +8,8 @@ backend you want to run and follow that one section.
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
-| [TensorRT-LLM](#tensorrt-llm) | OpenAI-compatible VisualGen server (image/video generation) | Generator (Audiovisual) |
+| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video generation) | Generator (Audiovisual) |
+| [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action/transfer) | Generator (Audiovisual, Action, **Transfer**) |
@@ -165,7 +166,7 @@ uv pip install --torch-backend=cu130 \
   transformers
 ```
 
-## TensorRT-LLM
+## TensorRT-LLM Generator
 
 OpenAI-compatible **VisualGen** server for Generator audiovisual text-to-image,
 text-to-video, and image-to-video examples. Cosmos3 support was added in TensorRT-LLM PR
@@ -251,6 +252,54 @@ frame. Requests send Cosmos3 controls through `extra_params`,
 so use a TensorRT-LLM build that includes the Cosmos3 VisualGen API schema.
 The notebook sets request-level `max_sequence_length=2048` for longer structured
 JSON prompts.
+
+## TensorRT-LLM Reasoner
+
+OpenAI-compatible **reasoning** server for image and video understanding. Run
+TensorRT-LLM in the prebuilt
+[`nvcr.io/nvidia/tensorrt-llm/release:1.3.0rc22`](https://catalog.ngc.nvidia.com/orgs/nvidia/tensorrt-llm/containers/release)
+container, or follow the
+[TensorRT-LLM Generator source-build instructions](#tensorrt-llm-generator) to
+install TensorRT-LLM from source.
+Authenticate with Hugging Face before loading gated checkpoints.
+
+Install headless OpenCV in the environment that runs the server. Cosmos3
+Reasoner uses it to process vision inputs:
+
+```bash
+python -m pip install opencv-python-headless
+```
+
+### Start the server
+
+Run one of these commands inside the release container or activated local
+environment.
+
+**Cosmos3-Nano** (single GPU, port 8001):
+
+```bash
+CUDA_VISIBLE_DEVICES=0 \
+trtllm-serve nvidia/Cosmos3-Nano \
+  --host 0.0.0.0 \
+  --port 8001 \
+  --max_num_tokens 32768
+```
+
+**Cosmos3-Super** (four GPUs, port 8001):
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
+trtllm-serve nvidia/Cosmos3-Super \
+  --host 0.0.0.0 \
+  --port 8001 \
+  --tensor_parallel_size 4 \
+  --max_num_tokens 32768
+```
+
+The server exposes `/health` and the OpenAI-compatible API at
+`http://localhost:8001/v1`. See the
+[Reasoner TensorRT-LLM notebook](reasoner/run_with_tensorrt_llm.ipynb) for image
+and video requests.
 
 ## Transformers
 
