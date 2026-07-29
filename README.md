@@ -1160,11 +1160,11 @@ We are building examples that show Cosmos 3 Super/Nano/Edge capabilities end to 
 
 ### Inference Benchmarks
 
-Cosmos 3 latency and serving results live in [`inference_benchmarks.md`](inference_benchmarks.md). Generator sections report visual-generation and world-model latency in seconds across GPUs and integrated computing platforms, including image and video generation, forward and inverse dynamics, and policy generation. Reasoner sections report vLLM serving metrics under concurrent load, with additional eager Transformers measurements for embedded platforms. Empty cells mean a combination has not been measured yet, not that it is unsupported.
+Cosmos 3 latency and serving results live in [`inference_benchmarks.md`](inference_benchmarks.md). Generator sections report visual-generation latency in seconds across GPUs and integrated computing platforms, including text-to-image, text-to-video, and image-to-video. Cosmos3-Edge video benchmarks use 121 output frames at 480p unless noted otherwise. Reasoner sections report vLLM serving metrics under concurrent load, with additional eager Transformers measurements for embedded platforms. Empty cells mean a combination has not been measured yet, not that it is unsupported.
 
 | Benchmark | Surface | Model | What it covers |
 | --- | --- | --- | --- |
-| [Cosmos3-Edge generator](inference_benchmarks.md#cosmos3-edge-generator) | Generator | Cosmos3-Edge | Image-to-video, forward dynamics, inverse dynamics, and DROID policy latency across PyTorch and vLLM-Omni on data center, workstation, and embedded platforms |
+| [Cosmos3-Edge generator](inference_benchmarks.md#cosmos3-edge-generator) | Generator | Cosmos3-Edge | 121-frame image-to-video and text-to-video latency, plus text-to-image latency, across PyTorch and vLLM-Omni |
 | [Cosmos3-Nano generator](inference_benchmarks.md#cosmos3-nano-generator) | Generator | Cosmos3-Nano | Text-to-image, text-to-video, and image-to-video latency across PyTorch, vLLM-Omni, Diffusers, and NIM |
 | [Cosmos3-Super generator](inference_benchmarks.md#cosmos3-super-generator) | Generator | Cosmos3-Super | The same modalities and engines at the larger checkpoint scale |
 | [Cosmos3-Edge reasoner](inference_benchmarks.md#cosmos3-edge-reasoner) | Reasoner | Cosmos3-Edge | vLLM serving metrics on RTX PRO GPUs and eager Transformers prefill, decode, and end-to-end latency on embedded platforms |
