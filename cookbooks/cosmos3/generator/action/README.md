@@ -129,7 +129,7 @@ write outputs under `outputs/cosmos3_action_vllm/`:
   DROID, UMI, and human hand-pose examples.
 - [`run_id_with_vllm_omni.ipynb`](./run_id_with_vllm_omni.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
-- [`run_policy_with_vllm.ipynb`](./run_policy_with_vllm.ipynb) — policy
+- [`run_policy_with_vllm_omni.ipynb`](./run_policy_with_vllm_omni.ipynb) — policy
   inference for DROID through the async video API.
 
 ## Post-Train for Cosmos3-Nano-Policy-DROID
