@@ -7,7 +7,7 @@ Deploy and use the Cosmos3 Certified NIM for world generation and multimodal
 reasoning. The image contains profiles for both runtime families, but one
 selected profile starts one backend/API at a time:
 
-- **Generator** — video generation, action, and transfer through
+- **Generator** — image and video generation, action, and transfer through
   `POST /v1/infer`.
 - **Reasoner** — OpenAI-compatible image/video understanding through Chat
   Completions and, when enabled, the Responses API.
@@ -22,6 +22,7 @@ selected profile starts one backend/API at a time:
 
 | Task | Runtime | Input | Output | Guide |
 | --- | --- | --- | --- | --- |
+| Text-to-image | Generator | Prompt | JPEG image | [Generation](generation.md#text-to-image) |
 | Text-to-video | Generator | Prompt | MP4 video | [Generation](generation.md#text-to-video) |
 | Image-to-video | Generator | Prompt + image | MP4 video | [Generation](generation.md#image-to-video) |
 | Video-to-video | Generator | Prompt + video | MP4 video | [Generation](generation.md#video-to-video) |
@@ -33,8 +34,8 @@ selected profile starts one backend/API at a time:
 | Streaming reasoning | Reasoner | Chat Completions request | Text deltas | [Reasoning](reasoning.md#stream-chat-completions) |
 | Responses API | Reasoner | Responses input | Response object/text | [Reasoning](reasoning.md#use-the-responses-api) |
 
-The current Certified NIM source does not expose sound generation or
-text-to-image through its public request model. Other Cosmos3 backends may have
+The current Certified NIM source does not expose image-to-image or sound
+generation through its public request model. Other Cosmos3 backends may have
 broader modality support; do not copy their endpoints or fields into NIM
 requests without translation.
 
@@ -50,7 +51,7 @@ requests without translation.
 | [Deploy with Helm](helm.md) | Kubernetes secrets, values, GPUs, storage, probes, rollout, and verification |
 | [Bring your own checkpoint](bring-your-own-checkpoint.md) | Generator checkpoint layout, mount, selectors, validation, and verification |
 | [API reference](api-reference.md) | Runtime routing, common Generator fields and response, task-contract links, and live schema |
-| [Generation](generation.md) | T2V, I2V, V2V, output decoding, and prompt upsampling |
+| [Generation](generation.md) | T2I, T2V, I2V, V2V, output decoding, and prompt upsampling |
 | [Reasoning](reasoning.md) | Chat Completions, streaming, Responses, media, sampling, and prompting |
 | [Action](action.md) | Forward dynamics, policy, inverse dynamics, domains, and action shapes |
 | [Transfer](transfer.md) | Edge, blur, depth, segmentation, WSM, and transfer tuning |
@@ -184,6 +185,7 @@ client. Install both once:
 export NIM_URL=${NIM_URL:-http://localhost:8000}
 python -m pip install requests openai
 
+python cookbooks/cosmos3/nim/examples/t2i.py
 python cookbooks/cosmos3/nim/examples/t2v.py
 python cookbooks/cosmos3/nim/examples/i2v.py
 python cookbooks/cosmos3/nim/examples/v2v.py
@@ -195,7 +197,7 @@ python cookbooks/cosmos3/nim/examples/reasoner_stream.py
 python cookbooks/cosmos3/nim/examples/reasoner_responses.py
 ```
 
-Generator examples write decoded MP4 files—and predicted action JSON when
+Generator examples write a decoded JPEG or MP4—and predicted action JSON when
 applicable—under `cookbooks/cosmos3/nim/examples/outputs/`. Reasoner examples
 print text directly. The output directory is ignored by the repository.
 

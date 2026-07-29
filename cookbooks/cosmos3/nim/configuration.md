@@ -70,11 +70,7 @@ image release.
 
 | Name | Required? | Default | Notes |
 | --- | --- | --- | --- |
-| `NIM_ATTENTION_BACKEND` | No | `VANILLA` | Select the Generator attention implementation. |
-| `NIM_ENABLE_CUDAGRAPH` | No | `false` | Enable Generator CUDA graph execution. |
 | `NIM_ENABLE_TORCH_COMPILE` | No | `true` | Enable the Generator `torch.compile` path. |
-| `NIM_ENABLE_FULLGRAPH` | No | `false` | Require full-graph compilation when compilation is enabled. |
-| `NIM_ENABLE_AUTOTUNE` | No | `true` | Enable Generator compilation and kernel autotuning. |
 | `NIM_MAX_SEQUENCE_LENGTH` | No | `5120` | Set the Generator prompt-token sequence length at startup. This is not a per-request control. |
 
 ### Diffusion caching
@@ -104,7 +100,8 @@ See [Bring your own checkpoint](bring-your-own-checkpoint.md) before setting
 ### Prompt upsampling
 
 Prompt upsampling is optional, off by default, and consumed only by the
-Generator. It applies to T2V and I2V; V2V, action, and transfer bypass it.
+Generator. It applies to T2I, T2V, and I2V; V2V, action, and transfer bypass
+it.
 
 ```bash
 -e NIM_ENABLE_PROMPT_UPSAMPLING=1 \
@@ -120,7 +117,7 @@ provider's native non-OpenAI endpoint is compatible.
 
 | Name | Required? | Default | Notes |
 | --- | --- | --- | --- |
-| `NIM_ENABLE_PROMPT_UPSAMPLING` | No | `false` | Enable prompt upsampling for Generator T2V and I2V requests. |
+| `NIM_ENABLE_PROMPT_UPSAMPLING` | No | `false` | Enable prompt upsampling for Generator T2I, T2V, and I2V requests. |
 | `NIM_PROMPT_UPSAMPLING_ENDPOINT_URL` | When enabled | Empty | OpenAI-compatible endpoint base or Chat Completions route. |
 | `NIM_PROMPT_UPSAMPLING_MODEL` | When enabled | Empty | Model name sent to the prompt-upsampling endpoint. |
 | `NIM_PROMPT_UPSAMPLING_API_KEY` | When enabled | Empty | Bearer credential for the external prompt-upsampling service. Keep it separate from `NGC_API_KEY`. |

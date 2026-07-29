@@ -1,11 +1,11 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: OpenMDW-1.1 -->
 
-# Generate video with the Cosmos3 Certified NIM
+# Generate images and videos with the Cosmos3 Certified NIM
 
-Use this page for text-to-video (T2V), image-to-video (I2V), and
-video-to-video (V2V) requests. These workflows require a running **Generator**
-profile and use synchronous JSON `POST /v1/infer`.
+Use this page for text-to-image (T2I), text-to-video (T2V), image-to-video
+(I2V), and video-to-video (V2V) requests. These workflows require a running
+**Generator** profile and use synchronous JSON `POST /v1/infer`.
 
 For launch instructions, see [deployment.md](deployment.md). The
 [API reference](api-reference.md#common-generator-request-fields) defines the
@@ -27,6 +27,64 @@ already tracked by this cookbook, and decode the response under
 ```bash
 python -m pip install requests
 ```
+
+## Text-to-image
+
+A T2I request has a non-empty `prompt`, no conditioning inputs, and exactly
+one output frame:
+
+```bash
+curl -fsS -X POST "$NIM_URL/v1/infer" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "prompt": "A white robotic arm draping sapphire satin over a dress mannequin in a softly lit fashion studio.",
+    "negative_prompt": "",
+    "resolution": "720_1_1",
+    "num_output_frames": 1,
+    "fps": 24.0,
+    "steps": 50,
+    "guidance_scale": 4.0,
+    "flow_shift": 3.0,
+    "seed": 0
+  }' \
+  -o /tmp/cosmos3-t2i-response.json
+
+python - <<'PY'
+import base64
+import json
+from pathlib import Path
+
+response = json.loads(Path("/tmp/cosmos3-t2i-response.json").read_text())
+Path("t2i.jpg").write_bytes(base64.b64decode(response["b64_image"]))
+PY
+```
+
+Or run the complete editable example, which uses the canonical representative
+prompt from the NIM source:
+
+```bash
+python cookbooks/cosmos3/nim/examples/t2i.py
+```
+
+Setting `num_output_frames` to `1` selects T2I only when `image`, `video`,
+`transfer`, `action_params`, `condition_frame_indexes_vision`, and
+`condition_video_keep` are absent. Image-to-image is not supported; an `image`
+with one output frame is rejected rather than returned or edited.
+
+When their fields are omitted, T2I uses:
+
+| Field | T2I default |
+| --- | --- |
+| `resolution` | `720_1_1` (960 × 960) |
+| `negative_prompt` | Empty string |
+| `steps` | `50` |
+| `guidance_scale` | `4.0` |
+| `flow_shift` | `3.0` |
+| `fps` | `24.0`; retained in the request but not encoded in the JPEG |
+
+All resolution keys listed under [Resolution keys](#resolution-keys) are
+accepted for T2I. The current public allow-list stops at the 720 tier; do not
+send upstream image-only 1080 keys to this NIM.
 
 ## Text-to-video
 
@@ -151,14 +209,15 @@ validation-gated.
 
 ### Frame cadence and limits
 
-The video VAE has temporal compression factor 4 and a causal first frame, so
-pixel-frame counts follow:
+T2I requires exactly one output frame. Video generation requires at least 25
+frames. The video VAE has temporal compression factor 4 and a causal first
+frame, so video pixel-frame counts follow:
 
 ```text
 num_output_frames = 1 + 4k
 ```
 
-Ordinary generation accepts at least 25 frames. Current source ceilings are:
+Current video source ceilings are:
 
 | Resolution tier | Maximum frames |
 | --- | ---: |
@@ -190,9 +249,12 @@ suffixes select distinct shapes.
 ### FPS and denoising steps
 
 - `fps` accepts finite values from 1 through 60; 10–30 is recommended.
-- Approximate duration is `num_output_frames / fps` seconds.
-- More `steps` usually costs more latency. Start with the ordinary-generation
-  default of 35 unless a validated recipe calls for another value.
+- T2I retains `fps` for the shared request model, but JPEG output has no frame
+  rate.
+- For video, approximate duration is `num_output_frames / fps` seconds.
+- More `steps` usually costs more latency. Start with 50 for T2I and 35 for
+  ordinary video generation unless a validated recipe calls for another
+  value.
 
 ## Media representations
 
@@ -217,10 +279,11 @@ different NIM releases, model artifacts, precisions, or hardware layouts.
 
 ## Optional prompt upsampling
 
-Operators can enable prompt upsampling for T2V and I2V. The NIM sends the input
-prompt—and the conditioning image for I2V—to an operator-supplied
-OpenAI-compatible Chat Completions endpoint, then pins resolution, aspect,
-duration, and FPS back to the original request.
+Operators can enable prompt upsampling for T2I, T2V, and I2V. The NIM sends the
+input prompt—and the conditioning image for I2V—to an operator-supplied
+OpenAI-compatible Chat Completions endpoint. T2I pins resolution and aspect
+back to the original request and removes video-only duration and FPS fields.
+T2V and I2V pin resolution, aspect, duration, and FPS.
 
 Prompt upsampling does not apply to V2V, action, or transfer. If the external
 request times out, fails, or returns an invalid result, generation continues
@@ -234,10 +297,14 @@ the external-service credential.
 
 ## Output and playback
 
-The response contains raw base64 for a VP9 video track in an MP4 container.
-The public examples decode it to `t2v.mp4`, `i2v.mp4`, or `v2v.mp4` under the
-examples `outputs/` directory. VP9-in-MP4 is not supported by every browser or
-stock player; `mpv` and `ffplay` are reliable choices.
+T2I returns raw JPEG base64 in `b64_image`; the public example decodes it to
+`t2i.jpg`. Video modes return raw base64 for a VP9 video track in an MP4
+container under `b64_video`; the public examples decode it to `t2v.mp4`,
+`i2v.mp4`, or `v2v.mp4` under the examples `outputs/` directory. The inactive
+media field is omitted.
+
+VP9-in-MP4 is not supported by every browser or stock player; `mpv` and
+`ffplay` are reliable choices.
 
 For a broadly compatible H.264 copy:
 
@@ -250,7 +317,8 @@ ffmpeg -i t2v.mp4 -c:v libx264 -crf 18 -pix_fmt yuv420p t2v-h264.mp4
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
 | HTTP 422, extra field | A vLLM-Omni field such as `input_reference`, `extra_params`, or request-level `guardrails` was copied into `/v1/infer` | Translate the request using the [API reference](api-reference.md); unknown fields are rejected |
-| HTTP 422, frame cadence | `num_output_frames` is not `1 + 4k` or exceeds its tier ceiling | Pick the nearest valid count and recheck the tier |
+| HTTP 422, frame cadence | A video request has fewer than 25 frames, is not on the `4k+1` cadence, or exceeds its tier ceiling | Pick a valid video count and recheck the tier |
+| HTTP 422, T2I conditioning | `num_output_frames=1` was combined with image, video, Transfer, action, or V2V controls | Remove all conditioning inputs for T2I, or request at least 25 frames for the intended video mode |
 | HTTP 422, image and video conflict | Both top-level media fields are present | Send only the field required by the intended mode |
 | URL media fails | URL inputs are disabled, unreachable from the container, or rejected by the decoder | Use a data URL and verify `NIM_ALLOW_URL_INPUT` |
 | Request times out in the client | Generation exceeded the client timeout, not necessarily the server timeout | Use the examples' 30-minute timeout and inspect NIM logs |

@@ -18,7 +18,7 @@ Reasoner completion APIs, and a Reasoner profile does not serve `/v1/infer`.
 
 | Runtime | API | Canonical documentation |
 | --- | --- | --- |
-| Generator | `POST /v1/infer` for T2V, I2V, and V2V | [Generation](generation.md) |
+| Generator | `POST /v1/infer` for T2I, T2V, I2V, and V2V | [Generation](generation.md) |
 | Generator | `POST /v1/infer` with `action_params` | [Action](action.md) |
 | Generator | `POST /v1/infer` with `transfer` | [Transfer](transfer.md) |
 | Reasoner | `POST /v1/chat/completions`, including streaming | [Reasoning](reasoning.md) |
@@ -37,7 +37,8 @@ Its shape selects the task:
 
 | Shape | Task |
 | --- | --- |
-| Non-empty `prompt` without media | T2V |
+| Non-empty `prompt`, no conditioning inputs, and `num_output_frames=1` | T2I |
+| Non-empty `prompt` without media and with 25 or more output frames | T2V |
 | Top-level `image` | I2V, or Action when paired with `action_params` |
 | Top-level `video` | V2V, inverse dynamics, or a derived Transfer control depending on nested fields |
 | Non-empty `action_params` | Forward dynamics, policy, or inverse dynamics |
@@ -47,22 +48,23 @@ The task guides define required inputs and invalid combinations.
 
 ### Common Generator request fields
 
-Defaults below describe ordinary T2V/I2V/V2V. Action and Transfer apply the
-mode-specific defaults documented on their canonical pages.
+Defaults below describe ordinary generation. T2I applies the mode-specific
+defaults identified in the table. Action and Transfer apply the defaults
+documented on their canonical pages.
 
 | Field | Type and ordinary default | Contract |
 | --- | --- | --- |
 | `prompt` | string or null; `null` | Maximum 20,000 characters; required when no media or nested task establishes the request |
-| `negative_prompt` | string or null; `null` | Maximum 20,000 characters; omission selects the bundled default, while `""` disables negative-prompt conditioning |
+| `negative_prompt` | string or null; `null` | Maximum 20,000 characters; omission becomes `""` for T2I and selects the bundled default for video modes; explicit `""` disables negative-prompt conditioning |
 | `image` | string or null; `null` | Raw base64, image data URL, or allowed HTTP(S) URL; maximum 20,000,000 encoded characters |
 | `video` | string or null; `null` | Raw base64, video data URL, or allowed HTTP(S) URL; maximum 100,000,000 encoded characters and 75 MB decoded |
 | `seed` | integer or null; `null` | Must be `>= 0`; the service generates one when omitted |
-| `guidance_scale` | finite number; `6.0` | Range `[1.0,7.0]`; Action and Transfer override the default |
-| `steps` | integer; `35` | Range `[1,100]`; Action and Transfer override the default |
-| `flow_shift` | finite number; `10.0` | No additional range constraint in the current request model |
-| `resolution` | enum; `720` | Ordinary Generation and Transfer only; see [resolution keys](generation.md#resolution-keys) |
-| `num_output_frames` | integer; `189` | See [generation cadence](generation.md#frame-cadence-and-limits), [Action](action.md#domains-and-dimensions), or [Transfer](transfer.md#transfer-tuning) |
-| `fps` | finite number; `24.0` | Range `[1.0,60.0]`; task modes can override the default |
+| `guidance_scale` | finite number; video `6.0`, T2I `4.0` | Range `[1.0,7.0]`; Action and Transfer override the default |
+| `steps` | integer; video `35`, T2I `50` | Range `[1,100]`; Action and Transfer override the default |
+| `flow_shift` | finite number; video `10.0`, T2I `3.0` | No additional range constraint in the current request model |
+| `resolution` | enum; video `720`, T2I `720_1_1` | Ordinary Generation and Transfer only; see [resolution keys](generation.md#resolution-keys) |
+| `num_output_frames` | integer; video `189` | `1` selects T2I; video uses the `4k+1` cadence from 25 upward. See [generation cadence](generation.md#frame-cadence-and-limits), [Action](action.md#domains-and-dimensions), or [Transfer](transfer.md#transfer-tuning) |
+| `fps` | finite number; `24.0` | Range `[1.0,60.0]`; retained in T2I requests but not encoded in the JPEG |
 | `condition_frame_indexes_vision` | integer array or null | V2V-only latent-frame indexes; see [Video-to-video](generation.md#video-to-video) |
 | `condition_video_keep` | `first`, `last`, or null | V2V-only frame-selection direction; defaults to `first` |
 | `action_params` | object or null | Canonical nested contract: [Action parameter reference](action.md#action-parameter-reference) |
@@ -79,9 +81,18 @@ Integer and finite-number fields use strict JSON types. For example, `"35"`,
 `35.0`, and `true` are not accepted spellings of integer `steps=35`. Unknown
 top-level and nested fields are rejected rather than silently ignored.
 
-## Common Generator response
+## Generator response
 
-A successful Generator response is JSON:
+A successful Generator response contains exactly one visual output. T2I
+returns:
+
+```json
+{
+  "b64_image": "<RAW_BASE64_JPEG>"
+}
+```
+
+Video modes return:
 
 ```json
 {
@@ -90,13 +101,14 @@ A successful Generator response is JSON:
 }
 ```
 
-`b64_video` is raw base64, not a data URL or file URL. Ordinary generation,
-Transfer, and forward dynamics return `action: null`. Policy and inverse
-dynamics return the predicted trajectory envelope documented in
+Both media fields are raw base64, not data URLs or file URLs. The inactive
+media field is omitted. T2I cannot return non-null `action` metadata. Ordinary
+video generation, Transfer, and forward dynamics return `action: null`; policy
+and inverse dynamics return the predicted trajectory envelope documented in
 [Response action object](action.md#response-action-object).
 
-The current source encoder emits a VP9 video track in an MP4 container.
-Released output codec support belongs to the
+The current source encoder emits JPEG for T2I and a VP9 video track in an MP4
+container for video modes. Released output codec support belongs to the
 [Support matrix](support-matrix.md#supported-media-and-codecs).
 
 ## Errors and live schema

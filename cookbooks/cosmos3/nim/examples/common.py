@@ -45,3 +45,20 @@ def decode_video(encoded_video: str) -> bytes:
     if not video:
         raise ValueError("b64_video decoded to an empty video")
     return video
+
+
+def decode_image(encoded_image: str) -> bytes:
+    """Decode a raw base64 image or base64 image data URL."""
+    if not isinstance(encoded_image, str):
+        raise TypeError("b64_image must be a string")
+    if encoded_image.startswith("data:"):
+        header, separator, encoded_image = encoded_image.partition(",")
+        if not separator or ";base64" not in header:
+            raise ValueError("Malformed base64 image data URL")
+    try:
+        image = base64.b64decode(encoded_image, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise ValueError("b64_image is not valid base64") from exc
+    if not image:
+        raise ValueError("b64_image decoded to an empty image")
+    return image

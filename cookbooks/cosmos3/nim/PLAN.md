@@ -62,6 +62,7 @@ cookbooks/cosmos3/nim/
 ├── acknowledgements.md
 └── examples/
     ├── common.py
+    ├── t2i.py
     ├── t2v.py
     ├── i2v.py
     ├── v2v.py
@@ -90,13 +91,13 @@ or a hand-maintained machine-readable manifest.
 | `helm.md` | Kubernetes prerequisites, secrets, values, GPUs, storage, probes, rollout, and verification |
 | `bring-your-own-checkpoint.md` | Generator BYOC boundary, layout, mount, profile validation, launch, and verification |
 | `api-reference.md` | Runtime routing, common Generator top-level fields, strict JSON behavior, common response, and live schema |
-| `generation.md` | T2V, I2V, V2V, conditioning media, frame/resolution rules, prompt upsampling, output decoding, reproducibility, generation failures |
+| `generation.md` | T2I, T2V, I2V, V2V, conditioning media, frame/resolution rules, prompt upsampling, output decoding, reproducibility, generation failures |
 | `reasoning.md` | Chat Completions, Responses, streaming, image/video media, sampling, structured outputs, prompt/task guidance |
 | `action.md` | Complete `action_params` contract, forward dynamics, policy, inverse dynamics, domains, action shapes, and response |
 | `transfer.md` | Complete `transfer` contract, controls, defaults, derived/precomputed forms, combinations, and chunking |
 | `operations.md` | Health/readiness, management endpoints, generic errors, metrics, logs, guardrails, diagnostics, and troubleshooting |
 | `acknowledgements.md` | Approved third-party notices for the exact released image only |
-| `examples/` | Minimal editable requests with API calls and primary response handling visible in each script; only strict local-media encoding and video decoding are shared |
+| `examples/` | Minimal editable requests with API calls and primary response handling visible in each script; only strict local-media encoding and image/video decoding are shared |
 
 When a workflow needs a fact owned by another page, summarize only what is
 needed and link to the canonical section. Do not duplicate full field,
@@ -149,17 +150,18 @@ does not repeat task-specific tables.
 
 ### Phase 3: Create runnable cookbook examples
 
-1. Keep `common.py` limited to strict MIME-aware local-media encoding and strict
-   video decoding.
+1. Keep `common.py` limited to strict MIME-aware local-media encoding and
+   strict image/video decoding.
 2. Maintain one local script for each planned task surface, showing its URL/client,
    request call, status handling, and primary output directly.
 3. Reuse existing cookbook assets.
 4. Use `http://localhost:8000` as the documented default through `NIM_URL`,
    unless the final release convention changes.
 5. Use dynamic `/v1/models` discovery for Reasoner examples where appropriate.
-6. Treat reviewed Cosmos3 NIM examples as research context only. Validate the
-   local scripts independently against current API models, runtime routing,
-   tests, and live OpenAPI when available.
+6. Keep representative prompts, request fields, and case meaning synchronized
+   with reviewed NIM fixtures while retaining the cookbook's direct-call
+   teaching structure. Validate the local scripts independently against
+   current API models, runtime routing, tests, and live OpenAPI when available.
 7. Exclude internal commands, moving `main` URLs presented as pinned, local
    `file://` media, vLLM-Omni multipart endpoints, and unsupported fields.
 
@@ -182,8 +184,8 @@ complete scripts.
 
 Prompt upsampling belongs in generation, configuration, and operations; it is
 not a separate generation endpoint. Document it as optional, Generator-only,
-limited to T2V/I2V, using a separate external-service secret, and falling back
-to the original prompt on request-time failures.
+limited to T2I/T2V/I2V, using a separate external-service secret, and falling
+back to the original prompt on request-time failures.
 
 Gate: every documented workflow has a local cookbook example or an explicit
 reason why a runnable example is not currently provided.
@@ -337,7 +339,8 @@ The documentation project is complete only when:
 - [x] Agree on the hub-and-spoke information architecture.
 - [x] Receive explicit authorization to draft public documentation.
 - [x] Refresh source snapshots; no reviewed repository had relevant commit drift.
-- [x] Create the public scaffold, API reference, and nine Python examples.
+- [x] Create the public scaffold, API reference, and ten Python files,
+  including the shared helper.
 - [x] Write the generation, reasoning, action, and transfer guides.
 - [x] Write deployment, operations, acknowledgements, and the overview.
 - [x] Split release notes, prerequisites, configuration, support matrix, Helm,
@@ -349,8 +352,10 @@ The documentation project is complete only when:
   Python syntax, offline asset resolution, and request construction.
 - [x] Run a 70-topic public coverage probe spanning the previous Generator,
   Reasoner/VLM, and current first-party guide requirements; every probe passed.
-- [x] Statically check 13 Generator payloads against field names extracted from
+- [x] Statically check 14 Generator payloads against field names extracted from
   the authoritative request classes plus frame/action-shape invariants.
+- [x] Add source-backed T2I request, JPEG response, prompt-upsampling, and
+  guardrail documentation from the merged NIM `cosmos3` branch.
 - [x] Establish independently maintained cookbook teaching examples with direct
   API calls, shallow media helpers, and one selected action/transfer request per
   invocation.
@@ -377,6 +382,15 @@ The split added release notes, prerequisites, configuration, support matrix,
 Helm, and BYOC pages. Recursive links/anchors, SPDX headers, JSON, Python,
 shell, YAML, example compilation, credential terminology, and
 `git diff --check` were revalidated after redistribution.
+
+The incremental T2I refresh was completed on 2026-07-29 from the merged NIM
+`cosmos3` state at
+`74064b2318222018af446b03701f8a8cbeaa28c3`. It added the one-frame request
+contract, JPEG response and example, T2I prompt upsampling and
+visual-guardrail coverage, and removed four obsolete Generator execution
+variables. Offline validation confirmed exact fixture equality, 57 unique
+documented variables, Python and fenced-code syntax, Markdown links/anchors,
+and whitespace integrity.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public

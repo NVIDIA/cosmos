@@ -130,8 +130,8 @@ configuration:
 | Variable | Current default | Effect |
 | --- | --- | --- |
 | `NIM_ENABLE_TEXT_GUARDRAILS` | true | Input prompt/negative-prompt blocklist and text classifier path |
-| `NIM_ENABLE_VIDEO_GUARDRAILS` | true | Output video/face-privacy guardrail path |
-| `NIM_ENABLE_SIGLIP_GUARDRAILS` | true | Per-frame safety classifier when video guardrails are enabled |
+| `NIM_ENABLE_VIDEO_GUARDRAILS` | true | Output image/video face-privacy guardrail path |
+| `NIM_ENABLE_SIGLIP_GUARDRAILS` | true | Per-frame safety classifier when output visual guardrails are enabled |
 
 A blocked request returns HTTP 422 and no usable partial output. Current source
 runs text checks on the prompt that reaches generation; when prompt upsampling
@@ -146,9 +146,11 @@ deployment policy. Do so only for an approved, isolated diagnostic:
 -e NIM_ENABLE_SIGLIP_GUARDRAILS=0
 ```
 
-Disabling video guardrails also bypasses the dependent SigLIP path. Disabling
-SigLIP alone can retain the rest of the video/face path. BYOC does not replace
-the NIM-owned guardrail artifacts in the current implementation.
+Despite its historical name, `NIM_ENABLE_VIDEO_GUARDRAILS` controls the output
+visual path for both generated images and videos. Disabling it also bypasses
+the dependent SigLIP path. Disabling SigLIP alone can retain the rest of the
+image/video face path. BYOC does not replace the NIM-owned guardrail artifacts
+in the current implementation.
 
 ## Prompt-upsampling diagnostics
 
@@ -163,7 +165,8 @@ time:
 When debugging, confirm:
 
 - the configured URL is OpenAI-compatible and reaches `/v1/chat/completions`;
-- the model supports image input for I2V;
+- the model supports image input when upsampling I2V; T2I and T2V send text
+  only;
 - the external secret is present but not logged;
 - timeout and token limits suit the endpoint; and
 - provider-specific fields are placed in
@@ -237,10 +240,10 @@ Task-specific validation belongs to [Generation](generation.md),
 | --- | --- | --- |
 | HTTP 422, unknown field | vLLM-Omni or old NIM request was copied literally | Use JSON `/v1/infer` and the current [API reference](api-reference.md) |
 | HTTP 422, media decode/fetch | Invalid base64/data URL, URL disabled/unreachable, or unsupported media | Prefer a MIME-aware data URL; check release codec/format support |
-| HTTP 422, frame or resolution | Frame count violates `4k+1`/tier limits or action rule | Recompute with the canonical tables; action frames equal chunk size plus one |
+| HTTP 422, frame or resolution | Request violates T2I one-frame selection, video cadence/tier limits, or an action rule | Recompute with the canonical tables; action frames equal chunk size plus one |
 | Content-policy 422 | Text or generated frames triggered guardrails | Rephrase and review content; disable only under approved diagnostic policy |
 | Backend 500/OOM | Profile fit or runtime workload exceeded available memory | Reduce workload/concurrency, choose Nano/offload, or use a larger supported GPU; retain logs |
-| Request/client timeout | Video generation exceeded client/backend timeout | Use a long client timeout, inspect server progress, and tune only after measurement |
+| Request/client timeout | Image or video generation exceeded client/backend timeout | Use a long client timeout, inspect server progress, and tune only after measurement |
 | MP4 will not play | Player lacks VP9-in-MP4 support | Use `mpv`/`ffplay` or re-encode to H.264 |
 
 ### Action and transfer

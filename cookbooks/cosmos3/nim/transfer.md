@@ -156,8 +156,9 @@ HTTP(S) URL, with the current 100,000,000-character encoded ceiling. Prefer
 data URLs for reproducible local assets. Exact released container/codec support
 and remote-fetch behavior remain validation-gated.
 
-The response has the normal Generator shape: `b64_video` plus `action: null`.
-The public script decodes it to `transfer_<case>.mp4`.
+The response has the normal Generator video shape: `b64_video` plus
+`action: null`. The inactive image field is omitted. The public script decodes
+it to `transfer_<case>.mp4`.
 
 ## Validation and common failures
 

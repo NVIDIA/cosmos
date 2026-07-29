@@ -18,7 +18,7 @@ profile starts one API/backend:
 
 | `NIM_MODEL_TYPE` | Backend/API | Use |
 | --- | --- | --- |
-| `generator` | Generator `POST /v1/infer` | Video generation, action, and transfer |
+| `generator` | Generator `POST /v1/infer` | Image/video generation, action, and transfer |
 | `reasoner` | OpenAI-compatible completion/Responses APIs | Image/video understanding and reasoning |
 
 Run separate containers when both APIs must be available simultaneously. Give

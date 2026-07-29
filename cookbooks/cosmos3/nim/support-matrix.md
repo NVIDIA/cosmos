@@ -76,6 +76,7 @@ performance expectations remain **TBD**. Confirm availability before setting
 | --- | --- | --- |
 | Input | Images | **TBD (release-dependent)** |
 | Input | Videos | **TBD (release-dependent)** |
+| Output | Generator image | Current source emits JPEG; release validation pending |
 | Output | Generator video | Current source emits VP9 in MP4; release validation pending |
 
 Request schemas recognize base64 and MIME-aware data URLs; optional HTTP(S)

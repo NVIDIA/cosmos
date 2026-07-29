@@ -3,7 +3,8 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Cosmos3 Certified NIM documentation source map
 
-> Source-provenance artifact committed on the local `egor/nim_docs` branch.
+> Source-provenance artifact maintained on the
+> `egor/cosmos3_nim_docs` branch.
 > This is an authoring reference, not an end-user guide.
 >
 > Purpose: preserve source locations, authority, discrepancies, and the agreed
@@ -14,7 +15,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 Produce standalone, human- and AI-readable documentation for the unified
 Cosmos3 Certified NIM under `cookbooks/cosmos3/nim` on branch
-`egor/nim_docs`.
+`egor/cosmos3_nim_docs`.
 
 The final guide set must cover deployment and NGC authentication, the Generator
 and Reasoner runtime surfaces, generation, reasoning, action, transfer,
@@ -41,11 +42,43 @@ Reviewed on 2026-07-27.
 The runnable examples documented by this guide are maintained locally under
 `cookbooks/cosmos3/nim/examples`. Their request shapes are validated against the
 current API models, runtime behavior, tests, and live OpenAPI when available.
-They are independently maintained. Reviewed Cosmos3 NIM examples were consulted
-only as high-level research context, not as an ongoing behavioral contract.
+They use an independently maintained teaching structure while keeping
+representative prompts, request fields, and case meaning synchronized with
+reviewed NIM fixtures.
 
 Before authoring or updating public docs, refresh the commit values and inspect
 changes to the primary source files listed below.
+
+### Incremental T2I source refresh
+
+Reviewed on 2026-07-29:
+
+| Repository | Branch | Reviewed commit | Change covered |
+| --- | --- | --- | --- |
+| Cosmos cookbook | `egor/cosmos3_nim_docs` | `60a7871` | Documentation baseline before T2I edits |
+| Cosmos3 Certified NIM | `cosmos3` | `74064b2318222018af446b03701f8a8cbeaa28c3` | Merged T2I request/response contract, JPEG artifacts, prompt upsampling, visual guardrails, examples, and environment-variable cleanup |
+
+The T2I refresh is incremental: the original snapshot below remains the
+provenance for previously researched profiles and historical coverage. The
+merged `cosmos3` state is authoritative for the new modality and the four
+removed Generator execution variables.
+
+T2I evidence at that commit:
+
+- `serving_stack/data_models/generation.py` selects prompt-only T2I with
+  `num_output_frames=1`, applies its defaults, and rejects conditioning inputs;
+- `serving_stack/data_models/responses.py` requires exactly one of `b64_image`
+  and `b64_video` and forbids action metadata on image responses;
+- `serving_stack/workflow.py` encodes the one-frame visual result as JPEG;
+- `serving_stack/prompt_upsampling.py` selects T2I templates and strips
+  video-only duration/FPS fields; and
+- `examples/t2i.py` supplies the canonical representative request fixture.
+
+The same refresh removed `NIM_ATTENTION_BACKEND`, `NIM_ENABLE_CUDAGRAPH`,
+`NIM_ENABLE_FULLGRAPH`, and `NIM_ENABLE_AUTOTUNE` from the Generator
+configuration. `NIM_ENABLE_TORCH_COMPILE` remains supported and defaults to
+`true`. The six variables intentionally excluded in the preceding
+configuration review remain excluded and are not reintroduced by this update.
 
 ## Authority and conflict resolution
 
@@ -64,9 +97,9 @@ Rules:
 
 - Treat implementation and validation tests as API truth.
 - Validate local cookbook request bodies against the API contract rather than
-  another repository's example implementation.
-- Treat reviewed Cosmos3 NIM examples as high-level research context only. Do
-  not describe their implementation or infer a stable contract from them.
+  another repository's runner implementation.
+- Use reviewed Cosmos3 NIM fixtures as representative request evidence, but do
+  not copy their test-runner machinery or treat it as a public API contract.
 - Treat `documentation.md` as a broad operational inventory, not as an exact
   schema when it conflicts with code.
 - Treat previous product docs as reusable explanations and information
@@ -155,11 +188,13 @@ Primary evidence:
 
 ### API capability boundary
 
-- Generator exposes JSON `POST /v1/infer` and returns base64-encoded VP9/MP4,
-  with optional action metadata.
-- Current request-mode inference covers T2V, I2V, V2V, transfer, forward
+- Generator exposes JSON `POST /v1/infer` and returns exactly one base64 visual
+  output: JPEG for T2I or VP9/MP4 for video, with optional video action
+  metadata.
+- Current request-mode inference covers T2I, T2V, I2V, V2V, transfer, forward
   dynamics, policy, and inverse dynamics.
-- Sound conditioning/output is not surfaced by this NIM source snapshot.
+- Image-to-image and sound conditioning/output are not surfaced by this NIM
+  source snapshot.
 - Reasoner uses the OpenAI-compatible Chat Completions surface, inherited
   Responses routes, and streaming.
 - Responses routes can be disabled, and persisted response state is not on by
@@ -189,7 +224,8 @@ The mode is inferred from the request shape:
 
 | Mode | Required discriminator/input | Forbidden or mode-specific rule | Local cookbook example |
 | --- | --- | --- | --- |
-| T2V | Non-empty `prompt`; no media | Ordinary generation frame rules apply | `cookbooks/cosmos3/nim/examples/t2v.py` |
+| T2I | Non-empty `prompt`; no conditioning inputs; `num_output_frames=1` | Image/video/Transfer/action/V2V controls are forbidden; I2I is unsupported | `cookbooks/cosmos3/nim/examples/t2i.py` |
+| T2V | Non-empty `prompt`; no media; 25 or more frames | Video generation frame rules apply | `cookbooks/cosmos3/nim/examples/t2v.py` |
 | I2V | `image` | `image` and `video` are mutually exclusive | `cookbooks/cosmos3/nim/examples/i2v.py` |
 | V2V | `video` without `transfer` or `action_params` | V2V conditioning controls are valid only here | `cookbooks/cosmos3/nim/examples/v2v.py` |
 | Transfer | Non-empty `transfer` | Cannot combine with `image`, `action_params`, or V2V conditioning controls | `cookbooks/cosmos3/nim/examples/transfer.py` |
@@ -202,16 +238,16 @@ Shared top-level request fields:
 | Field | Contract in source snapshot |
 | --- | --- |
 | `prompt` | Optional string, at most 20,000 characters. Required only when no image, video, or transfer input establishes a request. Normalized to an empty string for media/action requests when omitted. |
-| `negative_prompt` | Optional string, at most 20,000 characters. Omission selects the vendored structured OSS negative prompt; an explicit empty string disables it. |
+| `negative_prompt` | Optional string, at most 20,000 characters. Omission becomes empty for T2I and selects the vendored structured OSS negative prompt for video modes; an explicit empty string disables it. |
 | `image` | Base64, image data URL, or public HTTP(S) URL; at most 20,000,000 encoded characters. Empty/whitespace input is treated as absent. |
 | `video` | Base64, video data URL, or public HTTP(S) URL; at most 100,000,000 encoded characters and 75 MB after decoding. Empty/whitespace input is treated as absent. |
 | `seed` | Optional integer >= 0. Generated by the service when omitted. Public examples always set `0` for reproducibility. |
-| `guidance_scale` | Finite JSON number in `[1.0, 7.0]`; ordinary default `6.0`. |
-| `steps` | JSON integer in `[1, 100]`; ordinary default `35`. |
-| `flow_shift` | Finite JSON number; default `10.0`. No additional range constraint is present. |
-| `resolution` | One of 18 keys across `256`, `480`, and `720` tiers, each with bare/`16_9`, `1_1`, `9_16`, `4_3`, and `3_4` spellings. Bare tiers mean 16:9. Default `720`. |
-| `num_output_frames` | JSON integer on the `4k+1` cadence. Ordinary generation defaults to `189`, requires at least `25`, and caps output at `397`/`297`/`197` frames for the 256/480/720 tiers. |
-| `fps` | Finite JSON number in `[1.0, 60.0]`; ordinary default `24.0`. Source recommends 10–30 for quality. |
+| `guidance_scale` | Finite JSON number in `[1.0, 7.0]`; T2I default `4.0`, ordinary video default `6.0`. |
+| `steps` | JSON integer in `[1, 100]`; T2I default `50`, ordinary video default `35`. |
+| `flow_shift` | Finite JSON number; T2I default `3.0`, ordinary video default `10.0`. No additional range constraint is present. |
+| `resolution` | One of 18 keys across `256`, `480`, and `720` tiers, each with bare/`16_9`, `1_1`, `9_16`, `4_3`, and `3_4` spellings. Bare tiers mean 16:9. T2I defaults to `720_1_1`; video defaults to `720`. |
+| `num_output_frames` | `1` selects T2I. Video uses the `4k+1` cadence, defaults to `189`, requires at least `25`, and caps output at `397`/`297`/`197` frames for the 256/480/720 tiers. |
+| `fps` | Finite JSON number in `[1.0, 60.0]`; default `24.0`. Retained but not encoded for T2I; source recommends 10–30 for video quality. |
 | `condition_frame_indexes_vision` | V2V-only latent-frame indexes. Normalized to sorted, unique, non-negative integers; defaults to `[0, 1]`. The largest index must fit the requested output latent-frame range. |
 | `condition_video_keep` | V2V-only `first` or `last`; defaults to `first`. |
 | `transfer` | Nested transfer-control object described below. |
@@ -300,12 +336,16 @@ Primary evidence:
 
 ### Authoring-ready response and Reasoner contract
 
-Generator success response:
+Generator success response contains exactly one visual media field:
 
 | Field | Contract |
 | --- | --- |
-| `b64_video` | Required raw base64 string containing a VP9-encoded MP4. |
-| `action` | Predicted action object for policy/inverse dynamics; otherwise `null`. |
+| `b64_image` | T2I-only raw base64 string containing a JPEG. |
+| `b64_video` | Video-mode-only raw base64 string containing a VP9-encoded MP4. |
+| `action` | Predicted action object for policy/inverse dynamics; otherwise `null`. It cannot be non-null on an image response. |
+
+The inactive media field is omitted. An image response cannot include action
+metadata.
 
 Generator schema/media/guardrail validation generally returns HTTP 422;
 unexpected internal failures return HTTP 500. Public docs should describe the
@@ -360,9 +400,10 @@ Primary evidence:
 The scripts under `cookbooks/cosmos3/nim/examples` are independently maintained
 teaching examples. They keep request construction, the API call, status
 handling, and primary output visible in each task script. Only strict local
-media encoding and video decoding are shared. Their contracts are checked
+media encoding and image/video decoding are shared. Their contracts are checked
 against runtime code, request models, tests, and live release evidence rather
-than another repository's example implementation.
+than another repository's runner implementation; representative request
+semantics remain synchronized with the NIM fixtures.
 
 ### Ports and identity caveat
 
@@ -413,7 +454,7 @@ Important `documentation.md` regions:
 | `serving_stack/generator_inference.py` | Generator HTTP interface and workflow wiring |
 | `serving_stack/reasoner_inference.py` | Reasoner NIMlib/vLLM interface, request normalization, streaming, and route behavior |
 | `serving_stack/environment.py` | Environment-variable parsing, profile selector shorthands, Reasoner tuning, BYOC, guardrails, logging, and media URL policy |
-| `serving_stack/prompt_upsampling.py` | Optional Generator T2V/I2V prompt rewriting through an operator-supplied OpenAI-compatible endpoint |
+| `serving_stack/prompt_upsampling.py` | Optional Generator T2I/T2V/I2V prompt rewriting through an operator-supplied OpenAI-compatible endpoint |
 | `serving_stack/profile_selection/` | Hardware discovery, selection criteria, supported tags, and selection cascade |
 | `local_nimcraft/make_profiles.py` | Profiles emitted into the NIM manifest, model identities, GPU layouts, and VRAM constraints |
 | `local_nimcraft/nimcraft_export/profiles.json` | Generated profile inventory for the reviewed source snapshot |
@@ -469,6 +510,7 @@ not imply persistent response storage is on by default.
 
 | Source | Capability |
 | --- | --- |
+| `cookbooks/cosmos3/nim/examples/t2i.py` | Text-to-image |
 | `cookbooks/cosmos3/nim/examples/t2v.py` | Text-to-video |
 | `cookbooks/cosmos3/nim/examples/i2v.py` | Image-to-video using local media |
 | `cookbooks/cosmos3/nim/examples/v2v.py` | Video-to-video using local media |
@@ -477,7 +519,7 @@ not imply persistent response storage is on by default.
 | `cookbooks/cosmos3/nim/examples/reasoner_responses.py` | Reasoner Responses API |
 | `cookbooks/cosmos3/nim/examples/action.py` | Forward dynamics, policy, and inverse dynamics |
 | `cookbooks/cosmos3/nim/examples/transfer.py` | Precomputed and derived transfer controls |
-| `cookbooks/cosmos3/nim/examples/common.py` | Strict media encoding and video decoding |
+| `cookbooks/cosmos3/nim/examples/common.py` | Strict media encoding and image/video decoding |
 
 ### Current `documentation.md` is a first-party coverage floor
 
@@ -499,7 +541,7 @@ with code or the current profile export.
 | 10. Error envelope | Preserve stable status/type semantics without copying exact mutable messages; add Reasoner 400/422 behavior | `operations.md` |
 | 11. Deployment | Preserve NGC login, cache, ports, Docker flags, single/multi-GPU concepts, throughput/latency, cleanup, and cold-start notes | `deployment.md`; image/profile values release-gated |
 | 12. Environment variables | Re-audit every variable against `environment.py`; split canonical configuration from operational subsets | `configuration.md`, `operations.md` |
-| 12.1 Prompt upsampling | Document the current optional, Generator-only T2V/I2V flow, secret handling, supported template styles, failure fallback, and non-applicable modes | `configuration.md`, `generation.md`, `operations.md` |
+| 12.1 Prompt upsampling | Document the current optional, Generator-only T2I/T2V/I2V flow, secret handling, supported template styles, failure fallback, and non-applicable modes | `configuration.md`, `generation.md`, `operations.md` |
 | 13. Profile selection | Preserve selectors, conflicts, pinning, soft defaults, layouts, and selection cascade from current code | `deployment.md`; released manifest recheck required |
 | 14. Support matrix | Replace the stale prose grid with the released manifest-derived tested/compatible matrix | `support-matrix.md`; release matrix TBD |
 | 15. BYOC | Preserve layout, mount, selector cross-check, verification, and operational notes; state Generator/diffusion-only boundary | `bring-your-own-checkpoint.md`; published BYOC statement TBD |
@@ -518,18 +560,19 @@ copied; the chosen hub-and-spoke page ownership remains canonical.
 
 - `NIM_ENABLE_PROMPT_UPSAMPLING` is off by default and consumed only by the
   Generator backend.
-- The current request path applies it only when `action_params`, `transfer`, and
-  top-level `video` are absent: ordinary T2V and I2V. V2V, action, and transfer
-  requests are not upsampled.
+- The current request path applies it to T2I, T2V, and I2V. V2V, action, and
+  transfer requests are not upsampled.
 - When enabled, current startup validation requires an endpoint URL, model, API
   key value, a valid `external_api|reasoner` template style, and the bundled
   template files. A Reasoner-profile container does not require this config.
 - The endpoint is normalized to an OpenAI-compatible
   `/v1/chat/completions` URL and receives Bearer authorization. Public examples
   must not imply compatibility with a provider's native, non-OpenAI API.
-- I2V sends the conditioning image to a vision-capable upsampler as a data URL.
-- The NIM strips the Reasoner-only `scene_imagination` scratch field and pins
-  resolution, aspect ratio, duration, and FPS from the original generation
+- I2V sends the conditioning image to a vision-capable upsampler as a data URL;
+  T2I and T2V send text only.
+- The NIM strips the Reasoner-only `scene_imagination` scratch field. T2I pins
+  resolution and aspect ratio and removes video-only duration/FPS fields.
+  T2V/I2V pin resolution, aspect ratio, duration, and FPS from the original
   request so the upsampler cannot change output shape.
 - Request-time endpoint, timeout, or response-parsing failures log a warning and
   fall back to the original prompt instead of failing generation.
@@ -539,10 +582,10 @@ copied; the chosen hub-and-spoke page ownership remains canonical.
 
 Primary evidence:
 
-- `serving_stack/environment.py:866-949`
-- `serving_stack/prompt_upsampling.py:11-229`
-- `serving_stack/generator_inference.py:238-260`
-- `serving_stack/tests/test_prompt_upsampling.py:38-307`
+- `serving_stack/environment.py` at `74064b23`
+- `serving_stack/prompt_upsampling.py` at `74064b23`
+- `serving_stack/generator_mapping.py` at `74064b23`
+- `serving_stack/tests/test_prompt_upsampling.py` at `74064b23`
 - `documentation.md:513-549`
 
 ### Local cookbook asset policy
@@ -899,7 +942,7 @@ Primary style/integration evidence:
 | Hardware and profile selection | `make_profiles.py`, profile selection, exported profiles | `documentation.md`, support matrices | `support-matrix.md`, `deployment.md` |
 | Shared management endpoints | live OpenAPI, `api_spec.yaml`, NIM interface | `documentation.md` | `operations.md`; compact index in `api-reference.md` |
 | Generator shared request/response envelope | `data_models/generation.py`, tests | Local cookbook examples | `api-reference.md` |
-| T2V, I2V, V2V | `generation.py`, Generator runtime/tests | Local cookbook examples | `generation.md` |
+| T2I, T2V, I2V, V2V | `generation.py`, `responses.py`, Generator runtime/tests | Local cookbook examples | `generation.md` |
 | Generator prompt upsampling | `prompt_upsampling.py`, `generator_inference.py`, `environment.py`, tests | `documentation.md` | `configuration.md`, `generation.md`, `operations.md` |
 | Chat Completions | `reasoner_inference.py`, tests | Previous Reasoner API page and local cookbook example | `reasoning.md` |
 | Responses API | `reasoner_inference.py`, Reasoner tests | Local cookbook example | `reasoning.md` |
@@ -1031,10 +1074,11 @@ Workflow pages should link here instead of repeating full field tables.
 ### `generation.md`
 
 - Common setup and output decoder.
+- Text-to-image with one-frame selection and JPEG decoding.
 - Text-to-video.
 - Image-to-video with local base64/data URL and public URL.
 - Video-to-video and conditioning-frame controls.
-- Optional prompt upsampling for T2V/I2V, including its mode boundary and
+- Optional prompt upsampling for T2I/T2V/I2V, including its mode boundary and
   original-prompt fallback behavior.
 - Reproducibility, frame cadence, resolution, FPS, quality, and input/output
   media guidance.
@@ -1171,13 +1215,13 @@ handoff from research to drafting.
 | `helm.md` | Cluster prerequisites, chart discovery, secrets, values, GPU resources, storage, probes, rollout, and verification | Released chart contract; previous Helm organization | Chart identity/version/schema and monitoring integration | Copied complete values catalogue, Docker deployment |
 | `bring-your-own-checkpoint.md` | Generator BYOC boundary, layout, mount, profile cross-check, cache, launch, verification, and failures | `environment.py`, source guide, BYOC tests, previous BYOC page | Published format and runtime boundary | Historical Transfer checkpoint variables, Reasoner BYOC claims |
 | `api-reference.md` | Runtime routing, common Generator fields, strict JSON typing, common response, task links, and live OpenAPI | Generator request model/tests and routing code | Generator and Reasoner live OpenAPI | Detailed Action/Transfer/Reasoner tables, management semantics, generic errors |
-| `generation.md` | T2V/I2V/V2V workflows, frame/resolution/media rules, conditioning, optional prompt upsampling, decoding, reproducibility | `data_models/generation.py`, `generator_inference.py`, `prompt_upsampling.py`, tests, and local cookbook examples | Published capability set, live media/URL validation, prompt-upsampling smoke test, output playback | Action/transfer contracts, operator configuration tables |
+| `generation.md` | T2I/T2V/I2V/V2V workflows, frame/resolution/media rules, conditioning, optional prompt upsampling, JPEG/MP4 decoding, reproducibility | `data_models/generation.py`, `data_models/responses.py`, `generator_mapping.py`, `prompt_upsampling.py`, tests, and local cookbook examples | Published capability set, live media/URL validation, prompt-upsampling smoke test, output playback | Action/transfer contracts, operator configuration tables |
 | `reasoning.md` | Chat Completions, Responses, streaming, media ordering, task prompts, structured outputs, Reasoner-specific sampling/media guidance | `reasoner_inference.py`, Reasoner environment/startup, tests, local cookbook examples, and current prompt guide | Text-only/public-URL/media-format checks, Responses state features, approved reasoning-trace wording | Generic vLLM tuning reference, unsupported legacy `video_frames`/`mm_processor_kwargs`, hidden chain-of-thought promises |
 | `action.md` | Complete action contract plus forward dynamics, policy, inverse dynamics, response, and validation | `data_models/actions.py`, runtime/tests, and the local cookbook example | Published-image/profile smoke tests and released domain/model boundary | General generation tutorial, framework/vLLM-Omni syntax |
 | `transfer.md` | Complete transfer contract, control taxonomy, defaults, precomputed/derived forms, combinations, and validation | `data_models/transfer.py`, runtime/tests, and the local cookbook example | Published-image/profile smoke tests, exact supported combination matrix | Duplicate example for every asset, vLLM-Omni multipart syntax |
 | `operations.md` | Health/readiness, management endpoints, generic errors, metrics/logs, guardrails, diagnostics, and troubleshooting | Runtime interface/environment/prompt-upsampling code, `documentation.md`, tests, previous operations docs | Live metrics, log/error samples, chart probes, release limitations | Basic launch tutorial, duplicate task-schema tables, secret values |
 | `acknowledgements.md` | Third-party components and notices for the exact released image | Approved release/build acknowledgement inventory only | Entire content remains TBD until that artifact is supplied and approved | Product EULA copy, inferred dependency inventory, historical Generator notice reuse |
-| `examples/common.py` | Strict local-media-to-data-URL conversion and video decoding | Current cookbook helper and runtime media contract | Final supported media types | Request dispatch, CLI framework, downloads, credentials |
+| `examples/common.py` | Strict local-media-to-data-URL conversion and image/video decoding | Current cookbook helper and runtime media contract | Final supported media types | Request dispatch, CLI framework, downloads, credentials |
 | Task example scripts | One editable request with the API call and primary response handling visible in the same file | Current API models, runtime/tests, and local cookbook workflows | Live release smoke results and stable asset locations | Exhaustive parameter combinations, multi-level runner helpers, notebook-only execution |
 
 ### Canonical fact ownership
@@ -1258,7 +1302,7 @@ claim or command that needs the missing fact. Use these readiness labels:
 | `helm.md` | Ready with TBDs | Required concepts, secret separation, storage/probe/rollout workflow | Chart identity/version/schema and monitoring values |
 | `bring-your-own-checkpoint.md` | Source-ready with live gates | Current Generator boundary, layout, mount, cross-check, verification, failures | Released checkpoint formats and supported profile boundary |
 | `api-reference.md` | Source-ready with live gates | Runtime routing, common Generator envelope, strict typing, response, task links | Live OpenAPI for both modes and generated route inventory |
-| `generation.md` | Source-ready with live gates | T2V/I2V/V2V request construction, current fields/constraints, prompt-upsampling mode boundary and fallback, base64 response decoding, deterministic-seed guidance | Published-image capability and prompt-upsampling smoke results, remote-input behavior, playback/codec observations |
+| `generation.md` | Source-ready with live gates | T2I/T2V/I2V/V2V request construction, current fields/constraints, prompt-upsampling mode boundary and fallback, JPEG/MP4 base64 decoding, deterministic-seed guidance | Published-image capability and prompt-upsampling smoke results, remote-input behavior, playback/codec observations |
 | `reasoning.md` | Ready with TBDs | Chat Completions, Responses create flow, streaming, data URLs, media ordering, sampling, structured outputs, task taxonomy | Text-only and public-URL smoke tests, exact media formats, Responses persistence features, approved reasoning-trace wording |
 | `action.md` | Source-ready with live gates | Forward dynamics, policy, inverse dynamics, action shapes/domains, current representative payloads | Published-profile availability and one smoke result per documented mode/domain boundary |
 | `transfer.md` | Source-ready with live gates | Precomputed and derived controls, current fields/validators, representative request shapes | Published-profile availability, exact supported combination matrix, smoke results |
@@ -1420,8 +1464,8 @@ Do not close these from memory or legacy docs:
   correction, release gate, or explicit TBD.
 - Traced prompt upsampling through startup validation, request dispatch,
   external request construction, and tests. Confirmed it is optional,
-  Generator-only, limited to T2V/I2V, uses a separate secret, and falls back to
-  the original prompt on request-time failures.
+  Generator-only, applies to T2I/T2V/I2V, uses a separate secret, and falls
+  back to the original prompt on request-time failures.
 - Confirmed that local cookbook examples reuse existing public-repository
   assets and preserve their established provenance.
 - Audited all 16 previous official Generator user-guide/notices source files
