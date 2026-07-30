@@ -149,8 +149,9 @@ To run **Cosmos3-Super** instead, load the larger checkpoint:
 
 [`run_with_diffusers.ipynb`](./run_with_diffusers.ipynb) is the full tutorial for
 the Diffusers backend: it provisions a dedicated venv, then walks through
-text-to-image, text-to-video, and image-to-video generation (with and without
-audio) using `Cosmos3OmniPipeline`, including how to preview the generated media.
+text-to-image, text-to-video, image-to-video, and video-to-video generation (with
+and without audio) using `Cosmos3OmniPipeline`, including how to preview the
+generated media.
 
 ## Run with vLLM-Omni
 
