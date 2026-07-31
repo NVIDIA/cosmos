@@ -180,17 +180,27 @@ Point your serving stack at this directory.
 
 The FP8 output is a **drop-in checkpoint** — the same layout as the bf16 source, plus an
 `hf_quant_config.json` and a `quantization_config` in `transformer/config.json`. A
-Cosmos3-capable server detects the ModelOpt FP8 format automatically. Serve the local output
-by path, or the published `fp8` revision of the same Hugging Face repo:
+Cosmos3-capable server detects the ModelOpt FP8 format automatically. Serve it from a **local
+directory** — either the output produced above, or the published `fp8` revision downloaded
+with `snapshot_download` (pass `--served-model-name` so clients see the usual model id):
 
 ```bash
-vllm serve /path/to/OUTPUT_ROOT/nano-fp8 ...        # the local FP8 output
-vllm serve nvidia/Cosmos3-Nano --revision fp8 ...   # the published fp8 revision
+# A) the local FP8 output produced above
+vllm serve /path/to/OUTPUT_ROOT/nano-fp8 --served-model-name nvidia/Cosmos3-Nano ...
+
+# B) download the published fp8 revision to a local dir, then serve that dir
+python -c "from huggingface_hub import snapshot_download; \
+  snapshot_download('nvidia/Cosmos3-Nano', revision='fp8', local_dir='cosmos3-nano-fp8')"
+vllm serve cosmos3-nano-fp8 --served-model-name nvidia/Cosmos3-Nano ...
 ```
 
+> The `--revision fp8` flag alone is **not** honored by the vLLM-Omni Cosmos3 pipeline (it
+> loads the default revision), so the FP8 weights must be materialized to a local directory
+> first.
+
 **Runnable inference examples live in the other Cosmos3 cookbooks, not here.** Each
-vLLM / vLLM-Omni notebook has a **Quantized Checkpoints** section that serves the FP8 build by
-adding `--revision fp8`:
+vLLM / vLLM-Omni notebook has a **Quantized Checkpoints** section that downloads the FP8
+weights and serves them from a local directory:
 
 | Cookbook | Notebook(s) |
 | --- | --- |
