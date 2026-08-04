@@ -209,9 +209,16 @@ Current normalization supplies these values when omitted:
 
 The source default allows up to five images and one video per prompt. Operators
 can change these limits with `NIM_MAX_IMAGES_PER_PROMPT` and
-`NIM_MAX_VIDEOS_PER_PROMPT`. Operator-level `NIM_MEDIA_IO_KWARGS` replaces the
-complete default object; request-level `media_io_kwargs` is usually safer for a
-single workload.
+`NIM_MAX_VIDEOS_PER_PROMPT`. At normal startup,
+`NIM_MEDIA_IO_KWARGS` defaults to video FPS 4.0 with the `pynvvc` backend. An
+operator-level value replaces that complete object; request-level
+`media_io_kwargs` is usually safer for a single workload.
+
+Optional video-token pruning is controlled by
+`NIM_VIDEO_PRUNING_RATE` from `0` through `1`. When the rate is greater than
+zero, `NIM_VIDEO_PRUNING_METHOD` selects `vidcom2` (default) or `evs`. Treat
+both as operator-level quality/performance controls and validate the chosen
+method on representative video workloads.
 
 Older Reasoner documentation describes `video_frames` and
 `mm_processor_kwargs`. Neither is part of this guide's supported baseline until
@@ -293,4 +300,5 @@ final answers; do not depend on `<think>` blocks or hidden chain-of-thought.
 | Context or KV-cache failure | Request/media exceeded runtime limits | Reduce media sampling, token budget, concurrency, or adjust operator limits carefully |
 
 See [operations.md](operations.md#troubleshooting) for deployment-level
-diagnostics.
+diagnostics. To serve a local or Hugging Face Reasoner checkpoint, see
+[Bring your own checkpoint](bring-your-own-checkpoint.md#reasoner-checkpoint).

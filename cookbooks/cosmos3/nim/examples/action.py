@@ -87,9 +87,10 @@ def main() -> None:
     result = response.json()
 
     OUTPUTS.mkdir(exist_ok=True)
-    video_path = OUTPUTS / f"action_{case}.mp4"
-    video_path.write_bytes(decode_video(result["b64_video"]))
-    print(f"Saved video to {video_path}")
+    if result.get("b64_video"):
+        video_path = OUTPUTS / f"action_{case}.mp4"
+        video_path.write_bytes(decode_video(result["b64_video"]))
+        print(f"Saved video to {video_path}")
 
     if result.get("action") is not None:
         action_path = OUTPUTS / f"action_{case}.json"
@@ -97,6 +98,9 @@ def main() -> None:
             json.dumps(result["action"], indent=2) + "\n", encoding="utf-8"
         )
         print(f"Saved predicted action to {action_path}")
+
+    if not result.get("b64_video") and result.get("action") is None:
+        raise ValueError("Action response contained neither video nor action output")
 
 
 if __name__ == "__main__":

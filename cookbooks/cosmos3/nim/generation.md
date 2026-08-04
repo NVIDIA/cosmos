@@ -28,6 +28,48 @@ already tracked by this cookbook, and decode the response under
 python -m pip install requests
 ```
 
+## Select a compatible Generator variant
+
+The general-purpose `nano` and `super` variants accept ordinary generation
+modes supported by their released profile. Current source also defines
+specialist Super checkpoints:
+
+| `NIM_MODEL_VARIANT` | Accepted request | Sampling contract |
+| --- | --- | --- |
+| `super-t2i` | T2I only | Full-step T2I; omitted `flow_shift` becomes `3.0` |
+| `super-t2i-4step` | T2I only | Fixed four-step scheduler |
+| `super-i2v` | I2V only | Full-step I2V; omitted `flow_shift` becomes `1.0` |
+| `super-i2v-4step` | I2V only | Fixed four-step scheduler |
+
+A specialist profile rejects T2V, V2V, Transfer, Action, or the other specialist
+modality rather than silently using the wrong checkpoint. Availability remains
+release-dependent.
+
+For either four-step variant, omit the profile-owned `steps`,
+`guidance_scale`, and `flow_shift` fields. The runtime applies `steps=4`,
+`guidance_scale=1.0`, and its fixed scheduler flow shift. An explicit
+conflicting `steps` or `guidance_scale`, or any explicit `flow_shift`, is
+rejected. Keep `seed` and other ordinary request fields when needed.
+
+Select a released specialist before sending its request:
+
+```bash
+-e NIM_MODEL_TYPE=generator \
+-e NIM_MODEL_VARIANT=super-t2i-4step
+```
+
+`NIM_MODEL_SIZE=super` by itself selects the general-purpose `super` variant.
+See [Select a profile](deployment.md#select-a-profile). After launching the
+matching specialist, run its request:
+
+```bash
+python cookbooks/cosmos3/nim/examples/t2i_4step.py
+python cookbooks/cosmos3/nim/examples/i2v_4step.py
+```
+
+Each script omits all three profile-owned sampling controls. They target
+different variants, so run only the script matching the active NIM profile.
+
 ## Text-to-image
 
 A T2I request has a non-empty `prompt`, no conditioning inputs, and exactly

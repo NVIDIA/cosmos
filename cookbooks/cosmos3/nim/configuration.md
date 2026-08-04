@@ -17,8 +17,11 @@ Use [deployment.md](deployment.md) for complete Docker launch commands and
 
 | Name | Required? | Default | Notes |
 | --- | --- | --- | --- |
-| `NGC_API_KEY` | Conditional | Empty | NGC credentials used to download model artifacts on first boot. It is not required when all required artifacts are already present in the cache. |
+| `NGC_API_KEY` | Conditional | Empty | NGC credentials used to download profile-owned artifacts on first boot. It is not required when all required artifacts are already present in the cache. |
 | `NIM_CACHE_PATH` | No | `/opt/nim/.cache` | In-container path for downloaded model artifacts. Mount a writable host directory here to share the cache across runs. |
+| `NIM_MODEL_PATH` | No | Empty | Checkpoint override. Generator accepts an absolute local path; Reasoner accepts an absolute local path or `hf://owner/repository[:revision]`. See [Bring your own checkpoint](bring-your-own-checkpoint.md). |
+| `NIM_DISABLE_MODEL_DOWNLOAD` | No | `false` | Disable profile artifact download. Valid for a local Reasoner override; incompatible with `hf://` and rejected for Generator because Generator guardrails remain profile-owned. |
+| `HF_TOKEN` | Conditional | Empty | Hugging Face credential for a private Reasoner `hf://` source. Inject as a secret; never include it in the URI. |
 
 ### Server and logging
 
@@ -33,7 +36,8 @@ Use [deployment.md](deployment.md) for complete Docker launch commands and
 | Name | Required? | Default | Notes |
 | --- | --- | --- | --- |
 | `NIM_MODEL_TYPE` | No | `generator` | Select the active runtime: `generator` or `reasoner`. A running container serves only the selected runtime. |
-| `NIM_MODEL_SIZE` | No | Soft preference for Nano | Select the model-size preference used by automatic profile selection. |
+| `NIM_MODEL_SIZE` | No | Soft preference for Nano | Select `nano` or `super`. For Generator, this shorthand selects the corresponding general-purpose base variant rather than a specialist variant. |
+| `NIM_MODEL_VARIANT` | No | Base variant for selected size | Generator-only checkpoint contract: `nano`, `nano-droid`, `super`, `super-t2i`, `super-t2i-4step`, `super-i2v`, or `super-i2v-4step`, when present in the released manifest. |
 | `NIM_PRECISION` | No | Compatible soft preference | Select the precision preference used by automatic profile selection. Available values depend on the released profiles and hardware. |
 | `NIM_TAGS_SELECTOR` | No | Empty | Comma-separated `key=value` filters used by automatic profile selection. |
 | `NIM_MODEL_PROFILE` | No | Empty | Pin an exact profile ID from the image manifest instead of using automatic selection. |
@@ -71,7 +75,9 @@ image release.
 | Name | Required? | Default | Notes |
 | --- | --- | --- | --- |
 | `NIM_ENABLE_TORCH_COMPILE` | No | `true` | Enable the Generator `torch.compile` path. |
+| `NIM_ENABLE_VAE_PARALLELISM` | No | `true` | Enable the Generator's configurable VAE parallel execution path. Change only after validating the selected profile and workload. |
 | `NIM_MAX_SEQUENCE_LENGTH` | No | `5120` | Set the Generator prompt-token sequence length at startup. This is not a per-request control. |
+| `NIM_VRAM_MONITORING` | No | `false` | Log per-request peak GPU-memory measurements for diagnosis. It adds monitoring work and is not required for ordinary serving. |
 
 ### Diffusion caching
 
@@ -87,15 +93,20 @@ image release.
 | `NIM_ENABLE_TEXT_GUARDRAILS` | No | `true` | Enable input-text policy checks. |
 | `NIM_ENABLE_VIDEO_GUARDRAILS` | No | `true` | Enable the output face and video guardrail path. |
 | `NIM_ENABLE_SIGLIP_GUARDRAILS` | No | `true` | Enable the output-frame safety classifier when video guardrails run. |
+| `NIM_QWEN3GUARD_MAX_INPUT_TOKENS` | No | `8192` | Text-guard token budget; minimum accepted value is 512. |
+| `NIM_QWEN3GUARD_MAX_GPU_MEMORY_GB` | No | Auto-computed | Override the text guard's GPU-memory ceiling with a value from `0.1` through `16.0` GiB. Prefer the computed value unless profiling proves an override is needed. |
+| `NIM_QWEN3GUARD_ENFORCE_EAGER` | No | `false` | Enable eager execution for the text guard, disabling its CUDA graphs. This is independent of guardrail offload. |
+| `NIM_OFFLOAD_TEXT_GUARDRAIL` | No | Selected-profile policy | Force the text guard to sleep on CPU during diffusion (`true`) or remain resident (`false`), overriding the selected profile tag. |
+| `NIM_OFFLOAD_VIDEO_GUARDRAIL` | No | Selected-profile policy | Force output visual guardrail sessions to sleep during diffusion (`true`) or remain resident (`false`). |
 
-### Bring your own checkpoint
+### Transfer admission
 
 | Name | Required? | Default | Notes |
 | --- | --- | --- | --- |
-| `NIM_FT_CHECKPOINT` | No | Empty | Absolute path inside the container to a Generator BYOC diffusion checkpoint. Only the diffusion model is replaced; profile-managed components continue to come from the selected workspace. |
+| `NIM_ALLOW_UNSAFE_TRANSFER` | No | `false` | Allow Transfer even when startup determines that the selected profile lacks measured VRAM headroom. This can cause an out-of-memory failure; use only for an approved diagnostic. |
 
-See [Bring your own checkpoint](bring-your-own-checkpoint.md) before setting
-`NIM_FT_CHECKPOINT`.
+Startup derives an internal Transfer-admission value from the selected profile
+and GPU. Do not set `NIM_TRANSFER_VRAM_OK` as a normal user selector.
 
 ### Prompt upsampling
 
@@ -140,7 +151,7 @@ falls back to the original prompt. Never log or reuse the upsampler key as
 
 | Name | Required? | Default | Notes |
 | --- | --- | --- | --- |
-| `NIM_MAX_MODEL_LEN` | No | `262144` | Maximum model context length configured in vLLM. |
+| `NIM_MAX_MODEL_LEN` | No | `-1` (auto) | Let vLLM profile available memory and choose a context length bounded by the checkpoint limit. Set an explicit positive integer only after workload validation. |
 | `NIM_MAX_NUM_BATCHED_TOKENS` | No | `8192` | Scheduler token budget. Set an empty value to omit this override. |
 | `NIM_MAX_NUM_SEQS` | No | `256` | Maximum number of sequences scheduled in parallel. |
 | `NIM_STREAM_INTERVAL` | No | `10` | Streaming update interval. |
@@ -161,8 +172,9 @@ falls back to the original prompt. Never log or reuse the upsampler key as
 | --- | --- | --- | --- |
 | `NIM_MAX_IMAGES_PER_PROMPT` | No | `5` | Maximum number of images allowed in one request. |
 | `NIM_MAX_VIDEOS_PER_PROMPT` | No | `1` | Maximum number of videos allowed in one request. |
-| `NIM_MEDIA_IO_KWARGS` | No | Unset | Complete operator-level media preprocessing JSON object. When unset, the Cosmos3 wrapper does not override the underlying media-I/O defaults. |
+| `NIM_MEDIA_IO_KWARGS` | No | `{"video":{"fps":4.0,"video_backend":"pynvvc"}}` at normal Reasoner startup | Complete operator-level media preprocessing JSON object. An explicit value replaces the complete startup object. |
 | `NIM_VIDEO_PRUNING_RATE` | No | `0` (off) | Optional video-token pruning rate from `0` through `1`. |
+| `NIM_VIDEO_PRUNING_METHOD` | No | `vidcom2` | Video-token pruning implementation: `vidcom2` or `evs`. It is forwarded only when the pruning rate is greater than zero. |
 
 ### Decoding and structured output
 
@@ -193,7 +205,7 @@ the target release.
 
 ## Secret handling
 
-Keep `NGC_API_KEY` and `NIM_PROMPT_UPSAMPLING_API_KEY` separate. Do not place
-either value in source control, image layers, saved requests, notebooks, or
-logs. Prefer secret injection supported by the deployment environment instead
-of literal command-line values.
+Keep `NGC_API_KEY`, `HF_TOKEN`, and `NIM_PROMPT_UPSAMPLING_API_KEY` separate.
+Do not place any of them in source control, model-source URIs, image layers,
+saved requests, notebooks, or logs. Prefer secret injection supported by the
+deployment environment instead of literal command-line values.

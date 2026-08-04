@@ -147,7 +147,22 @@ defaults for mixed requests rather than combining defaults from each control.
 The exact combinations validated and supported by the published image remain
 **TBD (release-dependent)**. Until that matrix is available, use one control per
 production request and smoke-test any multi-control payload on the target
-release before documenting or automating it.
+release before documenting or automating it. Controls in a multi-control smoke
+test must be spatially and temporally aligned; do not combine unrelated
+single-control fixtures and interpret the result as a quality comparison.
+
+## Transfer VRAM admission
+
+Transfer has a higher peak-memory requirement than ordinary text-to-video on
+the same profile. Startup compares the visible GPU's headroom above the
+selected profile floor with the measured Transfer overhead. A deployment can
+therefore be ready and serve ordinary generation while rejecting Transfer.
+
+If Transfer is unavailable, use a larger GPU or a released lower-VRAM profile.
+`NIM_ALLOW_UNSAFE_TRANSFER=1` bypasses the admission check, but the request can
+run out of memory and the deployment does not become supported. Do not use the
+override as a normal production setting. See
+[Transfer headroom](support-matrix.md#transfer-headroom).
 
 ## Media and output
 
@@ -180,5 +195,6 @@ Transfer rejects:
 | Unknown `control_path`, `max_frames`, or `show_*` field | Remove vLLM-Omni-only fields and use the typed transfer object |
 | Control/output lengths are incompatible | Recheck frame cadence, chunk size, and conditional frame values |
 | Request works in vLLM-Omni but not NIM | Translate semantics rather than copying multipart transport or `extra_params` |
+| Transfer is disabled while T2V works | Selected profile fits ordinary generation but GPU headroom is below Transfer overhead; use a larger GPU or lower-VRAM released profile |
 
 For service-level failures, see [operations.md](operations.md#troubleshooting).
