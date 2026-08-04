@@ -6,9 +6,8 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 Use this page to replace the selected Generator or Reasoner checkpoint while
 preserving the Certified NIM server, profile selection, and runtime contract.
 
-> **Release status:** The current source implements the contracts below through
-> `NIM_MODEL_PATH`. The exact checkpoint families, layouts, and remote sources
-> accepted by the published image remain **TBD (release-dependent)**.
+> `NIM_MODEL_PATH` provides the implementation described below. Confirm the
+> accepted checkpoint inventory in the released [support matrix](support-matrix.md).
 
 ## Supported boundary
 
@@ -46,35 +45,22 @@ not prove compatibility with the released image.
 
 ### Launch
 
-Mount the checkpoint read-only at the same absolute path supplied in
-`NIM_MODEL_PATH`:
+Start with the standard [Generator launch](deployment.md#launch-generator).
+Mount the checkpoint read-only and add these Docker options:
 
 ```bash
-export NIM_IMAGE='<NIM_IMAGE:TBD>'
-export LOCAL_NIM_CACHE="${LOCAL_NIM_CACHE:-$HOME/.cache/nim/cosmos3}"
 export BYOC_CHECKPOINT='/host/path/to/generator-checkpoint'
-
-mkdir -p "$LOCAL_NIM_CACHE"
-
-docker run --rm --name cosmos3-generator-byoc \
-  --gpus '"device=0"' \
-  --shm-size 16g \
-  --ulimit memlock=-1 \
-  --ulimit stack=67108864 \
-  --ulimit nofile=65536:65536 \
-  -p 8000:8000 \
-  -e NGC_API_KEY \
-  -e NIM_MODEL_TYPE=generator \
-  -e NIM_MODEL_SIZE=nano \
-  -e NIM_PRECISION=bf16 \
-  -e NIM_PERF_PROFILE=latency \
-  -e NIM_MODEL_PATH=/byoc/cosmos3 \
-  -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
-  -v "$BYOC_CHECKPOINT:/byoc/cosmos3:ro" \
-  "$NIM_IMAGE"
 ```
 
-Generator guardrails remain profile-owned artifacts. The cache must be writable,
+Add these options to the `docker run` command:
+
+```text
+-e NIM_MODEL_PATH=/byoc/cosmos3 \
+-v "$BYOC_CHECKPOINT:/byoc/cosmos3:ro"
+```
+
+Choose a Generator variant, precision, and latency/throughput objective that
+match the checkpoint. Generator guardrails remain profile-owned artifacts. The cache must be writable,
 NGC artifact access may still be required, and
 `NIM_DISABLE_MODEL_DOWNLOAD=1` is rejected for Generator profiles.
 

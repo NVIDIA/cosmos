@@ -8,9 +8,8 @@ logging and guardrails, integrate metrics, and diagnose deployment and request
 failures. See [deployment.md](deployment.md) for launch configuration and
 [configuration.md](configuration.md) for environment variables.
 
-> Live endpoint responses, metric names, log samples, and release-specific
-> limitations are **TBD (release-dependent)** until validated against the final
-> Generator and Reasoner image profiles.
+> Validate endpoint output, metrics, logs, and operational limits against the
+> released image used by the deployment.
 
 ## Health and startup
 
@@ -247,7 +246,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | HTTP 422, unknown field | vLLM-Omni or old NIM request was copied literally | Use JSON `/v1/infer` and the current [API reference](api-reference.md) |
 | Selected variant rejects request mode or sampling fields | A T2I/I2V specialist received another mode, or a four-step request supplied profile-owned controls | Select a compatible `NIM_MODEL_VARIANT`; omit `steps`, `guidance_scale`, and `flow_shift` for four-step variants |
 | HTTP 422, media decode/fetch | Invalid base64/data URL, URL disabled/unreachable, or unsupported media | Prefer a MIME-aware data URL; check release codec/format support |
-| HTTP 422, frame or resolution | Request violates T2I one-frame selection, video cadence/tier limits, or an action rule | Recompute with the canonical tables; action frames equal chunk size plus one |
+| HTTP 422, frame or resolution | Request violates T2I one-frame selection, video cadence/tier limits, or an action rule | Recompute with the task tables; action frames equal chunk size plus one |
 | Content-policy 422 | Text or generated frames triggered guardrails | Rephrase and review content; disable only under approved diagnostic policy |
 | Backend 500/OOM | Profile fit or runtime workload exceeded available memory | Reduce workload/concurrency, choose Nano/offload, or use a larger supported GPU; retain logs |
 | Request/client timeout | Image or video generation exceeded client/backend timeout | Use a long client timeout, inspect server progress, and tune only after measurement |
@@ -279,8 +278,8 @@ Task-specific validation belongs to [Generation](generation.md),
 
 ### BYOC
 
-See [Bring your own checkpoint](bring-your-own-checkpoint.md) for the canonical
-layout, mount, selector, and verification procedure.
+See [Bring your own checkpoint](bring-your-own-checkpoint.md) for layout,
+mount, selector, and verification procedures.
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
@@ -290,18 +289,3 @@ layout, mount, selector, and verification procedure.
 | `hf://` source fails offline | Remote source requires download while model download is disabled | Pre-download the Reasoner checkpoint and use an absolute local path |
 | Generator rejects disabled download | Profile-owned guardrail artifacts still require materialization | Remove `NIM_DISABLE_MODEL_DOWNLOAD=1` and provide cache/NGC access |
 | Long first start | A new engine or remote checkpoint is being downloaded/materialized | Keep a writable persistent cache and wait for readiness |
-
-## Known release TBDs
-
-Before publication/production sign-off, replace or explicitly retain:
-
-- final image repository/tag and release/model-card links;
-- exact hardware, VRAM, driver, toolkit, and profile support;
-- final offload availability and performance expectations;
-- live OpenAPI for both runtimes;
-- exact media format/codec/URL behavior;
-- released Responses storage/background behavior;
-- metric catalogue, log samples, probes, and known limitations;
-- final Helm chart and monitoring values;
-- published Generator and Reasoner BYOC boundary; and
-- approved acknowledgements and license links.

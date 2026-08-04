@@ -33,8 +33,8 @@ Plan for:
 | Container shared memory | **TBD** |
 
 Do not add together the memory of heterogeneous GPUs to claim compatibility.
-Use a released profile whose GPU count, per-device VRAM, precision, and
-architecture requirements all match the visible devices.
+Choose a released model/precision combination whose GPU count, per-device
+VRAM, and architecture requirements match the visible devices.
 
 ## Software requirements
 
@@ -67,7 +67,7 @@ For a normal cold start, the host must reach:
 
 You also need an NGC personal API key with NGC Catalog access. The runtime
 variable is `NGC_API_KEY`, not `NGC_TOKEN`. See
-[Create and protect an NGC API key](deployment.md#create-and-protect-an-ngc-api-key)
+[Authenticate to NGC](deployment.md#authenticate-to-ngc)
 for export and Docker-login instructions.
 
 An air-gapped deployment requires the released image and a correctly

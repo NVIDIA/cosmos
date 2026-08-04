@@ -4,15 +4,19 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Use Cosmos3 action capabilities through the Certified NIM
 
 Use this page for forward dynamics, policy, and inverse dynamics requests. All
-three use a compatible **Generator** profile and synchronous JSON
+three use a compatible **Generator** model and synchronous JSON
 `POST /v1/infer`; the nested `action_params.mode` selects the task.
 
-> **Release status:** The request/response contracts are source-derived.
-> Published profile availability and the final supported model/domain matrix
-> remain **TBD (release-dependent)**.
+> Model and domain availability must be confirmed in the released
+> [support matrix](support-matrix.md).
 
-See [deployment.md](deployment.md) to start the NIM. This page is the canonical
-contract for `action_params`.
+See [Deployment](deployment.md) to start the NIM. There are two distinct
+contracts:
+
+- general Action models produce visual rollouts for forward dynamics, policy,
+  and inverse dynamics; and
+- the Nano-DROID specialist implements policy only and returns actions without
+  visual media.
 
 ## Action modes
 
@@ -190,8 +194,7 @@ The client must omit profile-owned fields:
   `history_length`, and `use_state` inside `action_params`; and
 - top-level `fps`, `num_output_frames`, and `negative_prompt`.
 
-Current source supplies an 8-wide action representation, 32 action steps,
-33 internal cadence frames, and 15 FPS. It defaults to four inference steps,
+The model returns 32 actions with width 8. It defaults to four inference steps,
 guidance `3.0`, and flow shift `5.0`; `steps`, `guidance_scale`, `flow_shift`,
 and `seed` remain overridable.
 
@@ -250,7 +253,7 @@ General visual Policy and inverse dynamics profiles return:
 {
   "b64_video": "<BASE64_MP4>",
   "action": {
-    "data": [[0.0, 0.0]],
+    "data": [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
     "shape": [16, 10],
     "dtype": "float32",
     "raw_action_dim": 10,
@@ -260,8 +263,8 @@ General visual Policy and inverse dynamics profiles return:
 }
 ```
 
-The shortened `data` above illustrates the envelope only; a real response has
-the full shape reported by `shape`. A specialist policy can instead return the
+The shortened `data` above shows one row; a real response has all 16 rows
+reported by `shape`. A specialist policy can instead return the
 same `action` envelope with both media fields absent, as described under
 [Nano-DROID policy](#nano-droid-policy). The public script writes available
 media and action artifacts independently.

@@ -7,12 +7,12 @@ Use this page to guide Generator output with edge, blur, depth, segmentation,
 or world-space-map (WSM) video controls. Transfer uses synchronous JSON
 `POST /v1/infer` with a top-level `transfer` object.
 
-> **Release status:** The current source implements every control below.
-> Published profile availability and the exact released multi-control matrix
-> remain **TBD (release-dependent)**.
+> Control and model availability must be confirmed in the released
+> [support matrix](support-matrix.md).
 
-See [deployment.md](deployment.md) to start a compatible Generator profile.
-This page is the canonical contract for the `transfer` object.
+See [Deployment](deployment.md) to start a compatible Generator model. Begin
+with one precomputed control, then use derived or multiple controls only when
+the workload requires them.
 
 ## Control types
 
@@ -80,7 +80,7 @@ Replace `edge` with `blur`, `depth`, `seg`, or `wsm` and provide the matching
 control. The complete script converts the existing local control video to the
 data URL automatically.
 
-## Derived edge or blur
+## Advanced: derive edge or blur
 
 For server-derived controls, send the source video at top level and omit the
 nested control video:
@@ -114,7 +114,7 @@ cannot accompany nested `video`.
 Depth, segmentation, and WSM cannot be derived by the server; supply a
 precomputed control video.
 
-## Transfer tuning
+## Advanced tuning
 
 | Field | Constraint | Current effective default |
 | --- | --- | --- |
@@ -138,7 +138,7 @@ All current transfer families default to 50 denoising steps and flow shift
 current source contract, not a promise that every release or model profile has
 identical quality-optimal settings.
 
-## Multiple controls
+## Advanced multiple controls
 
 The request schema can enable more than one control in the same `transfer`
 object. Current default selection deliberately uses the general edge-family
@@ -156,7 +156,7 @@ single-control fixtures and interpret the result as a quality comparison.
 Transfer has a higher peak-memory requirement than ordinary text-to-video on
 the same profile. Startup compares the visible GPU's headroom above the
 selected profile floor with the measured Transfer overhead. A deployment can
-therefore be ready and serve ordinary generation while rejecting Transfer.
+therefore be ready and serve generation without Transfer while rejecting it.
 
 If Transfer is unavailable, use a larger GPU or a released lower-VRAM profile.
 `NIM_ALLOW_UNSAFE_TRANSFER=1` bypasses the admission check, but the request can
@@ -171,7 +171,7 @@ HTTP(S) URL, with the current 100,000,000-character encoded ceiling. Prefer
 data URLs for reproducible local assets. Exact released container/codec support
 and remote-fetch behavior remain validation-gated.
 
-The response has the normal Generator video shape: `b64_video` plus
+The response uses the Generator video shape: `b64_video` plus
 `action: null`. The inactive image field is omitted. The public script decodes
 it to `transfer_<case>.mp4`.
 
@@ -195,6 +195,6 @@ Transfer rejects:
 | Unknown `control_path`, `max_frames`, or `show_*` field | Remove vLLM-Omni-only fields and use the typed transfer object |
 | Control/output lengths are incompatible | Recheck frame cadence, chunk size, and conditional frame values |
 | Request works in vLLM-Omni but not NIM | Translate semantics rather than copying multipart transport or `extra_params` |
-| Transfer is disabled while T2V works | Selected profile fits ordinary generation but GPU headroom is below Transfer overhead; use a larger GPU or lower-VRAM released profile |
+| Transfer is disabled while T2V works | Selected profile fits T2V but GPU headroom is below Transfer overhead; use a larger GPU or lower-VRAM released profile |
 
 For service-level failures, see [operations.md](operations.md#troubleshooting).

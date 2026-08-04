@@ -4,12 +4,11 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Cosmos3 Certified NIM API reference
 
 Use this compact reference for runtime routing, the shared Generator request
-envelope, and the common Generator response. Detailed task contracts live with
-their workflows so fields, constraints, and examples have one canonical owner.
+envelope, and the common Generator response. Detailed fields, constraints, and
+examples live with each task workflow.
 
-> **Release status:** The Generator envelope is derived from current request
-> models and tests. NIMlib- and vLLM-supplied routes must be checked against
-> `/openapi.json` from the released image under each runtime.
+> Check `/openapi.json` on the running Generator or Reasoner for routes supplied
+> by the active runtime and image release.
 
 ## Runtime and primary endpoints
 
@@ -48,32 +47,31 @@ The task guides define required inputs and invalid combinations.
 
 ### Common Generator request fields
 
-Defaults below describe ordinary generation. T2I applies the mode-specific
-defaults identified in the table. Action and Transfer apply the defaults
-documented on their canonical pages.
+This table defines the shared envelope. Task pages own mode-specific defaults
+and required combinations.
 
-| Field | Type and ordinary default | Contract |
+| Field | Type | Applies to |
 | --- | --- | --- |
-| `prompt` | string or null; `null` | Maximum 20,000 characters; required when no media or nested task establishes the request |
-| `negative_prompt` | string or null; `null` | Maximum 20,000 characters; omission becomes `""` for T2I and selects the bundled default for video modes; explicit `""` disables negative-prompt conditioning |
-| `image` | string or null; `null` | Raw base64, image data URL, or allowed HTTP(S) URL; maximum 20,000,000 encoded characters |
-| `video` | string or null; `null` | Raw base64, video data URL, or allowed HTTP(S) URL; maximum 100,000,000 encoded characters and 75 MB decoded |
-| `seed` | integer or null; `null` | Must be `>= 0`; the service generates one when omitted |
-| `guidance_scale` | finite number; video `6.0`, T2I `4.0` | Range `[1.0,7.0]`; Action and Transfer override the default |
-| `steps` | integer; video `35`, T2I `50` | Range `[1,100]`; Action and Transfer override the default |
-| `flow_shift` | finite number; video `10.0`, T2I `3.0` | No additional range constraint in the current request model |
-| `resolution` | enum; video `720`, T2I `720_1_1` | Ordinary Generation and Transfer only; see [resolution keys](generation.md#resolution-keys) |
-| `num_output_frames` | integer; video `189` | `1` selects T2I; video uses the `4k+1` cadence from 25 upward. See [generation cadence](generation.md#frame-cadence-and-limits), [Action](action.md#domains-and-dimensions), or [Transfer](transfer.md#transfer-tuning) |
-| `fps` | finite number; `24.0` | Range `[1.0,60.0]`; retained in T2I requests but not encoded in the JPEG |
-| `condition_frame_indexes_vision` | integer array or null | V2V-only latent-frame indexes; see [Video-to-video](generation.md#video-to-video) |
-| `condition_video_keep` | `first`, `last`, or null | V2V-only frame-selection direction; defaults to `first` |
-| `action_params` | object or null | Canonical nested contract: [Action parameter reference](action.md#action-parameter-reference) |
-| `transfer` | object or null | Canonical nested contract: [Transfer](transfer.md) |
+| `prompt` | string or null; maximum 20,000 characters | All Generator tasks; required when no media or nested task establishes the request |
+| `negative_prompt` | string or null; maximum 20,000 characters | Generation, Action, and Transfer when allowed by the selected model |
+| `image` | encoded string or null; maximum 20,000,000 characters | I2V, forward dynamics, and policy |
+| `video` | encoded string or null; maximum 100,000,000 characters and 75 MB decoded | V2V, inverse dynamics, and derived Transfer |
+| `seed` | non-negative integer or null | Reproducibility; the service generates one when omitted |
+| `guidance_scale` | finite number in `[1.0,7.0]` | Sampling when not owned by a specialist model |
+| `steps` | integer in `[1,100]` | Sampling when not owned by a specialist model |
+| `flow_shift` | finite number | Sampling when not owned by a specialist model |
+| `resolution` | enum | Generation and Transfer; see [resolution keys](generation.md#resolution-keys) |
+| `num_output_frames` | integer | T2I selection, video cadence, Action, and Transfer |
+| `fps` | finite number in `[1.0,60.0]` | Video tasks; retained but not encoded for T2I |
+| `condition_frame_indexes_vision` | integer array or null | V2V only |
+| `condition_video_keep` | `first`, `last`, or null | V2V only |
+| `action_params` | object or null | [Action](action.md#action-parameter-reference) |
+| `transfer` | object or null | [Transfer](transfer.md) |
 
 Empty or whitespace-only media strings are treated as absent. Media
 representations and release codec boundaries are documented under
 [Generation media representations](generation.md#media-representations) and
-the [Support matrix](support-matrix.md#supported-media-and-codecs).
+the [Support matrix](support-matrix.md#media-and-codecs).
 
 ### Strict JSON types
 
@@ -129,7 +127,7 @@ request has `b64_video`. See [Nano-DROID policy](action.md#nano-droid-policy).
 
 The current source encoder emits JPEG for T2I and a VP9 video track in an MP4
 container for video modes. Released output codec support belongs to the
-[Support matrix](support-matrix.md#supported-media-and-codecs).
+[Support matrix](support-matrix.md#media-and-codecs).
 
 ## Errors and live schema
 

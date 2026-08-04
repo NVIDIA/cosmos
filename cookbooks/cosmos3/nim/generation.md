@@ -5,11 +5,11 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 Use this page for text-to-image (T2I), text-to-video (T2V), image-to-video
 (I2V), and video-to-video (V2V) requests. These workflows require a running
-**Generator** profile and use synchronous JSON `POST /v1/infer`.
+**Generator** model and use synchronous JSON `POST /v1/infer`.
 
 For launch instructions, see [deployment.md](deployment.md). The
 [API reference](api-reference.md#common-generator-request-fields) defines the
-shared request envelope; this page owns ordinary generation rules.
+shared request envelope; this page defines T2I, T2V, I2V, and V2V rules.
 
 ## Prerequisites
 
@@ -27,48 +27,6 @@ already tracked by this cookbook, and decode the response under
 ```bash
 python -m pip install requests
 ```
-
-## Select a compatible Generator variant
-
-The general-purpose `nano` and `super` variants accept ordinary generation
-modes supported by their released profile. Current source also defines
-specialist Super checkpoints:
-
-| `NIM_MODEL_VARIANT` | Accepted request | Sampling contract |
-| --- | --- | --- |
-| `super-t2i` | T2I only | Full-step T2I; omitted `flow_shift` becomes `3.0` |
-| `super-t2i-4step` | T2I only | Fixed four-step scheduler |
-| `super-i2v` | I2V only | Full-step I2V; omitted `flow_shift` becomes `1.0` |
-| `super-i2v-4step` | I2V only | Fixed four-step scheduler |
-
-A specialist profile rejects T2V, V2V, Transfer, Action, or the other specialist
-modality rather than silently using the wrong checkpoint. Availability remains
-release-dependent.
-
-For either four-step variant, omit the profile-owned `steps`,
-`guidance_scale`, and `flow_shift` fields. The runtime applies `steps=4`,
-`guidance_scale=1.0`, and its fixed scheduler flow shift. An explicit
-conflicting `steps` or `guidance_scale`, or any explicit `flow_shift`, is
-rejected. Keep `seed` and other ordinary request fields when needed.
-
-Select a released specialist before sending its request:
-
-```bash
--e NIM_MODEL_TYPE=generator \
--e NIM_MODEL_VARIANT=super-t2i-4step
-```
-
-`NIM_MODEL_SIZE=super` by itself selects the general-purpose `super` variant.
-See [Select a profile](deployment.md#select-a-profile). After launching the
-matching specialist, run its request:
-
-```bash
-python cookbooks/cosmos3/nim/examples/t2i_4step.py
-python cookbooks/cosmos3/nim/examples/i2v_4step.py
-```
-
-Each script omits all three profile-owned sampling controls. They target
-different variants, so run only the script matching the active NIM profile.
 
 ## Text-to-image
 
@@ -101,8 +59,7 @@ Path("t2i.jpg").write_bytes(base64.b64decode(response["b64_image"]))
 PY
 ```
 
-Or run the complete editable example, which uses the canonical representative
-prompt from the NIM source:
+Or run the complete editable example:
 
 ```bash
 python cookbooks/cosmos3/nim/examples/t2i.py
@@ -247,6 +204,37 @@ roughly one third, so large videos can make the JSON request substantially
 larger. Exact released container/codec support and remote-fetch behavior remain
 validation-gated.
 
+## Specialist T2I and I2V variants
+
+General-purpose `nano` and `super` models support the tasks included by their
+released profiles. Super also provides task-specific variants:
+
+| Variant | Accepted request | Sampling behavior |
+| --- | --- | --- |
+| `super-t2i` | T2I only | Full-step T2I; omitted `flow_shift` becomes `3.0` |
+| `super-t2i-4step` | T2I only | Fixed four-step scheduler |
+| `super-i2v` | I2V only | Full-step I2V; omitted `flow_shift` becomes `1.0` |
+| `super-i2v-4step` | I2V only | Fixed four-step scheduler |
+
+A specialist rejects other Generator tasks. Select the matching variant before
+launch; `NIM_MODEL_SIZE=super` alone selects general-purpose `super`.
+
+Launch T2I with `NIM_MODEL_VARIANT=super-t2i-4step`, then run:
+
+```bash
+python cookbooks/cosmos3/nim/examples/t2i_4step.py
+```
+
+Launch I2V with `NIM_MODEL_VARIANT=super-i2v-4step`, then run:
+
+```bash
+python cookbooks/cosmos3/nim/examples/i2v_4step.py
+```
+
+Each script must run against the matching active model. Four-step requests must
+omit `steps`, `guidance_scale`, and `flow_shift`; the model owns those values.
+`seed` and other ordinary fields remain available.
+
 ## Choose resolution, frames, and FPS
 
 ### Frame cadence and limits
@@ -274,7 +262,7 @@ the largest valid conditioning index is 23.
 ### Resolution keys
 
 Bare keys are aliases for the 16:9 shape in the same tier. Shapes are width ×
-height from the model's canonical table, not mathematical resizing of the tier
+height from the model's resolution table, not mathematical resizing of the tier
 number.
 
 | Aspect | `256` tier | `480` tier | `720` tier |
@@ -295,7 +283,7 @@ suffixes select distinct shapes.
   rate.
 - For video, approximate duration is `num_output_frames / fps` seconds.
 - More `steps` usually costs more latency. Start with 50 for T2I and 35 for
-  ordinary video generation unless a validated recipe calls for another
+  standard video generation unless a validated recipe calls for another
   value.
 
 ## Media representations

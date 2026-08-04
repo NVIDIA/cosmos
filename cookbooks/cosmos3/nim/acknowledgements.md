@@ -3,12 +3,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Cosmos3 Certified NIM acknowledgements
 
-> **TBD (release-dependent):** Third-party component acknowledgements and
-> notices for the exact released Cosmos3 Certified NIM image have not yet been
-> supplied or approved for publication.
+> **TBD:** Third-party component acknowledgements and notices for the released
+> Cosmos3 Certified NIM image have not yet been supplied or approved.
 
-This page is the canonical destination for that inventory once the release
-artifact is available. It must be generated or reviewed against the exact image
+This page will contain that inventory once the release artifact is available. It must be generated or reviewed against the exact image
 repository, tag, and digest documented by this cookbook.
 
 The final content should include, as applicable:

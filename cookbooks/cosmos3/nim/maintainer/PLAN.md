@@ -16,6 +16,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 - Source discovery and information-architecture planning are complete.
 - Public documentation has been refreshed against Cosmos3 NIM source commit
   `243e05f8eecb44766d90f2843adb46356ae77a17`.
+- The user journey now starts with runtime, model, optional precision, and the
+  Generator latency/throughput choice; profile IDs are advanced controls.
+- Maintainer planning and provenance live under `maintainer/`, outside the
+  public guide navigation.
 - Static validation for this refresh is tracked below; released-image
   validation remains pending.
 - Release-owned facts remain `TBD (release-dependent)` until authoritative
@@ -87,7 +91,7 @@ or a hand-maintained machine-readable manifest.
 
 | Artifact | Canonical responsibility |
 | --- | --- |
-| `README.md` | Product scope, selected Generator/Reasoner runtime model, capability/endpoint index, minimum launch and first requests, guide navigation |
+| `README.md` | Product scope, runtime/model-first selection model, capability index, first requests, and guide navigation |
 | `release-notes.md` | Released versions, image tags, compatibility changes, limitations, and upgrade guidance |
 | `prerequisites.md` | Host hardware/software, storage, shared memory, NGC access, and setup verification |
 | `deployment.md` | `NGC_API_KEY`, Docker login, cache, launch flags, ports, selectors, readiness, and shutdown |
@@ -357,6 +361,9 @@ The documentation project is complete only when:
 - [x] Reduce `api-reference.md` to shared routing and Generator envelope
   material; move mode-specific contracts to task and operations pages.
 - [x] Keep provisional profile details structural and release-owned values TBD.
+- [x] Simplify the user journey around runtime, model, optional precision, and
+  Generator latency/throughput; leave exact profiles and tags as advanced.
+- [x] Move planning and source provenance into the maintainer-only directory.
 - [x] Validate Markdown links/anchors, fence labels, embedded JSON, SPDX headers,
   Python syntax, offline asset resolution, and request construction.
 - [x] Run a 70-topic public coverage probe spanning the previous Generator,
@@ -409,6 +416,13 @@ compiled all twelve examples, parsed every JSON fence, checked local Markdown
 links/anchors and SPDX headers, verified profile parallelism invariants and all
 seven variants, asserted the refreshed source contracts, and passed
 `git diff --check`.
+
+A later editorial pass removed duplicated launch/configuration material,
+reordered basic tasks before specialist behavior, reduced repeated status
+language, made configuration progressive, removed speculative Helm values, and
+moved this plan and source ledger under `maintainer/`. Recursive links, anchors,
+JSON, SPDX, Python syntax, model/precision claims, and whitespace were checked
+again.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public

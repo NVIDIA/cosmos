@@ -3,74 +3,93 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Deploy the Cosmos3 Certified NIM
 
-Use this page to authenticate to NGC, launch the Cosmos3 Certified NIM, select a
-Generator or Reasoner profile, manage the model cache, and verify readiness.
+Use this page to authenticate to NGC, choose a model, launch Generator or
+Reasoner, and verify the selected service. The final NGC image and released
+hardware matrix remain **TBD**.
 
-> **Release-dependent values:** The final NGC image repository/tag, published
-> support matrix, and release URLs are **TBD**. Commands use `<NIM_IMAGE:TBD>`
-> until the release owner supplies the authoritative value. Do not replace it
-> with an older separate Generator or Reasoner image.
+## How selection works
 
-## Deployment model
+Users normally select a runtime and model, not a profile ID:
 
-One container image contains profiles for both runtime families. One selected
-profile starts one API/backend:
+1. Choose Generator or Reasoner.
+2. Choose a Generator variant or Reasoner model size.
+3. Optionally pin precision; otherwise FP8 is preferred when compatible.
+4. For Generator, choose latency or throughput.
+5. The NIM selects the best compatible profile for those choices and the
+   visible GPUs.
 
-| `NIM_MODEL_TYPE` | Backend/API | Use |
-| --- | --- | --- |
-| `generator` | Generator `POST /v1/infer` | Image/video generation, action, and transfer |
-| `reasoner` | OpenAI-compatible completion/Responses APIs | Image/video understanding and reasoning |
+A profile is the resolved deployment configuration: model artifacts,
+precision, GPU layout, and any required residency/offload policy. Automatic
+selection prefers a compatible profile that avoids offload and makes effective
+use of the available GPUs. Startup fails if the chosen model cannot run on the
+host.
 
-Run separate containers when both APIs must be available simultaneously. Give
-each container a distinct host port and cache strategy.
+### Select a Generator model
+
+| `NIM_MODEL_VARIANT` | Contract |
+| --- | --- |
+| `nano` | General-purpose Nano Generator |
+| `nano-droid` | Nano-DROID policy; current implementation is BF16 only |
+| `super` | General-purpose Super Generator |
+| `super-t2i` | Full-step T2I specialist |
+| `super-t2i-4step` | Four-step T2I specialist |
+| `super-i2v` | Full-step I2V specialist |
+| `super-i2v-4step` | Four-step I2V specialist |
+
+For Generator, `NIM_MODEL_VARIANT` also determines Nano versus Super.
+`NIM_MODEL_SIZE=nano` or `super` remains a shorthand for the corresponding
+base variant, but explicit variant selection is clearer.
+
+Choose the workload objective explicitly:
+
+| `NIM_PERF_PROFILE` | Optimize for |
+| --- | --- |
+| `latency` | Lower latency for an individual request |
+| `throughput` | Higher aggregate request rate |
+
+The software defaults to `latency` when the selector is omitted.
+
+### Select a Reasoner model
+
+Set `NIM_MODEL_TYPE=reasoner` and choose `NIM_MODEL_SIZE=nano` or `super`.
+Reasoner does not accept `NIM_MODEL_VARIANT` or `NIM_PERF_PROFILE`.
+
+### Precision selection
+
+Omit `NIM_PRECISION` for normal automatic selection. FP8 is preferred when the
+chosen model, released profiles, and GPU support it; otherwise selection falls
+back to another compatible precision. Set `NIM_PRECISION=bf16`, `fp8`, or
+another released value only when the workload requires an explicit precision.
+Nano-DROID currently has BF16 profiles only.
 
 ## Before you deploy
 
-Verify the host against [Prerequisites](prerequisites.md), then choose a
-released configuration from the [Support matrix](support-matrix.md). For
-Kubernetes, continue with [Deploy with Helm](helm.md) after completing NGC
-authentication below.
+Verify the host against [Prerequisites](prerequisites.md) and the released
+[Support matrix](support-matrix.md). For Kubernetes, see
+[Deploy with Helm](helm.md).
 
-## Create and protect an NGC API key
+## Authenticate to NGC
 
-Create a personal API key in the
-[NGC account setup](https://org.ngc.nvidia.com/setup) flow and include access to
-the NGC Catalog service. Export it only in the shell that launches the NIM:
+Create an API key with NGC Catalog access, then export it in the shell that
+launches the NIM:
 
 ```bash
 export NGC_API_KEY='<your-ngc-api-key>'
-```
-
-The runtime variable is `NGC_API_KEY`. Do not use `NGC_TOKEN` in launch
-commands. Never place the real key in source control, notebooks, command output,
-saved request JSON, or documentation.
-
-Authenticate Docker using the literal special username `$oauthtoken`:
-
-```bash
 echo "$NGC_API_KEY" \
   | docker login nvcr.io --username '$oauthtoken' --password-stdin
 ```
 
-Docker authentication pulls the container. Passing `NGC_API_KEY` into the
-container authorizes cold-start model artifact download.
+The literal Docker username is `$oauthtoken`. `NGC_API_KEY` authorizes model
+artifact download inside the container; do not substitute `NGC_TOKEN` or place
+the key in source control.
 
-## Set the released image
-
-Replace this placeholder after the final NGC repository and tag are approved:
+Set the released image with an explicit tag:
 
 ```bash
 export NIM_IMAGE='<NIM_IMAGE:TBD>'
 ```
 
-Pin an explicit release tag. Do not use `latest` in reproducible deployments.
-Discover available tags from the final NGC Catalog page or NGC CLI once the
-public repository is known.
-
 ## Prepare the model cache
-
-A persistent cache avoids downloading/materializing model artifacts on every
-restart:
 
 ```bash
 export LOCAL_NIM_CACHE="${LOCAL_NIM_CACHE:-$HOME/.cache/nim/cosmos3}"
@@ -78,18 +97,13 @@ mkdir -p "$LOCAL_NIM_CACHE"
 chmod -R a+rwX "$LOCAL_NIM_CACHE"
 ```
 
-Mount it at `/opt/nim/.cache`. In a production environment, prefer a
-group/ACL/UID-specific permission policy over world-writable permissions. The
-container must be able to create files in the mount.
+The examples use permissive local-development permissions. In production, use
+an appropriate UID, group, or ACL policy. Keep the cache between runs to avoid
+repeated downloads and materialization.
 
-Keep the cache between runs. A cold cache can add substantial download,
-engine-build, load, and warmup time. Remove it only to reclaim space or when a
-release explicitly requires a clean artifact layout.
+## Launch Generator
 
-## Launch a Generator profile
-
-This is the minimal structural launch. Replace `<NIM_IMAGE:TBD>` and choose
-selectors supported by the final release:
+This example explicitly chooses the general-purpose Nano model and latency:
 
 ```bash
 docker run --rm --name cosmos3-generator \
@@ -101,18 +115,18 @@ docker run --rm --name cosmos3-generator \
   -p 8000:8000 \
   -e NGC_API_KEY \
   -e NIM_MODEL_TYPE=generator \
-  -e NIM_MODEL_SIZE=nano \
+  -e NIM_MODEL_VARIANT=nano \
   -e NIM_PERF_PROFILE=latency \
   -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
   "$NIM_IMAGE"
 ```
 
-The current source defaults to Generator when `NIM_MODEL_TYPE` is omitted, but
-set it explicitly in documentation, automation, and multi-container setups.
+Replace the model and performance objective with values supported by the
+released image. Add `-e NIM_PRECISION=fp8` only when precision must be pinned.
 
-## Launch a Reasoner profile
+## Launch Reasoner
 
-Use a different host port when keeping the Generator running:
+Use another GPU and host port when Generator remains active:
 
 ```bash
 docker run --rm --name cosmos3-reasoner \
@@ -129,139 +143,78 @@ docker run --rm --name cosmos3-reasoner \
   "$NIM_IMAGE"
 ```
 
-The Reasoner has no `latency`/`throughput` profile axis, so do not set
-`NIM_PERF_PROFILE` or `profile=...` for it. Point Reasoner clients at
-`http://localhost:8001` in this two-container example.
-
-## Understand the Docker flags
-
-| Flag | Purpose |
-| --- | --- |
-| `--rm --name` | Remove the stopped container and give it a stable operational name |
-| `--gpus` | Expose the GPU set from which profile selection can choose |
-| `--shm-size` | Expand `/dev/shm` for media/intermediate buffers; final recommended size is release-dependent |
-| `--ulimit memlock=-1` | Allow engine/model processes to pin required memory |
-| `--ulimit stack=67108864` | Avoid small default stacks during model/engine setup |
-| `--ulimit nofile=65536:65536` | Allow many checkpoint/artifact files to open concurrently |
-| `-p HOST:8000` | Publish the container's HTTP API on the selected host port |
-| `-e NGC_API_KEY` | Pass the existing shell variable without writing its value into the command |
-| `-v ...:/opt/nim/.cache` | Persist downloaded and materialized model artifacts |
-
-If multiple NIM containers publish additional internal/backend ports in a final
-release recipe, every container needs unique host-side port numbers even when
-container-side ports are identical.
+Point Reasoner clients at `http://localhost:8001` in this two-container setup.
 
 ## Wait for readiness
 
-Liveness means the HTTP process exists; readiness means the selected model can
+Liveness means the HTTP process exists. Readiness means the selected model can
 serve requests:
 
 ```bash
-curl -f http://localhost:8000/v1/health/live
+export NIM_URL=${NIM_URL:-http://localhost:8000}
+curl -f "$NIM_URL/v1/health/live"
 
-until curl -fsS http://localhost:8000/v1/health/ready >/dev/null; do
+until curl -fsS "$NIM_URL/v1/health/ready" >/dev/null; do
   sleep 10
 done
 ```
 
-Cold materialization, compilation, loading, and warmup can take much longer
-than HTTP startup. Send inference only after readiness returns HTTP 200. Do not
-use liveness as a substitute.
+Cold download, materialization, compilation, model load, and warmup can take
+much longer than HTTP startup. Send inference only after readiness succeeds.
 
-## Select a profile
+## Verify the selection
 
-Profiles describe compatible model artifacts and runtime layouts. The exact
-released profile grid is intentionally not reproduced here while it is still
-being finalized. The stable selection concepts are:
+```bash
+curl -fsS "$NIM_URL/v1/metadata" | python -m json.tool
+curl -fsS "$NIM_URL/v1/manifest" | python -m json.tool
+```
 
-- runtime: Generator or Reasoner;
-- model size: Nano or Super;
-- Generator model variant: a general-purpose or task-specialized checkpoint;
-- precision: for example BF16, FP8, or NVFP4 when supported by the released
-  artifact and GPU architecture;
-- Generator objective: latency or aggregate throughput;
-- GPU count and parallelism layout; and
-- Generator model and guardrail residency policies for lower-VRAM deployments.
+Metadata confirms the selected model, profile, and Generator variant. This is
+verification, not a normal profile-selection step.
 
-User-facing selectors:
+## Advanced profile controls
 
-| Variable | Meaning |
+Most deployments should stop at model, optional precision, and Generator
+latency/throughput selection. Use these controls only for a validated need:
+
+| Variable | Use |
 | --- | --- |
-| `NIM_MODEL_TYPE` | `generator` or `reasoner` |
-| `NIM_MODEL_SIZE` | `nano` or `super`; for Generator, selects the corresponding general-purpose base variant |
-| `NIM_MODEL_VARIANT` | Generator-only checkpoint contract, including task-specialized variants when released |
-| `NIM_PRECISION` | Requested precision when a compatible released profile exists |
-| `NIM_PERF_PROFILE` | Generator-only `latency` or `throughput` |
-| `NIM_OFFLOAD_MODE` | Generator offload preference, such as `none`, `model`, or `layer`, when released |
-| `NIM_TAGS_SELECTOR` | Comma-separated exact tags such as `model_size=nano,n_gpus=2` |
-| `NIM_MODEL_PROFILE` | Exact manifest profile ID; use only when intentionally pinning a reviewed release |
+| `NIM_OFFLOAD_MODE` | Request a released lower-memory model offload mode |
+| `NIM_TAGS_SELECTOR` | Filter profiles by exact manifest tags |
+| `NIM_MODEL_PROFILE` | Pin one reviewed profile ID from the exact image |
 
-Shorthands and the same keys in `NIM_TAGS_SELECTOR` must not conflict.
+Exact profile pins and low-level tags reduce portability across hosts and
+releases. If automatic selection fails, first choose a smaller model or
+compatible precision rather than copying a profile ID from another system.
+See [Configuration](configuration.md#advanced-profile-controls) for details.
 
-At a high level, selection:
+## Docker flag summary
 
-1. removes profiles incompatible with visible GPU count, VRAM, compute
-   capability, and runtime-specific constraints;
-2. applies explicit selector tags and an exact profile pin, if supplied;
-3. applies soft defaults only when they keep at least one compatible candidate;
-4. prefers layouts that use the requested/available resources; and
-5. applies runtime-specific layout ranking.
+| Flag | Purpose |
+| --- | --- |
+| `--gpus` | Expose the GPUs available to automatic profile selection |
+| `--shm-size` | Provide shared memory for media and intermediate buffers |
+| `--ulimit` | Raise memory-lock, stack, and open-file limits |
+| `-p HOST:8000` | Publish the selected host port |
+| `-e NGC_API_KEY` | Pass the exported NGC credential |
+| `-v ...:/opt/nim/.cache` | Persist model artifacts |
 
-Inspect `/v1/metadata` and `/v1/manifest` after startup rather than assuming
-which row won.
+Final resource values are release-specific. Do not infer support from these
+structural examples.
 
-### Latency, throughput, and parallelism
+## Next steps
 
-- Generator latency profiles shard one request across compatible parallelism
-  dimensions to reduce per-request latency.
-- Generator throughput profiles use data-parallel workers/replicas where the
-  released layout permits, increasing aggregate request rate rather than
-  necessarily reducing one request's latency.
-- Reasoner profiles select their tensor-parallel GPU allocation without the
-  Generator performance-scenario tag. Scale aggregate Reasoner throughput with
-  external replicas and load balancing unless a release documents otherwise.
+- [Configuration](configuration.md) lists user-facing and advanced variables.
+- [Bring your own checkpoint](bring-your-own-checkpoint.md) covers local and
+  Hugging Face model sources.
+- [API reference](api-reference.md) routes requests to the right task guide.
+- [Operations](operations.md) covers health, logs, metrics, and failures.
 
-`nim_dp`, `nim_gp`, `nim_up`, and `nim_tp` are low-level manifest tags. Prefer
-the high-level shorthands unless debugging or pinning a layout validated for the
-exact release.
-
-### Low-VRAM offload profiles
-
-The current design includes Generator profiles that can offload model state
-and, independently, safety components to reduce resident GPU-memory
-requirements. Conceptually:
-
-- model offload `none` keeps the normal model layout and is preferred when it
-  fits;
-- model-level or layer-level offload reduces model residency at a latency cost;
-- text-guard offload sleeps Qwen3Guard during diffusion; and
-- video-guard offload sleeps output-safety sessions during diffusion.
-
-The selected profile owns the default guardrail residency policy. Advanced
-operator overrides are documented in [Configuration](configuration.md#guardrails).
-Offload profiles target lower-VRAM access, not peak performance. Current source
-profiles are provisional and can change before release. Confirm released rows
-and memory requirements in the [Support matrix](support-matrix.md) before
-setting an offload selector.
-
-## Continue configuring the deployment
-
-- [Configuration](configuration.md) lists launch-time environment variables,
-  defaults, conflicts, and prompt-upsampling settings.
-- [Bring your own checkpoint](bring-your-own-checkpoint.md) covers Generator
-  and Reasoner checkpoint sources, mounts, downloads, and validation.
-- [Deploy with Helm](helm.md) covers Kubernetes secrets, storage, GPU
-  resources, probes, and rollout.
-
-## Stop the NIM
+Stop the examples with:
 
 ```bash
 docker stop cosmos3-generator
 docker stop cosmos3-reasoner
 ```
 
-The examples use `--rm`, so stopped containers are removed automatically. Keep
-the cache unless intentionally reclaiming disk space.
-
-For health, logs, metrics, guardrails, and troubleshooting, continue with
-[operations.md](operations.md).
+The containers use `--rm`; the persistent model cache remains.
