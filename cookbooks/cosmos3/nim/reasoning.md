@@ -159,6 +159,38 @@ by default in the current source; exact feature support in the released image
 is **TBD (release-dependent)**. Keep video requests on Chat Completions until
 the released Responses video path is validated.
 
+## Reasoning, instructions, and tool calls
+
+Chat requests default to `chat_template_kwargs.enable_thinking=false`, so
+ordinary untagged output remains in `message.content`. To enable thinking and
+request parsed reasoning, pass the controls through `extra_body`:
+
+```python
+extra_body = {
+    "chat_template_kwargs": {"enable_thinking": True},
+    "include_reasoning": True,
+    "thinking_token_budget": 512,
+}
+```
+
+Pass that object as `extra_body=extra_body` in a normal Chat Completions call.
+`include_reasoning` must be a JSON boolean. When the released response schema
+includes parsed reasoning, read its dedicated message field and keep the final
+answer in `message.content`; do not parse `<think>` tags. Reasoning text is not
+a stable machine-readable explanation and should not be required by downstream
+logic.
+
+The current Chat Completions middleware also:
+
+- maps a `developer` message to a `system` instruction;
+- enables standard OpenAI tool definitions and automatic tool choice with the
+  Hermes tool-call format; and
+- requires `top_logprobs` to be an integer or null. When `logprobs=true` and
+  `top_logprobs` is omitted, the service requests one top log probability.
+
+Check the released `/openapi.json` and client response model before depending
+on reasoning or tool-call fields.
+
 ## Optional Nano Reasoner DFlash
 
 Set `NIM_USE_DFLASH=1` at launch to enable DFlash speculative decoding for a
@@ -255,7 +287,7 @@ final answers; do not depend on `<think>` blocks or hidden chain-of-thought.
 
 | Status/symptom | Meaning | Action |
 | --- | --- | --- |
-| HTTP 400 | Sampling or request-shape validation commonly failed | Check model, sampling ranges, and OpenAI extension placement |
+| HTTP 400 | Sampling or request-shape validation commonly failed | Check model, sampling ranges, extension placement, and strict `include_reasoning`/`top_logprobs` types |
 | HTTP 422 | Media validation or preprocessing commonly failed | Check data URL, media ordering, prompt media limits, and release format support |
 | Empty/no choices | Backend did not return a normal Chat Completion | Preserve response/log details and check the selected Reasoner profile |
 | Responses route 404 | Operator disabled Responses or the release does not expose it | Use Chat Completions or inspect `NIM_DISABLE_RESPONSES_ROUTE` and live OpenAPI |

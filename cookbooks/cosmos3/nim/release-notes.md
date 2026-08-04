@@ -28,6 +28,11 @@ The current Generator API requires top-level `model_mode`, renames
 `image`/`video` to `input_reference`, and moves `action_params.mode` to the top
 level. Older request fields return HTTP 422. Generator responses are unchanged.
 
+Current Reasoner development behavior adds Qwen3 parsed-reasoning controls,
+OpenAI tool calling, `developer`-message normalization, and strict
+`include_reasoning` and `top_logprobs` types. Media errors return HTTP 422;
+other request-shape and sampling errors return HTTP 400.
+
 The current documentation describes the source-backed unified runtime model:
 one image contains Generator and Reasoner profiles, and one selected profile
 starts one backend. This statement is not a substitute for a published release

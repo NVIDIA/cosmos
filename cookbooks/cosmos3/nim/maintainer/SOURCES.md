@@ -86,11 +86,11 @@ Reviewed through 2026-08-04:
 
 | Repository | Branch | Reviewed commit | Change covered |
 | --- | --- | --- | --- |
-| Cosmos cookbook | `egor/nim_docs_update` | `c02ebd4809f572764297152c9d5a29b7f41a173d` | Documentation baseline before the latest source refresh |
-| Cosmos3 Certified NIM | `cosmos3` | `22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480` | Explicit Generator modes/renamed fields, Nano Reasoner DFlash, system-memory admission, and the earlier model/BYOC/Transfer contracts |
+| Cosmos cookbook | `egor/cosmos3_nim_docs` | `3f3395365024a7373d2891058d5583f718140905` | Merged documentation baseline before the latest Reasoner QA refresh |
+| Cosmos3 Certified NIM | `cosmos3` | `280bbea3581427ccf75285beec0f143dc936af04` | Reasoner reasoning/tool-call QA contract plus explicit Generator modes, DFlash, system-memory admission, and earlier model/BYOC/Transfer contracts |
 
-The current NIM commit is 47 commits beyond the incremental `74064b23` pin.
-The tracked source diff under `cosmos3/` changes 133 files. The source checkout
+The current NIM commit is 51 commits beyond the incremental `74064b23` pin.
+The tracked source diff under `cosmos3/` changes 142 files. The source checkout
 also contains an unrelated untracked `cosmos3/bugs/` directory; it was not used
 as evidence. This section supersedes stale current-state conclusions in the
 older snapshot sections below while retaining those sections as historical
@@ -127,14 +127,21 @@ Current high-impact contracts:
   guardrail offload controls.
 - Reasoner video pruning adds `NIM_VIDEO_PRUNING_METHOD=vidcom2|evs`, used when
   `NIM_VIDEO_PRUNING_RATE` is nonzero.
+- Reasoner Chat defaults thinking off, accepts an explicit thinking/token
+  budget and parsed-reasoning request, maps `developer` to `system`, enables
+  Hermes-format automatic tool calls, and strictly validates
+  `include_reasoning` and `top_logprobs`. Request/sampling errors use HTTP 400;
+  media errors use HTTP 422.
 - `NIM_USE_DFLASH=1` enables speculative decoding only for Nano Reasoner. Each
   generated Nano Reasoner profile carries the separate BF16 draft artifact;
   Generator and Super Reasoner are rejected at startup.
 - Ten single-GPU Super BF16 model/layer-offload development rows require 150
   GiB of effective system memory. Startup checks the container cgroup limit
   before host physical memory.
-- Generator FP8's development compute-capability floor is 8.9; Reasoner keeps
-  a separate precision policy.
+- Generator and Reasoner FP8 development compute-capability floors are now
+  both 8.9. Current Reasoner runtime VRAM floors changed to 46 GiB for two-GPU
+  Super BF16, 67 GiB for one-GPU Super FP8, and 73 GiB for one-GPU Super
+  NVFP4. These remain maintainer evidence, not released support rows.
 - `/v1/metadata` reports checkpoint source for either runtime and
   `model_variant` for Generator.
 
@@ -158,7 +165,11 @@ Primary changed evidence:
 - `serving_stack/environment.py`
 - `serving_stack/data_models/generation.py`
 - `serving_stack/data_models/transfer.py`
-- `serving_stack/reasoner_model_source.py`
+- `serving_stack/reasoner/model_source.py`
+- `serving_stack/reasoner/contracts.py`
+- `serving_stack/reasoner/api.py`
+- `serving_stack/reasoner/profile.py`
+- `serving_stack/reasoner/runtime.py`
 - `serving_stack/reasoner_inference.py`
 - `serving_stack/data_models/actions.py`
 - `serving_stack/data_models/responses.py`
@@ -1564,10 +1575,10 @@ Do not close these from memory or legacy docs:
   unvalidated.
 - The same refresh asserted current source constants and controls for explicit
   Generator modes/field names, shared `NIM_MODEL_PATH`, model variants,
-  Reasoner pruning and DFlash, Transfer override, Nano-DROID `[32,8]`, and
-  action-only responses. It compiled all twelve local examples and validated
-  JSON fences,
-  SPDX headers, local links/anchors, Markdown table structure, and whitespace.
+  Reasoner pruning, DFlash, reasoning/tool contracts and strict extension
+  types, Transfer override, Nano-DROID `[32,8]`, and action-only responses. It
+  compiled all twelve local examples and validated JSON fences, SPDX headers,
+  local links/anchors, Markdown table structure, and whitespace.
 - Confirmed every Reasoner row omits the performance-profile axis, fixes
   `nim_dp=nim_gp=nim_up=1`, and satisfies `n_gpus=nim_tp`.
 - Confirmed the checked-in tests cover Generator validation, action modes,

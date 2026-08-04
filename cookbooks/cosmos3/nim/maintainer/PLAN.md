@@ -3,8 +3,8 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Cosmos3 Certified NIM documentation creation plan
 
-> Authoring artifact maintained on the `egor/nim_docs_update` branch. This is a
-> project execution plan, not an end-user guide.
+> Maintainer authoring artifact. This is a project execution plan, not an
+> end-user guide.
 >
 > This plan defines the execution order, page ownership, validation gates, and
 > completion criteria for the public documentation. See [SOURCES.md](SOURCES.md)
@@ -15,7 +15,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 - Source discovery and information-architecture planning are complete.
 - Public documentation has been refreshed against Cosmos3 NIM source commit
-  `22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480`.
+  `280bbea3581427ccf75285beec0f143dc936af04`.
 - The user journey now starts with runtime, model, optional precision, and the
   Generator latency/throughput choice; profile IDs are advanced controls.
 - Maintainer planning and provenance live under `maintainer/`, outside the
@@ -28,8 +28,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 ## Objective
 
 Create standalone, human- and AI-readable documentation for the unified Cosmos3
-Certified NIM under `cookbooks/cosmos3/nim` on branch
-`egor/nim_docs_update`.
+Certified NIM under `cookbooks/cosmos3/nim`.
 
 The final guide set must:
 
@@ -352,9 +351,12 @@ The documentation project is complete only when:
 - [x] Reconcile the 2026-08-03 NIM drift: model variants, shared BYOC,
   Nano-DROID/action-only output, Transfer VRAM admission, profile-backed
   guardrail residency, and Reasoner video pruning.
-- [x] Reconcile the 2026-08-04 drift: explicit Generator `model_mode`, renamed
-  request fields, Nano Reasoner DFlash, and system-memory admission for Super
-  BF16 offload profiles.
+- [x] Reconcile the first 2026-08-04 drift: explicit Generator `model_mode`,
+  renamed request fields, Nano Reasoner DFlash, and system-memory admission for
+  Super BF16 offload profiles.
+- [x] Reconcile the Reasoner QA drift through `280bbea3`: thinking/reasoning
+  controls, developer instructions, tool calling, strict extension types, and
+  stable HTTP 400/422 behavior.
 - [x] Create the public scaffold, API reference, and twelve Python files,
   including the shared helper and specialist four-step T2I/I2V requests.
 - [x] Write the generation, reasoning, action, and transfer guides.
@@ -410,11 +412,13 @@ visual-guardrail coverage, and removed four obsolete Generator execution
 variables.
 
 The full update refresh was first performed from NIM source commit
-`243e05f8eecb44766d90f2843adb46356ae77a17`, then advanced to
-`22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480`. The latest refresh adds the
-breaking explicit-mode Generator request contract, Nano Reasoner DFlash, and
-system-memory admission for Super BF16 offload profiles. It supersedes the
-older current contracts for profile inventory, BYOC, Generator request/response
+`243e05f8eecb44766d90f2843adb46356ae77a17`, then advanced through
+`22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480` and
+`280bbea3581427ccf75285beec0f143dc936af04`. These refreshes add the breaking
+explicit-mode Generator request contract, Nano Reasoner DFlash, system-memory
+admission for Super BF16 offload profiles, and the Reasoner
+reasoning/tool-call QA contract. Together they supersede the older current
+contracts for profile inventory, BYOC, Generator request/response
 modality, Action, Transfer admission, and advanced environment variables. The
 source profile generator produced 122 development rows (115 Generator and 7
 Reasoner) in a temporary output; those rows remain pre-release evidence.
@@ -431,6 +435,12 @@ language, made configuration progressive, removed speculative Helm values, and
 moved this plan and source ledger under `maintainer/`. Recursive links, anchors,
 JSON, SPDX, Python syntax, model/precision claims, and whitespace were checked
 again.
+
+The Reasoner QA refresh asserted developer-role normalization, default and
+explicit thinking controls, strict reasoning/logprob types, and advertised
+Qwen3/Hermes parser settings directly against the import-safe source contract.
+The changed development hardware floors remain maintainer evidence because the
+public release matrix is still TBD.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public
