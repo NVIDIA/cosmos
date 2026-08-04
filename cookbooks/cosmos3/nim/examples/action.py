@@ -25,10 +25,10 @@ INVERSE_VIDEO_URL = (
 def build_request(case: str) -> dict:
     if case == "inverse_dynamics":
         return {
+            "model_mode": "inverse_dynamics",
             "prompt": "Put the pot to the left of the purple item.",
-            "video": INVERSE_VIDEO_URL,
+            "input_reference": INVERSE_VIDEO_URL,
             "action_params": {
-                "mode": "inverse_dynamics",
                 "domain_name": "bridge_orig_lerobot",
                 "action_chunk_size": 16,
                 "raw_action_dim": 10,
@@ -36,19 +36,18 @@ def build_request(case: str) -> dict:
                 "image_size": "480",
                 "action_fps": 5.0,
             },
-            "num_output_frames": 17,
             "fps": 5.0,
-            "steps": 30,
+            "num_inference_steps": 30,
             "guidance_scale": 1.0,
             "flow_shift": 10.0,
             "seed": 0,
         }
 
     request = {
+        "model_mode": case,
         "prompt": "You are an autonomous vehicle planning system.",
-        "image": media_to_data_url(ACTION_ROOT / "images" / "av_0.jpg"),
+        "input_reference": media_to_data_url(ACTION_ROOT / "images" / "av_0.jpg"),
         "action_params": {
-            "mode": case,
             "domain_name": "av",
             "action_chunk_size": 60,
             "raw_action_dim": 9,
@@ -56,9 +55,8 @@ def build_request(case: str) -> dict:
             "image_size": "480",
             "action_fps": 10.0,
         },
-        "num_output_frames": 61,
         "fps": 10.0,
-        "steps": 30,
+        "num_inference_steps": 30,
         "guidance_scale": 1.0,
         "flow_shift": 10.0,
         "seed": 0,

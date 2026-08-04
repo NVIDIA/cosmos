@@ -8,9 +8,8 @@ logging and guardrails, integrate metrics, and diagnose deployment and request
 failures. See [deployment.md](deployment.md) for launch configuration and
 [configuration.md](configuration.md) for environment variables.
 
-> Live endpoint responses, metric names, log samples, and release-specific
-> limitations are **TBD (release-dependent)** until validated against the final
-> Generator and Reasoner image profiles.
+> Validate endpoint output, metrics, logs, and operational limits against the
+> released image used by the deployment.
 
 ## Health and startup
 
@@ -228,7 +227,8 @@ Task-specific validation belongs to [Generation](generation.md),
 | Image pull unauthorized | Docker is not logged in or key lacks repository access | Re-run password-stdin login with `NGC_API_KEY` and literal `$oauthtoken` |
 | Artifact download fails | Container lacks `NGC_API_KEY`, entitlement, DNS/network, or storage | Verify key injection and NGC connectivity; inspect cache capacity/ownership |
 | Cache permission denied | Host mount is not writable by the container | Fix ownership/ACLs and retain a persistent writable `/opt/nim/.cache` |
-| No compatible profile | Visible GPUs do not satisfy selected runtime/size/precision/count/offload tags | Remove unnecessary pins, select a smaller compatible model/offload mode, or use supported hardware |
+| No compatible profile | Visible GPUs or system memory do not satisfy the selected model/precision/offload requirements | Remove unnecessary pins, choose a smaller model or compatible precision, or use supported hardware |
+| Offload profile requires more system memory | The container cgroup or host exposes less RAM than the profile requires | Raise the container memory limit or choose a compatible precision/profile; current Super BF16 offload profiles require 150 GiB |
 | Conflicting selectors | A shorthand disagrees with `NIM_TAGS_SELECTOR` | Set each selector in one place and inspect the full launch environment |
 | Visible GPUs sit idle | Selected profile uses fewer GPUs than Docker exposed | Restrict `--gpus` or intentionally pin a released layout matching the desired count |
 | Compute-capability precision failure | Requested precision needs a newer GPU architecture | Select a released precision compatible with the hardware |
@@ -244,10 +244,11 @@ Task-specific validation belongs to [Generation](generation.md),
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
-| HTTP 422, unknown field | vLLM-Omni or old NIM request was copied literally | Use JSON `/v1/infer` and the current [API reference](api-reference.md) |
-| Selected variant rejects request mode or sampling fields | A T2I/I2V specialist received another mode, or a four-step request supplied profile-owned controls | Select a compatible `NIM_MODEL_VARIANT`; omit `steps`, `guidance_scale`, and `flow_shift` for four-step variants |
+| HTTP 422, missing or invalid `model_mode` | Generator tasks are no longer inferred from request shape | Set one of the documented top-level modes |
+| HTTP 422, deprecated Generator field | Request uses `image`, `video`, `num_output_frames`, `steps`, or `action_params.mode` | Use `input_reference`, `num_frames`, `num_inference_steps`, and top-level `model_mode` |
+| Selected variant rejects request mode or sampling fields | A specialist received another mode, or a four-step request supplied profile-owned controls | Select a compatible `NIM_MODEL_VARIANT`; omit `num_inference_steps`, `guidance_scale`, and `flow_shift` for four-step variants |
 | HTTP 422, media decode/fetch | Invalid base64/data URL, URL disabled/unreachable, or unsupported media | Prefer a MIME-aware data URL; check release codec/format support |
-| HTTP 422, frame or resolution | Request violates T2I one-frame selection, video cadence/tier limits, or an action rule | Recompute with the canonical tables; action frames equal chunk size plus one |
+| HTTP 422, frame or resolution | Request violates T2I/video cadence rules or supplies `num_frames` for Action | Recompute with the task tables; Action derives frames from its chunk size |
 | Content-policy 422 | Text or generated frames triggered guardrails | Rephrase and review content; disable only under approved diagnostic policy |
 | Backend 500/OOM | Profile fit or runtime workload exceeded available memory | Reduce workload/concurrency, choose Nano/offload, or use a larger supported GPU; retain logs |
 | Request/client timeout | Image or video generation exceeded client/backend timeout | Use a long client timeout, inspect server progress, and tune only after measurement |
@@ -259,7 +260,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | --- | --- | --- |
 | Action trajectory shape error | Rows, width, domain dimension, or chunk size disagree | Validate `[T,D]`, domain table, positive multiple-of-4 chunk, and `T+1` frames |
 | Wrong action media error | Forward/policy received video or inverse received image | Use image for forward/policy and video for inverse dynamics |
-| Derived transfer control needs video | Edge/blur has no nested control and no top-level source | Add top-level video or a nested precomputed control |
+| Derived transfer control needs video | Edge/blur has no nested control and no `input_reference` | Add `input_reference` or a nested precomputed control video |
 | Transfer control video required | Depth, segmentation, or WSM lacks nested video | Supply precomputed control media |
 | Multi-control result unsupported/poor | Combination is not validated for the release | Return to one control and smoke-test aligned controls on the intended profile |
 | Nano-DROID action-only response breaks client | Client assumes every policy response has `b64_video` | Save `action` independently and treat both media fields as optional |
@@ -275,12 +276,13 @@ Task-specific validation belongs to [Generation](generation.md),
 | Responses route 404 | Route disabled or absent in this release | Use Chat Completions and inspect live OpenAPI/operator setting |
 | Retrieval/cancel does not work | Response storage/background support is not enabled | Use `store=false` create flow or validate storage configuration for the release |
 | KV-cache/context OOM | Context, media tokens, batching, or concurrency is too large | Reduce media FPS/token budget/concurrency before raising memory utilization |
+| DFlash startup is rejected | DFlash was enabled for Generator/Super Reasoner or its Nano draft artifact is missing | Use Nano Reasoner with a released DFlash artifact, or set `NIM_USE_DFLASH=0` |
 | Reasoner checkpoint source fails | Local layout, `hf://` URI, revision, token, or inferred profile properties are invalid | Validate `NIM_MODEL_PATH`, `HF_TOKEN`, cache/network access, and matching selectors |
 
 ### BYOC
 
-See [Bring your own checkpoint](bring-your-own-checkpoint.md) for the canonical
-layout, mount, selector, and verification procedure.
+See [Bring your own checkpoint](bring-your-own-checkpoint.md) for layout,
+mount, selector, and verification procedures.
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
@@ -290,18 +292,3 @@ layout, mount, selector, and verification procedure.
 | `hf://` source fails offline | Remote source requires download while model download is disabled | Pre-download the Reasoner checkpoint and use an absolute local path |
 | Generator rejects disabled download | Profile-owned guardrail artifacts still require materialization | Remove `NIM_DISABLE_MODEL_DOWNLOAD=1` and provide cache/NGC access |
 | Long first start | A new engine or remote checkpoint is being downloaded/materialized | Keep a writable persistent cache and wait for readiness |
-
-## Known release TBDs
-
-Before publication/production sign-off, replace or explicitly retain:
-
-- final image repository/tag and release/model-card links;
-- exact hardware, VRAM, driver, toolkit, and profile support;
-- final offload availability and performance expectations;
-- live OpenAPI for both runtimes;
-- exact media format/codec/URL behavior;
-- released Responses storage/background behavior;
-- metric catalogue, log samples, probes, and known limitations;
-- final Helm chart and monitoring values;
-- published Generator and Reasoner BYOC boundary; and
-- approved acknowledgements and license links.

@@ -15,7 +15,11 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 - Source discovery and information-architecture planning are complete.
 - Public documentation has been refreshed against Cosmos3 NIM source commit
-  `243e05f8eecb44766d90f2843adb46356ae77a17`.
+  `22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480`.
+- The user journey now starts with runtime, model, optional precision, and the
+  Generator latency/throughput choice; profile IDs are advanced controls.
+- Maintainer planning and provenance live under `maintainer/`, outside the
+  public guide navigation.
 - Static validation for this refresh is tracked below; released-image
   validation remains pending.
 - Release-owned facts remain `TBD (release-dependent)` until authoritative
@@ -87,7 +91,7 @@ or a hand-maintained machine-readable manifest.
 
 | Artifact | Canonical responsibility |
 | --- | --- |
-| `README.md` | Product scope, selected Generator/Reasoner runtime model, capability/endpoint index, minimum launch and first requests, guide navigation |
+| `README.md` | Product scope, runtime/model-first selection model, capability index, first requests, and guide navigation |
 | `release-notes.md` | Released versions, image tags, compatibility changes, limitations, and upgrade guidance |
 | `prerequisites.md` | Host hardware/software, storage, shared memory, NGC access, and setup verification |
 | `deployment.md` | `NGC_API_KEY`, Docker login, cache, launch flags, ports, selectors, readiness, and shutdown |
@@ -348,6 +352,9 @@ The documentation project is complete only when:
 - [x] Reconcile the 2026-08-03 NIM drift: model variants, shared BYOC,
   Nano-DROID/action-only output, Transfer VRAM admission, profile-backed
   guardrail residency, and Reasoner video pruning.
+- [x] Reconcile the 2026-08-04 drift: explicit Generator `model_mode`, renamed
+  request fields, Nano Reasoner DFlash, and system-memory admission for Super
+  BF16 offload profiles.
 - [x] Create the public scaffold, API reference, and twelve Python files,
   including the shared helper and specialist four-step T2I/I2V requests.
 - [x] Write the generation, reasoning, action, and transfer guides.
@@ -357,6 +364,9 @@ The documentation project is complete only when:
 - [x] Reduce `api-reference.md` to shared routing and Generator envelope
   material; move mode-specific contracts to task and operations pages.
 - [x] Keep provisional profile details structural and release-owned values TBD.
+- [x] Simplify the user journey around runtime, model, optional precision, and
+  Generator latency/throughput; leave exact profiles and tags as advanced.
+- [x] Move planning and source provenance into the maintainer-only directory.
 - [x] Validate Markdown links/anchors, fence labels, embedded JSON, SPDX headers,
   Python syntax, offline asset resolution, and request construction.
 - [x] Run a 70-topic public coverage probe spanning the previous Generator,
@@ -399,16 +409,28 @@ contract, JPEG response and example, T2I prompt upsampling and
 visual-guardrail coverage, and removed four obsolete Generator execution
 variables.
 
-The full update refresh was performed from NIM source commit
-`243e05f8eecb44766d90f2843adb46356ae77a17`. It supersedes the older current
-contracts for profile inventory, BYOC, Generator response modality, Action,
-Transfer admission, and advanced environment variables. The source profile
-generator produced 122 development rows (115 Generator and 7 Reasoner) in a
-temporary output; those rows remain pre-release evidence. Offline validation
-compiled all twelve examples, parsed every JSON fence, checked local Markdown
-links/anchors and SPDX headers, verified profile parallelism invariants and all
-seven variants, asserted the refreshed source contracts, and passed
-`git diff --check`.
+The full update refresh was first performed from NIM source commit
+`243e05f8eecb44766d90f2843adb46356ae77a17`, then advanced to
+`22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480`. The latest refresh adds the
+breaking explicit-mode Generator request contract, Nano Reasoner DFlash, and
+system-memory admission for Super BF16 offload profiles. It supersedes the
+older current contracts for profile inventory, BYOC, Generator request/response
+modality, Action, Transfer admission, and advanced environment variables. The
+source profile generator produced 122 development rows (115 Generator and 7
+Reasoner) in a temporary output; those rows remain pre-release evidence.
+Offline validation compiled all twelve examples, validated 16 cookbook
+Generator payloads and eight documented JSON payloads against the latest
+`Cosmos3Request`, parsed every JSON fence, checked local Markdown links/anchors
+and SPDX headers, verified profile parallelism, DFlash artifacts, system-memory
+tags, and all seven variants, asserted the refreshed source contracts, and
+passed `git diff --check`.
+
+A later editorial pass removed duplicated launch/configuration material,
+reordered basic tasks before specialist behavior, reduced repeated status
+language, made configuration progressive, removed speculative Helm values, and
+moved this plan and source ledger under `maintainer/`. Recursive links, anchors,
+JSON, SPDX, Python syntax, model/precision claims, and whitespace were checked
+again.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public

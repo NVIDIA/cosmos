@@ -11,15 +11,22 @@ Use an explicit image tag from the corresponding release entry.
 
 | Item | Status |
 | --- | --- |
-| Release version and date | **TBD (release-dependent)** |
-| NGC image repository and tag | **TBD (release-dependent)** |
-| NGC Catalog and model-card URLs | **TBD (release-dependent)** |
-| Helm chart and version | **TBD (release-dependent)** |
-| Supported hardware and profile matrix | **TBD (release-dependent)** |
-| Released Generator model variants | **TBD (release-dependent)** |
-| Released Generator and Reasoner BYOC boundary | **TBD (release-dependent)** |
-| Transfer-enabled profile/GPU rows | **TBD (release-dependent)** |
-| Known limitations and upgrade notes | **TBD (release-dependent)** |
+| Release version and date | **TBD** |
+| NGC image repository and tag | **TBD** |
+| NGC Catalog and model-card URLs | **TBD** |
+| Helm chart and version | **TBD** |
+| Supported hardware and model matrix | **TBD** |
+| Released Generator model variants | **TBD** |
+| Released Generator and Reasoner BYOC boundary | **TBD** |
+| Transfer-enabled model/GPU rows | **TBD** |
+| Known limitations and upgrade notes | **TBD** |
+
+### Development API migration
+
+The current Generator API requires top-level `model_mode`, renames
+`num_output_frames` to `num_frames`, `steps` to `num_inference_steps`, and
+`image`/`video` to `input_reference`, and moves `action_params.mode` to the top
+level. Older request fields return HTTP 422. Generator responses are unchanged.
 
 The current documentation describes the source-backed unified runtime model:
 one image contains Generator and Reasoner profiles, and one selected profile

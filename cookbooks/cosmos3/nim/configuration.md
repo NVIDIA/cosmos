@@ -3,211 +3,183 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Configure the Cosmos3 Certified NIM
 
-This page is the canonical reference for launch-time environment variables.
-Use [deployment.md](deployment.md) for complete Docker launch commands and
-[operations.md](operations.md) for runtime diagnostics.
+This page lists launch-time environment variables intended for users and
+operators. Start with the model-selection variables and keep automatic defaults
+unless the workload requires an override. See [Deployment](deployment.md) for
+complete Docker commands.
 
-> **Release status:** Defaults and availability below are derived from the
-> current source. Recheck them against the released image and its live metadata
-> before treating them as a compatibility contract.
+## Essential configuration
 
-## Shared variables
+### Authentication and cache
 
-### Authentication and model artifacts
+| Name | Default | Use |
+| --- | --- | --- |
+| `NGC_API_KEY` | Empty | Download profile-owned artifacts when they are not already cached |
+| `NIM_CACHE_PATH` | `/opt/nim/.cache` | Set the writable in-container artifact cache |
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NGC_API_KEY` | Conditional | Empty | NGC credentials used to download profile-owned artifacts on first boot. It is not required when all required artifacts are already present in the cache. |
-| `NIM_CACHE_PATH` | No | `/opt/nim/.cache` | In-container path for downloaded model artifacts. Mount a writable host directory here to share the cache across runs. |
+### Choose the runtime and model
 
-### Server and logging
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_MODEL_TYPE` | `generator` | Select `generator` or `reasoner` |
+| `NIM_MODEL_VARIANT` | `nano` preference | Select a Generator model: `nano`, `nano-droid`, `super`, `super-t2i`, `super-t2i-4step`, `super-i2v`, or `super-i2v-4step` |
+| `NIM_MODEL_SIZE` | Nano preference | Select Reasoner `nano` or `super`; for Generator, acts as shorthand for the matching general-purpose variant |
+| `NIM_PRECISION` | FP8 preference | Optionally pin a released precision; omit it to prefer FP8 when compatible and fall back automatically |
+| `NIM_PERF_PROFILE` | `latency` | Generator only: choose `latency` or `throughput` |
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_HTTP_API_PORT` | No | `8000` | Port used by the Uvicorn HTTP server. The container-side port in the Docker publish mapping must match this value. |
-| `NIM_LOG_LEVEL` | No | `INFO` | Logging threshold for the NIM service. |
-| `NIM_LOGGING_JSONL` | No | `false` | Enable JSON-formatted logs. Readable text logs are enabled by default. |
+For Generator, prefer `NIM_MODEL_VARIANT`; it also determines Nano versus
+Super. Reasoner accepts `NIM_MODEL_SIZE` and rejects `NIM_MODEL_VARIANT` and
+`NIM_PERF_PROFILE`. Nano-DROID currently has BF16 profiles only.
 
-### Runtime and profile selection
-
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_MODEL_TYPE` | No | `generator` | Select the active runtime: `generator` or `reasoner`. A running container serves only the selected runtime. |
-| `NIM_MODEL_SIZE` | No | Soft preference for Nano | Select `nano` or `super`. For Generator, this shorthand selects the corresponding general-purpose base variant rather than a specialist variant. |
-| `NIM_MODEL_VARIANT` | No | Base variant for selected size | Generator-only checkpoint contract: `nano`, `nano-droid`, `super`, `super-t2i`, `super-t2i-4step`, `super-i2v`, or `super-i2v-4step`, when present in the released manifest. |
-| `NIM_PRECISION` | No | Compatible soft preference | Select the precision preference used by automatic profile selection. Available values depend on the released profiles and hardware. |
-| `NIM_TAGS_SELECTOR` | No | Empty | Comma-separated `key=value` filters used by automatic profile selection. |
-| `NIM_MODEL_PROFILE` | No | Empty | Pin an exact profile ID from the image manifest instead of using automatic selection. |
-| `NIM_MANIFEST_PATH` | No | Image default | Override the model-manifest path. |
-
-Shorthands and the corresponding keys in `NIM_TAGS_SELECTOR` must not
-conflict. Use `NIM_MODEL_PROFILE` only to pin a reviewed profile from the exact
-image release.
+The NIM chooses the best compatible profile for these settings and the visible
+GPUs. A normal deployment does not need a profile ID.
 
 ### Bring your own checkpoint
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_MODEL_PATH` | No | Empty | Checkpoint override. Generator accepts an absolute local path; Reasoner accepts an absolute local path or `hf://owner/repository[:revision]`. |
-| `NIM_DISABLE_MODEL_DOWNLOAD` | No | `false` | Disable profile artifact download. Valid for a local Reasoner override; incompatible with `hf://` and rejected for Generator because Generator guardrails remain profile-owned. |
-| `HF_TOKEN` | Conditional | Empty | Hugging Face credential for a private Reasoner `hf://` source. Inject as a secret; never include it in the URI. |
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_MODEL_PATH` | Empty | Generator: absolute local directory. Reasoner: absolute local directory or `hf://owner/repository[:revision]` |
+| `NIM_DISABLE_MODEL_DOWNLOAD` | `false` | Disable profile download for a completely local Reasoner override; incompatible with Reasoner `hf://` and rejected for Generator |
+| `HF_TOKEN` | Empty | Authenticate to a private Reasoner Hugging Face repository |
 
-See [Bring your own checkpoint](bring-your-own-checkpoint.md) for runtime-specific
-layout, mount, download, and profile-validation requirements.
+See [Bring your own checkpoint](bring-your-own-checkpoint.md) for layouts,
+mounts, and compatibility checks.
 
-## Generator variables
+### Server and logging
 
-### Generator profile selection
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_HTTP_API_PORT` | `8000` | Set the container HTTP port |
+| `NIM_LOG_LEVEL` | `INFO` | Set the service logging threshold |
+| `NIM_LOGGING_JSONL` | `false` | Emit JSON-line logs |
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_PERF_PROFILE` | No | Latency preference | Select the Generator performance scenario used by automatic profile selection. |
-| `NIM_OFFLOAD_MODE` | No | Compatible preference | Select the Generator offload preference used by automatic profile selection. |
+## Advanced profile controls
 
-### Input, output, and request handling
+Use these only when automatic model selection is not sufficient:
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_ALLOW_URL_INPUT` | No | `true` | Allow HTTP(S) URLs for image, video, and Transfer control-video inputs. Set to `false` to require base64-encoded inputs. |
-| `NIM_VIDEO_SAVE_QUALITY` | No | `7` | Set VP9 output-video compression quality from `1` through `9`. The values map linearly to FFmpeg CRF `[63, 0]`; higher values produce higher quality and lower CRF. This does not affect diffusion quality. |
-| `NIM_TRITON_REQUEST_TIMEOUT` | No | 30 minutes | Queue-plus-execution timeout in microseconds. The source default is `1800000000`. |
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_OFFLOAD_MODE` | Automatic compatible preference | Request `none`, `model`, or `layer` when the released model provides that mode |
+| `NIM_TAGS_SELECTOR` | Empty | Filter by comma-separated exact manifest tags |
+| `NIM_MODEL_PROFILE` | Empty | Pin an exact profile ID from the current image |
 
-### Startup
+Do not combine shorthand variables with conflicting values in
+`NIM_TAGS_SELECTOR`. Exact tags and profile IDs are tied to an image release and
+are less portable than automatic selection.
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_ENABLE_WARMUP` | No | `false` | Run a synthetic inference pass during startup before the service becomes ready. |
+## Generator configuration
 
-### Execution and compilation
+### Input and output
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_ENABLE_TORCH_COMPILE` | No | `true` | Enable the Generator `torch.compile` path. |
-| `NIM_MAX_SEQUENCE_LENGTH` | No | `5120` | Set the Generator prompt-token sequence length at startup. This is not a per-request control. |
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_ALLOW_URL_INPUT` | `true` | Allow HTTP(S) image, video, and Transfer inputs; set `false` to require encoded input |
+| `NIM_VIDEO_SAVE_QUALITY` | `7` | Set VP9 output quality from 1 through 9; this affects encoding, not diffusion quality |
+| `NIM_TRITON_REQUEST_TIMEOUT` | 30 minutes | Set the queue-plus-execution timeout in microseconds; source default is `1800000000` |
 
-### Diffusion caching
+### Startup and execution
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_CACHE_BACKEND` | No | Empty | Enable an optional diffusion-step cache. Current source accepts only `cache_dit`. This is separate from the artifact cache configured by `NIM_CACHE_PATH`. |
-| `NIM_CACHE_CONFIG` | No | Empty JSON object | Set backend-specific diffusion-cache configuration as a JSON object. |
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_ENABLE_WARMUP` | `false` | Run synthetic inference before readiness |
+| `NIM_ENABLE_TORCH_COMPILE` | `true` | Enable the Generator compilation path |
+| `NIM_TRITON_LOG_VERBOSE` | `0` | Increase Generator backend logging during diagnosis |
+| `NIM_MAX_SEQUENCE_LENGTH` | `5120` | Set the startup prompt-token sequence length |
 
 ### Guardrails
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_ENABLE_TEXT_GUARDRAILS` | No | `true` | Enable input-text policy checks. |
-| `NIM_ENABLE_VIDEO_GUARDRAILS` | No | `true` | Enable the output face and video guardrail path. |
-| `NIM_ENABLE_SIGLIP_GUARDRAILS` | No | `true` | Enable the output-frame safety classifier when video guardrails run. |
-| `NIM_OFFLOAD_TEXT_GUARDRAIL` | No | Selected-profile policy | Force the text guard to sleep on CPU during diffusion (`true`) or remain resident (`false`), overriding the selected profile tag. |
-| `NIM_OFFLOAD_VIDEO_GUARDRAIL` | No | Selected-profile policy | Force output visual guardrail sessions to sleep during diffusion (`true`) or remain resident (`false`). |
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_ENABLE_TEXT_GUARDRAILS` | `true` | Enable input-text policy checks |
+| `NIM_ENABLE_VIDEO_GUARDRAILS` | `true` | Enable output image/video face and visual guardrails |
+| `NIM_ENABLE_SIGLIP_GUARDRAILS` | `true` | Enable the output-frame safety classifier |
+| `NIM_OFFLOAD_TEXT_GUARDRAIL` | Profile policy | Override whether the text guard sleeps on CPU during diffusion |
+| `NIM_OFFLOAD_VIDEO_GUARDRAIL` | Profile policy | Override whether output guardrail sessions sleep during diffusion |
 
-### Transfer admission
+The selected profile owns normal guardrail residency. Treat offload variables as
+advanced overrides, not routine model selection.
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_ALLOW_UNSAFE_TRANSFER` | No | `false` | Allow Transfer even when startup determines that the selected profile lacks measured VRAM headroom. This can cause an out-of-memory failure; use only for an approved diagnostic. |
+### Transfer diagnostic override
 
-Transfer admission is derived internally from the selected profile and GPU.
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_ALLOW_UNSAFE_TRANSFER` | `false` | Bypass Transfer's VRAM admission check for an approved diagnostic; the request can fail with OOM |
 
 ### Prompt upsampling
 
-Prompt upsampling is optional, off by default, and consumed only by the
-Generator. It applies to T2I, T2V, and I2V; V2V, action, and transfer bypass
-it.
+Prompt upsampling is optional and applies only to Generator T2I, T2V, and I2V.
+It sends the request to an operator-provided OpenAI-compatible endpoint.
 
-```bash
--e NIM_ENABLE_PROMPT_UPSAMPLING=1 \
--e NIM_PROMPT_UPSAMPLING_ENDPOINT_URL='https://openai-compatible.example/v1' \
--e NIM_PROMPT_UPSAMPLING_MODEL='<UPSAMPLER_MODEL>' \
--e NIM_PROMPT_UPSAMPLING_API_KEY="$UPSAMPLER_API_KEY" \
--e NIM_PROMPT_UPSAMPLING_TEMPLATE_STYLE=external_api
-```
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_ENABLE_PROMPT_UPSAMPLING` | `false` | Enable prompt upsampling |
+| `NIM_PROMPT_UPSAMPLING_ENDPOINT_URL` | Empty | Set the OpenAI-compatible endpoint base or Chat Completions route |
+| `NIM_PROMPT_UPSAMPLING_MODEL` | Empty | Set the external model name |
+| `NIM_PROMPT_UPSAMPLING_API_KEY` | Empty | Set the external Bearer credential |
+| `NIM_PROMPT_UPSAMPLING_TEMPLATE_STYLE` | `external_api` | Select `external_api` or `reasoner` templates |
+| `NIM_PROMPT_UPSAMPLING_TIMEOUT_S` | `120` | Set the external call timeout in seconds |
+| `NIM_PROMPT_UPSAMPLING_MAX_TOKENS` | `8192` | Set the requested output-token limit |
+| `NIM_PROMPT_UPSAMPLING_TEMPERATURE` | Omitted | Optionally set external sampling temperature |
+| `NIM_PROMPT_UPSAMPLING_TOP_P` | Omitted | Optionally set external nucleus sampling |
+| `NIM_PROMPT_UPSAMPLING_TOP_K` | Omitted | Optionally set top-k when the provider accepts it |
+| `NIM_PROMPT_UPSAMPLING_EXTRA_BODY` | Empty object | Merge additional JSON into the external request |
 
-The endpoint is normalized to an OpenAI-compatible
-`/v1/chat/completions` route and uses Bearer authorization. Do not assume a
-provider's native non-OpenAI endpoint is compatible.
+Endpoint, model, and key are required when the feature is enabled. A request-time
+external failure logs a warning and continues with the original prompt. Keep
+the external key separate from `NGC_API_KEY`.
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_ENABLE_PROMPT_UPSAMPLING` | No | `false` | Enable prompt upsampling for Generator T2I, T2V, and I2V requests. |
-| `NIM_PROMPT_UPSAMPLING_ENDPOINT_URL` | When enabled | Empty | OpenAI-compatible endpoint base or Chat Completions route. |
-| `NIM_PROMPT_UPSAMPLING_MODEL` | When enabled | Empty | Model name sent to the prompt-upsampling endpoint. |
-| `NIM_PROMPT_UPSAMPLING_API_KEY` | When enabled | Empty | Bearer credential for the external prompt-upsampling service. Keep it separate from `NGC_API_KEY`. |
-| `NIM_PROMPT_UPSAMPLING_TEMPLATE_STYLE` | No | `external_api` | Select `external_api` or `reasoner` prompt templates. |
-| `NIM_PROMPT_UPSAMPLING_TIMEOUT_S` | No | `120` | Per-call timeout in seconds. |
-| `NIM_PROMPT_UPSAMPLING_MAX_TOKENS` | No | `8192` | Maximum output-token budget requested from the upsampler. |
-| `NIM_PROMPT_UPSAMPLING_TEMPERATURE` | No | Omitted | Optional external sampling temperature. |
-| `NIM_PROMPT_UPSAMPLING_TOP_P` | No | Omitted | Optional external nucleus-sampling value. |
-| `NIM_PROMPT_UPSAMPLING_TOP_K` | No | Omitted | Optional external top-k value. Not every OpenAI-compatible provider accepts it. |
-| `NIM_PROMPT_UPSAMPLING_EXTRA_BODY` | No | Empty object | Additional JSON object merged into the external request. |
+## Reasoner configuration
 
-Enabling the feature without endpoint, model, or key fails Generator startup.
-At request time, external timeout, error, or invalid output logs a warning and
-falls back to the original prompt. Never log or reuse the upsampler key as
-`NGC_API_KEY`.
+These are advanced workload controls. Change one at a time and validate memory,
+latency, quality, and correctness.
 
-## Reasoner variables
+### Speculative decoding
+
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_USE_DFLASH` | `false` | Enable DFlash speculative decoding for Nano Reasoner only |
+
+DFlash does not change the Reasoner request API. Startup rejects it for
+Generator and Super Reasoner. Confirm that the released Nano Reasoner includes
+the draft artifact before enabling it.
 
 ### Context and scheduling
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_MAX_MODEL_LEN` | No | `-1` (auto) | Let vLLM profile available memory and choose a context length bounded by the checkpoint limit. Set an explicit positive integer only after workload validation. |
-| `NIM_MAX_NUM_BATCHED_TOKENS` | No | `8192` | Scheduler token budget. Set an empty value to omit this override. |
-| `NIM_MAX_NUM_SEQS` | No | `256` | Maximum number of sequences scheduled in parallel. |
-| `NIM_STREAM_INTERVAL` | No | `10` | Streaming update interval. |
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_MAX_MODEL_LEN` | `-1` (auto) | Let vLLM choose a context length bounded by the model |
+| `NIM_MAX_NUM_BATCHED_TOKENS` | `8192` | Set the scheduler token budget |
+| `NIM_MAX_NUM_SEQS` | `256` | Set maximum scheduled sequences |
+| `NIM_STREAM_INTERVAL` | `10` | Set the streaming update interval |
+| `NIM_GPU_MEMORY_UTILIZATION` | `0.90` | Set the vLLM GPU-memory target in `(0,1]` |
 
-### GPU memory and caching
+### Caching and multimodal processing
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_GPU_MEMORY_UTILIZATION` | No | `0.90` | vLLM GPU-memory utilization target. Accepted values are greater than `0` and no greater than `1`. |
-| `NIM_ENABLE_KV_CACHE_REUSE` | No | `true` | Enable prefix caching and KV-cache reuse. |
-| `NIM_ENABLE_CHUNKED_PREFILL` | No | `true` | Enable vLLM chunked prefill. |
-| `NIM_DISABLE_CHUNKED_MM_INPUT` | No | `false` | Disable chunking of multimodal input. |
-| `NIM_DISABLE_MM_PREPROCESSOR_CACHE` | No | `false` | Disable the multimodal preprocessor cache. |
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_ENABLE_KV_CACHE_REUSE` | `true` | Enable prefix/KV-cache reuse |
+| `NIM_ENABLE_CHUNKED_PREFILL` | `true` | Enable chunked prefill |
+| `NIM_DISABLE_CHUNKED_MM_INPUT` | `false` | Disable multimodal-input chunking |
+| `NIM_DISABLE_MM_PREPROCESSOR_CACHE` | `false` | Disable the multimodal preprocessor cache |
+| `NIM_MAX_IMAGES_PER_PROMPT` | `5` | Limit images in one request |
+| `NIM_MAX_VIDEOS_PER_PROMPT` | `1` | Limit videos in one request |
+| `NIM_MEDIA_IO_KWARGS` | Video FPS 4 with `pynvvc` | Replace the complete operator-level media preprocessing object |
+| `NIM_VIDEO_PRUNING_RATE` | `0` | Set video-token pruning from 0 through 1 |
+| `NIM_VIDEO_PRUNING_METHOD` | `vidcom2` | Select `vidcom2` or `evs` when pruning is enabled |
 
-### Multimodal limits and preprocessing
+Prefer request-level `media_io_kwargs` for one workload rather than changing the
+operator-wide media object.
 
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_MAX_IMAGES_PER_PROMPT` | No | `5` | Maximum number of images allowed in one request. |
-| `NIM_MAX_VIDEOS_PER_PROMPT` | No | `1` | Maximum number of videos allowed in one request. |
-| `NIM_MEDIA_IO_KWARGS` | No | `{"video":{"fps":4.0,"video_backend":"pynvvc"}}` at normal Reasoner startup | Complete operator-level media preprocessing JSON object. An explicit value replaces the complete startup object. |
-| `NIM_VIDEO_PRUNING_RATE` | No | `0` (off) | Optional video-token pruning rate from `0` through `1`. |
-| `NIM_VIDEO_PRUNING_METHOD` | No | `vidcom2` | Video-token pruning implementation: `vidcom2` or `evs`. It is forwarded only when the pruning rate is greater than zero. |
+### API behavior
 
-### Decoding and structured output
-
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_GUIDED_DECODING_BACKEND` | No | `xgrammar` | Structured-output and guided-decoding backend. |
-
-### vLLM execution and compilation
-
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_MM_ENCODER_ATTN_BACKEND` | No | `FLASH_ATTN` | Multimodal-encoder attention backend. |
-| `NIM_MM_ENCODER_TP_MODE` | No | Empty | Optional vLLM multimodal-encoder tensor-parallel mode. |
-| `NIM_COMPILATION_CONFIG` | No | Source JSON object | vLLM compilation configuration. The current source supplies CUDA graph and multimodal-encoder compilation settings. |
-| `VLLM_ATTENTION_BACKEND` | No | Empty | Optional vLLM attention-backend override. |
-
-### Request logging and Responses API
-
-| Name | Required? | Default | Notes |
-| --- | --- | --- | --- |
-| `NIM_DISABLE_LOG_REQUESTS` | No | `true` | Disable request-body logging. Request content may be sensitive. |
-| `NIM_DISABLE_RESPONSES_ROUTE` | No | `false` in current route tests | Remove Responses create, retrieve, and cancel routes when set to `true`. |
-| `VLLM_ENABLE_RESPONSES_API_STORE` | No | Off | Enable state required by persisted and background Responses features. |
-
-These are operator controls, not a recommendation to override every default.
-Change one at a time and validate memory, quality, latency, and correctness on
-the target release.
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_GUIDED_DECODING_BACKEND` | `xgrammar` | Select the structured-output backend |
+| `NIM_DISABLE_LOG_REQUESTS` | `true` | Keep Reasoner request bodies out of logs |
+| `NIM_DISABLE_RESPONSES_ROUTE` | `false` in current route tests | Remove Responses routes when set to `true` |
 
 ## Secret handling
 
 Keep `NGC_API_KEY`, `HF_TOKEN`, and `NIM_PROMPT_UPSAMPLING_API_KEY` separate.
-Do not place any of them in source control, model-source URIs, image layers,
-saved requests, notebooks, or logs. Prefer secret injection supported by the
-deployment environment instead of literal command-line values.
+Inject them through the deployment environment. Do not put them in source
+control, model-source URIs, image layers, requests, notebooks, or logs.

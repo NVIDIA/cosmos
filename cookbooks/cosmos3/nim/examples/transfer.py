@@ -37,6 +37,7 @@ def precomputed_request(hint: str) -> dict:
     )
     control_path = TRANSFER_ROOT / hint / f"control_{hint}.mp4"
     return {
+        "model_mode": "video2video",
         "prompt": prompt,
         "transfer": {
             hint: {"video": media_to_data_url(control_path)},
@@ -48,9 +49,9 @@ def precomputed_request(hint: str) -> dict:
             "num_video_frames_per_chunk": 121,
         },
         "resolution": "720_4_3" if hint == "blur" else "720_16_9",
-        "num_output_frames": 101 if hint == "wsm" else 121,
+        "num_frames": 101 if hint == "wsm" else 121,
         "fps": 10.0 if hint == "wsm" else 30.0,
-        "steps": 50,
+        "num_inference_steps": 50,
         "guidance_scale": 1.0 if hint == "wsm" else 3.0,
         "flow_shift": 10.0,
         "seed": 0,
@@ -64,11 +65,12 @@ def derived_request(hint: str) -> dict:
         else {"preset_blur_strength": "medium"}
     )
     return {
+        "model_mode": "video2video",
         "prompt": (
             "A red sports car drives through a dramatic landscape with stable "
             "geometry, realistic motion, and cinematic lighting."
         ),
-        "video": media_to_data_url(DERIVED_VIDEO),
+        "input_reference": media_to_data_url(DERIVED_VIDEO),
         "transfer": {
             hint: preset,
             "control_guidance": 1.5,
@@ -77,9 +79,9 @@ def derived_request(hint: str) -> dict:
             "num_video_frames_per_chunk": 121,
         },
         "resolution": "720_16_9",
-        "num_output_frames": 121,
+        "num_frames": 121,
         "fps": 30.0,
-        "steps": 50,
+        "num_inference_steps": 50,
         "guidance_scale": 3.0,
         "flow_shift": 10.0,
         "seed": 0,

@@ -25,15 +25,16 @@ OUTPUT = Path(__file__).parent / "outputs" / "i2v.mp4"
 
 def main() -> None:
     request = {
+        "model_mode": "image2video",
         "prompt": (
             "A photorealistic red sports car drives through a modern city at "
             "golden hour, with cinematic lighting and smooth camera motion."
         ),
-        "image": media_to_data_url(IMAGE),
+        "input_reference": media_to_data_url(IMAGE),
         "resolution": "720",
-        "num_output_frames": 189,
+        "num_frames": 189,
         "fps": 24.0,
-        "steps": 35,
+        "num_inference_steps": 35,
         "guidance_scale": 6.0,
         "flow_shift": 10.0,
         "seed": 0,

@@ -5,10 +5,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 Use this page for Cosmos3 Reasoner requests through OpenAI-compatible Chat
 Completions, streaming, and Responses APIs. These workflows require a running
-**Reasoner** profile; `/v1/infer` is a Generator endpoint and is not used here.
+**Reasoner** model; `/v1/infer` is a Generator endpoint and is not used here.
 
-See [deployment.md](deployment.md) to select a Reasoner profile. This page is
-the canonical contract for Reasoner routes, media, sampling, and responses.
+See [Deployment](deployment.md) to select and launch a Reasoner model. This
+page covers Reasoner routes, media, sampling, and responses.
 
 ## Install the client and verify readiness
 
@@ -38,9 +38,8 @@ model = models.data[0].id
 print(model)
 ```
 
-Current source uses `nvidia/cosmos3-nano-reasoner` and
-`nvidia/cosmos3-super-reasoner`; runtime discovery remains the preferred
-contract.
+Runtime discovery is the preferred contract; do not hard-code a model ID from
+another image or deployment.
 
 ## Image reasoning with Chat Completions
 
@@ -82,43 +81,10 @@ Run the equivalent cookbook example:
 python cookbooks/cosmos3/nim/examples/reasoner.py --case image
 ```
 
-For a curl-only flow, create a request file so the large data URL never passes
-through fragile shell quoting:
-
-```bash
-python - <<'PY'
-import base64
-import json
-import urllib.request
-from pathlib import Path
-
-nim_url = "http://localhost:8000"
-models = json.load(urllib.request.urlopen(f"{nim_url}/v1/models"))
-model = models["data"][0]["id"]
-image_path = Path("cookbooks/cosmos3/reasoner/assets/robot_153.jpg")
-image_url = "data:image/jpeg;base64," + base64.b64encode(
-    image_path.read_bytes()
-).decode()
-request = {
-    "model": model,
-    "messages": [{
-        "role": "user",
-        "content": [
-            {"type": "image_url", "image_url": {"url": image_url}},
-            {"type": "text", "text": "Caption the image in detail."},
-        ],
-    }],
-    "max_tokens": 4096,
-    "seed": 0,
-}
-Path("/tmp/cosmos3-reasoner-request.json").write_text(json.dumps(request))
-PY
-
-curl -fsS -X POST "$NIM_URL/v1/chat/completions" \
-  -H 'Content-Type: application/json' \
-  --data-binary @/tmp/cosmos3-reasoner-request.json \
-  | python -m json.tool
-```
+Use the OpenAI client for normal applications. For direct HTTP integration,
+inspect the active `/openapi.json` and send the same request object to
+`POST /v1/chat/completions`; keep large data URLs in a request file rather than
+shell arguments.
 
 ## Video reasoning with Chat Completions
 
@@ -193,7 +159,18 @@ by default in the current source; exact feature support in the released image
 is **TBD (release-dependent)**. Keep video requests on Chat Completions until
 the released Responses video path is validated.
 
-## Sampling and request extensions
+## Optional Nano Reasoner DFlash
+
+Set `NIM_USE_DFLASH=1` at launch to enable DFlash speculative decoding for a
+Nano Reasoner. The request routes and payloads do not change. Startup rejects
+the option for Generator and Super Reasoner, or when the required draft
+artifact is unavailable.
+
+Treat DFlash as an advanced performance option. Compare latency, throughput,
+and output quality on representative requests before production use. See
+[Reasoner configuration](configuration.md#speculative-decoding).
+
+## Advanced sampling and request extensions
 
 Current normalization supplies these values when omitted:
 
@@ -207,27 +184,12 @@ Current normalization supplies these values when omitted:
 `nvext` are request extensions. With the OpenAI client, put them explicitly in
 `extra_body`, as the video example does.
 
-The source default allows up to five images and one video per prompt. Operators
-can change these limits with `NIM_MAX_IMAGES_PER_PROMPT` and
-`NIM_MAX_VIDEOS_PER_PROMPT`. At normal startup,
-`NIM_MEDIA_IO_KWARGS` defaults to video FPS 4.0 with the `pynvvc` backend. An
-operator-level value replaces that complete object; request-level
-`media_io_kwargs` is usually safer for a single workload.
-
-Optional video-token pruning is controlled by
-`NIM_VIDEO_PRUNING_RATE` from `0` through `1`. When the rate is greater than
-zero, `NIM_VIDEO_PRUNING_METHOD` selects `vidcom2` (default) or `evs`. Treat
-both as operator-level quality/performance controls and validate the chosen
-method on representative video workloads.
-
-Older Reasoner documentation describes `video_frames` and
-`mm_processor_kwargs`. Neither is part of this guide's supported baseline until
-the released API proves its exact shape and behavior.
-
-Older guidance also describes choosing between request-level video `fps` and
-`num_frames`. The local cookbook example uses `media_io_kwargs.video.fps`.
-Whether `num_frames` is accepted, its bounds, and whether the two fields are
-mutually exclusive remain **TBD (release-dependent)**.
+The default service limit is five images and one video per prompt. Use
+request-level `media_io_kwargs` for workload-specific video sampling; the
+example requests 4 FPS. Operator-wide media limits, preprocessing, and optional
+video-token pruning are documented under
+[Reasoner configuration](configuration.md#reasoner-configuration). Verify
+additional request fields against the active `/openapi.json`.
 
 ### Text-only requests
 

@@ -3,117 +3,114 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Cosmos3 Certified NIM support matrix
 
-This page is the canonical location for released model, precision, GPU,
-profile, offload, and media compatibility. Use
-[prerequisites.md](prerequisites.md) for general host requirements and
-[deployment.md](deployment.md#select-a-profile) to select a compatible profile.
+Use this page to match a model to released precision, GPU, memory, and media
+support. The final tested matrix is **TBD**. Development profiles do not create
+a public support guarantee.
 
-> **Release status:** The final tested and supported matrix is **TBD
-> (release-dependent)**. Current source profiles are useful validation inputs
-> but do not establish a public support guarantee.
+## Model contracts
 
-## How to read the matrix
+Choose the model first. The NIM then selects a compatible profile for the
+visible host.
 
-A configuration is supported only when all dimensions match a released row:
+| Runtime | Model | Task contract | Automatic precision behavior |
+| --- | --- | --- | --- |
+| Generator | `nano` | General-purpose Generator tasks included by the release | Prefer FP8 when compatible; otherwise fall back |
+| Generator | `nano-droid` | DROID policy with action-only output | BF16 only in the current implementation |
+| Generator | `super` | General-purpose Generator tasks included by the release | Prefer FP8 when compatible; otherwise fall back |
+| Generator | `super-t2i` | Full-step T2I only | Prefer FP8 when compatible; otherwise fall back |
+| Generator | `super-t2i-4step` | Four-step T2I only | Prefer FP8 when compatible; otherwise fall back |
+| Generator | `super-i2v` | Full-step I2V only | Prefer FP8 when compatible; otherwise fall back |
+| Generator | `super-i2v-4step` | Four-step I2V only | Prefer FP8 when compatible; otherwise fall back |
+| Reasoner | `nano` | Image/video reasoning | Prefer FP8 when compatible; otherwise fall back |
+| Reasoner | `super` | Image/video reasoning | Prefer FP8 when compatible; otherwise fall back |
 
-- runtime family: Generator or Reasoner;
-- model size: Nano or Super;
-- Generator model variant and its allowed request mode;
-- model precision;
-- GPU architecture and minimum compute capability;
-- GPU count and homogeneous per-device VRAM;
-- parallelism layout;
-- Generator latency/throughput objective;
-- Generator model and guardrail offload policy; and
-- Transfer VRAM headroom, when Transfer is enabled.
+A Generator specialist rejects requests outside its task contract. Model
+presence in the implementation does not mean that every model is included in
+every image release.
 
-Distinguish:
+Nano Reasoner can optionally use DFlash speculative decoding. The released
+profile must include the draft artifact; Generator and Super Reasoner do not
+support `NIM_USE_DFLASH=1`.
 
-- **tested and supported** configurations explicitly listed for the release;
-- **compatible** hardware that satisfies documented gates but is not part of
-  the tested SKU list; and
-- **unsupported or unverified** combinations, including configurations inferred
-  only from development manifests.
+## Released hardware configurations
 
-## Released model and hardware profiles
+A configuration is supported only when one released row matches the selected
+model, precision, GPU architecture, GPU count, per-device memory, and any
+system-memory requirement.
 
-| Runtime | Model/variant | Precision | GPU architecture / compute capability | GPUs | Per-device VRAM | Layout/offload | Transfer | Status |
-| --- | --- | --- | --- | ---: | ---: | --- | --- | --- |
-| Generator | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | Release validation pending |
-| Reasoner | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | N/A | Release validation pending |
+| Runtime/model | Precision | GPU architecture | GPUs | Per-device VRAM | System RAM | Performance/offload | Transfer | Status |
+| --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
+| Generator variants | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | Release validation pending |
+| Reasoner Nano/Super | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | N/A | N/A | Release validation pending |
 
-Populate this table from the exact released manifest and approved test
-inventory. Do not merge historical Generator and Reasoner tables or publish
-development-only rows as released support.
+Populate this table from the released image manifest and approved test
+inventory. If a combination is not listed, treat it as unsupported.
 
-## Profile behavior
+## Automatic profile selection
 
-Generator latency profiles can shard one request across compatible parallelism
-dimensions. Generator throughput profiles can use data-parallel workers to
-increase aggregate request rate. Reasoner profiles select their own
-tensor-parallel allocation and do not use the Generator
-`latency`/`throughput` selector.
+Users normally set:
 
-Low-level manifest dimensions can include `nim_dp`, `nim_gp`, `nim_up`, and
-`nim_tp`. Generator profiles also carry `model_variant`, `text_guard_offload`,
-and `video_guard_offload`. Select with high-level variables where possible;
-pin low-level tags only after reviewing the target image's manifest.
+- runtime;
+- Generator variant or Reasoner model size;
+- Generator latency or throughput; and
+- precision only when it must be pinned.
 
-The current development source permits Generator FP8 on compute capability 8.9
-or newer; Reasoner precision gates are separate. This is pre-release evidence,
-not a public hardware guarantee. Populate the released table from the exact
-published manifest.
+The NIM finds a compatible profile for those choices and the visible GPUs.
+Automatic selection prefers FP8 when available, avoids offload when the model
+fits normally, and uses a compatible GPU layout. If no profile fits, startup
+fails rather than selecting an unsupported combination.
 
-## Low-VRAM offload
+Exact profile IDs and low-level manifest tags are advanced release-specific
+controls. Do not copy them between images or hosts.
 
-The current design includes Generator profiles that can trade performance for
-lower GPU-memory residency:
+## Latency, throughput, and lower-memory profiles
 
-- `none` keeps the normal model layout;
-- model-level or layer-level offload reduces model residency at a latency cost;
-- text-guard offload sleeps the text classifier during diffusion; and
-- video-guard offload sleeps output-safety sessions during diffusion.
+Generator requires a workload choice:
 
-These are distinct dimensions. The released rows, supported model/precision
-combinations, minimum memory, and performance expectations remain **TBD**.
-Confirm availability before setting an offload selector or override.
+- `latency` prioritizes an individual request;
+- `throughput` prioritizes aggregate request rate.
+
+The software default is latency, but production deployment should make the
+choice explicit. Reasoner does not use this selector.
+
+Some Generator releases can provide model or guardrail offload profiles. They
+reduce resident GPU memory at a latency cost and can move weights into system
+RAM. Current Super BF16 model- and layer-offload profiles require 150 GiB of
+effective system memory, measured against the container limit first. The
+released table must confirm availability, GPU and system-memory floors, and
+performance expectations before use.
 
 ## Transfer headroom
 
-Generator profile compatibility is based on its ordinary generation floor.
-Transfer has an additional measured peak-memory overhead. At startup, the NIM
-checks whether the visible GPU has enough headroom for the selected profile;
-a deployment can therefore serve ordinary generation while rejecting Transfer.
+Transfer can require more peak memory than generation without Transfer on the
+same model. Startup checks whether the selected profile and GPU have validated
+headroom. A deployment can therefore serve generation while rejecting
+Transfer.
 
-The released matrix must identify which profile/GPU rows have validated
-Transfer headroom. `NIM_ALLOW_UNSAFE_TRANSFER=1` bypasses this protection but
-can cause an out-of-memory failure and does not make the configuration
-supported.
+Use a larger GPU or a released lower-memory profile when Transfer does not fit.
+`NIM_ALLOW_UNSAFE_TRANSFER=1` bypasses the check for diagnosis but can cause an
+out-of-memory failure and does not make the deployment supported.
 
-## Supported media and codecs
+## Media and codecs
 
 | Direction | Media | Released formats/codecs and limits |
 | --- | --- | --- |
-| Input | Images | **TBD (release-dependent)** |
-| Input | Videos | **TBD (release-dependent)** |
-| Output | Generator image | Current source emits JPEG; release validation pending |
-| Output | Generator video | Current source emits VP9 in MP4; release validation pending |
+| Input | Images | **TBD** |
+| Input | Videos | **TBD** |
+| Output | Generator image | Current implementation emits JPEG; release validation pending |
+| Output | Generator video | Current implementation emits VP9 in MP4; release validation pending |
 
-Request schemas recognize base64 and MIME-aware data URLs; optional HTTP(S)
-input also depends on runtime configuration. Schema acceptance does not prove
-that every container, codec, chroma format, frame rate, or remote source is
-supported. Record the validated release matrix here after image smoke tests.
+The request schemas accept base64 and MIME-aware data URLs. HTTP(S) input is
+available only when enabled and reachable from the container. Schema acceptance
+does not guarantee every image format, video container, codec, chroma format,
+frame rate, or remote source.
 
-## Inspect the selected release
-
-After launch, inspect the active selection rather than assuming which profile
-won:
+## Verify a running deployment
 
 ```bash
 curl -fsS http://localhost:8000/v1/metadata | python -m json.tool
 curl -fsS http://localhost:8000/v1/manifest | python -m json.tool
 ```
 
-Runtime metadata confirms the selected image/profile, Generator
-`model_variant`, and checkpoint label. It does not expand the published support
-boundary.
+Metadata confirms the selected model/profile; it does not expand the released
+support boundary.

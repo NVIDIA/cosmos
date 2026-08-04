@@ -82,15 +82,15 @@ configuration review remain excluded and are not reintroduced by this update.
 
 ### Full source refresh for the documentation update
 
-Reviewed on 2026-08-03:
+Reviewed through 2026-08-04:
 
 | Repository | Branch | Reviewed commit | Change covered |
 | --- | --- | --- | --- |
-| Cosmos cookbook | `egor/cosmos3_nim_docs` | `8297ef76e383e934907e665a30a7353ec98783dc` | Documentation baseline before this refresh |
-| Cosmos3 Certified NIM | `cosmos3` | `243e05f8eecb44766d90f2843adb46356ae77a17` | Current model variants, Generator and Reasoner BYOC, Nano-DROID, action-only responses, Transfer admission, profile/offload changes, and Reasoner video pruning |
+| Cosmos cookbook | `egor/nim_docs_update` | `c02ebd4809f572764297152c9d5a29b7f41a173d` | Documentation baseline before the latest source refresh |
+| Cosmos3 Certified NIM | `cosmos3` | `22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480` | Explicit Generator modes/renamed fields, Nano Reasoner DFlash, system-memory admission, and the earlier model/BYOC/Transfer contracts |
 
-The current NIM commit is 41 commits beyond the incremental `74064b23` pin.
-The tracked source diff under `cosmos3/` changes 102 files. The source checkout
+The current NIM commit is 47 commits beyond the incremental `74064b23` pin.
+The tracked source diff under `cosmos3/` changes 133 files. The source checkout
 also contains an unrelated untracked `cosmos3/bugs/` directory; it was not used
 as evidence. This section supersedes stale current-state conclusions in the
 older snapshot sections below while retaining those sections as historical
@@ -98,6 +98,11 @@ provenance.
 
 Current high-impact contracts:
 
+- Generator `POST /v1/infer` now requires explicit `model_mode`. It renames
+  `num_output_frames` to `num_frames`, `steps` to `num_inference_steps`, and
+  top-level `image`/`video` to `input_reference`; Action mode moves from
+  `action_params.mode` to the top level. Old fields receive HTTP 422 and
+  responses are unchanged.
 - `NIM_MODEL_PATH` replaces `NIM_FT_CHECKPOINT`. Generator accepts an absolute
   local checkpoint and retains profile-owned guardrails. Reasoner accepts an
   absolute local path or `hf://owner/repository[:revision]`, with optional
@@ -106,8 +111,9 @@ Current high-impact contracts:
   `nano-droid`, `super`, `super-t2i`, `super-t2i-4step`, `super-i2v`, and
   `super-i2v-4step`. `NIM_MODEL_SIZE` selects the corresponding base variant;
   `NIM_MODEL_VARIANT` selects a specialist contract.
-- Four-step T2I/I2V variants own `steps=4`, `guidance_scale=1.0`, and scheduler
-  flow shift. Clients omit those controls; specialist variants reject the
+- Four-step T2I/I2V variants own `num_inference_steps=4`,
+  `guidance_scale=1.0`, and scheduler flow shift. Clients omit those controls;
+  specialist variants reject the
   wrong request mode.
 - Nano-DROID is a policy-only Generator variant with a strict current-state
   observation, 32 action steps, an 8-wide output, and no visual response.
@@ -121,6 +127,12 @@ Current high-impact contracts:
   guardrail offload controls.
 - Reasoner video pruning adds `NIM_VIDEO_PRUNING_METHOD=vidcom2|evs`, used when
   `NIM_VIDEO_PRUNING_RATE` is nonzero.
+- `NIM_USE_DFLASH=1` enables speculative decoding only for Nano Reasoner. Each
+  generated Nano Reasoner profile carries the separate BF16 draft artifact;
+  Generator and Super Reasoner are rejected at startup.
+- Ten single-GPU Super BF16 model/layer-offload development rows require 150
+  GiB of effective system memory. Startup checks the container cgroup limit
+  before host physical memory.
 - Generator FP8's development compute-capability floor is 8.9; Reasoner keeps
   a separate precision policy.
 - `/v1/metadata` reports checkpoint source for either runtime and
@@ -129,8 +141,10 @@ Current high-impact contracts:
 Running `local_nimcraft/make_profiles.py` from this source into an untracked
 temporary output generated 122 development rows: 115 Generator and 7 Reasoner.
 The Generator rows split across 18 `nano`, 7 `nano-droid`, 18 `super`, and 18
-rows for each of the four specialist Super variants. This generated inventory
-is pre-release evidence only and must not be published as a support matrix.
+rows for each of the four specialist Super variants. Three Nano Reasoner rows
+include the DFlash draft artifact, and ten Super BF16 offload rows carry the
+150-GiB system-memory floor. This generated inventory is pre-release evidence
+only and must not be published as a support matrix.
 
 The current source tree no longer contains `cosmos3/documentation.md`, the
 static `cosmos3/api_spec.yaml`, or a tracked generated `profiles.json`.
@@ -140,7 +154,10 @@ schema remain historical evidence only at the broad `63578446` snapshot.
 
 Primary changed evidence:
 
+- `api-update.md`
 - `serving_stack/environment.py`
+- `serving_stack/data_models/generation.py`
+- `serving_stack/data_models/transfer.py`
 - `serving_stack/reasoner_model_source.py`
 - `serving_stack/reasoner_inference.py`
 - `serving_stack/data_models/actions.py`
@@ -1538,15 +1555,18 @@ Do not close these from memory or legacy docs:
 
 - Parsed the relevant implementation and local cookbook Python files with the
   standard library AST parser; all parsed successfully.
-- Historical validation loaded the 39-row snapshot. The 2026-08-03 refresh ran
-  `make_profiles.py` to a temporary untracked output and confirmed 122 current
-  development rows (115 Generator, 7 Reasoner), including all seven model
-  variants and every `n_gpus = nim_dp * nim_gp * nim_up * nim_tp` invariant.
-  Release support remains unvalidated.
-- The same refresh asserted current source constants and controls for shared
-  `NIM_MODEL_PATH`, model variants, Reasoner pruning method, Transfer override,
-  Nano-DROID `[32,8]`, and action-only responses. It compiled all twelve local
-  examples and validated JSON fences,
+- Historical validation loaded the 39-row snapshot. The refresh through
+  2026-08-04 ran `make_profiles.py` to a temporary untracked output and
+  confirmed 122 current development rows (115 Generator, 7 Reasoner), all seven
+  model variants, every `n_gpus = nim_dp * nim_gp * nim_up * nim_tp` invariant,
+  three Nano Reasoner rows with the DFlash draft artifact, and ten Super BF16
+  offload rows with the 150-GiB system-memory floor. Release support remains
+  unvalidated.
+- The same refresh asserted current source constants and controls for explicit
+  Generator modes/field names, shared `NIM_MODEL_PATH`, model variants,
+  Reasoner pruning and DFlash, Transfer override, Nano-DROID `[32,8]`, and
+  action-only responses. It compiled all twelve local examples and validated
+  JSON fences,
   SPDX headers, local links/anchors, Markdown table structure, and whitespace.
 - Confirmed every Reasoner row omits the performance-profile axis, fixes
   `nim_dp=nim_gp=nim_up=1`, and satisfies `n_gpus=nim_tp`.
