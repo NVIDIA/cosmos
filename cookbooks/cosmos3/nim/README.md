@@ -108,7 +108,7 @@ uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py
 For a Reasoner:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case image
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case image_caption
 ```
 
 Specialist models accept only their documented task contract. Use
@@ -118,8 +118,9 @@ Specialist models accept only their documented task contract. Use
 matching variant.
 
 Generator examples save decoded media and action JSON under
-`examples/outputs/`. Reasoner examples print text. The output directory is
-ignored by the repository.
+`examples/outputs/`. The Reasoner task runner prints its final answer and saves
+request metadata, the raw response, final text, and validated JSON for
+structured cases under the same ignored output directory.
 
 ## Documentation
 

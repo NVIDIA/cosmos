@@ -513,8 +513,13 @@ implementation. T2I, T2V, and I2V reuse the audiovisual cookbook's
 The five precomputed Transfer cases reuse the Transfer cookbook's prompt,
 negative prompt, control, geometry, seed, and chunk-length choices. Action
 reuses the three AV trajectories, two AV inverse videos, and one UMI trajectory
-chunk while retaining NIM-owned request and response validation. API adapters
-and model-specific request contracts remain NIM-owned.
+chunk while retaining NIM-owned request and response validation. Reasoner
+reuses nine representative prompt-guide assets while replacing prompt-authored
+thinking tags and free-form JSON extraction with NIM request controls and
+structured output. It retains canonical case-specific sampling: `seed=0` for
+the three image cases that use it, the trajectory temperature/top-p/penalty
+recipe, and backend defaults for the other cases; all videos retain 4-FPS
+sampling. API adapters and model-specific request contracts remain NIM-owned.
 
 ### Ports and identity caveat
 
@@ -627,7 +632,7 @@ not imply persistent response storage is on by default.
 | `cookbooks/cosmos3/nim/examples/i2v.py` | General-purpose image-to-video using local media |
 | `cookbooks/cosmos3/nim/examples/i2v_4step.py` | Four-step specialist image-to-video with profile-owned sampling omitted |
 | `cookbooks/cosmos3/nim/examples/v2v.py` | Video-to-video using local media |
-| `cookbooks/cosmos3/nim/examples/reasoner.py` | Image and video Chat Completions |
+| `cookbooks/cosmos3/nim/examples/reasoner.py` | Nine canonical image/video Chat tasks, optional explicit reasoning, structured output validation, and saved artifacts |
 | `cookbooks/cosmos3/nim/examples/reasoner_stream.py` | Reasoner streaming |
 | `cookbooks/cosmos3/nim/examples/reasoner_responses.py` | Reasoner Responses API |
 | `cookbooks/cosmos3/nim/examples/action.py` | Forward dynamics, policy, and inverse dynamics |
@@ -712,9 +717,12 @@ negative prompts, and conditioning images under
 reuse the matching prompt/control pair and shared negative prompt under
 `cookbooks/cosmos3/generator/transfer/assets/`. For Action, reuse reviewed image,
 video, and trajectory cases under `cookbooks/cosmos3/generator/action/assets/`
-without importing unsupported embodiments or backend-only request fields.
-Serialize JSON prompt assets as compact strings because the Generator API's
-`prompt` and `negative_prompt` fields are strings, not nested JSON objects.
+without importing unsupported embodiments or backend-only request fields. For
+Reasoner, reuse reviewed media under `cookbooks/cosmos3/reasoner/assets/` but
+adapt prompts that prescribe `<think>` tags to explicit Certified NIM thinking
+controls. Serialize JSON prompt assets as compact strings because the Generator
+API's `prompt` and `negative_prompt` fields are strings, not nested JSON
+objects.
 
 ## Previous product documentation
 
@@ -930,6 +938,8 @@ Primary current evidence:
 - `cosmos3/serving_stack/patches/vllm/README.md:29-42`
 - `cosmos3/serving_stack/tests/test_reasoner_inference.py:620-934`
 - `cookbooks/cosmos3/reasoner/reasoner_prompt_guide.md:6-99,101-659`
+- `cookbooks/cosmos3/reasoner/run_with_nim.ipynb` task cells for canonical
+  assets, media ordering, 4-FPS video sampling, and task-specific recipes
 
 Before publication, audit every row against the completed guides just as for
 the Generator matrix. Historical Reasoner release 1.7.0 facts are provenance,
@@ -954,7 +964,8 @@ Repository root: `/Users/ekrivov/projects/cosmos`.
 | `cookbooks/cosmos3/reasoner/README.md` | Reasoner task organization and guide style |
 | `cookbooks/cosmos3/generator/transfer/README.md` | Transfer terminology, controls, and troubleshooting style |
 | `cookbooks/cosmos3/generator/action/README.md` | Action capability organization and domain terminology |
-| `cookbooks/cosmos3/reasoner/reasoner_prompt_guide.md` | Prompt and media ordering guidance |
+| `cookbooks/cosmos3/reasoner/reasoner_prompt_guide.md` | Prompt intent, expected task shapes, and coordinate conventions |
+| `cookbooks/cosmos3/reasoner/run_with_nim.ipynb` | Canonical Reasoner assets, NIM media transport, and per-case sampling recipes |
 
 ### Prior cookbook research
 

@@ -390,6 +390,9 @@ The documentation project is complete only when:
 - [x] Expand Action coverage with canonical AV forward/left/right and inverse
   cases, one UMI chunk, response validation, sequence/cadence concepts, and
   stateless policy-integration guidance.
+- [x] Expand Reasoner coverage from caption transport to a representative
+  nine-task catalog with explicit thinking controls, JSON schemas, semantic
+  output validation, and saved artifacts.
 - [ ] Validate both runtimes against the final released image and resolve or
   retain the release-dependent TBD ledger.
 - [ ] Update stale inbound cookbook/root NIM summaries if that broader scope is
@@ -471,6 +474,14 @@ transitions and `T+1` observations before fields, separates cadence and geometry
 controls, treats NIM policy calls as synchronous/stateless, and gates physical
 execution on checkpoint-specific transforms and independent safety checks.
 Static response tests cover shape, metadata, domain, and finite values.
+
+The Reasoner alignment reuses canonical captioning, temporal localization,
+embodied reasoning, grounding, visual trajectory, physical-plausibility, and
+situation-understanding assets. It adapts them to data URLs, 4-FPS video
+sampling, explicit NIM thinking controls, and OpenAI JSON schemas instead of
+copying prompt-authored `<think>` or Markdown-fence parsing. The task
+runner saves redacted request metadata, raw responses, final text, validated
+structured JSON, and parsed reasoning when returned.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public
