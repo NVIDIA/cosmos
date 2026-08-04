@@ -1,0 +1,23 @@
+diff --git a/eval/4_embodiments/6_motion_smoothness.py b/eval/4_embodiments/6_motion_smoothness.py
+--- a/eval/4_embodiments/6_motion_smoothness.py
++++ b/eval/4_embodiments/6_motion_smoothness.py
+@@ -53,6 +53,10 @@ def load_video_sliding_window(video_file, window_size=5):
+     vr = VideoReader(video_file)
+     total_frames = len(vr)
+     frames_by_group = []
++
++    # Decode the video once. Adjacent sliding windows overlap, so calling
++    # VideoReader.get_batch() for every window repeatedly decodes the same frames.
++    decoded_frames = vr.get_batch(list(range(total_frames))).asnumpy()
+ 
+     # Calculate the left and right extension of the window
+     left_extend = (window_size - 1) // 2
+@@ -72,7 +76,7 @@ def load_video_sliding_window(video_file, window_size=5):
+             else:
+                 frame_indices.insert(0, frame_indices[0])
+ 
+-        frames = vr.get_batch(frame_indices).asnumpy()
++        frames = decoded_frames[frame_indices]
+ 
+         # Special handling for the beginning frames to ensure consistency with window_size frames
+         if current_frame < left_extend:

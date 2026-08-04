@@ -2,7 +2,7 @@
 
 Generate images and video (with optional audio) from text, image or video prompts with
 `Cosmos3-Nano`, `Cosmos3-Super`, `Cosmos3-Edge`, and the published four-step
-distilled Cosmos3-Super students across Cosmos Framework, Diffusers, vLLM-Omni,
+distilled Cosmos3-Super students across Cosmos Framework, Diffusers, vLLM-Omni, TRT-LLM
 and NIM backends. Sample prompts live under [`assets/`](./assets).
 
 > **NIM scope:** `Cosmos3-Generator` NIM currently exposes Text2Video and
@@ -17,8 +17,10 @@ to get one generation running per backend — run them from this folder.
 Generator requires the Guardrail. Request access to the gated
 [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
 HF repository before running these examples. To disable the guardrail, set
-`enable_safety_checker=False` (Diffusers), `guardrails: false` (vLLM-Omni
-`extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework). For
+`enable_safety_checker=False` (Diffusers), `TRTLLM_DISABLE_COSMOS3_GUARDRAILS=1`
+or `use_guardrails: false` through `extra_params` (TensorRT-LLM),
+`guardrails: false` (vLLM-Omni `extra_params`/`extra_args`), or
+`--no-guardrails` (Cosmos Framework). For
 Generator NIM set `NIM_ENABLE_TEXT_GUARDRAILS=0 NIM_ENABLE_VIDEO_GUARDRAILS=0`.
 
 NIM backends use NGC authentication instead of Hugging Face login; see the
@@ -143,12 +145,17 @@ export_to_video(result.video, "/tmp/cosmos3_t2v_diffusers.mp4", fps=24)
 To run **Cosmos3-Super** instead, load the larger checkpoint:
 `Cosmos3OmniPipeline.from_pretrained("nvidia/Cosmos3-Super", ...)`.
 
+To run **Cosmos3-Edge** instead, load `nvidia/Cosmos3-Edge` and use its
+single-GPU, no-audio settings: `height=480`, `width=832`, `num_frames=121`,
+`num_inference_steps=50`, `guidance_scale=5.0`, and `flow_shift=3.0`.
+
 ### Notebook walkthrough
 
 [`run_with_diffusers.ipynb`](./run_with_diffusers.ipynb) is the full tutorial for
 the Diffusers backend: it provisions a dedicated venv, then walks through
 text-to-image, text-to-video, and image-to-video generation (with and without
-audio) using `Cosmos3OmniPipeline`, including how to preview the generated media.
+audio) using `Cosmos3OmniPipeline`, including a dedicated Cosmos3-Edge section
+with 480p text-to-image, text-to-video, and image-to-video examples and previews.
 
 ## Run with vLLM-Omni
 
@@ -244,6 +251,73 @@ image-to-video requests with audio on or off plus standard video-to-video
 requests. Server launch options (Nano and
 Super, tensor parallelism, layerwise offload, and CFG-parallel variants) live in
 the [shared environment setup guide](../../README.md#vllm-omni).
+
+## Run with TensorRT-LLM
+
+### Quickstart
+
+Set up the environment and start the server:
+[TensorRT-LLM setup](../../README.md#tensorrt-llm). The notebook targets the
+OpenAI-compatible VisualGen API served by `trtllm-serve`.
+
+Send a text-to-video request with the synchronous video API:
+
+```python
+import json
+from pathlib import Path
+
+import requests
+
+prompt = json.load(open("assets/prompts/text2video/robot_kitchen.json"))
+negative = json.load(open("assets/negative_prompts/text2video/neg_prompt.json"))
+
+response = requests.post(
+    "http://localhost:8000/v1/videos/generations",
+    json={
+        "prompt": json.dumps(prompt, ensure_ascii=True, separators=(",", ":")),
+        "negative_prompt": json.dumps(negative, ensure_ascii=True, separators=(",", ":")),
+        "size": "1280x720",
+        "seconds": 189 / 24,
+        "fps": 24,
+        "num_frames": 189,
+        "num_inference_steps": 35,
+        "guidance_scale": 6.0,
+        "max_sequence_length": 2048,
+        "seed": 0,
+        "extra_params": {
+            "use_resolution_template": False,
+            "use_duration_template": False,
+            "use_system_prompt": False,
+            "use_guardrails": True,
+        },
+    },
+)
+response.raise_for_status()
+suffix = ".avi" if "x-msvideo" in response.headers.get("content-type", "") else ".mp4"
+Path(f"/tmp/cosmos3_t2v_trtllm{suffix}").write_bytes(response.content)
+```
+
+For image-to-video, post multipart form data to the same endpoint with the
+reference image under `input_reference`. TensorRT-LLM Cosmos3 audio/action
+generation is not covered by this backend section.
+
+For text-to-image, use the same video generation endpoint with `num_frames=1`,
+`seconds=1`, and `fps=8`; TensorRT-LLM Cosmos3 returns a one-frame video
+response for this path. `num_frames` is passed explicitly so the server does not
+derive an eight-frame clip from `seconds * fps`.
+
+The TRT-LLM notebook always sends model-specific `extra_params`, so use a
+TensorRT-LLM release with the Cosmos3 VisualGen API schema. The notebook sets
+request-level `max_sequence_length=2048` for longer structured JSON prompts.
+
+### Notebook walkthrough
+
+[`run_with_trt_llm.ipynb`](./run_with_trt_llm.ipynb) is the full tutorial for the
+TensorRT-LLM backend: it walks through text-to-image, text-to-video, and
+image-to-video requests against an already-running VisualGen server. Server
+launch options (Nano and Super, FP8 dynamic quantization, CFG parallelism,
+Ulysses, and parallel VAE) live in the
+[shared environment setup guide](../../README.md#tensorrt-llm).
 
 ## Run with NIM
 

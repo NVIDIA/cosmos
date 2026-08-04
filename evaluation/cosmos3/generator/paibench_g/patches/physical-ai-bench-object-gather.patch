@@ -1,0 +1,20 @@
+diff --git a/generation/pbench/distributed.py b/generation/pbench/distributed.py
+--- a/generation/pbench/distributed.py
++++ b/generation/pbench/distributed.py
+@@ -112,9 +112,13 @@ def merge_list_of_list(results):
+ 
+ 
+ def gather_list_of_dict(results):
+-    results = all_gather(results)
+-    results = merge_list_of_list(results)
+-    return results
++    world_size = get_world_size()
++    if world_size == 1:
++        return results
++
++    gathered_results = [None] * world_size
++    torch.distributed.all_gather_object(gathered_results, results)
++    return merge_list_of_list(gathered_results)
+ 
+ 
+ def distribute_list_to_rank(data_list):

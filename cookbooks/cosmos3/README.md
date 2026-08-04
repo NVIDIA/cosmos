@@ -8,6 +8,7 @@ backend you want to run and follow that one section.
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
+| [TensorRT-LLM](#tensorrt-llm) | OpenAI-compatible VisualGen server (image/video generation) | Generator (Audiovisual) |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action/transfer) | Generator (Audiovisual, Action, **Transfer**) |
@@ -29,9 +30,10 @@ backend you want to run and follow that one section.
   export HF_TOKEN=<your_token>
   ```
 
-  To disable the guardrail, set `enable_safety_checker=False` (Diffusers), `guardrails: false`
-  (vLLM-Omni `extra_params`/`extra_args`), or
-  `--no-guardrails` (Cosmos Framework). For Generator NIM set environment variables `NIM_ENABLE_TEXT_GUARDRAILS=0 NIM_ENABLE_VIDEO_GUARDRAILS=0`.
+  To disable the guardrail, set `enable_safety_checker=False` (Diffusers),
+  `TRTLLM_DISABLE_COSMOS3_GUARDRAILS=1` or `use_guardrails: false` through
+  `extra_params` (TensorRT-LLM), `guardrails: false` (vLLM-Omni
+  `extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework). For Generator NIM set environment variables `NIM_ENABLE_TEXT_GUARDRAILS=0 NIM_ENABLE_VIDEO_GUARDRAILS=0`.
 - NIMs don't need Hugging Face access; instead, an NGC API key is required
   (used as `NGC_API_KEY`). You can generate one on [build.nvidia.com](https://build.nvidia.com/) or [NGC](https://catalog.ngc.nvidia.com/), then run `docker login nvcr.io` once (username `$oauthtoken`, password = your key). This repository uses the Reasoner NIM image `nvcr.io/nim/nvidia/cosmos3-reasoner` and the Generator NIM image `nvcr.io/nim/nvidia/cosmos3-generator`.
 - For the Cosmos Framework backend: access to `git@github.com:NVIDIA/cosmos-framework.git`.
@@ -162,6 +164,93 @@ uv pip install --torch-backend=cu130 \
   torchvision \
   transformers
 ```
+
+## TensorRT-LLM
+
+OpenAI-compatible **VisualGen** server for Generator audiovisual text-to-image,
+text-to-video, and image-to-video examples. Cosmos3 support was added in TensorRT-LLM PR
+[#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824); use a
+TensorRT-LLM checkout or package that includes that change.
+
+Install TensorRT-LLM following its upstream documentation.
+
+To build TensorRT-LLM from source, follow NVIDIA's
+[Build from Source](https://nvidia.github.io/TensorRT-LLM/installation/build-from-source.html)
+guide. This is the right path when you need a checkout that contains a recent
+Cosmos3 VisualGen change before it is available in your installed package or
+release image.
+
+```bash
+apt-get update && apt-get -y install git git-lfs
+git lfs install
+
+git clone https://github.com/NVIDIA/TensorRT-LLM.git
+cd TensorRT-LLM
+git submodule update --init --recursive
+git lfs pull
+
+# Pick a devel tag from the upstream build-from-source guide or NGC.
+docker pull nvcr.io/nvidia/tensorrt-llm/devel:<tag>
+docker run --rm -it \
+  --ipc=host \
+  --ulimit memlock=-1 --ulimit stack=67108864 \
+  --gpus=all \
+  --volume "$PWD":"$PWD" \
+  --workdir "$PWD" \
+  nvcr.io/nvidia/tensorrt-llm/devel:<tag>
+
+# Inside the container:
+python3 scripts/build_wheel.py --use_ccache --skip_building_wheel --linking_install_binary
+pip install -e .
+```
+
+For Python-only changes, the upstream guide also documents
+`TRTLLM_USE_PRECOMPILED=1 pip install -e .` to reuse precompiled binaries while
+installing the checkout in editable mode.
+
+Then install the Cosmos3 guardrail package in the same environment unless you
+explicitly disable guardrails before starting the server:
+
+```bash
+pip install cosmos_guardrail==0.3.0
+# If needed by your OpenCV stack:
+# pip uninstall opencv-python
+```
+
+Set the TensorRT-LLM source root for the shared VisualGen config YAMLs:
+
+```bash
+export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD/TensorRT-LLM}"
+export COSMOS3_TRTLLM_PORT="${COSMOS3_TRTLLM_PORT:-8000}"
+```
+
+**Cosmos3-Nano** (single GPU):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Nano \
+  --visual_gen_args "$TRTLLM_ROOT/examples/visual_gen/configs/cosmos3-nano-1gpu.yaml" \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+**Cosmos3-Super** (four GPUs; CFG parallelism with Ulysses, plus parallel VAE):
+
+```bash
+torchrun --nproc_per_node=4 -m tensorrt_llm.commands.serve \
+  nvidia/Cosmos3-Super \
+  --visual_gen_args "$TRTLLM_ROOT/examples/visual_gen/configs/cosmos3-super-4gpu.yaml" \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+The server exposes `/health`, `/v1/videos/generations`, `/v1/videos`, and
+`/v1/images/generations`. The audiovisual notebook uses the validated video
+generation endpoint for text-to-image, text-to-video, and image-to-video. Cosmos3
+text-to-image is sent as a one-frame video request, matching the TensorRT-LLM
+Cosmos3 pipeline; the notebook sends it as `num_frames=1`, `seconds=1`, and
+`fps=8` to satisfy the video request schema while preserving a single generated
+frame. Requests send Cosmos3 controls through `extra_params`,
+so use a TensorRT-LLM build that includes the Cosmos3 VisualGen API schema.
+The notebook sets request-level `max_sequence_length=2048` for longer structured
+JSON prompts.
 
 ## Transformers
 

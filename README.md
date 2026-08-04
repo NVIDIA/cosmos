@@ -294,9 +294,11 @@ authentication.
 
 Generator requires the Guardrail. Request access to the gated
 [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
-HF repository for Hugging Face based Generator paths. To disable the guardrail,
-set `enable_safety_checker=False` (Diffusers), `guardrails: false` (vLLM-Omni
+HF repository for Hugging Face based Generator paths. To disable the guardrail, set `enable_safety_checker=False` (Diffusers),
+`TRTLLM_DISABLE_COSMOS3_GUARDRAILS=1` or `use_guardrails: false` through
+`extra_params` (TensorRT-LLM), `guardrails: false` (vLLM-Omni
 `extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework).
+
 #### Generator with Diffusers
 
 <details>
@@ -1119,6 +1121,7 @@ We are building examples that show Cosmos 3 Super/Nano/Edge capabilities end to 
 | --- | --- | --- | --- | --- |
 | Generator (audiovisual) with Diffusers | Generator | Text-to-image, plus text-to-video and image-to-video each with or without synchronized sound, via `Cosmos3OmniPipeline`. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_diffusers.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_diffusers.ipynb) |
 | Generator (audiovisual) with Cosmos Framework | Generator | Text-to-image, plus text-to-video and image-to-video each with sound on or off, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_cosmos_framework.ipynb) |
+| Generator (audiovisual) with TensorRT-LLM | Generator | Text-to-image, text-to-video, and image-to-video against an OpenAI-compatible TensorRT-LLM VisualGen server. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_trt_llm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_trt_llm.ipynb) |
 | Generator (audiovisual) with vLLM-Omni | Generator | Text-to-image, text-to-video, image-to-video, and video-to-video, with supported sound modes, against an OpenAI-compatible vLLM-Omni server. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb) |
 | Generator (audiovisual) with NIM | Generator | Text2Video and Image2Video only, against the prebuilt `Cosmos3-Generator` NIM; requests use `POST /v1/infer` and decode JSON `b64_video` responses. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_nim.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_nim.ipynb) |
 | Generator (audiovisual) with SGLang | Generator | Text-to-image, plus text-to-video and image-to-video each with sound on or off, against an OpenAI-compatible SGLang server. | [Notebook](cookbooks/cosmos3/generator/audiovisual/run_with_sglang.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/audiovisual/run_with_sglang.ipynb) |
@@ -1136,11 +1139,11 @@ We are building examples that show Cosmos 3 Super/Nano/Edge capabilities end to 
 
 ### Inference Benchmarks
 
-Cosmos 3 latency and serving results live in [`inference_benchmarks.md`](inference_benchmarks.md). Generator sections report visual-generation and world-model latency in seconds across GPUs and integrated computing platforms, including image and video generation, forward and inverse dynamics, and policy generation. Reasoner sections report vLLM serving metrics under concurrent load, with additional eager Transformers measurements for embedded platforms. Empty cells mean a combination has not been measured yet, not that it is unsupported.
+Cosmos 3 latency and serving results live in [`inference_benchmarks.md`](inference_benchmarks.md). Generator sections report visual-generation latency in seconds across GPUs and integrated computing platforms, including text-to-image, text-to-video, and image-to-video. Cosmos3-Edge video benchmarks use 121 output frames at 480p unless noted otherwise. Reasoner sections report vLLM serving metrics under concurrent load, with additional eager Transformers measurements for embedded platforms. Empty cells mean a combination has not been measured yet, not that it is unsupported.
 
 | Benchmark | Surface | Model | What it covers |
 | --- | --- | --- | --- |
-| [Cosmos3-Edge generator](inference_benchmarks.md#cosmos3-edge-generator) | Generator | Cosmos3-Edge | Image-to-video, forward dynamics, inverse dynamics, and DROID policy latency across PyTorch and vLLM-Omni on data center, workstation, and embedded platforms |
+| [Cosmos3-Edge generator](inference_benchmarks.md#cosmos3-edge-generator) | Generator | Cosmos3-Edge | 121-frame image-to-video and text-to-video latency, plus text-to-image latency, across PyTorch and vLLM-Omni |
 | [Cosmos3-Nano generator](inference_benchmarks.md#cosmos3-nano-generator) | Generator | Cosmos3-Nano | Text-to-image, text-to-video, and image-to-video latency across PyTorch, vLLM-Omni, Diffusers, and NIM |
 | [Cosmos3-Super generator](inference_benchmarks.md#cosmos3-super-generator) | Generator | Cosmos3-Super | The same modalities and engines at the larger checkpoint scale |
 | [Cosmos3-Edge reasoner](inference_benchmarks.md#cosmos3-edge-reasoner) | Reasoner | Cosmos3-Edge | vLLM serving metrics on RTX PRO GPUs and eager Transformers prefill, decode, and end-to-end latency on embedded platforms |
@@ -1163,6 +1166,8 @@ Post-train Cosmos 3 on your own data with the supervised fine-tuning (SFT) cookb
 | [Reasoner SFT](cookbooks/cosmos3/reasoner/finetune/README.md) | Reasoner | Cosmos3-Edge | Physical-plausibility SFT on VideoPhy-2 | [`launch_sft_videophy2_edge.sh`](cookbooks/cosmos3/reasoner/finetune/launch_sft_videophy2_edge.sh) |
 
 These cookbooks run on the [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework), NVIDIA's end-to-end Physical AI framework for training and serving world models. For the full post-training reference — every config field, raw `torchrun`, resuming, and advanced parallelism — see the [Cosmos Framework training guide](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/training.md).
+
+For agent-driven Cosmos 3 Reasoner post-training, see [TAO agent skills](cookbooks/cosmos3/reasoner/finetune/README.md#tao-agent-skills), including tutorials for video question answering and Automated Optical Inspection (AOI).
 
 ### Export and Convert Checkpoints
 
