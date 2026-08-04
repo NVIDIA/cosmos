@@ -5,7 +5,8 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 Use this page to guide Generator output with edge, blur, depth, segmentation,
 or world-space-map (WSM) video controls. Transfer uses synchronous JSON
-`POST /v1/infer` with a top-level `transfer` object.
+`POST /v1/infer` with `model_mode=video2video` and a top-level `transfer`
+object.
 
 > Control and model availability must be confirmed in the released
 > [support matrix](support-matrix.md).
@@ -16,7 +17,7 @@ the workload requires them.
 
 ## Control types
 
-| Control | Precomputed video | Server-derived from top-level video | Preset |
+| Control | Precomputed video | Server-derived from `input_reference` | Preset |
 | --- | --- | --- | --- |
 | `edge` | Yes | Yes | `very_low`, `low`, `medium`, `high`, `very_high` |
 | `blur` | Yes | Yes | `none`, `very_low`, `low`, `medium`, `high`, `very_high` |
@@ -25,7 +26,7 @@ the workload requires them.
 | `wsm` | Required | No | None |
 
 At least one control must be enabled. Precomputed control media uses the same
-base64/data-URL/allowed-public-URL contract as top-level `video`.
+base64/data-URL/allowed-public-URL contract as `input_reference`.
 
 ## Run the examples
 
@@ -56,6 +57,7 @@ server-local `control_path` from a vLLM-Omni example:
 
 ```json
 {
+  "model_mode": "video2video",
   "prompt": "A cinematic scene that follows the supplied edge structure.",
   "transfer": {
     "edge": {
@@ -67,9 +69,9 @@ server-local `control_path` from a vLLM-Omni example:
     "num_video_frames_per_chunk": 121
   },
   "resolution": "720_16_9",
-  "num_output_frames": 121,
+  "num_frames": 121,
   "fps": 30.0,
-  "steps": 50,
+  "num_inference_steps": 50,
   "guidance_scale": 3.0,
   "flow_shift": 10.0,
   "seed": 0
@@ -82,13 +84,14 @@ data URL automatically.
 
 ## Advanced: derive edge or blur
 
-For server-derived controls, send the source video at top level and omit the
-nested control video:
+For server-derived controls, send the source video in `input_reference` and
+omit the nested control video:
 
 ```json
 {
+  "model_mode": "video2video",
   "prompt": "A red sports car drives through a dramatic snowy landscape.",
-  "video": "data:video/mp4;base64,<BASE64_SOURCE_VIDEO>",
+  "input_reference": "data:video/mp4;base64,<BASE64_SOURCE_VIDEO>",
   "transfer": {
     "edge": {
       "preset_edge_threshold": "medium"
@@ -99,17 +102,17 @@ nested control video:
     "num_video_frames_per_chunk": 121
   },
   "resolution": "720_16_9",
-  "num_output_frames": 121,
+  "num_frames": 121,
   "fps": 30.0,
-  "steps": 50,
+  "num_inference_steps": 50,
   "guidance_scale": 3.0,
   "seed": 0
 }
 ```
 
 `"edge": true` and `"blur": true` select the corresponding derived control
-without an explicit preset. A preset applies only to a derived control and
-cannot accompany nested `video`.
+without an explicit preset; they require `input_reference`. A preset applies
+only to a derived control and cannot accompany nested `video`.
 
 Depth, segmentation, and WSM cannot be derived by the server; supply a
 precomputed control video.
@@ -123,7 +126,7 @@ precomputed control video.
 | `num_conditional_frames` | Integer `>= 0` and smaller than chunk size | 1 |
 | `num_first_chunk_conditional_frames` | Integer `>= 0`; bounded by chunk and output | 0 |
 
-`num_first_chunk_conditional_frames > 0` requires top-level `video`.
+`num_first_chunk_conditional_frames > 0` requires `input_reference`.
 
 Current defaults by family:
 
@@ -166,8 +169,9 @@ override as a normal production setting. See
 
 ## Media and output
 
-Control and top-level videos accept raw base64, a video data URL, or an allowed
-HTTP(S) URL, with the current 100,000,000-character encoded ceiling. Prefer
+Control videos and video `input_reference` values accept raw base64, a video
+data URL, or an allowed HTTP(S) URL, with the current
+100,000,000-character encoded ceiling. Prefer
 data URLs for reproducible local assets. Exact released container/codec support
 and remote-fetch behavior remain validation-gated.
 
@@ -180,10 +184,10 @@ it to `transfer_<case>.mp4`.
 Transfer rejects:
 
 - an empty `transfer` object;
-- top-level `image`;
+- a `model_mode` other than `video2video`;
 - `action_params`;
 - V2V fields `condition_frame_indexes_vision` and `condition_video_keep`;
-- derived edge/blur without top-level `video`;
+- derived edge/blur without `input_reference`;
 - depth/seg/WSM without a nested non-empty control video;
 - a nested precomputed edge/blur video combined with its preset; and
 - chunk/conditioning values that violate their bounds.

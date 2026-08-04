@@ -133,6 +133,16 @@ the external key separate from `NGC_API_KEY`.
 These are advanced workload controls. Change one at a time and validate memory,
 latency, quality, and correctness.
 
+### Speculative decoding
+
+| Name | Default | Use |
+| --- | --- | --- |
+| `NIM_USE_DFLASH` | `false` | Enable DFlash speculative decoding for Nano Reasoner only |
+
+DFlash does not change the Reasoner request API. Startup rejects it for
+Generator and Super Reasoner. Confirm that the released Nano Reasoner includes
+the draft artifact before enabling it.
+
 ### Context and scheduling
 
 | Name | Default | Use |

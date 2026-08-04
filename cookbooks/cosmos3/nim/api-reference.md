@@ -32,52 +32,71 @@ their paths and operational meaning.
 ## Generator: `POST /v1/infer`
 
 The Generator accepts one synchronous JSON object and rejects unknown fields.
-Its shape selects the task:
+Every request must set `model_mode`; the task is no longer inferred from media
+or frame count.
 
-| Shape | Task |
-| --- | --- |
-| Non-empty `prompt`, no conditioning inputs, and `num_output_frames=1` | T2I |
-| Non-empty `prompt` without media and with 25 or more output frames | T2V |
-| Top-level `image` | I2V, or Action when paired with `action_params` |
-| Top-level `video` | V2V, inverse dynamics, or a derived Transfer control depending on nested fields |
-| Non-empty `action_params` | Forward dynamics, policy, or inverse dynamics |
-| Non-empty `transfer` | Edge, blur, depth, segmentation, WSM, or mixed Transfer |
+`NIM_MODEL_VARIANT` and `model_mode` select different things:
 
-The task guides define required inputs and invalid combinations.
+- `NIM_MODEL_VARIANT` chooses the checkpoint when the container starts.
+- `model_mode` chooses the task for one request.
+
+| `model_mode` | Task | `input_reference` |
+| --- | --- | --- |
+| `text2image` | T2I | Forbidden |
+| `text2video` | T2V | Forbidden |
+| `image2video` | I2V | Required image |
+| `video2video` | V2V | Required video |
+| `video2video` with `transfer` | Transfer | Optional for precomputed controls; required for derived edge/blur |
+| `forward_dynamics` | Forward dynamics | Required image |
+| `policy` | Policy | Required image |
+| `inverse_dynamics` | Inverse dynamics | Required video |
+
+The task guides define the remaining required inputs and invalid combinations.
 
 ### Common Generator request fields
 
-This table defines the shared envelope. Task pages own mode-specific defaults
-and required combinations.
-
 | Field | Type | Applies to |
 | --- | --- | --- |
-| `prompt` | string or null; maximum 20,000 characters | All Generator tasks; required when no media or nested task establishes the request |
-| `negative_prompt` | string or null; maximum 20,000 characters | Generation, Action, and Transfer when allowed by the selected model |
-| `image` | encoded string or null; maximum 20,000,000 characters | I2V, forward dynamics, and policy |
-| `video` | encoded string or null; maximum 100,000,000 characters and 75 MB decoded | V2V, inverse dynamics, and derived Transfer |
+| `model_mode` | required enum | Selects one of the seven modes above |
+| `prompt` | string or null; maximum 20,000 characters | Required and non-empty for T2I/T2V; task-dependent otherwise |
+| `negative_prompt` | string or null; maximum 20,000 characters | Tasks and models that permit negative prompting |
+| `input_reference` | encoded image/video string or null | I2V, V2V, Action, and derived Transfer; media type follows `model_mode` |
 | `seed` | non-negative integer or null | Reproducibility; the service generates one when omitted |
 | `guidance_scale` | finite number in `[1.0,7.0]` | Sampling when not owned by a specialist model |
-| `steps` | integer in `[1,100]` | Sampling when not owned by a specialist model |
+| `num_inference_steps` | integer in `[1,100]` | Sampling when not owned by a specialist model |
 | `flow_shift` | finite number | Sampling when not owned by a specialist model |
 | `resolution` | enum | Generation and Transfer; see [resolution keys](generation.md#resolution-keys) |
-| `num_output_frames` | integer | T2I selection, video cadence, Action, and Transfer |
+| `num_frames` | integer | Generation and Transfer; Action derives it and rejects the field |
 | `fps` | finite number in `[1.0,60.0]` | Video tasks; retained but not encoded for T2I |
 | `condition_frame_indexes_vision` | integer array or null | V2V only |
 | `condition_video_keep` | `first`, `last`, or null | V2V only |
-| `action_params` | object or null | [Action](action.md#action-parameter-reference) |
-| `transfer` | object or null | [Transfer](transfer.md) |
+| `action_params` | object | Action modes only; [Action](action.md#action-parameter-reference) |
+| `transfer` | object | `video2video` only; [Transfer](transfer.md) |
 
 Empty or whitespace-only media strings are treated as absent. Media
 representations and release codec boundaries are documented under
 [Generation media representations](generation.md#media-representations) and
 the [Support matrix](support-matrix.md#media-and-codecs).
 
+### Migrate older Generator requests
+
+| Previous contract | Current contract |
+| --- | --- |
+| Task inferred from request shape | Required `model_mode` |
+| `num_output_frames` | `num_frames` |
+| `steps` | `num_inference_steps` |
+| Top-level `image` or `video` | `input_reference` |
+| `action_params.mode` | Top-level `model_mode` |
+
+The old fields are not aliases; requests that use them return HTTP 422.
+Responses are unchanged.
+
 ### Strict JSON types
 
 Integer and finite-number fields use strict JSON types. For example, `"35"`,
-`35.0`, and `true` are not accepted spellings of integer `steps=35`. Unknown
-top-level and nested fields are rejected rather than silently ignored.
+`35.0`, and `true` are not accepted spellings of integer
+`num_inference_steps=35`. Unknown top-level and nested fields are rejected
+rather than silently ignored.
 
 ## Generator response
 

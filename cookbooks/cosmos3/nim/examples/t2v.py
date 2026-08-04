@@ -15,11 +15,12 @@ OUTPUT = Path(__file__).parent / "outputs" / "t2v.mp4"
 
 def main() -> None:
     request = {
+        "model_mode": "text2video",
         "prompt": "A storm trooper vacuuming the beach.",
         "resolution": "720_16_9",
-        "num_output_frames": 189,
+        "num_frames": 189,
         "fps": 24.0,
-        "steps": 35,
+        "num_inference_steps": 35,
         "guidance_scale": 6.0,
         "flow_shift": 10.0,
         "seed": 0,

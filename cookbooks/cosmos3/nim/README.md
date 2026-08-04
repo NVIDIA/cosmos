@@ -29,6 +29,11 @@ visible GPUs.
 4. For Generator, choose **latency** or **throughput**.
 5. Start the container. The NIM selects a compatible profile for the model,
    precision preference, performance objective, and host.
+6. For each Generator request, set the explicit top-level `model_mode` for the
+   task.
+
+`NIM_MODEL_VARIANT` chooses the checkpoint at startup; request `model_mode`
+chooses T2I, T2V, I2V, V2V, Transfer, or an Action operation.
 
 ### Generator variants
 

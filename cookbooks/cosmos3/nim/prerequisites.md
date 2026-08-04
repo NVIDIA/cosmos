@@ -34,7 +34,13 @@ Plan for:
 
 Do not add together the memory of heterogeneous GPUs to claim compatibility.
 Choose a released model/precision combination whose GPU count, per-device
-VRAM, and architecture requirements match the visible devices.
+VRAM, system RAM, and architecture requirements match the visible devices.
+
+Lower-VRAM profiles can keep model weights in system memory. The current Super
+BF16 model- and layer-offload profiles require 150 GiB of effective system
+memory. The NIM checks a container memory limit before host physical memory, so
+a lower Docker or Kubernetes limit can make an otherwise capable host
+incompatible. Confirm the requirement in the released support matrix.
 
 ## Software requirements
 

@@ -92,6 +92,11 @@ Use the same read-only mount pattern as the Generator, but select the Reasoner:
 For a completely local checkpoint, `NIM_DISABLE_MODEL_DOWNLOAD=1` prevents
 profile artifact download after source resolution.
 
+When `NIM_USE_DFLASH=1`, a Nano Reasoner workspace must also contain the draft
+artifact at `dflash-nano-bf16-v1/`, including `config.json` and
+`model.safetensors`. If that artifact is not part of the released BYOC
+contract, leave DFlash disabled or use the profile-owned checkpoint workflow.
+
 ### Hugging Face source
 
 The Reasoner also accepts:
@@ -108,7 +113,9 @@ The downloaded snapshot is stored under the writable NIM cache.
 
 An `hf://` source requires network materialization, so it cannot be combined
 with `NIM_DISABLE_MODEL_DOWNLOAD=1`. For offline operation, pre-download the
-checkpoint and use an absolute local path instead.
+checkpoint and use an absolute local path instead. If DFlash is enabled, the
+resolved repository must also include the nested draft artifact described
+above.
 
 ## Discovery and validation
 

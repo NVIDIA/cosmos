@@ -24,17 +24,18 @@ OUTPUT = Path(__file__).parent / "outputs" / "v2v.mp4"
 
 def main() -> None:
     request = {
+        "model_mode": "video2video",
         "prompt": (
             "A red sports car drives through a dramatic landscape with realistic "
             "motion, stable geometry, and cinematic lighting."
         ),
-        "video": media_to_data_url(VIDEO),
+        "input_reference": media_to_data_url(VIDEO),
         "condition_frame_indexes_vision": [0, 1],
         "condition_video_keep": "first",
         "resolution": "720",
-        "num_output_frames": 93,
+        "num_frames": 93,
         "fps": 24.0,
-        "steps": 35,
+        "num_inference_steps": 35,
         "guidance_scale": 6.0,
         "flow_shift": 10.0,
         "seed": 0,

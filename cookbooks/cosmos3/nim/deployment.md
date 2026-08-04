@@ -19,8 +19,8 @@ Users normally select a runtime and model, not a profile ID:
    visible GPUs.
 
 A profile is the resolved deployment configuration: model artifacts,
-precision, GPU layout, and any required residency/offload policy. Automatic
-selection prefers a compatible profile that avoids offload and makes effective
+precision, GPU layout, and any required GPU/system-memory residency policy.
+Automatic selection prefers a compatible profile that avoids offload and makes effective
 use of the available GPUs. Startup fails if the chosen model cannot run on the
 host.
 
@@ -52,7 +52,9 @@ The software defaults to `latency` when the selector is omitted.
 ### Select a Reasoner model
 
 Set `NIM_MODEL_TYPE=reasoner` and choose `NIM_MODEL_SIZE=nano` or `super`.
-Reasoner does not accept `NIM_MODEL_VARIANT` or `NIM_PERF_PROFILE`.
+Reasoner does not accept `NIM_MODEL_VARIANT` or `NIM_PERF_PROFILE`. Nano
+Reasoner can optionally enable DFlash speculative decoding with
+`NIM_USE_DFLASH=1`; see [Configuration](configuration.md#speculative-decoding).
 
 ### Precision selection
 
@@ -199,8 +201,10 @@ See [Configuration](configuration.md#advanced-profile-controls) for details.
 | `-e NGC_API_KEY` | Pass the exported NGC credential |
 | `-v ...:/opt/nim/.cache` | Persist model artifacts |
 
-Final resource values are release-specific. Do not infer support from these
-structural examples.
+Final resource values are release-specific. Some lower-VRAM profiles require
+substantial system RAM; the current Super BF16 offload profiles require 150
+GiB. Docker or Kubernetes memory limits count as the available system memory.
+Do not infer support from these structural examples.
 
 ## Next steps
 

@@ -25,15 +25,17 @@ OUTPUT = Path(__file__).parent / "outputs" / "i2v_4step.mp4"
 
 def main() -> None:
     # Start the NIM with NIM_MODEL_VARIANT=super-i2v-4step. The profile owns
-    # steps, guidance_scale, and flow_shift, so this request omits all three.
+    # num_inference_steps, guidance_scale, and flow_shift, so this request
+    # omits all three.
     request = {
+        "model_mode": "image2video",
         "prompt": (
             "A photorealistic red sports car drives through a modern city at "
             "golden hour, with cinematic lighting and smooth camera motion."
         ),
-        "image": media_to_data_url(IMAGE),
+        "input_reference": media_to_data_url(IMAGE),
         "resolution": "720",
-        "num_output_frames": 189,
+        "num_frames": 189,
         "fps": 24.0,
         "seed": 0,
     }

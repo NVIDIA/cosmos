@@ -15,6 +15,7 @@ OUTPUT = Path(__file__).parent / "outputs" / "t2i.jpg"
 
 def main() -> None:
     request = {
+        "model_mode": "text2image",
         "prompt": (
             "Photorealistic fashion-studio scene shot at eye level: a sleek "
             "white-and-aluminum robotic arm enters from the upper left, its "
@@ -35,9 +36,9 @@ def main() -> None:
         ),
         "negative_prompt": "",
         "resolution": "720_1_1",
-        "num_output_frames": 1,
+        "num_frames": 1,
         "fps": 24.0,
-        "steps": 50,
+        "num_inference_steps": 50,
         "guidance_scale": 4.0,
         "flow_shift": 3.0,
         "seed": 0,

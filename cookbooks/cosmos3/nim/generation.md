@@ -37,12 +37,13 @@ one output frame:
 curl -fsS -X POST "$NIM_URL/v1/infer" \
   -H 'Content-Type: application/json' \
   -d '{
+    "model_mode": "text2image",
     "prompt": "A white robotic arm draping sapphire satin over a dress mannequin in a softly lit fashion studio.",
     "negative_prompt": "",
     "resolution": "720_1_1",
-    "num_output_frames": 1,
+    "num_frames": 1,
     "fps": 24.0,
-    "steps": 50,
+    "num_inference_steps": 50,
     "guidance_scale": 4.0,
     "flow_shift": 3.0,
     "seed": 0
@@ -65,10 +66,9 @@ Or run the complete editable example:
 python cookbooks/cosmos3/nim/examples/t2i.py
 ```
 
-Setting `num_output_frames` to `1` selects T2I only when `image`, `video`,
-`transfer`, `action_params`, `condition_frame_indexes_vision`, and
-`condition_video_keep` are absent. Image-to-image is not supported; an `image`
-with one output frame is rejected rather than returned or edited.
+Set `model_mode` to `text2image`. T2I requires a non-empty prompt, forbids
+`input_reference`, and uses exactly `num_frames=1`. Image-to-image is not
+supported; use `image2video` when conditioning on an image.
 
 When their fields are omitted, T2I uses:
 
@@ -76,7 +76,7 @@ When their fields are omitted, T2I uses:
 | --- | --- |
 | `resolution` | `720_1_1` (960 × 960) |
 | `negative_prompt` | Empty string |
-| `steps` | `50` |
+| `num_inference_steps` | `50` |
 | `guidance_scale` | `4.0` |
 | `flow_shift` | `3.0` |
 | `fps` | `24.0`; retained in the request but not encoded in the JPEG |
@@ -87,15 +87,17 @@ send upstream image-only 1080 keys to this NIM.
 
 ## Text-to-video
 
-A T2V request has a non-empty `prompt` and no `image` or `video`:
+A T2V request sets `model_mode` to `text2video`, has a non-empty `prompt`, and
+omits `input_reference`:
 
 ```bash
 curl -fsS -X POST "$NIM_URL/v1/infer" \
   -H 'Content-Type: application/json' \
   -d '{
+    "model_mode": "text2video",
     "prompt": "A storm trooper vacuuming the beach.",
     "resolution": "720_16_9",
-    "num_output_frames": 189,
+    "num_frames": 189,
     "fps": 24.0,
     "seed": 0
   }' \
@@ -139,13 +141,14 @@ mime = mimetypes.guess_type(image_path.name)[0] or "image/jpeg"
 image = f"data:{mime};base64,{base64.b64encode(image_path.read_bytes()).decode()}"
 
 request = {
+    "model_mode": "image2video",
     "prompt": (
         "A photorealistic red sports car drives through a modern city at "
         "golden hour, with cinematic lighting and smooth camera motion."
     ),
-    "image": image,
+    "input_reference": image,
     "resolution": "720",
-    "num_output_frames": 189,
+    "num_frames": 189,
     "fps": 24.0,
     "seed": 0,
 }
@@ -167,22 +170,25 @@ The cookbook version uses an existing image asset:
 python cookbooks/cosmos3/nim/examples/i2v.py
 ```
 
-`image` and `video` are mutually exclusive. The current encoded-image ceiling
+`input_reference` is required and interpreted as an image because
+`model_mode=image2video`. The current encoded-image ceiling
 is 20,000,000 characters. Exact released decoder formats remain
 **TBD (release-dependent)**; JPEG, PNG, and WebP are the source-tested baseline.
 
 ## Video-to-video
 
-V2V uses top-level `video` without `transfer` or `action_params`:
+V2V sets `model_mode` to `video2video`, supplies a video in
+`input_reference`, and omits `transfer` and `action_params`:
 
 ```json
 {
+  "model_mode": "video2video",
   "prompt": "Keep the camera motion and change the environment to a snowy valley.",
-  "video": "data:video/mp4;base64,<BASE64_VIDEO>",
+  "input_reference": "data:video/mp4;base64,<BASE64_VIDEO>",
   "condition_frame_indexes_vision": [0, 1],
   "condition_video_keep": "first",
   "resolution": "720",
-  "num_output_frames": 93,
+  "num_frames": 93,
   "fps": 24.0,
   "seed": 0
 }
@@ -232,7 +238,8 @@ python cookbooks/cosmos3/nim/examples/i2v_4step.py
 ```
 
 Each script must run against the matching active model. Four-step requests must
-omit `steps`, `guidance_scale`, and `flow_shift`; the model owns those values.
+omit `num_inference_steps`, `guidance_scale`, and `flow_shift`; the model owns
+those values.
 `seed` and other ordinary fields remain available.
 
 ## Choose resolution, frames, and FPS
@@ -244,7 +251,7 @@ frames. The video VAE has temporal compression factor 4 and a causal first
 frame, so video pixel-frame counts follow:
 
 ```text
-num_output_frames = 1 + 4k
+num_frames = 1 + 4k
 ```
 
 Current video source ceilings are:
@@ -256,7 +263,7 @@ Current video source ceilings are:
 | `720` | 197 |
 
 The largest V2V `condition_frame_indexes_vision` value must fit the output
-latent-frame range. For `num_output_frames=93`, there are 24 latent frames and
+latent-frame range. For `num_frames=93`, there are 24 latent frames and
 the largest valid conditioning index is 23.
 
 ### Resolution keys
@@ -281,9 +288,9 @@ suffixes select distinct shapes.
 - `fps` accepts finite values from 1 through 60; 10–30 is recommended.
 - T2I retains `fps` for the shared request model, but JPEG output has no frame
   rate.
-- For video, approximate duration is `num_output_frames / fps` seconds.
-- More `steps` usually costs more latency. Start with 50 for T2I and 35 for
-  standard video generation unless a validated recipe calls for another
+- For video, approximate duration is `num_frames / fps` seconds.
+- More `num_inference_steps` usually costs more latency. Start with 50 for T2I
+  and 35 for standard video generation unless a validated recipe calls for another
   value.
 
 ## Media representations
@@ -346,10 +353,11 @@ ffmpeg -i t2v.mp4 -c:v libx264 -crf 18 -pix_fmt yuv420p t2v-h264.mp4
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
-| HTTP 422, extra field | A vLLM-Omni field such as `input_reference`, `extra_params`, or request-level `guardrails` was copied into `/v1/infer` | Translate the request using the [API reference](api-reference.md); unknown fields are rejected |
+| HTTP 422, extra field | A vLLM-Omni field such as `extra_params`, `control_path`, or request-level `guardrails` was copied into `/v1/infer` | Translate the request using the [API reference](api-reference.md); unknown fields are rejected |
 | HTTP 422, frame cadence | A video request has fewer than 25 frames, is not on the `4k+1` cadence, or exceeds its tier ceiling | Pick a valid video count and recheck the tier |
-| HTTP 422, T2I conditioning | `num_output_frames=1` was combined with image, video, Transfer, action, or V2V controls | Remove all conditioning inputs for T2I, or request at least 25 frames for the intended video mode |
-| HTTP 422, image and video conflict | Both top-level media fields are present | Send only the field required by the intended mode |
+| HTTP 422, missing or invalid mode | `model_mode` is absent or conflicts with fields in the request | Set the explicit mode and include only its fields |
+| HTTP 422, deprecated field | The request uses `image`, `video`, `num_output_frames`, or `steps` | Migrate to `input_reference`, `num_frames`, and `num_inference_steps` |
+| HTTP 422, reference mismatch | `input_reference` is missing, forbidden, or does not match `model_mode` | Omit it for text modes; provide the required image/video for conditioned modes |
 | URL media fails | URL inputs are disabled, unreachable from the container, or rejected by the decoder | Use a data URL and verify `NIM_ALLOW_URL_INPUT` |
 | Request times out in the client | Generation exceeded the client timeout, not necessarily the server timeout | Use the examples' 30-minute timeout and inspect NIM logs |
 | MP4 does not play | Player lacks VP9-in-MP4 support | Use `mpv`/`ffplay` or re-encode to H.264 |

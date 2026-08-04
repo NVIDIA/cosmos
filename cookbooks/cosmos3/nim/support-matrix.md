@@ -28,15 +28,20 @@ A Generator specialist rejects requests outside its task contract. Model
 presence in the implementation does not mean that every model is included in
 every image release.
 
+Nano Reasoner can optionally use DFlash speculative decoding. The released
+profile must include the draft artifact; Generator and Super Reasoner do not
+support `NIM_USE_DFLASH=1`.
+
 ## Released hardware configurations
 
 A configuration is supported only when one released row matches the selected
-model, precision, GPU architecture, GPU count, and per-device memory.
+model, precision, GPU architecture, GPU count, per-device memory, and any
+system-memory requirement.
 
-| Runtime/model | Precision | GPU architecture | GPUs | Per-device VRAM | Performance/offload | Transfer | Status |
-| --- | --- | --- | ---: | ---: | --- | --- | --- |
-| Generator variants | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | Release validation pending |
-| Reasoner Nano/Super | **TBD** | **TBD** | **TBD** | **TBD** | N/A | N/A | Release validation pending |
+| Runtime/model | Precision | GPU architecture | GPUs | Per-device VRAM | System RAM | Performance/offload | Transfer | Status |
+| --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
+| Generator variants | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | Release validation pending |
+| Reasoner Nano/Super | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | N/A | N/A | Release validation pending |
 
 Populate this table from the released image manifest and approved test
 inventory. If a combination is not listed, treat it as unsupported.
@@ -69,8 +74,11 @@ The software default is latency, but production deployment should make the
 choice explicit. Reasoner does not use this selector.
 
 Some Generator releases can provide model or guardrail offload profiles. They
-reduce resident GPU memory at a latency cost. Availability, minimum memory, and
-performance expectations must appear in the released table before use.
+reduce resident GPU memory at a latency cost and can move weights into system
+RAM. Current Super BF16 model- and layer-offload profiles require 150 GiB of
+effective system memory, measured against the container limit first. The
+released table must confirm availability, GPU and system-memory floors, and
+performance expectations before use.
 
 ## Transfer headroom
 

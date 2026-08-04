@@ -159,6 +159,17 @@ by default in the current source; exact feature support in the released image
 is **TBD (release-dependent)**. Keep video requests on Chat Completions until
 the released Responses video path is validated.
 
+## Optional Nano Reasoner DFlash
+
+Set `NIM_USE_DFLASH=1` at launch to enable DFlash speculative decoding for a
+Nano Reasoner. The request routes and payloads do not change. Startup rejects
+the option for Generator and Super Reasoner, or when the required draft
+artifact is unavailable.
+
+Treat DFlash as an advanced performance option. Compare latency, throughput,
+and output quality on representative requests before production use. See
+[Reasoner configuration](configuration.md#speculative-decoding).
+
 ## Advanced sampling and request extensions
 
 Current normalization supplies these values when omitted:

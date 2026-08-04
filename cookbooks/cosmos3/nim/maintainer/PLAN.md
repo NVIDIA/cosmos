@@ -15,7 +15,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 - Source discovery and information-architecture planning are complete.
 - Public documentation has been refreshed against Cosmos3 NIM source commit
-  `243e05f8eecb44766d90f2843adb46356ae77a17`.
+  `22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480`.
 - The user journey now starts with runtime, model, optional precision, and the
   Generator latency/throughput choice; profile IDs are advanced controls.
 - Maintainer planning and provenance live under `maintainer/`, outside the
@@ -352,6 +352,9 @@ The documentation project is complete only when:
 - [x] Reconcile the 2026-08-03 NIM drift: model variants, shared BYOC,
   Nano-DROID/action-only output, Transfer VRAM admission, profile-backed
   guardrail residency, and Reasoner video pruning.
+- [x] Reconcile the 2026-08-04 drift: explicit Generator `model_mode`, renamed
+  request fields, Nano Reasoner DFlash, and system-memory admission for Super
+  BF16 offload profiles.
 - [x] Create the public scaffold, API reference, and twelve Python files,
   including the shared helper and specialist four-step T2I/I2V requests.
 - [x] Write the generation, reasoning, action, and transfer guides.
@@ -406,16 +409,21 @@ contract, JPEG response and example, T2I prompt upsampling and
 visual-guardrail coverage, and removed four obsolete Generator execution
 variables.
 
-The full update refresh was performed from NIM source commit
-`243e05f8eecb44766d90f2843adb46356ae77a17`. It supersedes the older current
-contracts for profile inventory, BYOC, Generator response modality, Action,
-Transfer admission, and advanced environment variables. The source profile
-generator produced 122 development rows (115 Generator and 7 Reasoner) in a
-temporary output; those rows remain pre-release evidence. Offline validation
-compiled all twelve examples, parsed every JSON fence, checked local Markdown
-links/anchors and SPDX headers, verified profile parallelism invariants and all
-seven variants, asserted the refreshed source contracts, and passed
-`git diff --check`.
+The full update refresh was first performed from NIM source commit
+`243e05f8eecb44766d90f2843adb46356ae77a17`, then advanced to
+`22e36fd6d8a5c2eb709b1ec937d4bb5ad1a36480`. The latest refresh adds the
+breaking explicit-mode Generator request contract, Nano Reasoner DFlash, and
+system-memory admission for Super BF16 offload profiles. It supersedes the
+older current contracts for profile inventory, BYOC, Generator request/response
+modality, Action, Transfer admission, and advanced environment variables. The
+source profile generator produced 122 development rows (115 Generator and 7
+Reasoner) in a temporary output; those rows remain pre-release evidence.
+Offline validation compiled all twelve examples, validated 16 cookbook
+Generator payloads and eight documented JSON payloads against the latest
+`Cosmos3Request`, parsed every JSON fence, checked local Markdown links/anchors
+and SPDX headers, verified profile parallelism, DFlash artifacts, system-memory
+tags, and all seven variants, asserted the refreshed source contracts, and
+passed `git diff --check`.
 
 A later editorial pass removed duplicated launch/configuration material,
 reordered basic tasks before specialist behavior, reduced repeated status

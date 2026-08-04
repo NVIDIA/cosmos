@@ -5,7 +5,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 Use this page for forward dynamics, policy, and inverse dynamics requests. All
 three use a compatible **Generator** model and synchronous JSON
-`POST /v1/infer`; the nested `action_params.mode` selects the task.
+`POST /v1/infer`; top-level `model_mode` selects the task.
 
 > Model and domain availability must be confirmed in the released
 > [support matrix](support-matrix.md).
@@ -20,14 +20,15 @@ contracts:
 
 ## Action modes
 
-| Mode | Input | Output |
+| `model_mode` | Input | Output |
 | --- | --- | --- |
 | `forward_dynamics` | Conditioning image plus action trajectory `[T,D]` | Rollout video; `action` response is null |
 | `policy` | Conditioning image, task prompt, and optional state | Rollout video plus predicted action trajectory, or action only for a compatible specialist profile |
 | `inverse_dynamics` | Conditioning video and optional task prompt | Video plus predicted action trajectory |
 
-Action requests must not set top-level `resolution`. The backend derives the
-shape from the conditioning media and `action_params.image_size`.
+Action requests must not set top-level `resolution` or `num_frames`. The
+backend derives the shape from the conditioning media and the frame count from
+`action_params.action_chunk_size`.
 
 ## Domains and dimensions
 
@@ -52,7 +53,6 @@ that specialist contract.
 
 | Field | Type/default | Contract |
 | --- | --- | --- |
-| `mode` | required enum | `forward_dynamics`, `policy`, or `inverse_dynamics` |
 | `domain_name` | required enum | `av`, `bridge_orig_lerobot`, `droid_lerobot`, or `umi` |
 | `action_chunk_size` | required integer | Positive multiple of 4; output frames equal this value plus 1 |
 | `action` | number array `[T,D]` or null | Required only for forward dynamics; `T=action_chunk_size` and `D=raw_action_dim` |
@@ -90,10 +90,10 @@ The public example constructs this request after reading
 
 ```python
 request = {
+    "model_mode": "forward_dynamics",
     "prompt": "You are an autonomous vehicle planning system.",
-    "image": image_data_url,
+    "input_reference": image_data_url,
     "action_params": {
-        "mode": "forward_dynamics",
         "domain_name": "av",
         "action_chunk_size": 60,
         "action": trajectory,  # 60 rows × 9 numeric values
@@ -102,9 +102,8 @@ request = {
         "image_size": "480",
         "action_fps": 10.0,
     },
-    "num_output_frames": 61,
     "fps": 10.0,
-    "steps": 30,
+    "num_inference_steps": 30,
     "guidance_scale": 1.0,
     "flow_shift": 10.0,
     "seed": 0,
@@ -124,10 +123,10 @@ Policy predicts the action instead of receiving it:
 
 ```json
 {
+  "model_mode": "policy",
   "prompt": "You are an autonomous vehicle planning system.",
-  "image": "data:image/jpeg;base64,<BASE64_IMAGE>",
+  "input_reference": "data:image/jpeg;base64,<BASE64_IMAGE>",
   "action_params": {
-    "mode": "policy",
     "domain_name": "av",
     "action_chunk_size": 60,
     "raw_action_dim": 9,
@@ -135,9 +134,8 @@ Policy predicts the action instead of receiving it:
     "image_size": "480",
     "action_fps": 10.0
   },
-  "num_output_frames": 61,
   "fps": 10.0,
-  "steps": 30,
+  "num_inference_steps": 30,
   "guidance_scale": 1.0,
   "seed": 0
 }
@@ -167,10 +165,10 @@ vLLM-Omni endpoint:
 
 ```json
 {
+  "model_mode": "policy",
   "prompt": "Remove the crumpled paper from the sink and place it in the trash can.",
-  "image": "data:image/jpeg;base64,<COMPOSED_DROID_OBSERVATION>",
+  "input_reference": "data:image/jpeg;base64,<COMPOSED_DROID_OBSERVATION>",
   "action_params": {
-    "mode": "policy",
     "domain_name": "droid_lerobot",
     "action_chunk_size": 32,
     "observation": {
@@ -192,11 +190,11 @@ The client must omit profile-owned fields:
 
 - `raw_action_dim`, `action_space`, `image_size`, `action_fps`,
   `history_length`, and `use_state` inside `action_params`; and
-- top-level `fps`, `num_output_frames`, and `negative_prompt`.
+- top-level `fps`, `num_frames`, and `negative_prompt`.
 
 The model returns 32 actions with width 8. It defaults to four inference steps,
-guidance `3.0`, and flow shift `5.0`; `steps`, `guidance_scale`, `flow_shift`,
-and `seed` remain overridable.
+guidance `3.0`, and flow shift `5.0`; `num_inference_steps`, `guidance_scale`,
+`flow_shift`, and `seed` remain overridable.
 
 A successful response is action-only:
 
@@ -223,10 +221,10 @@ Inverse dynamics uses a video instead of an image:
 
 ```json
 {
+  "model_mode": "inverse_dynamics",
   "prompt": "Put the pot to the left of the purple item.",
-  "video": "https://example.com/bridge-task.mp4",
+  "input_reference": "https://example.com/bridge-task.mp4",
   "action_params": {
-    "mode": "inverse_dynamics",
     "domain_name": "bridge_orig_lerobot",
     "action_chunk_size": 16,
     "raw_action_dim": 10,
@@ -234,9 +232,8 @@ Inverse dynamics uses a video instead of an image:
     "image_size": "480",
     "action_fps": 5.0
   },
-  "num_output_frames": 17,
   "fps": 5.0,
-  "steps": 30,
+  "num_inference_steps": 30,
   "guidance_scale": 1.0,
   "seed": 0
 }
@@ -271,11 +268,12 @@ media and action artifacts independently.
 
 ## Defaults and validation
 
-For general Action profiles, omitted fields use `steps=30`,
-`guidance_scale=1.0`, and `fps=10.0`, and the service derives
-`num_output_frames`. Specialist profiles can replace these defaults and own
-additional fields. Explicit values are validated against the selected
-profile's contract and shared Generator ranges.
+For general Action profiles, omitted fields use `num_inference_steps=30`,
+`guidance_scale=1.0`, and `fps=10.0`. The service always derives `num_frames`
+as `action_chunk_size + 1`; Action requests reject an explicit `num_frames`.
+Specialist profiles can replace these defaults and own additional fields.
+Explicit values are validated against the selected profile's contract and
+shared Generator ranges.
 
 Action mode rejects:
 
@@ -295,7 +293,7 @@ configuration; see [operations.md](operations.md#guardrails).
 | --- | --- |
 | `action_chunk_size` is not a positive multiple of 4 | Use 60 for the AV example or 16 for the robot examples |
 | Action rows or width do not match | Validate `[T,D]` before sending; use the domain table above |
-| `num_output_frames` mismatch | Omit it or set exactly `action_chunk_size + 1` |
+| `num_frames` is rejected | Omit it; the service always derives `action_chunk_size + 1` |
 | Wrong conditioning media | Image for forward/policy; video for inverse dynamics |
 | Profile/model cannot run the action case | Confirm the released image's action-capable model variant and supported domain |
 | Nano-DROID rejects profile-owned fields | Omit fixed action dimensions, cadence, state flags, and top-level media-output controls |

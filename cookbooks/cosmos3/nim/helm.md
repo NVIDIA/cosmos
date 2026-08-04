@@ -64,7 +64,8 @@ Map the following concepts to names from the released chart schema:
 - `NIM_MODEL_VARIANT` for Generator or `NIM_MODEL_SIZE` for Reasoner;
 - `NIM_PERF_PROFILE` for Generator;
 - optional `NIM_PRECISION` pin;
-- GPU limits matching a released configuration;
+- GPU and system-memory limits matching a released configuration, including
+  any additional RAM required by model offload;
 - a writable model cache mounted at `/opt/nim/.cache`;
 - an adequately sized in-memory `/dev/shm` volume;
 - service port `8000`, unless deliberately changed;
