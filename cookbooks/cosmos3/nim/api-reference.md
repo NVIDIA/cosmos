@@ -24,6 +24,10 @@ Reasoner completion APIs, and a Reasoner profile does not serve `/v1/infer`.
 | Reasoner | `POST /v1/responses` and optional state routes | [Reasoning](reasoning.md#use-the-responses-api) |
 | Reasoner | `POST /v1/completions` legacy-compatible route | Verify the released schema before use |
 
+Reasoner Chat Completions supports media, parsed-reasoning controls, developer
+instructions, and OpenAI tool calls as described in
+[Reasoning](reasoning.md#reasoning-instructions-and-tool-calls).
+
 The NIM framework also exposes health, model, metadata, manifest, version,
 license, metrics, and OpenAPI endpoints. See
 [Inspect the running service](operations.md#inspect-the-running-service) for

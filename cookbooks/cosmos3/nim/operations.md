@@ -271,7 +271,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
 | Model not found | Client hard-coded the wrong served ID | Discover it through `/v1/models` |
-| HTTP 400 sampling error | Sampling value/type or extension placement is invalid | Check current ranges and place NIM/vLLM extensions in `extra_body` |
+| HTTP 400 request error | Sampling, `include_reasoning`, `top_logprobs`, or extension placement is invalid | Check current ranges, use strict JSON types, and place NIM/vLLM extensions in `extra_body` |
 | HTTP 422 media error | Media content/order/count/preprocessing failed | Put media before text, use data URLs, and check operator media limits |
 | Responses route 404 | Route disabled or absent in this release | Use Chat Completions and inspect live OpenAPI/operator setting |
 | Retrieval/cancel does not work | Response storage/background support is not enabled | Use `store=false` create flow or validate storage configuration for the release |
