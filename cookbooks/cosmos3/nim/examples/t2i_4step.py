@@ -7,10 +7,20 @@ import os
 from pathlib import Path
 
 import requests
-from common import decode_image
+from common import compact_json_file, decode_image
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
-OUTPUT = Path(__file__).parent / "outputs" / "t2i_4step.jpg"
+COSMOS3_ROOT = Path(__file__).resolve().parents[2]
+PROMPT = (
+    COSMOS3_ROOT
+    / "generator"
+    / "audiovisual"
+    / "assets"
+    / "prompts"
+    / "text2image"
+    / "robot_draping.json"
+)
+OUTPUT = Path(__file__).parent / "outputs" / "t2i_robot_draping_4step.jpg"
 
 
 def main() -> None:
@@ -19,10 +29,7 @@ def main() -> None:
     # omits all three.
     request = {
         "model_mode": "text2image",
-        "prompt": (
-            "A white robotic arm drapes sapphire satin over a dress mannequin "
-            "in a softly lit fashion studio, photorealistic editorial style."
-        ),
+        "prompt": compact_json_file(PROMPT),
         "negative_prompt": "",
         "resolution": "720_1_1",
         "num_frames": 1,

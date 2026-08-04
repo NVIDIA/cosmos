@@ -5,6 +5,7 @@
 
 import base64
 import binascii
+import json
 from pathlib import Path
 
 _MIME_TYPES = {
@@ -14,6 +15,15 @@ _MIME_TYPES = {
     ".png": "image/png",
     ".webp": "image/webp",
 }
+
+
+def compact_json_file(path: Path) -> str:
+    """Load a JSON asset and return the compact string expected by Generator."""
+    path = path.resolve()
+    if not path.is_file():
+        raise FileNotFoundError(f"JSON file does not exist: {path}")
+    value = json.loads(path.read_text(encoding="utf-8"))
+    return json.dumps(value, ensure_ascii=True, separators=(",", ":"))
 
 
 def media_to_data_url(path: Path) -> str:

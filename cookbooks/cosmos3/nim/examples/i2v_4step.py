@@ -7,20 +7,15 @@ import os
 from pathlib import Path
 
 import requests
-from common import decode_video, media_to_data_url
+from common import compact_json_file, decode_video, media_to_data_url
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
-IMAGE = (
-    COSMOS3_ROOT
-    / "generator"
-    / "audiovisual"
-    / "assets"
-    / "images"
-    / "image2video"
-    / "car_driving.jpg"
-)
-OUTPUT = Path(__file__).parent / "outputs" / "i2v_4step.mp4"
+ASSETS = COSMOS3_ROOT / "generator" / "audiovisual" / "assets"
+IMAGE = ASSETS / "images" / "image2video" / "car_driving.jpg"
+PROMPT = ASSETS / "prompts" / "image2video" / "car_driving.json"
+NEGATIVE_PROMPT = ASSETS / "negative_prompts" / "image2video" / "neg_prompt.json"
+OUTPUT = Path(__file__).parent / "outputs" / "i2v_car_driving_4step.mp4"
 
 
 def main() -> None:
@@ -29,10 +24,8 @@ def main() -> None:
     # omits all three.
     request = {
         "model_mode": "image2video",
-        "prompt": (
-            "A photorealistic red sports car drives through a modern city at "
-            "golden hour, with cinematic lighting and smooth camera motion."
-        ),
+        "prompt": compact_json_file(PROMPT),
+        "negative_prompt": compact_json_file(NEGATIVE_PROMPT),
         "input_reference": media_to_data_url(IMAGE),
         "resolution": "720",
         "num_frames": 189,

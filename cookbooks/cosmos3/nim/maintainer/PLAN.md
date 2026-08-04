@@ -105,7 +105,7 @@ or a hand-maintained machine-readable manifest.
 | `transfer.md` | Complete `transfer` contract, controls, defaults, derived/precomputed forms, combinations, and chunking |
 | `operations.md` | Health/readiness, management endpoints, generic errors, metrics, logs, guardrails, diagnostics, and troubleshooting |
 | `acknowledgements.md` | Approved third-party notices for the exact released image only |
-| `examples/` | Minimal editable requests with API calls and primary response handling visible in each script; only strict local-media encoding and image/video decoding are shared |
+| `examples/` | Minimal editable requests with API calls and primary response handling visible in each script; strict local-media encoding, response decoding, and canonical JSON-prompt serialization are shared |
 
 When a workflow needs a fact owned by another page, summarize only what is
 needed and link to the canonical section. Do not duplicate full field,
@@ -159,8 +159,9 @@ does not repeat task-specific tables.
 
 ### Phase 3: Create runnable cookbook examples
 
-1. Keep `common.py` limited to strict MIME-aware local-media encoding and
-   strict image/video decoding.
+1. Keep `common.py` limited to strict MIME-aware local-media encoding,
+   image/video decoding, and compact serialization of reviewed JSON prompt
+   assets.
 2. Maintain one local script for each planned task surface, showing its URL/client,
    request call, status handling, and primary output directly.
 3. Reuse existing cookbook assets.
@@ -380,6 +381,9 @@ The documentation project is complete only when:
 - [x] Establish independently maintained cookbook teaching examples with direct
   API calls, shallow media helpers, and one selected action/transfer request per
   invocation.
+- [x] Align the T2I, T2V, I2V, and four-step examples with the shared
+  audiovisual `robot_draping`, `robot_kitchen`, and `car_driving` scenarios
+  while retaining NIM-specific requests and sampling contracts.
 - [ ] Validate both runtimes against the final released image and resolve or
   retain the release-dependent TBD ledger.
 - [ ] Update stale inbound cookbook/root NIM summaries if that broader scope is
@@ -441,6 +445,12 @@ explicit thinking controls, strict reasoning/logprob types, and advertised
 Qwen3/Hermes parser settings directly against the import-safe source contract.
 The changed development hardware floors remain maintainer evidence because the
 public release matrix is still TBD.
+
+The generation-example alignment reuses the reviewed audiovisual structured
+prompts, negative prompts, and I2V image without copying assets into the NIM
+folder. T2I retains its NIM-native sampling recipe; T2V and I2V use the common
+video recipe. Four-step requests reuse the same scenarios while continuing to
+omit the three profile-owned sampling fields.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public
