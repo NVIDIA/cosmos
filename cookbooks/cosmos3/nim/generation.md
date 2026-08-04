@@ -210,6 +210,22 @@ prompt, and saves `examples/outputs/i2v_car_driving.mp4`.
 is 20,000,000 characters. Exact released decoder formats remain
 **TBD (release-dependent)**; JPEG, PNG, and WebP are the source-tested baseline.
 
+## Choose a video-conditioned workflow
+
+Use the intent and distinguishing fields—not only the presence of media—to
+choose the request shape:
+
+| Intent | `model_mode` | Distinguishing input | Guide |
+| --- | --- | --- | --- |
+| Animate a still image | `image2video` | Image `input_reference` | [Image-to-video](#image-to-video) |
+| Continue or transform a source video | `video2video` | Video `input_reference` plus optional V2V conditioning fields | [Video-to-video](#video-to-video) |
+| Follow an edge, blur, depth, segmentation, or WSM control | `video2video` | Non-empty `transfer`; top-level video only for a derived control | [Transfer](transfer.md) |
+| Estimate actions from an observed video | `inverse_dynamics` | Video `input_reference` plus `action_params` | [Action](action.md#inverse-dynamics) |
+
+Plain V2V, Transfer, and inverse dynamics are separate contracts. Do not combine
+V2V conditioning fields with `transfer`, or combine either with
+`action_params`; conflicting shapes return HTTP 422.
+
 ## Video-to-video
 
 V2V sets `model_mode` to `video2video`, supplies a video in

@@ -4,16 +4,16 @@
 """Run one Cosmos3 transfer request using a precomputed or derived control."""
 
 import argparse
-import json
 import os
 from pathlib import Path
 
 import requests
-from common import decode_video, media_to_data_url
+from common import compact_json_file, decode_video, media_to_data_url
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
 TRANSFER_ROOT = COSMOS3_ROOT / "generator" / "transfer" / "assets"
+NEGATIVE_PROMPT = TRANSFER_ROOT / "negative_prompt.json"
 DERIVED_VIDEO = (
     COSMOS3_ROOT
     / "generator"
@@ -32,13 +32,11 @@ CASES = tuple(f"precomputed_{hint}" for hint in PRECOMPUTED_HINTS) + (
 
 def precomputed_request(hint: str) -> dict:
     prompt_path = TRANSFER_ROOT / hint / "prompt.json"
-    prompt = json.dumps(
-        json.loads(prompt_path.read_text(encoding="utf-8")), separators=(",", ":")
-    )
     control_path = TRANSFER_ROOT / hint / f"control_{hint}.mp4"
     return {
         "model_mode": "video2video",
-        "prompt": prompt,
+        "prompt": compact_json_file(prompt_path),
+        "negative_prompt": compact_json_file(NEGATIVE_PROMPT),
         "transfer": {
             hint: {"video": media_to_data_url(control_path)},
             "control_guidance": (
@@ -46,7 +44,7 @@ def precomputed_request(hint: str) -> dict:
             ),
             "num_conditional_frames": 1,
             "num_first_chunk_conditional_frames": 0,
-            "num_video_frames_per_chunk": 121,
+            "num_video_frames_per_chunk": 101 if hint == "wsm" else 121,
         },
         "resolution": "720_4_3" if hint == "blur" else "720_16_9",
         "num_frames": 101 if hint == "wsm" else 121,
@@ -54,7 +52,7 @@ def precomputed_request(hint: str) -> dict:
         "num_inference_steps": 50,
         "guidance_scale": 1.0 if hint == "wsm" else 3.0,
         "flow_shift": 10.0,
-        "seed": 0,
+        "seed": 2026,
     }
 
 
@@ -70,6 +68,7 @@ def derived_request(hint: str) -> dict:
             "A red sports car drives through a dramatic landscape with stable "
             "geometry, realistic motion, and cinematic lighting."
         ),
+        "negative_prompt": compact_json_file(NEGATIVE_PROMPT),
         "input_reference": media_to_data_url(DERIVED_VIDEO),
         "transfer": {
             hint: preset,
@@ -84,7 +83,7 @@ def derived_request(hint: str) -> dict:
         "num_inference_steps": 50,
         "guidance_scale": 3.0,
         "flow_shift": 10.0,
-        "seed": 0,
+        "seed": 2026,
     }
 
 
