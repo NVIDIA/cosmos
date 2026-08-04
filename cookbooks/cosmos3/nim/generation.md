@@ -22,10 +22,11 @@ curl -f "$NIM_URL/v1/health/ready"
 
 Run the examples from the repository root. They use `requests`, reuse the
 canonical audiovisual prompts and media already tracked by this cookbook, and
-decode responses under `cookbooks/cosmos3/nim/examples/outputs/`:
+decode responses under `cookbooks/cosmos3/nim/examples/outputs/`. Use `uv` to
+create the temporary client environment for each command, for example:
 
 ```bash
-python -m pip install requests
+uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py
 ```
 
 ## Choose a modality
@@ -36,9 +37,10 @@ constant while each backend uses its own API adapter.
 
 | Modality | Canonical scenario | Conditioning input | Response field | Run |
 | --- | --- | --- | --- | --- |
-| T2I | Robot draping satin over a mannequin | None | `b64_image` | `python cookbooks/cosmos3/nim/examples/t2i.py` |
-| T2V | Robot cleaning a kitchen | None | `b64_video` | `python cookbooks/cosmos3/nim/examples/t2v.py` |
-| I2V | Car traveling along a coastal road | `car_driving.jpg` | `b64_video` | `python cookbooks/cosmos3/nim/examples/i2v.py` |
+| T2I | Robot draping satin over a mannequin | None | `b64_image` | `uv run --with requests python cookbooks/cosmos3/nim/examples/t2i.py` |
+| T2V | Robot cleaning a kitchen | None | `b64_video` | `uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py` |
+| I2V | Car traveling along a coastal road | `car_driving.jpg` | `b64_video` | `uv run --with requests python cookbooks/cosmos3/nim/examples/i2v.py` |
+| V2V | Continue or transform a car-driving video | `car_driving_plain.mp4` | `b64_video` | `uv run --with requests python cookbooks/cosmos3/nim/examples/v2v.py` |
 
 The scripts load the full structured JSON prompts from
 `cookbooks/cosmos3/generator/audiovisual/assets/`, compact each JSON document
@@ -87,7 +89,7 @@ PY
 Run the complete editable comparison case:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/t2i.py
+uv run --with requests python cookbooks/cosmos3/nim/examples/t2i.py
 ```
 
 It uses the canonical `assets/prompts/text2image/robot_draping.json` prompt and
@@ -145,7 +147,7 @@ PY
 Run the complete editable comparison case:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/t2v.py
+uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py
 ```
 
 It uses `assets/prompts/text2video/robot_kitchen.json`, the shared T2V negative
@@ -198,7 +200,7 @@ Path("i2v_car_driving.mp4").write_bytes(base64.b64decode(result["b64_video"]))
 Run the complete editable comparison case:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/i2v.py
+uv run --with requests python cookbooks/cosmos3/nim/examples/i2v.py
 ```
 
 It pairs `assets/images/image2video/car_driving.jpg` with
@@ -248,7 +250,7 @@ V2V sets `model_mode` to `video2video`, supplies a video in
 Run the complete local-media example:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/v2v.py
+uv run --with requests python cookbooks/cosmos3/nim/examples/v2v.py
 ```
 
 `condition_frame_indexes_vision` indexes latent frames, not pixel frames. The
@@ -279,13 +281,13 @@ launch; `NIM_MODEL_SIZE=super` alone selects general-purpose `super`.
 Launch T2I with `NIM_MODEL_VARIANT=super-t2i-4step`, then run:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/t2i_4step.py
+uv run --with requests python cookbooks/cosmos3/nim/examples/t2i_4step.py
 ```
 
 Launch I2V with `NIM_MODEL_VARIANT=super-i2v-4step`, then run:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/i2v_4step.py
+uv run --with requests python cookbooks/cosmos3/nim/examples/i2v_4step.py
 ```
 
 Each script must run against the matching active model. Four-step requests must

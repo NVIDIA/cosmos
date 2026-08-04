@@ -40,13 +40,12 @@ single command does not run several expensive generations:
 
 ```bash
 export NIM_URL=${NIM_URL:-http://localhost:8000}
-python -m pip install requests
 
-python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_edge
-python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_blur
-python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_depth
-python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_seg
-python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_wsm
+uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_edge
+uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_blur
+uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_depth
+uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_seg
+uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_wsm
 ```
 
 The NIM can also derive edge or blur controls from a source video. These are
@@ -54,8 +53,8 @@ additional NIM API examples rather than members of the precomputed comparison
 set:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/transfer.py --case derived_edge
-python cookbooks/cosmos3/nim/examples/transfer.py --case derived_blur
+uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case derived_edge
+uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case derived_blur
 ```
 
 The decoded result is written to

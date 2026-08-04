@@ -90,11 +90,10 @@ Action requests forbid `resolution`.
 
 ## Run the canonical examples
 
-From the repository root:
+From the repository root, use `uv` to provide the `requests` client dependency for each example command:
 
 ```bash
 export NIM_URL=${NIM_URL:-http://localhost:8000}
-python -m pip install requests
 ```
 
 The executable cases reuse the same AV and UMI assets as the Cosmos Framework
@@ -102,14 +101,14 @@ and vLLM-Omni tutorials:
 
 | Case | Mode and scenario | Run |
 | --- | --- | --- |
-| `av_forward` | AV forward dynamics, straight trajectory | `python cookbooks/cosmos3/nim/examples/action.py --case av_forward` |
-| `av_left` | AV forward dynamics, left trajectory | `python cookbooks/cosmos3/nim/examples/action.py --case av_left` |
-| `av_right` | AV forward dynamics, right trajectory | `python cookbooks/cosmos3/nim/examples/action.py --case av_right` |
-| `umi_forward` | First 16-action UMI forward-dynamics chunk | `python cookbooks/cosmos3/nim/examples/action.py --case umi_forward` |
-| `av_inverse_0` | AV inverse dynamics for `av_0.mp4` | `python cookbooks/cosmos3/nim/examples/action.py --case av_inverse_0` |
-| `av_inverse_1` | AV inverse dynamics for `av_1.mp4` | `python cookbooks/cosmos3/nim/examples/action.py --case av_inverse_1` |
-| `bridge_inverse` | Bridge inverse dynamics using the pinned public fixture | `python cookbooks/cosmos3/nim/examples/action.py --case bridge_inverse` |
-| `av_policy` | General AV policy API-contract example | `python cookbooks/cosmos3/nim/examples/action.py --case av_policy` |
+| `av_forward` | AV forward dynamics, straight trajectory | `uv run --with requests python cookbooks/cosmos3/nim/examples/action.py --case av_forward` |
+| `av_left` | AV forward dynamics, left trajectory | `uv run --with requests python cookbooks/cosmos3/nim/examples/action.py --case av_left` |
+| `av_right` | AV forward dynamics, right trajectory | `uv run --with requests python cookbooks/cosmos3/nim/examples/action.py --case av_right` |
+| `umi_forward` | First 16-action UMI forward-dynamics chunk | `uv run --with requests python cookbooks/cosmos3/nim/examples/action.py --case umi_forward` |
+| `av_inverse_0` | AV inverse dynamics for `av_0.mp4` | `uv run --with requests python cookbooks/cosmos3/nim/examples/action.py --case av_inverse_0` |
+| `av_inverse_1` | AV inverse dynamics for `av_1.mp4` | `uv run --with requests python cookbooks/cosmos3/nim/examples/action.py --case av_inverse_1` |
+| `bridge_inverse` | Bridge inverse dynamics using the pinned public fixture | `uv run --with requests python cookbooks/cosmos3/nim/examples/action.py --case bridge_inverse` |
+| `av_policy` | General AV policy API-contract example | `uv run --with requests python cookbooks/cosmos3/nim/examples/action.py --case av_policy` |
 
 The original example names `forward_dynamics`, `inverse_dynamics`, and `policy`
 remain aliases for `av_forward`, `bridge_inverse`, and `av_policy`.

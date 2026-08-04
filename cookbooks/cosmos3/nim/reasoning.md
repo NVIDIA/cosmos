@@ -12,10 +12,9 @@ page covers Reasoner routes, media, sampling, and responses.
 
 ## Install the client and verify readiness
 
-The runnable examples use the OpenAI Python client:
+The runnable examples use the OpenAI Python client through `uv run --with openai`:
 
 ```bash
-python -m pip install openai
 export NIM_URL=${NIM_URL:-http://localhost:8000}
 curl -f "$NIM_URL/v1/health/ready"
 curl -sS "$NIM_URL/v1/models" | python -m json.tool
@@ -78,7 +77,7 @@ print(response.choices[0].message.content)
 Run the equivalent cookbook example:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/reasoner.py --case image
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case image
 ```
 
 Use the OpenAI client for normal applications. For direct HTTP integration,
@@ -123,7 +122,7 @@ print(response.choices[0].message.content)
 Run the complete example:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/reasoner.py --case video
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case video
 ```
 
 Data URLs are the portable baseline. Public HTTP(S) media URLs may work when
@@ -137,7 +136,7 @@ Set `stream=True`, print each non-empty delta, and retain the assembled output
 if downstream code needs the complete result:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/reasoner_stream.py
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner_stream.py
 ```
 
 The example reads `choices[0].delta.content`; chunks without choices or content
@@ -150,7 +149,7 @@ The current NIM provides a Responses create route unless the operator sets
 `input_text`:
 
 ```bash
-python cookbooks/cosmos3/nim/examples/reasoner_responses.py
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner_responses.py
 ```
 
 The request uses `store=false`. Persisted retrieval, cancellation, background
