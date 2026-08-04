@@ -511,7 +511,9 @@ tests, and live release evidence rather than another repository's runner
 implementation. T2I, T2V, and I2V reuse the audiovisual cookbook's
 `robot_draping`, `robot_kitchen`, and `car_driving` scenarios, respectively.
 The five precomputed Transfer cases reuse the Transfer cookbook's prompt,
-negative prompt, control, geometry, seed, and chunk-length choices. API adapters
+negative prompt, control, geometry, seed, and chunk-length choices. Action
+reuses the three AV trajectories, two AV inverse videos, and one UMI trajectory
+chunk while retaining NIM-owned request and response validation. API adapters
 and model-specific request contracts remain NIM-owned.
 
 ### Ports and identity caveat
@@ -708,9 +710,11 @@ For cross-backend generation examples, prefer the reviewed structured prompts,
 negative prompts, and conditioning images under
 `cookbooks/cosmos3/generator/audiovisual/assets/`. For Transfer comparisons,
 reuse the matching prompt/control pair and shared negative prompt under
-`cookbooks/cosmos3/generator/transfer/assets/`. Serialize JSON prompt assets as
-compact strings because the Generator API's `prompt` and `negative_prompt`
-fields are strings, not nested JSON objects.
+`cookbooks/cosmos3/generator/transfer/assets/`. For Action, reuse reviewed image,
+video, and trajectory cases under `cookbooks/cosmos3/generator/action/assets/`
+without importing unsupported embodiments or backend-only request fields.
+Serialize JSON prompt assets as compact strings because the Generator API's
+`prompt` and `negative_prompt` fields are strings, not nested JSON objects.
 
 ## Previous product documentation
 

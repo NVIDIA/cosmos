@@ -387,6 +387,9 @@ The documentation project is complete only when:
 - [x] Align the five precomputed Transfer cases with the shared prompts,
   negative prompt, seeds, geometry, and chunk lengths; retain derived edge and
   blur as additional NIM examples.
+- [x] Expand Action coverage with canonical AV forward/left/right and inverse
+  cases, one UMI chunk, response validation, sequence/cadence concepts, and
+  stateless policy-integration guidance.
 - [ ] Validate both runtimes against the final released image and resolve or
   retain the release-dependent TBD ledger.
 - [ ] Update stale inbound cookbook/root NIM summaries if that broader scope is
@@ -460,6 +463,14 @@ cases. It restores their common negative prompt and seed and matches the WSM
 chunk to its 101-frame output. Derived edge and blur remain clearly labeled
 NIM-specific extensions. Generation now distinguishes plain V2V, Transfer, and
 inverse dynamics before users construct a video-conditioned request.
+
+The Action alignment reuses all three canonical AV trajectories, both local AV
+inverse videos, and the first canonical UMI chunk while retaining the pinned
+Bridge fixture and AV policy contract case. The guide now teaches `[T,D]`
+transitions and `T+1` observations before fields, separates cadence and geometry
+controls, treats NIM policy calls as synchronous/stateless, and gates physical
+execution on checkpoint-specific transforms and independent safety checks.
+Static response tests cover shape, metadata, domain, and finite values.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public
