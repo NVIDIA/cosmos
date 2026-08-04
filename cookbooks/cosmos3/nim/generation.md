@@ -20,13 +20,35 @@ export NIM_URL=${NIM_URL:-http://localhost:8000}
 curl -f "$NIM_URL/v1/health/ready"
 ```
 
-Run the examples from the repository root. They use `requests`, reuse media
-already tracked by this cookbook, and decode the response under
-`cookbooks/cosmos3/nim/examples/outputs/`:
+Run the examples from the repository root. They use `requests`, reuse the
+canonical audiovisual prompts and media already tracked by this cookbook, and
+decode responses under `cookbooks/cosmos3/nim/examples/outputs/`:
 
 ```bash
 python -m pip install requests
 ```
+
+## Choose a modality
+
+The standard examples use the same representative scenarios as the Cosmos3
+Framework, Diffusers, and vLLM-Omni audiovisual tutorials. The scenario stays
+constant while each backend uses its own API adapter.
+
+| Modality | Canonical scenario | Conditioning input | Response field | Run |
+| --- | --- | --- | --- | --- |
+| T2I | Robot draping satin over a mannequin | None | `b64_image` | `python cookbooks/cosmos3/nim/examples/t2i.py` |
+| T2V | Robot cleaning a kitchen | None | `b64_video` | `python cookbooks/cosmos3/nim/examples/t2v.py` |
+| I2V | Car traveling along a coastal road | `car_driving.jpg` | `b64_video` | `python cookbooks/cosmos3/nim/examples/i2v.py` |
+
+The scripts load the full structured JSON prompts from
+`cookbooks/cosmos3/generator/audiovisual/assets/`, compact each JSON document
+into the string accepted by the Generator `prompt` field, and use the shared
+negative prompt for video modes. The shorter prompts below emphasize request
+shape; use the scripts for the cross-backend comparison cases.
+
+A standard script can run against an active general-purpose `nano` or `super`
+variant when that task is included by its released profile. Specialist
+four-step variants require their matching scripts and request contract.
 
 ## Text-to-image
 
@@ -56,15 +78,20 @@ import json
 from pathlib import Path
 
 response = json.loads(Path("/tmp/cosmos3-t2i-response.json").read_text())
-Path("t2i.jpg").write_bytes(base64.b64decode(response["b64_image"]))
+Path("t2i_robot_draping.jpg").write_bytes(
+    base64.b64decode(response["b64_image"])
+)
 PY
 ```
 
-Or run the complete editable example:
+Run the complete editable comparison case:
 
 ```bash
 python cookbooks/cosmos3/nim/examples/t2i.py
 ```
+
+It uses the canonical `assets/prompts/text2image/robot_draping.json` prompt and
+saves `examples/outputs/t2i_robot_draping.jpg`.
 
 Set `model_mode` to `text2image`. T2I requires a non-empty prompt, forbids
 `input_reference`, and uses exactly `num_frames=1`. Image-to-image is not
@@ -95,7 +122,7 @@ curl -fsS -X POST "$NIM_URL/v1/infer" \
   -H 'Content-Type: application/json' \
   -d '{
     "model_mode": "text2video",
-    "prompt": "A storm trooper vacuuming the beach.",
+    "prompt": "A modern industrial robotic arm cleans a kitchen counter with a green sponge.",
     "resolution": "720_16_9",
     "num_frames": 189,
     "fps": 24.0,
@@ -109,17 +136,21 @@ import json
 from pathlib import Path
 
 response = json.loads(Path("/tmp/cosmos3-response.json").read_text())
-Path("t2v.mp4").write_bytes(base64.b64decode(response["b64_video"]))
+Path("t2v_robot_kitchen.mp4").write_bytes(
+    base64.b64decode(response["b64_video"])
+)
 PY
 ```
 
-Or run the complete editable example:
+Run the complete editable comparison case:
 
 ```bash
 python cookbooks/cosmos3/nim/examples/t2v.py
 ```
 
-The default negative prompt is supplied by the service when omitted. Pass
+It uses `assets/prompts/text2video/robot_kitchen.json`, the shared T2V negative
+prompt, and saves `examples/outputs/t2v_robot_kitchen.mp4`. The default negative
+prompt is supplied by the service when omitted from a custom request. Pass
 `"negative_prompt": ""` only when you intentionally want to disable it.
 
 ## Image-to-video
@@ -136,16 +167,16 @@ import urllib.request
 from pathlib import Path
 
 nim_url = "http://localhost:8000"
-image_path = Path("input.jpg")
+image_path = Path(
+    "cookbooks/cosmos3/generator/audiovisual/assets/"
+    "images/image2video/car_driving.jpg"
+)
 mime = mimetypes.guess_type(image_path.name)[0] or "image/jpeg"
 image = f"data:{mime};base64,{base64.b64encode(image_path.read_bytes()).decode()}"
 
 request = {
     "model_mode": "image2video",
-    "prompt": (
-        "A photorealistic red sports car drives through a modern city at "
-        "golden hour, with cinematic lighting and smooth camera motion."
-    ),
+    "prompt": "A car travels along a coastal mountain road with natural motion.",
     "input_reference": image,
     "resolution": "720",
     "num_frames": 189,
@@ -161,14 +192,18 @@ http_request = urllib.request.Request(
 )
 with urllib.request.urlopen(http_request, timeout=1800) as response:
     result = json.load(response)
-Path("i2v.mp4").write_bytes(base64.b64decode(result["b64_video"]))
+Path("i2v_car_driving.mp4").write_bytes(base64.b64decode(result["b64_video"]))
 ```
 
-The cookbook version uses an existing image asset:
+Run the complete editable comparison case:
 
 ```bash
 python cookbooks/cosmos3/nim/examples/i2v.py
 ```
+
+It pairs `assets/images/image2video/car_driving.jpg` with
+`assets/prompts/image2video/car_driving.json`, uses the shared I2V negative
+prompt, and saves `examples/outputs/i2v_car_driving.mp4`.
 
 `input_reference` is required and interpreted as an image because
 `model_mode=image2video`. The current encoded-image ceiling
@@ -334,11 +369,12 @@ the external-service credential.
 
 ## Output and playback
 
-T2I returns raw JPEG base64 in `b64_image`; the public example decodes it to
-`t2i.jpg`. Video modes return raw base64 for a VP9 video track in an MP4
-container under `b64_video`; the public examples decode it to `t2v.mp4`,
-`i2v.mp4`, or `v2v.mp4` under the examples `outputs/` directory. The inactive
-media field is omitted.
+T2I returns raw JPEG base64 in `b64_image`; the standard comparison example
+decodes it to `t2i_robot_draping.jpg`. Video modes return raw base64 for a VP9
+video track in an MP4 container under `b64_video`; the standard examples decode
+it to `t2v_robot_kitchen.mp4`, `i2v_car_driving.mp4`, or `v2v.mp4` under the
+examples `outputs/` directory. Specialist examples add `_4step` to the
+corresponding scenario name. The inactive media field is omitted.
 
 VP9-in-MP4 is not supported by every browser or stock player; `mpv` and
 `ffplay` are reliable choices.
@@ -346,7 +382,7 @@ VP9-in-MP4 is not supported by every browser or stock player; `mpv` and
 For a broadly compatible H.264 copy:
 
 ```bash
-ffmpeg -i t2v.mp4 -c:v libx264 -crf 18 -pix_fmt yuv420p t2v-h264.mp4
+ffmpeg -i t2v_robot_kitchen.mp4 -c:v libx264 -crf 18 -pix_fmt yuv420p t2v_robot_kitchen-h264.mp4
 ```
 
 ## Common failures

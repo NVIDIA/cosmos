@@ -7,33 +7,26 @@ import os
 from pathlib import Path
 
 import requests
-from common import decode_image
+from common import compact_json_file, decode_image
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
-OUTPUT = Path(__file__).parent / "outputs" / "t2i.jpg"
+COSMOS3_ROOT = Path(__file__).resolve().parents[2]
+PROMPT = (
+    COSMOS3_ROOT
+    / "generator"
+    / "audiovisual"
+    / "assets"
+    / "prompts"
+    / "text2image"
+    / "robot_draping.json"
+)
+OUTPUT = Path(__file__).parent / "outputs" / "t2i_robot_draping.jpg"
 
 
 def main() -> None:
     request = {
         "model_mode": "text2image",
-        "prompt": (
-            "Photorealistic fashion-studio scene shot at eye level: a sleek "
-            "white-and-aluminum robotic arm enters from the upper left, its "
-            "precision two-finger gripper delicately pinching the edge of a "
-            "length of deep sapphire blue satin and draping it over a beige "
-            "headless dress mannequin mounted on a chrome stand at the center "
-            "of the frame. The satin forms deliberate diagonal pleats across "
-            "the torso and cascades down to pool luxuriously on the polished "
-            "pale concrete floor. A few silver dressmaker pins catch pinpoint "
-            "highlights along the right side seam. A large softbox from the "
-            "right casts smooth, creamy specular highlights along the satin "
-            "folds and gentle, soft shadows beneath the mannequin's waist. In "
-            "the softly blurred background, a wooden cutting table holds a "
-            "coiled yellow measuring tape, and chrome garment racks recede "
-            "into bokeh against clean neutral cream walls. The mood is precise, "
-            "futuristic, and quietly elegant—an editorial vision of "
-            "robotic-assisted couture."
-        ),
+        "prompt": compact_json_file(PROMPT),
         "negative_prompt": "",
         "resolution": "720_1_1",
         "num_frames": 1,

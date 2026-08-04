@@ -43,8 +43,8 @@ The runnable examples documented by this guide are maintained locally under
 `cookbooks/cosmos3/nim/examples`. Their request shapes are validated against the
 current API models, runtime behavior, tests, and live OpenAPI when available.
 They use an independently maintained teaching structure while keeping
-representative prompts, request fields, and case meaning synchronized with
-reviewed NIM fixtures.
+request fields synchronized with reviewed NIM fixtures and reusing canonical
+cross-backend cookbook scenarios where the modalities match.
 
 Before authoring or updating public docs, refresh the commit values and inspect
 changes to the primary source files listed below.
@@ -505,10 +505,12 @@ Primary evidence:
 The scripts under `cookbooks/cosmos3/nim/examples` are independently maintained
 teaching examples. They keep request construction, the API call, status
 handling, and primary output visible in each task script. Only strict local
-media encoding and image/video decoding are shared. Their contracts are checked
-against runtime code, request models, tests, and live release evidence rather
-than another repository's runner implementation; representative request
-semantics remain synchronized with the NIM fixtures.
+media encoding, image/video decoding, and compact JSON-prompt serialization are
+shared. Their contracts are checked against runtime code, request models,
+tests, and live release evidence rather than another repository's runner
+implementation. T2I, T2V, and I2V reuse the audiovisual cookbook's
+`robot_draping`, `robot_kitchen`, and `car_driving` scenarios, respectively;
+the API adapter and model-specific sampling contract remain NIM-owned.
 
 ### Ports and identity caveat
 
@@ -626,7 +628,7 @@ not imply persistent response storage is on by default.
 | `cookbooks/cosmos3/nim/examples/reasoner_responses.py` | Reasoner Responses API |
 | `cookbooks/cosmos3/nim/examples/action.py` | Forward dynamics, policy, and inverse dynamics |
 | `cookbooks/cosmos3/nim/examples/transfer.py` | Precomputed and derived transfer controls |
-| `cookbooks/cosmos3/nim/examples/common.py` | Strict media encoding and image/video decoding |
+| `cookbooks/cosmos3/nim/examples/common.py` | Strict media encoding, image/video decoding, and compact JSON-prompt serialization |
 
 ### Historical `documentation.md` remains a coverage floor
 
@@ -700,6 +702,11 @@ Primary evidence:
 Use assets already present in the cookbook repository and retain their existing
 provenance and license history. Convert local media to data URLs at runtime
 where required; do not copy private-source assets into the public cookbook.
+For cross-backend generation examples, prefer the reviewed structured prompts,
+negative prompts, and conditioning images under
+`cookbooks/cosmos3/generator/audiovisual/assets/`. Serialize JSON prompt assets
+as compact strings because the Generator API's `prompt` and `negative_prompt`
+fields are strings, not nested JSON objects.
 
 ## Previous product documentation
 
@@ -1338,7 +1345,7 @@ handoff from research to drafting.
 | `transfer.md` | Complete transfer contract, control taxonomy, defaults, precomputed/derived forms, combinations, and validation | `data_models/transfer.py`, runtime/tests, and the local cookbook example | Published-image/profile smoke tests, exact supported combination matrix | Duplicate example for every asset, vLLM-Omni multipart syntax |
 | `operations.md` | Health/readiness, management endpoints, generic errors, metrics/logs, guardrails, diagnostics, and troubleshooting | Runtime interface/environment/profile/guardrail code, tests, and previous operations docs | Live metrics, log/error samples, chart probes, release limitations | Basic launch tutorial, duplicate task-schema tables, secret values |
 | `acknowledgements.md` | Third-party components and notices for the exact released image | Approved release/build acknowledgement inventory only | Entire content remains TBD until that artifact is supplied and approved | Product EULA copy, inferred dependency inventory, historical Generator notice reuse |
-| `examples/common.py` | Strict local-media-to-data-URL conversion and image/video decoding | Current cookbook helper and runtime media contract | Final supported media types | Request dispatch, CLI framework, downloads, credentials |
+| `examples/common.py` | Strict local-media-to-data-URL conversion, image/video decoding, and compact JSON-prompt serialization | Current cookbook helper, reviewed audiovisual assets, and runtime media/prompt contracts | Final supported media types | Request dispatch, CLI framework, downloads, credentials |
 | Task example scripts | One editable request with the API call and primary response handling visible in the same file | Current API models, runtime/tests, and local cookbook workflows | Live release smoke results and stable asset locations | Exhaustive parameter combinations, multi-level runner helpers, notebook-only execution |
 
 ### Canonical fact ownership
@@ -1436,8 +1443,8 @@ When the user authorizes drafting, use this dependency order:
 3. Draft the compact `api-reference.md` for runtime routing and the common
    Generator envelope; assign task contracts to their corresponding guides.
 4. Maintain local task scripts with complete editable request dictionaries and
-   direct API calls; share only the strict local-media encoder and video decoder
-   in `examples/common.py`.
+   direct API calls; share only strict local-media encoding, response decoding,
+   and compact JSON-prompt serialization in `examples/common.py`.
 5. Draft `generation.md`, `reasoning.md`, `action.md`, and `transfer.md` as the
    canonical task contracts against current models and runnable scripts.
 6. Draft `release-notes.md`, `prerequisites.md`, `configuration.md`,

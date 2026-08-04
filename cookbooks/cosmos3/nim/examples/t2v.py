@@ -7,16 +7,21 @@ import os
 from pathlib import Path
 
 import requests
-from common import decode_video
+from common import compact_json_file, decode_video
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
-OUTPUT = Path(__file__).parent / "outputs" / "t2v.mp4"
+COSMOS3_ROOT = Path(__file__).resolve().parents[2]
+ASSETS = COSMOS3_ROOT / "generator" / "audiovisual" / "assets"
+PROMPT = ASSETS / "prompts" / "text2video" / "robot_kitchen.json"
+NEGATIVE_PROMPT = ASSETS / "negative_prompts" / "text2video" / "neg_prompt.json"
+OUTPUT = Path(__file__).parent / "outputs" / "t2v_robot_kitchen.mp4"
 
 
 def main() -> None:
     request = {
         "model_mode": "text2video",
-        "prompt": "A storm trooper vacuuming the beach.",
+        "prompt": compact_json_file(PROMPT),
+        "negative_prompt": compact_json_file(NEGATIVE_PROMPT),
         "resolution": "720_16_9",
         "num_frames": 189,
         "fps": 24.0,
