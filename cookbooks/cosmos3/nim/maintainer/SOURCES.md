@@ -87,9 +87,10 @@ Reviewed through 2026-08-04:
 | Repository | Branch | Reviewed commit | Change covered |
 | --- | --- | --- | --- |
 | Cosmos cookbook | `egor/cosmos3_nim_docs` | `3f3395365024a7373d2891058d5583f718140905` | Merged documentation baseline before the latest Reasoner QA refresh |
-| Cosmos3 Certified NIM | `cosmos3` | `280bbea3581427ccf75285beec0f143dc936af04` | Reasoner reasoning/tool-call QA contract plus explicit Generator modes, DFlash, system-memory admission, and earlier model/BYOC/Transfer contracts |
+| Cosmos3 Certified NIM | `cosmos3` | `5862d3a552be94c12875ecfbebab115c63a65451` | Semi-final profile catalog, synchronized Reasoner VRAM floors, Reasoner QA, explicit Generator modes, DFlash, system-memory admission, and earlier model/BYOC/Transfer contracts |
 
-The current NIM commit is 51 commits beyond the incremental `74064b23` pin.
+The current NIM commit is 61 commits beyond the incremental `74064b23` pin and
+10 commits beyond the preceding `280bbea3` documentation pin.
 The tracked source diff under `cosmos3/` changes 142 files. The source checkout
 also contains an unrelated untracked `cosmos3/bugs/` directory; it was not used
 as evidence. This section supersedes stale current-state conclusions in the
@@ -138,10 +139,11 @@ Current high-impact contracts:
 - Ten single-GPU Super BF16 model/layer-offload development rows require 150
   GiB of effective system memory. Startup checks the container cgroup limit
   before host physical memory.
-- Generator and Reasoner FP8 development compute-capability floors are now
-  both 8.9. Current Reasoner runtime VRAM floors changed to 46 GiB for two-GPU
-  Super BF16, 67 GiB for one-GPU Super FP8, and 73 GiB for one-GPU Super
-  NVFP4. These remain maintainer evidence, not released support rows.
+- Generator and Reasoner FP8 compute-capability floors are both 8.9. The
+  current Reasoner runtime and generated-profile VRAM floors are synchronized
+  at 46 GiB for two-GPU Super BF16, 67 GiB for one-GPU Super FP8, and 73 GiB
+  for one-GPU Super NVFP4. Grouped source-profile requirements are authorized
+  for public hardware planning, with an explicit non-release caveat.
 - `/v1/metadata` reports checkpoint source for either runtime and
   `model_variant` for Generator.
 
@@ -150,8 +152,9 @@ temporary output generated 122 development rows: 115 Generator and 7 Reasoner.
 The Generator rows split across 18 `nano`, 7 `nano-droid`, 18 `super`, and 18
 rows for each of the four specialist Super variants. Three Nano Reasoner rows
 include the DFlash draft artifact, and ten Super BF16 offload rows carry the
-150-GiB system-memory floor. This generated inventory is pre-release evidence
-only and must not be published as a support matrix.
+150-GiB system-memory floor. The public support matrix groups these semi-final
+requirements by user-facing model, precision, offload, GPU count, and floor; it
+does not expose 122 development profile IDs or claim released support.
 
 The current source tree no longer contains `cosmos3/documentation.md`, the
 static `cosmos3/api_spec.yaml`, or a tracked generated `profiles.json`.
@@ -661,7 +664,7 @@ with code or the current profile export.
 | 12. Environment variables | Re-audit every variable against `environment.py`; split canonical configuration from operational subsets | `configuration.md`, `operations.md` |
 | 12.1 Prompt upsampling | Document the current optional, Generator-only T2I/T2V/I2V flow, secret handling, supported template styles, failure fallback, and non-applicable modes | `configuration.md`, `generation.md`, `operations.md` |
 | 13. Profile selection | Preserve selectors, conflicts, pinning, soft defaults, layouts, and selection cascade from current code | `deployment.md`; released manifest recheck required |
-| 14. Support matrix | Replace the stale prose grid with the released manifest-derived tested/compatible matrix | `support-matrix.md`; release matrix TBD |
+| 14. Support matrix | Replace the stale prose grid with grouped current source-profile requirements and later reconcile it with the released manifest/tested matrix | `support-matrix.md`; semi-final hardware rows documented, released-row approval pending |
 | 15. BYOC | Preserve historical layout/mount guidance, but supersede its Generator-only variable and boundary with current `NIM_MODEL_PATH` contracts | `bring-your-own-checkpoint.md`; released formats remain TBD |
 | 16. Helm/Kubernetes | Preserve topic and operational categories but not placeholder chart identity or unverified values | `helm.md`; chart/values TBD |
 | 17. Observability | Preserve inspection, log, distributed-diagnostic, and Prometheus/Grafana workflows; capture current endpoints/metrics from release | `operations.md`; live scrape/log validation pending |
@@ -781,7 +784,7 @@ Parity matrix:
 | Safety and guardrails | Explain text guardrails, output-video checks/face handling, failure behavior, and the risk of disabling controls | `operations.md` |
 | API Catalog, NGC Catalog, and container security reports | Link to the final release catalog/model-card pages once known | `README.md`; release URL TBD |
 | NVIDIA Developer Program / entitlement context | Provide a concise external link if still applicable to the released NIM | `README.md`; wording/link recheck required |
-| Hardware prerequisites | CPU architecture, RAM, disk, shared memory, supported GPU architecture/count, homogeneity, and VRAM floors | `prerequisites.md`, `support-matrix.md`; release values TBD |
+| Hardware prerequisites | CPU architecture, RAM, disk, shared memory, supported GPU architecture/count, homogeneity, and VRAM floors | `prerequisites.md`, `support-matrix.md`; semi-final GPU/profile floors documented, remaining host/release values TBD |
 | Software prerequisites | Linux, driver, Docker, NVIDIA Container Toolkit, and setup verification with `nvidia-smi` | `prerequisites.md`; exact versions TBD |
 | NGC credential creation | Explain how to create an NGC personal API key with NGC Catalog access | `deployment.md` |
 | Credential export and safe handling | Use `NGC_API_KEY`; never place a real key in examples, logs, source control, notebooks, or output artifacts | `README.md`, `deployment.md` |
@@ -805,7 +808,7 @@ Parity matrix:
 | Error handling | Cover stable 4xx/5xx semantics and mode-specific validation without promising exact error strings | `operations.md` and task guides |
 | OpenAPI | Explain live `/openapi.json`; capture/validate it under both Generator and Reasoner profiles | `api-reference.md`; runtime capture pending |
 | Resolution and frame-cap tables | Preserve exact key-to-WxH shapes and per-tier frame caps | `generation.md` |
-| Model sizes, precisions, and VRAM | Provide the release manifest-derived matrix, tested versus compatible distinction, and compute-capability gates | `support-matrix.md`; release matrix TBD |
+| Model sizes, precisions, and VRAM | Provide grouped source-profile requirements now, then reconcile against the release manifest and tested SKU inventory | `support-matrix.md`; source compute/VRAM floors documented, release approval pending |
 | Parallelism/profile selection | Explain latency versus throughput, replicas/sharding, offload, selection cascade, and explicit pinning | `deployment.md` |
 | Input/output codecs | State current VP9-in-MP4 output and validate all claimed image/video inputs against the release | `support-matrix.md`, `generation.md` |
 | BYOC | Preserve mount pattern, expected checkpoint layout, profile cross-check, readiness, cache/ulimits, path rules, and metadata verification | `bring-your-own-checkpoint.md`; Generator-only unless release proves more |
@@ -926,7 +929,7 @@ current authority, explicitly marked TBD, or explained as superseded.
 | 2D grounding and action trajectories | Preserve the normalized 0-1000 coordinate convention, output schema, and pixel-conversion explanation after model-release verification | `reasoning.md` |
 | Text-only queries | Historical support is plausible but lacks reviewed released-image evidence | `reasoning.md`; release smoke test pending |
 | Media and sampling errors | Current interface maps media-related failures to 422 and sampling/validation failures to 400; document stable semantics, not exact messages | `reasoning.md`, `operations.md` |
-| Profiles, GPU/precision support, and KV-cache behavior | Replace the historical Reasoner 1.7.0 hardware tables with the exact released manifest and distinguish tested from merely compatible configurations | `support-matrix.md`; release matrix TBD |
+| Profiles, GPU/precision support, and KV-cache behavior | Replace the historical Reasoner 1.7.0 tables with synchronized current source floors and later distinguish released/tested configurations | `support-matrix.md`; seven semi-final source layouts documented, release approval pending |
 | Environment-variable reference | Carry forward only variables present in the current runtime; include request logging, caching, sequence/token limits, media limits, video preprocessing, compilation, and attention controls | `configuration.md`, operational subsets in `operations.md` |
 | Metrics, logging, Helm, and troubleshooting | Reuse the surrounding VLM guide's organization, but validate endpoints, chart values, metric names, and failure modes against this release | `helm.md`, `operations.md`; release validation pending |
 
@@ -999,7 +1002,7 @@ facts.
 | Manual table of contents on selected long pages | Adapt | Use the landing-page guide table and strong headings; add a manual page TOC only when the rendered page is genuinely difficult to scan |
 | Large `<details>` blocks in the root README | Avoid inside focused guides | Hidden/collapsed content is less discoverable and unnecessary when pages are already split by concern |
 | Repeating complete backend setup in multiple READMEs | Avoid | One canonical deployment page prevents image, selector, and credential drift |
-| Unqualified model size/count and hardware claims | Avoid | Use released manifest/model-card evidence or an explicit TBD |
+| Unqualified model size/count and hardware claims | Avoid | Label grouped current-source profile requirements as semi-final; reserve supported/tested claims for released manifest/model-card evidence |
 | Backend-specific request examples copied between integrations | Avoid | Validate each local example against the Certified NIM contract |
 
 ### File and example presentation rules
@@ -1351,10 +1354,10 @@ handoff from research to drafting.
 | --- | --- | --- | --- | --- |
 | `README.md` | Product scope, selected-runtime mental model, capability/endpoint index, minimum launch, first Generator/Reasoner requests, navigation | Runtime dispatch, profile generation/selection, metadata, and local cookbook examples | Final image/tag, product/model-card/release URLs, approved public naming | Exhaustive fields, full environment reference, profile internals, long troubleshooting |
 | `release-notes.md` | Released versions, image tags, compatibility changes, known limitations, and upgrade notes | Approved published release inventory | Entire initial entry remains TBD until supplied | Inferred versioning, development-branch changelog |
-| `prerequisites.md` | Host hardware/software, memory/storage/shared-memory, NGC access, and verification | Released support statement, current source requirements, previous prerequisite organization | Exact architecture, resource, driver, Docker, and toolkit floors | Profile selector details, Docker launch tutorial |
+| `prerequisites.md` | Host hardware/software, memory/storage/shared-memory, NGC access, and verification | Current source profile/hardware requirements, released support statement, previous prerequisite organization | CPU architecture, general RAM, disk/shared-memory, driver, Docker, and toolkit floors | Profile selector details, Docker launch tutorial |
 | `deployment.md` | NGC key and login, cache/permissions, Docker flags, ports, selectors, readiness, and shutdown | Runtime/profile-selection code, current Makefile launch contract, and previous quickstart | Final image/tag and release URLs | Full environment tables, support matrix, Helm, BYOC contract |
 | `configuration.md` | Shared, selection, Generator, Reasoner, and prompt-upsampling environment variables | `environment.py`, prompt-upsampling code/tests, framework contract | Released defaults and external endpoint compatibility | Complete launch commands, runtime troubleshooting |
-| `support-matrix.md` | Model, precision, GPU, VRAM, profile, offload, and media/codec compatibility | Released manifest/test inventory; current profile generation as pre-release evidence | Entire public matrix and tested SKU boundary | Launch tutorial, inferred support from development rows |
+| `support-matrix.md` | Model, precision, GPU, VRAM, profile, offload, and media/codec compatibility | Current profile generation/hardware policy; released manifest/test inventory | Released-row approval, tested SKU boundary, and media/codec matrix | Launch tutorial, profile IDs, or claims that every development row ships |
 | `helm.md` | Cluster prerequisites, chart discovery, secrets, values, GPU resources, storage, probes, rollout, and verification | Released chart contract; previous Helm organization | Chart identity/version/schema and monitoring integration | Copied complete values catalogue, Docker deployment |
 | `bring-your-own-checkpoint.md` | Generator and Reasoner checkpoint sources, layouts, local mounts/Hugging Face resolution, profile cross-check, cache, launch, verification, and failures | `environment.py`, `reasoner_model_source.py`, startup code, tests, previous BYOC page | Published formats and runtime boundary | Historical checkpoint variables, unsupported repository protocols |
 | `api-reference.md` | Runtime routing, common Generator fields, strict JSON typing, common response, task links, and live OpenAPI | Generator request model/tests and routing code | Generator and Reasoner live OpenAPI | Detailed Action/Transfer/Reasoner tables, management semantics, generic errors |
@@ -1378,7 +1381,7 @@ Use this table during drafting and review to resolve tempting duplication:
 | Host hardware/software and verification | `prerequisites.md` | Minimal pre-launch reminder |
 | Image, NGC login, cache, Docker launch, selectors, and readiness | `deployment.md` | Minimal quickstart subset in `README.md` |
 | Environment variables and prompt-upsampling launch configuration | `configuration.md` | Workflow-specific subset with link |
-| Released hardware/profile/offload/media compatibility | `support-matrix.md` | One-row selection context; no copied matrix |
+| Semi-final source-profile and released hardware/offload/media compatibility | `support-matrix.md` | One-row selection context; no copied matrix |
 | Kubernetes/Helm deployment | `helm.md` | Troubleshooting symptoms in `operations.md` |
 | Generator and Reasoner BYOC setup and contract | `bring-your-own-checkpoint.md` | Configuration row and operations symptoms |
 | Runtime routing and common Generator envelope | `api-reference.md` | Task-specific request subsets |
@@ -1438,10 +1441,10 @@ claim or command that needs the missing fact. Use these readiness labels:
 | --- | --- | --- | --- |
 | `README.md` | Ready with TBDs | Unified selected-runtime model, capability/endpoint index, NGC credential flow, guide navigation, minimal request shapes | Final image/tag, approved product wording, catalog/model-card/release URLs, final support summary |
 | `release-notes.md` | Artifact-dependent | Page purpose and initial TBD structure | Version/date, image/tag, compatibility changes, limitations, and upgrade notes |
-| `prerequisites.md` | Ready with TBDs | Requirement categories, NGC/network needs, verification workflow | Exact CPU/GPU, RAM/disk/shared-memory, driver, Docker, and toolkit values |
+| `prerequisites.md` | Ready with TBDs | Source GPU compute/count/VRAM floors, profile-specific system RAM, NGC/network needs, verification workflow | CPU architecture, general RAM, disk/shared-memory, driver, Docker, and toolkit values |
 | `deployment.md` | Ready with TBDs | Docker/cache/credential mechanics, selectors, profile-selection concepts, readiness, shutdown | Final image/tag and release URLs |
 | `configuration.md` | Source-ready with live gates | Current shared/Generator/Reasoner/prompt-upsampling variables and conflicts | Released defaults and external endpoint compatibility |
-| `support-matrix.md` | Ready with TBDs | Matrix semantics, current profile concepts, offload and media categories | Released rows, tested SKUs, VRAM, compute floors, codecs |
+| `support-matrix.md` | Source-ready with release gates | Grouped semi-final model/precision/offload rows, GPU counts, compute gates, VRAM/system-memory/Transfer floors | Released-row approval, tested SKUs, and codecs |
 | `helm.md` | Ready with TBDs | Required concepts, secret separation, storage/probe/rollout workflow | Chart identity/version/schema and monitoring values |
 | `bring-your-own-checkpoint.md` | Source-ready with live gates | Current Generator boundary, layout, mount, cross-check, verification, failures | Released checkpoint formats and supported profile boundary |
 | `api-reference.md` | Source-ready with live gates | Runtime routing, common Generator envelope, strict typing, response, task links | Live OpenAPI for both modes and generated route inventory |
@@ -1536,11 +1539,11 @@ remain TBD by agreement.
 | The former static `api_spec.yaml` is deleted and never represented all dynamic routes | file history and current runtime routing | Generate/capture live OpenAPI separately for Generator, Reasoner, and relevant specialist profiles |
 | Product/model parameter counts differ across sources | NIM source guide and public Cosmos README | Use approved public naming/size language; avoid counts until reconciled |
 | Source examples default to port 18000 while public cookbook examples commonly use 8000 | Source task scripts, cookbook NIM pages | Standardize docs on `NIM_URL`, defaulting to `http://localhost:8000`; explain host-port remapping once |
-| Generated profile export includes Generator BF16, FP8, and FP8 offload rows while `documentation.md` says the active Generator grid is BF16-only | `profiles.json`, `vram_profiles.yaml`, documentation overview/support matrix | Use the release manifest for the published table; treat the current prose table as stale |
+| Generated profile export includes Generator BF16, FP8, and FP8 offload rows while the deleted `documentation.md` says the active Generator grid is BF16-only | current profile generator/YAML vs historical documentation | Use grouped current-source rows for semi-final planning, treat the deleted prose table as stale, and reconcile the final release manifest |
 | Developer README says text generation lives in a separate Reasoner NIM while the current manifest and dispatcher include Reasoner profiles in the same image | `README.md:3` vs `profiles.json`, `inference.py`, `documentation.md:25` | Describe one-profile-at-a-time unified behavior only after confirming the published image; retain this as a release identity conflict |
 | Local NIM identities and versions disagree | `nim-config.yaml`, Makefile, build-context `VERSION` | Never derive the public image/tag from local build defaults; obtain it from the published NIM/NIMCraft release |
-| Hardware/profile tables are generated and release-sensitive | profile generator/export vs older documentation | Derive tables from the release manifest and record the reviewed version |
-| Historical prerequisites and the current source guide disagree on some CPU/RAM/disk and compute-capability values | previous `prerequisites.rst` vs current `documentation.md` and profile gates | Keep public numeric requirements TBD until the released support statement resolves the conflict; record final values in `prerequisites.md` and `support-matrix.md` |
+| Hardware/profile tables are generated and release-sensitive | profile generator/export vs older documentation | Publish grouped semi-final source requirements with status labeling; reconcile exact rows against the released manifest |
+| Historical prerequisites and the current source guide disagree on CPU/RAM/disk values | previous `prerequisites.rst` vs current profile gates | Publish only current source compute/profile floors; keep CPU, general RAM, disk, shared-memory, and software versions TBD until the released support statement resolves them |
 | Helm URL and some launch values are placeholders in `documentation.md` | outstanding TBDs | Confirm released chart and image details before publication |
 | Reasoner routes are dynamic and not fully represented by Generator OpenAPI | Reasoner NIMlib interface | Validate live OpenAPI separately under a Reasoner profile |
 | Historical Reasoner docs claim `video_frames` and `mm_processor_kwargs`, but current runtime evidence does not establish them | old Reasoner API page vs current Reasoner options and tests | Keep both out of supported guidance until a published-image smoke test proves the exact request shapes |
@@ -1599,6 +1602,11 @@ Do not close these from memory or legacy docs:
   three Nano Reasoner rows with the DFlash draft artifact, and ten Super BF16
   offload rows with the 150-GiB system-memory floor. Release support remains
   unvalidated.
+- The hardware publication refresh at `5862d3a5` regenerated the same 122-row
+  inventory and matched the 13 grouped Generator rows and seven Reasoner rows
+  in `support-matrix.md` against source compute gates, GPU counts, per-device
+  VRAM, effective system-memory floors, and Transfer thresholds. All five
+  `test_profile_catalog.py` tests passed in an isolated `uv` environment.
 - The same refresh asserted current source constants and controls for explicit
   Generator modes/field names, shared `NIM_MODEL_PATH`, model variants,
   Reasoner pruning, DFlash, reasoning/tool contracts and strict extension

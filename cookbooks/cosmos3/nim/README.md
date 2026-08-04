@@ -12,9 +12,10 @@ contains two runtimes, but each container runs only one:
   Completions and, when enabled, the Responses API.
 
 > **Documentation status:** API behavior follows the current implementation.
-> Released images, model variants, profiles, hardware, codecs, and checkpoint
-> combinations are defined by the release notes and support matrix. Values that
-> are not yet approved remain marked **TBD**.
+> The support matrix records semi-final source-profile hardware requirements;
+> the target image manifest determines which rows it actually ships. Release
+> identity, final approval, codecs, and checkpoint combinations that are not yet
+> authoritative remain marked **TBD**.
 
 ## Choose what to run
 
@@ -86,8 +87,9 @@ generation.
 ## Get started
 
 1. Verify the host against [Prerequisites](prerequisites.md).
-2. Choose a released model/hardware combination from the
-   [Support matrix](support-matrix.md).
+2. Choose a model/hardware combination from the semi-final
+   [Support matrix](support-matrix.md), then confirm that the target image
+   contains that row.
 3. Follow [Deployment](deployment.md) to authenticate, prepare the cache, and
    launch Generator or Reasoner.
 4. Wait for readiness:
