@@ -384,6 +384,9 @@ The documentation project is complete only when:
 - [x] Align the T2I, T2V, I2V, and four-step examples with the shared
   audiovisual `robot_draping`, `robot_kitchen`, and `car_driving` scenarios
   while retaining NIM-specific requests and sampling contracts.
+- [x] Align the five precomputed Transfer cases with the shared prompts,
+  negative prompt, seeds, geometry, and chunk lengths; retain derived edge and
+  blur as additional NIM examples.
 - [ ] Validate both runtimes against the final released image and resolve or
   retain the release-dependent TBD ledger.
 - [ ] Update stale inbound cookbook/root NIM summaries if that broader scope is
@@ -451,6 +454,12 @@ prompts, negative prompts, and I2V image without copying assets into the NIM
 folder. T2I retains its NIM-native sampling recipe; T2V and I2V use the common
 video recipe. Four-step requests reuse the same scenarios while continuing to
 omit the three profile-owned sampling fields.
+
+The Transfer alignment similarly reuses the five reviewed precomputed control
+cases. It restores their common negative prompt and seed and matches the WSM
+chunk to its 101-frame output. Derived edge and blur remain clearly labeled
+NIM-specific extensions. Generation now distinguishes plain V2V, Transfer, and
+inverse dynamics before users construct a video-conditioned request.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public

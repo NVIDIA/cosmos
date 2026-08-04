@@ -509,8 +509,10 @@ media encoding, image/video decoding, and compact JSON-prompt serialization are
 shared. Their contracts are checked against runtime code, request models,
 tests, and live release evidence rather than another repository's runner
 implementation. T2I, T2V, and I2V reuse the audiovisual cookbook's
-`robot_draping`, `robot_kitchen`, and `car_driving` scenarios, respectively;
-the API adapter and model-specific sampling contract remain NIM-owned.
+`robot_draping`, `robot_kitchen`, and `car_driving` scenarios, respectively.
+The five precomputed Transfer cases reuse the Transfer cookbook's prompt,
+negative prompt, control, geometry, seed, and chunk-length choices. API adapters
+and model-specific request contracts remain NIM-owned.
 
 ### Ports and identity caveat
 
@@ -704,8 +706,10 @@ provenance and license history. Convert local media to data URLs at runtime
 where required; do not copy private-source assets into the public cookbook.
 For cross-backend generation examples, prefer the reviewed structured prompts,
 negative prompts, and conditioning images under
-`cookbooks/cosmos3/generator/audiovisual/assets/`. Serialize JSON prompt assets
-as compact strings because the Generator API's `prompt` and `negative_prompt`
+`cookbooks/cosmos3/generator/audiovisual/assets/`. For Transfer comparisons,
+reuse the matching prompt/control pair and shared negative prompt under
+`cookbooks/cosmos3/generator/transfer/assets/`. Serialize JSON prompt assets as
+compact strings because the Generator API's `prompt` and `negative_prompt`
 fields are strings, not nested JSON objects.
 
 ## Previous product documentation

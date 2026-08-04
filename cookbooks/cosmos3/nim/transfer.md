@@ -13,7 +13,9 @@ object.
 
 See [Deployment](deployment.md) to start a compatible Generator model. Begin
 with one precomputed control, then use derived or multiple controls only when
-the workload requires them.
+the workload requires them. If you are choosing between an ordinary V2V,
+Transfer, or inverse-dynamics request, see
+[Choose a video-conditioned workflow](generation.md#choose-a-video-conditioned-workflow).
 
 ## Control types
 
@@ -31,8 +33,10 @@ base64/data-URL/allowed-public-URL contract as `input_reference`.
 ## Run the examples
 
 The script reuses prompts and control videos already tracked by the transfer
-cookbook. Choose one case so a single command does not run seven expensive
-generations:
+cookbook. The five precomputed cases are the cross-backend comparison set: they
+use the same structured prompt, shared negative prompt, control media, geometry,
+and seed as the Cosmos Framework and vLLM-Omni tutorials. Choose one case so a
+single command does not run several expensive generations:
 
 ```bash
 export NIM_URL=${NIM_URL:-http://localhost:8000}
@@ -43,6 +47,13 @@ python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_blur
 python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_depth
 python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_seg
 python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_wsm
+```
+
+The NIM can also derive edge or blur controls from a source video. These are
+additional NIM API examples rather than members of the precomputed comparison
+set:
+
+```bash
 python cookbooks/cosmos3/nim/examples/transfer.py --case derived_edge
 python cookbooks/cosmos3/nim/examples/transfer.py --case derived_blur
 ```
@@ -58,7 +69,8 @@ server-local `control_path` from a vLLM-Omni example:
 ```json
 {
   "model_mode": "video2video",
-  "prompt": "A cinematic scene that follows the supplied edge structure.",
+  "prompt": "<compact contents of assets/edge/prompt.json>",
+  "negative_prompt": "<compact contents of assets/negative_prompt.json>",
   "transfer": {
     "edge": {
       "video": "data:video/mp4;base64,<BASE64_EDGE_CONTROL>"
@@ -74,7 +86,7 @@ server-local `control_path` from a vLLM-Omni example:
   "num_inference_steps": 50,
   "guidance_scale": 3.0,
   "flow_shift": 10.0,
-  "seed": 0
+  "seed": 2026
 }
 ```
 
@@ -91,6 +103,7 @@ omit the nested control video:
 {
   "model_mode": "video2video",
   "prompt": "A red sports car drives through a dramatic snowy landscape.",
+  "negative_prompt": "<compact contents of assets/negative_prompt.json>",
   "input_reference": "data:video/mp4;base64,<BASE64_SOURCE_VIDEO>",
   "transfer": {
     "edge": {
@@ -106,7 +119,7 @@ omit the nested control video:
   "fps": 30.0,
   "num_inference_steps": 50,
   "guidance_scale": 3.0,
-  "seed": 0
+  "seed": 2026
 }
 ```
 
@@ -137,9 +150,11 @@ Current defaults by family:
 | WSM-only | 101 | 10 | 1.0 | 3.0 |
 
 All current transfer families default to 50 denoising steps and flow shift
-10.0. Explicit request values override defaults when valid. Treat these as the
-current source contract, not a promise that every release or model profile has
-identical quality-optimal settings.
+10.0. The comparison script explicitly uses a 121-frame chunk for edge, blur,
+depth, and segmentation, and a 101-frame chunk for the 101-frame WSM case.
+Explicit request values override defaults when valid. Treat these as the current
+source contract, not a promise that every release or model profile has identical
+quality-optimal settings.
 
 ## Advanced multiple controls
 
