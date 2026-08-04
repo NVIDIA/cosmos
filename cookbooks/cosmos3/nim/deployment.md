@@ -176,18 +176,20 @@ being finalized. The stable selection concepts are:
 
 - runtime: Generator or Reasoner;
 - model size: Nano or Super;
+- Generator model variant: a general-purpose or task-specialized checkpoint;
 - precision: for example BF16, FP8, or NVFP4 when supported by the released
   artifact and GPU architecture;
 - Generator objective: latency or aggregate throughput;
 - GPU count and parallelism layout; and
-- Generator offload mode for lower-VRAM deployments.
+- Generator model and guardrail residency policies for lower-VRAM deployments.
 
 User-facing selectors:
 
 | Variable | Meaning |
 | --- | --- |
 | `NIM_MODEL_TYPE` | `generator` or `reasoner` |
-| `NIM_MODEL_SIZE` | `nano` or `super` |
+| `NIM_MODEL_SIZE` | `nano` or `super`; for Generator, selects the corresponding general-purpose base variant |
+| `NIM_MODEL_VARIANT` | Generator-only checkpoint contract, including task-specialized variants when released |
 | `NIM_PRECISION` | Requested precision when a compatible released profile exists |
 | `NIM_PERF_PROFILE` | Generator-only `latency` or `throughput` |
 | `NIM_OFFLOAD_MODE` | Generator offload preference, such as `none`, `model`, or `layer`, when released |
@@ -225,27 +227,29 @@ exact release.
 
 ### Low-VRAM offload profiles
 
-The current design includes Generator profiles that can offload model state to
-reduce resident GPU-memory requirements. Conceptually:
+The current design includes Generator profiles that can offload model state
+and, independently, safety components to reduce resident GPU-memory
+requirements. Conceptually:
 
-- `none` keeps the normal resident layout and is preferred when it fits;
-- model-level offload reduces GPU residency with added transfer/startup cost;
-  and
-- layer-level offload can reduce GPU residency further with a larger latency
-  tradeoff.
+- model offload `none` keeps the normal model layout and is preferred when it
+  fits;
+- model-level or layer-level offload reduces model residency at a latency cost;
+- text-guard offload sleeps Qwen3Guard during diffusion; and
+- video-guard offload sleeps output-safety sessions during diffusion.
 
-Offload profiles are intended for access on lower-VRAM GPUs, not peak
-performance. Current source profiles are provisional, may exist only for
-specific model/precision/GPU-count combinations, and can change before release.
-Confirm released offload rows and memory requirements in the
-[Support matrix](support-matrix.md) before setting `NIM_OFFLOAD_MODE`.
+The selected profile owns the default guardrail residency policy. Advanced
+operator overrides are documented in [Configuration](configuration.md#guardrails).
+Offload profiles target lower-VRAM access, not peak performance. Current source
+profiles are provisional and can change before release. Confirm released rows
+and memory requirements in the [Support matrix](support-matrix.md) before
+setting an offload selector.
 
 ## Continue configuring the deployment
 
 - [Configuration](configuration.md) lists launch-time environment variables,
   defaults, conflicts, and prompt-upsampling settings.
-- [Bring your own checkpoint](bring-your-own-checkpoint.md) covers the
-  Generator checkpoint override and validation.
+- [Bring your own checkpoint](bring-your-own-checkpoint.md) covers Generator
+  and Reasoner checkpoint sources, mounts, downloads, and validation.
 - [Deploy with Helm](helm.md) covers Kubernetes secrets, storage, GPU
   resources, probes, and rollout.
 

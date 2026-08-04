@@ -3,7 +3,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Cosmos3 Certified NIM documentation creation plan
 
-> Authoring artifact committed on the local `egor/nim_docs` branch. This is a
+> Authoring artifact maintained on the `egor/nim_docs_update` branch. This is a
 > project execution plan, not an end-user guide.
 >
 > This plan defines the execution order, page ownership, validation gates, and
@@ -14,8 +14,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 ## Current status and authorization boundary
 
 - Source discovery and information-architecture planning are complete.
-- Public documentation drafting is complete for the current source snapshot.
-- Static validation is complete; released-image validation remains pending.
+- Public documentation has been refreshed against Cosmos3 NIM source commit
+  `243e05f8eecb44766d90f2843adb46356ae77a17`.
+- Static validation for this refresh is tracked below; released-image
+  validation remains pending.
 - Release-owned facts remain `TBD (release-dependent)` until authoritative
   release evidence is available.
 
@@ -23,15 +25,16 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 Create standalone, human- and AI-readable documentation for the unified Cosmos3
 Certified NIM under `cookbooks/cosmos3/nim` on branch
-`egor/nim_docs`.
+`egor/nim_docs_update`.
 
 The final guide set must:
 
 - cover no less than the durable user-facing topics in the previous official
   Cosmos3 Generator documentation;
 - preserve the applicable historical Reasoner/VLM coverage;
-- cover every current first-party `documentation.md` section by
-  documenting, correcting, intentionally excluding, or visibly deferring it;
+- retain the deleted historical first-party `documentation.md` as a coverage
+  floor while deriving current behavior from implementation, tests, generated
+  profiles, and live release OpenAPI;
 - describe only API behavior supported by the current Certified NIM source or
   validated released image;
 - use the current cookbook's structure, terminology, links, code-fence, table,
@@ -63,8 +66,10 @@ cookbooks/cosmos3/nim/
 └── examples/
     ├── common.py
     ├── t2i.py
+    ├── t2i_4step.py
     ├── t2v.py
     ├── i2v.py
+    ├── i2v_4step.py
     ├── v2v.py
     ├── reasoner.py
     ├── reasoner_stream.py
@@ -89,7 +94,7 @@ or a hand-maintained machine-readable manifest.
 | `configuration.md` | Shared, Generator, Reasoner, selection, and prompt-upsampling environment variables |
 | `support-matrix.md` | Released model, precision, GPU, VRAM, profile, offload, and codec compatibility |
 | `helm.md` | Kubernetes prerequisites, secrets, values, GPUs, storage, probes, rollout, and verification |
-| `bring-your-own-checkpoint.md` | Generator BYOC boundary, layout, mount, profile validation, launch, and verification |
+| `bring-your-own-checkpoint.md` | Generator and Reasoner checkpoint sources, layouts, mounts/downloads, profile validation, launch, and verification |
 | `api-reference.md` | Runtime routing, common Generator top-level fields, strict JSON behavior, common response, and live schema |
 | `generation.md` | T2I, T2V, I2V, V2V, conditioning media, frame/resolution rules, prompt upsampling, output decoding, reproducibility, generation failures |
 | `reasoning.md` | Chat Completions, Responses, streaming, image/video media, sampling, structured outputs, prompt/task guidance |
@@ -110,8 +115,9 @@ environment-variable, profile, or troubleshooting tables.
 1. Record branch, commit, and tracked worktree state for the cookbook, NIM,
    product-documentation, and framework repositories.
 2. Diff the current NIM against the snapshots in `SOURCES.md`, focusing on:
-   request models, Reasoner routing, environment variables, prompt upsampling,
-   profiles, tests, and `documentation.md`.
+   request models, Generator specialist contracts, Reasoner routing/model
+   sources, environment variables, prompt upsampling, profile inputs/generation,
+   and tests. Treat deleted source documentation as historical evidence.
 3. Update the resolved contracts, coverage matrices, discrepancies, and TBD
    ledger before public drafting.
 4. If a release image is available, capture Generator and Reasoner evidence
@@ -199,8 +205,8 @@ Draft:
 - `support-matrix.md` with release-gated hardware/profile/media tables;
 - `configuration.md` with environment-variable contracts;
 - `helm.md` with Kubernetes setup and chart-owned values left TBD;
-- `bring-your-own-checkpoint.md` with Generator-scoped BYOC unless the release
-  proves a wider boundary; and
+- `bring-your-own-checkpoint.md` with separate Generator local-path and
+  Reasoner local/Hugging Face `NIM_MODEL_PATH` contracts; and
 - `deployment.md` with:
   - creation and safe handling of an NGC personal API key;
   - runtime variable `NGC_API_KEY` and Docker username literal `$oauthtoken`;
@@ -338,9 +344,12 @@ The documentation project is complete only when:
 - [x] Record discrepancies, reusable assets, and release-dependent TBDs.
 - [x] Agree on the hub-and-spoke information architecture.
 - [x] Receive explicit authorization to draft public documentation.
-- [x] Refresh source snapshots; no reviewed repository had relevant commit drift.
-- [x] Create the public scaffold, API reference, and ten Python files,
-  including the shared helper.
+- [x] Refresh the original source snapshots.
+- [x] Reconcile the 2026-08-03 NIM drift: model variants, shared BYOC,
+  Nano-DROID/action-only output, Transfer VRAM admission, profile-backed
+  guardrail residency, and Reasoner video pruning.
+- [x] Create the public scaffold, API reference, and twelve Python files,
+  including the shared helper and specialist four-step T2I/I2V requests.
 - [x] Write the generation, reasoning, action, and transfer guides.
 - [x] Write deployment, operations, acknowledgements, and the overview.
 - [x] Split release notes, prerequisites, configuration, support matrix, Helm,
@@ -388,9 +397,18 @@ The incremental T2I refresh was completed on 2026-07-29 from the merged NIM
 `74064b2318222018af446b03701f8a8cbeaa28c3`. It added the one-frame request
 contract, JPEG response and example, T2I prompt upsampling and
 visual-guardrail coverage, and removed four obsolete Generator execution
-variables. Offline validation confirmed exact fixture equality, 57 unique
-documented variables, Python and fenced-code syntax, Markdown links/anchors,
-and whitespace integrity.
+variables.
+
+The full update refresh was performed from NIM source commit
+`243e05f8eecb44766d90f2843adb46356ae77a17`. It supersedes the older current
+contracts for profile inventory, BYOC, Generator response modality, Action,
+Transfer admission, and advanced environment variables. The source profile
+generator produced 122 development rows (115 Generator and 7 Reasoner) in a
+temporary output; those rows remain pre-release evidence. Offline validation
+compiled all twelve examples, parsed every JSON fence, checked local Markdown
+links/anchors and SPDX headers, verified profile parallelism invariants and all
+seven variants, asserted the refreshed source contracts, and passed
+`git diff --check`.
 
 Live API, profile, media/codec, metrics, log, Helm, BYOC, and acknowledgements
 validation remains release-dependent and is labeled as such in the public

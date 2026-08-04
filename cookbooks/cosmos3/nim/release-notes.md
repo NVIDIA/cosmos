@@ -16,7 +16,9 @@ Use an explicit image tag from the corresponding release entry.
 | NGC Catalog and model-card URLs | **TBD (release-dependent)** |
 | Helm chart and version | **TBD (release-dependent)** |
 | Supported hardware and profile matrix | **TBD (release-dependent)** |
-| Released BYOC boundary | **TBD (release-dependent)** |
+| Released Generator model variants | **TBD (release-dependent)** |
+| Released Generator and Reasoner BYOC boundary | **TBD (release-dependent)** |
+| Transfer-enabled profile/GPU rows | **TBD (release-dependent)** |
 | Known limitations and upgrade notes | **TBD (release-dependent)** |
 
 The current documentation describes the source-backed unified runtime model:

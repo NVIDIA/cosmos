@@ -46,7 +46,7 @@ curl -fsS "$NIM_URL/openapi.json" -o openapi.json
 
 | Endpoint | Operational question |
 | --- | --- |
-| `/v1/metadata` | Which profile/checkpoint did the NIM report? |
+| `/v1/metadata` | Which profile/checkpoint did the NIM report, and which `model_variant` is active for Generator? |
 | `/v1/models` | Which model ID should the Reasoner client send? |
 | `/v1/manifest` | Which profile/artifact information is present in this image? |
 | `/v1/version` | Which release/server API is running? |
@@ -70,8 +70,8 @@ Common controls:
 
 Use `DEBUG` or verbose backend logging only during diagnosis; it can increase
 volume, expose request content, and affect performance. Never log
-`NGC_API_KEY`, `NIM_PROMPT_UPSAMPLING_API_KEY`, raw media data URLs, or full
-prompts containing sensitive data.
+`NGC_API_KEY`, `HF_TOKEN`, `NIM_PROMPT_UPSAMPLING_API_KEY`, raw media data
+URLs, or full prompts containing sensitive data.
 
 For a Docker container:
 
@@ -149,8 +149,14 @@ deployment policy. Do so only for an approved, isolated diagnostic:
 Despite its historical name, `NIM_ENABLE_VIDEO_GUARDRAILS` controls the output
 visual path for both generated images and videos. Disabling it also bypasses
 the dependent SigLIP path. Disabling SigLIP alone can retain the rest of the
-image/video face path. BYOC does not replace the NIM-owned guardrail artifacts
-in the current implementation.
+image/video face path. Generator BYOC does not replace the NIM-owned guardrail
+artifacts.
+
+Low-VRAM Generator profiles can independently sleep the text guard and output
+visual guardrails during diffusion. Profile tags own the normal policy;
+`NIM_OFFLOAD_TEXT_GUARDRAIL` and `NIM_OFFLOAD_VIDEO_GUARDRAIL` are advanced
+overrides. Change one dimension at a time and measure memory, latency, and
+safety behavior.
 
 ## Prompt-upsampling diagnostics
 
@@ -239,6 +245,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
 | HTTP 422, unknown field | vLLM-Omni or old NIM request was copied literally | Use JSON `/v1/infer` and the current [API reference](api-reference.md) |
+| Selected variant rejects request mode or sampling fields | A T2I/I2V specialist received another mode, or a four-step request supplied profile-owned controls | Select a compatible `NIM_MODEL_VARIANT`; omit `steps`, `guidance_scale`, and `flow_shift` for four-step variants |
 | HTTP 422, media decode/fetch | Invalid base64/data URL, URL disabled/unreachable, or unsupported media | Prefer a MIME-aware data URL; check release codec/format support |
 | HTTP 422, frame or resolution | Request violates T2I one-frame selection, video cadence/tier limits, or an action rule | Recompute with the canonical tables; action frames equal chunk size plus one |
 | Content-policy 422 | Text or generated frames triggered guardrails | Rephrase and review content; disable only under approved diagnostic policy |
@@ -254,7 +261,9 @@ Task-specific validation belongs to [Generation](generation.md),
 | Wrong action media error | Forward/policy received video or inverse received image | Use image for forward/policy and video for inverse dynamics |
 | Derived transfer control needs video | Edge/blur has no nested control and no top-level source | Add top-level video or a nested precomputed control |
 | Transfer control video required | Depth, segmentation, or WSM lacks nested video | Supply precomputed control media |
-| Multi-control result unsupported/poor | Combination is not validated for the release | Return to one control and smoke-test the intended combination/profile |
+| Multi-control result unsupported/poor | Combination is not validated for the release | Return to one control and smoke-test aligned controls on the intended profile |
+| Nano-DROID action-only response breaks client | Client assumes every policy response has `b64_video` | Save `action` independently and treat both media fields as optional |
+| Transfer disabled while T2V works | GPU fits the profile's ordinary-generation floor but lacks Transfer headroom | Use a larger GPU or lower-VRAM profile; use the unsafe override only for diagnostics |
 
 ### Reasoner
 
@@ -266,6 +275,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | Responses route 404 | Route disabled or absent in this release | Use Chat Completions and inspect live OpenAPI/operator setting |
 | Retrieval/cancel does not work | Response storage/background support is not enabled | Use `store=false` create flow or validate storage configuration for the release |
 | KV-cache/context OOM | Context, media tokens, batching, or concurrency is too large | Reduce media FPS/token budget/concurrency before raising memory utilization |
+| Reasoner checkpoint source fails | Local layout, `hf://` URI, revision, token, or inferred profile properties are invalid | Validate `NIM_MODEL_PATH`, `HF_TOKEN`, cache/network access, and matching selectors |
 
 ### BYOC
 
@@ -275,9 +285,11 @@ layout, mount, selector, and verification procedure.
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
 | Checkpoint/profile mismatch | Inferred model size or precision disagrees with selected profile | Pin compatible `NIM_MODEL_SIZE`/`NIM_PRECISION` and use a released BYOC-supported profile |
-| Required file missing | BYOC directory does not match expected layout | Check `transformer/config.json`, weights, VAE, scheduler, and `model_index.json` |
-| Path/mount failure | `NIM_FT_CHECKPOINT` is not the exact absolute container mount | Align the read-only bind target and environment path |
-| Long first start | A new engine/materialization is being built | Keep a writable persistent cache and wait for readiness |
+| Required file missing | BYOC directory does not match the runtime-specific layout | Generator: check transformer, weights, VAE, scheduler, and model index. Reasoner: check config, safetensors, tokenizer, and processor files |
+| Path/mount failure | Local `NIM_MODEL_PATH` is not the exact absolute container mount | Align the read-only bind target and environment path |
+| `hf://` source fails offline | Remote source requires download while model download is disabled | Pre-download the Reasoner checkpoint and use an absolute local path |
+| Generator rejects disabled download | Profile-owned guardrail artifacts still require materialization | Remove `NIM_DISABLE_MODEL_DOWNLOAD=1` and provide cache/NGC access |
+| Long first start | A new engine or remote checkpoint is being downloaded/materialized | Keep a writable persistent cache and wait for readiness |
 
 ## Known release TBDs
 
@@ -291,5 +303,5 @@ Before publication/production sign-off, replace or explicitly retain:
 - released Responses storage/background behavior;
 - metric catalogue, log samples, probes, and known limitations;
 - final Helm chart and monitoring values;
-- published BYOC boundary; and
+- published Generator and Reasoner BYOC boundary; and
 - approved acknowledgements and license links.

@@ -83,8 +83,8 @@ top-level and nested fields are rejected rather than silently ignored.
 
 ## Generator response
 
-A successful Generator response contains exactly one visual output. T2I
-returns:
+A successful Generator response contains an image, a video, or—on a compatible
+specialist policy profile—an action without visual media. T2I returns:
 
 ```json
 {
@@ -101,11 +101,31 @@ Video modes return:
 }
 ```
 
-Both media fields are raw base64, not data URLs or file URLs. The inactive
-media field is omitted. T2I cannot return non-null `action` metadata. Ordinary
-video generation, Transfer, and forward dynamics return `action: null`; policy
-and inverse dynamics return the predicted trajectory envelope documented in
+Both media fields are raw base64, not data URLs or file URLs. Inactive fields
+can be omitted or null depending on response serialization. T2I cannot return
+non-null `action` metadata. Ordinary video generation, Transfer, and forward
+dynamics return no predicted action; general Policy and inverse dynamics return
+video plus the trajectory envelope documented in
 [Response action object](action.md#response-action-object).
+
+A specialist action-only policy can return:
+
+```json
+{
+  "action": {
+    "data": [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
+    "shape": [32, 8],
+    "dtype": "float32",
+    "raw_action_dim": 8,
+    "action_mode": "policy",
+    "domain_id": 8
+  }
+}
+```
+
+In that case both `b64_image` and `b64_video` are absent or null. Clients must
+branch on the fields actually present rather than assuming every non-T2I
+request has `b64_video`. See [Nano-DROID policy](action.md#nano-droid-policy).
 
 The current source encoder emits JPEG for T2I and a VP9 video track in an MP4
 container for video modes. Released output codec support belongs to the

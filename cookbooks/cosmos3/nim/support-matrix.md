@@ -18,12 +18,14 @@ A configuration is supported only when all dimensions match a released row:
 
 - runtime family: Generator or Reasoner;
 - model size: Nano or Super;
+- Generator model variant and its allowed request mode;
 - model precision;
 - GPU architecture and minimum compute capability;
 - GPU count and homogeneous per-device VRAM;
 - parallelism layout;
-- Generator latency/throughput objective; and
-- Generator offload mode, when available.
+- Generator latency/throughput objective;
+- Generator model and guardrail offload policy; and
+- Transfer VRAM headroom, when Transfer is enabled.
 
 Distinguish:
 
@@ -35,10 +37,10 @@ Distinguish:
 
 ## Released model and hardware profiles
 
-| Runtime | Model size | Precision | GPU architecture / compute capability | GPUs | Per-device VRAM | Layout | Status |
-| --- | --- | --- | --- | ---: | ---: | --- | --- |
-| Generator | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | Release validation pending |
-| Reasoner | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | Release validation pending |
+| Runtime | Model/variant | Precision | GPU architecture / compute capability | GPUs | Per-device VRAM | Layout/offload | Transfer | Status |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- |
+| Generator | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | Release validation pending |
+| Reasoner | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | **TBD** | N/A | Release validation pending |
 
 Populate this table from the exact released manifest and approved test
 inventory. Do not merge historical Generator and Reasoner tables or publish
@@ -53,22 +55,40 @@ tensor-parallel allocation and do not use the Generator
 `latency`/`throughput` selector.
 
 Low-level manifest dimensions can include `nim_dp`, `nim_gp`, `nim_up`, and
-`nim_tp`. Select with high-level variables where possible; pin low-level tags
-only after reviewing the target image's manifest.
+`nim_tp`. Generator profiles also carry `model_variant`, `text_guard_offload`,
+and `video_guard_offload`. Select with high-level variables where possible;
+pin low-level tags only after reviewing the target image's manifest.
+
+The current development source permits Generator FP8 on compute capability 8.9
+or newer; Reasoner precision gates are separate. This is pre-release evidence,
+not a public hardware guarantee. Populate the released table from the exact
+published manifest.
 
 ## Low-VRAM offload
 
 The current design includes Generator profiles that can trade performance for
 lower GPU-memory residency:
 
-- `none` keeps the normal resident layout;
-- model-level offload moves model state with additional transfer/startup cost;
-  and
-- layer-level offload can reduce residency further with a larger latency cost.
+- `none` keeps the normal model layout;
+- model-level or layer-level offload reduces model residency at a latency cost;
+- text-guard offload sleeps the text classifier during diffusion; and
+- video-guard offload sleeps output-safety sessions during diffusion.
 
-The released rows, supported model/precision combinations, minimum memory, and
-performance expectations remain **TBD**. Confirm availability before setting
-`NIM_OFFLOAD_MODE`.
+These are distinct dimensions. The released rows, supported model/precision
+combinations, minimum memory, and performance expectations remain **TBD**.
+Confirm availability before setting an offload selector or override.
+
+## Transfer headroom
+
+Generator profile compatibility is based on its ordinary generation floor.
+Transfer has an additional measured peak-memory overhead. At startup, the NIM
+checks whether the visible GPU has enough headroom for the selected profile;
+a deployment can therefore serve ordinary generation while rejecting Transfer.
+
+The released matrix must identify which profile/GPU rows have validated
+Transfer headroom. `NIM_ALLOW_UNSAFE_TRANSFER=1` bypasses this protection but
+can cause an out-of-memory failure and does not make the configuration
+supported.
 
 ## Supported media and codecs
 
@@ -94,5 +114,6 @@ curl -fsS http://localhost:8000/v1/metadata | python -m json.tool
 curl -fsS http://localhost:8000/v1/manifest | python -m json.tool
 ```
 
-Runtime metadata confirms the selected image/profile; it does not expand the
-published support boundary.
+Runtime metadata confirms the selected image/profile, Generator
+`model_variant`, and checkpoint label. It does not expand the published support
+boundary.

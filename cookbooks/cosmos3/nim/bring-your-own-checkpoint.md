@@ -3,28 +3,32 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Bring your own Cosmos3 checkpoint
 
-Use this page to replace the Generator diffusion checkpoint while preserving
-the selected NIM profile's runtime, guardrails, and supporting artifacts.
+Use this page to replace the selected Generator or Reasoner checkpoint while
+preserving the Certified NIM server, profile selection, and runtime contract.
 
-> **Release status:** Current source supports `NIM_FT_CHECKPOINT` for a
-> Generator diffusion checkpoint. It does not establish Reasoner BYOC. The
-> final published runtime boundary and accepted checkpoint format are **TBD
-> (release-dependent)**.
+> **Release status:** The current source implements the contracts below through
+> `NIM_MODEL_PATH`. The exact checkpoint families, layouts, and remote sources
+> accepted by the published image remain **TBD (release-dependent)**.
 
 ## Supported boundary
 
-BYOC replaces the Generator model weights identified by
-`NIM_FT_CHECKPOINT`. It does not replace the NIM server, profile manifest,
-guardrail bundle, or other profile-owned runtime artifacts.
+`NIM_MODEL_PATH` is the shared checkpoint-source variable:
 
-Do not reuse historical Transfer BYOC variables such as
+| Runtime | Accepted source | What remains profile-owned |
+| --- | --- | --- |
+| Generator | Absolute local directory | Server, profile, and Generator guardrail artifacts |
+| Reasoner | Absolute local directory or `hf://owner/repository[:revision]` | Server, selected runtime layout, and profile compatibility policy |
+
+The former Generator variable `NIM_FT_CHECKPOINT` is not part of the current
+contract. Do not reuse historical Transfer variables such as
 `NIM_EDGE_CHECKPOINT`, `NIM_VIS_CHECKPOINT`, `NIM_DEPTH_CHECKPOINT`, or
-`NIM_SEG_CHECKPOINT`. They are not part of the current Certified NIM's
-source-backed configuration contract.
+`NIM_SEG_CHECKPOINT`.
 
-## Expected checkpoint layout
+## Generator checkpoint
 
-The current source expects this structural shape:
+### Expected layout
+
+The current Generator path expects this structural shape:
 
 ```text
 /byoc/cosmos3/
@@ -36,19 +40,21 @@ The current source expects this structural shape:
 └── model_index.json
 ```
 
-The released image must define the exact accepted serialization, configuration
-fields, model sizes, and precisions. Do not infer compatibility solely because
-a directory has these names.
+The runtime reads `transformer/config.json` to infer model size and precision,
+then cross-checks both against the selected profile. Directory names alone do
+not prove compatibility with the released image.
 
-## Prepare the launch
+### Launch
 
-Use the normal released image and writable model cache. Mount the checkpoint
-read-only at an absolute in-container path:
+Mount the checkpoint read-only at the same absolute path supplied in
+`NIM_MODEL_PATH`:
 
 ```bash
 export NIM_IMAGE='<NIM_IMAGE:TBD>'
 export LOCAL_NIM_CACHE="${LOCAL_NIM_CACHE:-$HOME/.cache/nim/cosmos3}"
-export BYOC_CHECKPOINT='/host/path/to/checkpoint'
+export BYOC_CHECKPOINT='/host/path/to/generator-checkpoint'
+
+mkdir -p "$LOCAL_NIM_CACHE"
 
 docker run --rm --name cosmos3-generator-byoc \
   --gpus '"device=0"' \
@@ -62,34 +68,79 @@ docker run --rm --name cosmos3-generator-byoc \
   -e NIM_MODEL_SIZE=nano \
   -e NIM_PRECISION=bf16 \
   -e NIM_PERF_PROFILE=latency \
-  -e NIM_FT_CHECKPOINT=/byoc/cosmos3 \
+  -e NIM_MODEL_PATH=/byoc/cosmos3 \
   -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
   -v "$BYOC_CHECKPOINT:/byoc/cosmos3:ro" \
   "$NIM_IMAGE"
 ```
 
-The selector values are illustrative. Set model size, precision, GPU count, and
-other selectors to a profile compatible with the actual checkpoint and the
-released [support matrix](support-matrix.md).
+Generator guardrails remain profile-owned artifacts. The cache must be writable,
+NGC artifact access may still be required, and
+`NIM_DISABLE_MODEL_DOWNLOAD=1` is rejected for Generator profiles.
 
-The normal cache must remain writable because derived engines and intermediate
-artifacts are not written into the read-only checkpoint mount.
+## Reasoner checkpoint
+
+### Local directory
+
+A local Reasoner checkpoint must use an absolute in-container path and contain,
+at minimum:
+
+- a supported Cosmos3 Reasoner or Cosmos3 Omni `config.json`;
+- safetensors weights or a valid safetensors index and all referenced shards;
+- tokenizer files; and
+- processor or preprocessor configuration.
+
+The runtime infers Nano versus Super, BF16/FP8/NVFP4 precision, and Reasoner
+versus Omni layout. It then selects a compatible Reasoner profile. An explicit
+`NIM_MODEL_SIZE`, `NIM_PRECISION`, or `NIM_MODEL_PROFILE` must agree with the
+checkpoint.
+
+Use the same read-only mount pattern as the Generator, but select the Reasoner:
+
+```bash
+-e NIM_MODEL_TYPE=reasoner \
+-e NIM_MODEL_PATH=/byoc/cosmos3-reasoner \
+-v "$BYOC_CHECKPOINT:/byoc/cosmos3-reasoner:ro"
+```
+
+For a completely local checkpoint, `NIM_DISABLE_MODEL_DOWNLOAD=1` prevents
+profile artifact download after source resolution.
+
+### Hugging Face source
+
+The Reasoner also accepts:
+
+```bash
+-e NIM_MODEL_TYPE=reasoner \
+-e NIM_MODEL_PATH='hf://owner/repository:revision' \
+-e HF_TOKEN
+```
+
+Omit `:revision` to use `main`. Inject `HF_TOKEN` only when the repository
+requires it; never place the token in the URI, image layer, or documentation.
+The downloaded snapshot is stored under the writable NIM cache.
+
+An `hf://` source requires network materialization, so it cannot be combined
+with `NIM_DISABLE_MODEL_DOWNLOAD=1`. For offline operation, pre-download the
+checkpoint and use an absolute local path instead.
 
 ## Discovery and validation
 
-At startup, the current NIM:
+At startup, the NIM:
 
-1. resolves the absolute `NIM_FT_CHECKPOINT` path;
-2. inspects checkpoint configuration to infer model size and precision;
-3. cross-checks those values against the selected profile; and
-4. fails before inference when the path, layout, or profile is incompatible.
+1. parses `NIM_MODEL_PATH` and rejects unsupported or unsafe source forms;
+2. validates the checkpoint layout and infers its model properties;
+3. checks explicit selectors and the selected profile against those properties;
+4. materializes any runtime-owned artifacts still required; and
+5. fails before inference when the source, layout, or profile is incompatible.
 
-This prevents a checkpoint/profile mismatch from failing later inside model
-load or inference. Adjust the selectors; do not bypass the cross-check.
+Adjust the selectors or checkpoint rather than bypassing compatibility checks.
+The exact accepted release inventory belongs in the
+[Support matrix](support-matrix.md).
 
 ## Verify the active checkpoint
 
-Wait for readiness, then inspect metadata:
+Wait for readiness and inspect metadata:
 
 ```bash
 until curl -fsS http://localhost:8000/v1/health/ready >/dev/null; do
@@ -99,21 +150,24 @@ done
 curl -fsS http://localhost:8000/v1/metadata | python -m json.tool
 ```
 
-Confirm that the reported checkpoint is the in-container override path and
-that the selected profile matches the intended model size and precision. Then
-run a representative Generator request and compare output quality with the
-checkpoint's validation baseline.
+The `checkpoint` field reports `default` for bundled artifacts or identifies the
+configured source. Generator metadata also reports `model_variant`. Confirm the
+selected profile, then run a representative request and compare its result with
+the checkpoint's validation baseline.
 
 ## Common failures
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
-| Checkpoint path does not exist | Host path was not mounted at the value of `NIM_FT_CHECKPOINT` | Compare the bind mount destination with the absolute in-container variable |
-| Permission denied | Container cannot traverse/read the mounted directory | Fix host ownership/ACLs while keeping the checkpoint mount read-only |
-| Required file or directory missing | Checkpoint layout or serialization is incomplete/incompatible | Compare against the released BYOC contract and export the checkpoint again |
-| Model size or precision mismatch | Selected profile does not match checkpoint metadata | Set compatible selectors from the released support matrix |
-| Engine/materialization failure | Writable cache, disk, RAM, shared memory, or profile resources are insufficient | Check cache permissions/resources and retain startup logs |
-| Metadata shows bundled checkpoint | Override was omitted, rejected, or applied to the wrong container | Inspect environment, mount, startup logs, and `/v1/metadata` |
+| Local path does not exist | Host path was not mounted at the exact `NIM_MODEL_PATH` value | Align the read-only bind destination and environment path |
+| Relative path rejected | Local checkpoint sources must be absolute | Use an absolute in-container path |
+| Permission denied | Container cannot traverse or read the mount | Fix host ownership/ACLs while retaining a read-only checkpoint mount |
+| Required file missing | Checkpoint layout, tokenizer, processor, index, or weight shards are incomplete | Compare with the released BYOC contract and export again |
+| Model size or precision mismatch | Explicit selector/profile disagrees with inferred checkpoint properties | Select a compatible released profile or use a matching checkpoint |
+| Generator rejects disabled downloads | Generator still needs profile-owned guardrails | Remove `NIM_DISABLE_MODEL_DOWNLOAD=1` and provide NGC/cache access |
+| Hugging Face source rejected offline | `hf://` requires download but downloads are disabled | Use an absolute pre-downloaded local path |
+| Hugging Face authorization fails | Token, repository ID, revision, network, or cache is invalid | Check `HF_TOKEN`, URI, connectivity, and writable cache without logging the token |
+| Metadata shows `default` | Override was omitted, rejected, or applied to another container | Inspect launch environment, mounts, startup logs, and `/v1/metadata` |
 
 For broader startup, cache, GPU, and readiness diagnosis, see
 [Operations](operations.md#byoc).

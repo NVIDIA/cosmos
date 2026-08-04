@@ -28,6 +28,7 @@ selected profile starts one backend/API at a time:
 | Video-to-video | Generator | Prompt + video | MP4 video | [Generation](generation.md#video-to-video) |
 | Forward dynamics | Generator | Image + action trajectory | Rollout video | [Action](action.md#forward-dynamics) |
 | Policy | Generator | Image + task/state | Video + predicted action | [Action](action.md#policy) |
+| Nano-DROID policy | Generator specialist | Image + task/current state | Predicted action | [Action](action.md#nano-droid-policy) |
 | Inverse dynamics | Generator | Video | Video + predicted action | [Action](action.md#inverse-dynamics) |
 | Video transfer | Generator | Prompt + spatial control | Controlled MP4 video | [Transfer](transfer.md) |
 | Image/video reasoning | Reasoner | Messages with media + text | Text or structured result | [Reasoning](reasoning.md) |
@@ -46,14 +47,14 @@ requests without translation.
 | [Release notes](release-notes.md) | Released versions, compatibility changes, limitations, and upgrade guidance |
 | [Prerequisites](prerequisites.md) | Host hardware, software, storage, shared memory, NGC access, and setup verification |
 | [Deployment](deployment.md) | NGC authentication, Docker, cache, runtime/profile selection, readiness, and shutdown |
-| [Configuration](configuration.md) | Shared, Generator, Reasoner, selection, and prompt-upsampling environment variables |
-| [Support matrix](support-matrix.md) | Released model, precision, GPU, VRAM, profile, offload, and codec compatibility |
+| [Configuration](configuration.md) | Shared, Generator, Reasoner, selection, BYOC, guardrail-memory, and prompt-upsampling variables |
+| [Support matrix](support-matrix.md) | Released model variant, precision, GPU, VRAM, profile, offload, Transfer, and codec compatibility |
 | [Deploy with Helm](helm.md) | Kubernetes secrets, values, GPUs, storage, probes, rollout, and verification |
-| [Bring your own checkpoint](bring-your-own-checkpoint.md) | Generator checkpoint layout, mount, selectors, validation, and verification |
+| [Bring your own checkpoint](bring-your-own-checkpoint.md) | Generator and Reasoner checkpoint sources, mounts, selectors, validation, and verification |
 | [API reference](api-reference.md) | Runtime routing, common Generator fields and response, task-contract links, and live schema |
-| [Generation](generation.md) | T2I, T2V, I2V, V2V, output decoding, and prompt upsampling |
+| [Generation](generation.md) | T2I, T2V, I2V, V2V, specialist four-step variants, output decoding, and prompt upsampling |
 | [Reasoning](reasoning.md) | Chat Completions, streaming, Responses, media, sampling, and prompting |
-| [Action](action.md) | Forward dynamics, policy, inverse dynamics, domains, and action shapes |
+| [Action](action.md) | Forward dynamics, policy, inverse dynamics, Nano-DROID, domains, and action shapes |
 | [Transfer](transfer.md) | Edge, blur, depth, segmentation, WSM, and transfer tuning |
 | [Operations](operations.md) | Health, inspection, logs, metrics, guardrails, and troubleshooting |
 | [Acknowledgements](acknowledgements.md) | Third-party notices for the exact released image; currently TBD |
@@ -166,15 +167,18 @@ python cookbooks/cosmos3/nim/examples/reasoner.py --case image
 ## Profiles and low-VRAM operation
 
 Profile selection considers runtime, model size, precision, GPU count/hardware,
-Generator latency versus throughput, and optional Generator offload. Some
-profiles are designed to trade latency for lower GPU-memory residency through
-model- or layer-level offload.
+Generator latency versus throughput, checkpoint variant, and optional model or
+guardrail offload. General-purpose `nano` and `super` Generator variants accept
+the ordinary capability set; specialist variants can restrict requests to T2I,
+I2V, or Nano-DROID policy. Select a specialist with `NIM_MODEL_VARIANT` only
+when it appears in the released manifest.
 
 The current generated profile grid is provisional, so this cookbook does not
 publish it as a final support table. Use the released image's manifest and model
-card for exact availability and inspect `/v1/metadata` after startup. See
-[Select a profile](deployment.md#select-a-profile) for the stable model and
-selector concepts.
+card for exact availability and inspect `/v1/metadata` after startup. Generator
+metadata reports the selected `model_variant`. See
+[Select a profile](deployment.md#select-a-profile) for the stable selection
+concepts.
 
 ## Run the Python examples
 
@@ -186,8 +190,12 @@ export NIM_URL=${NIM_URL:-http://localhost:8000}
 python -m pip install requests openai
 
 python cookbooks/cosmos3/nim/examples/t2i.py
+# With NIM_MODEL_VARIANT=super-t2i-4step:
+python cookbooks/cosmos3/nim/examples/t2i_4step.py
 python cookbooks/cosmos3/nim/examples/t2v.py
 python cookbooks/cosmos3/nim/examples/i2v.py
+# With NIM_MODEL_VARIANT=super-i2v-4step:
+python cookbooks/cosmos3/nim/examples/i2v_4step.py
 python cookbooks/cosmos3/nim/examples/v2v.py
 python cookbooks/cosmos3/nim/examples/action.py --case forward_dynamics
 python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_edge
@@ -198,8 +206,9 @@ python cookbooks/cosmos3/nim/examples/reasoner_responses.py
 ```
 
 Generator examples write a decoded JPEG or MP4—and predicted action JSON when
-applicable—under `cookbooks/cosmos3/nim/examples/outputs/`. Reasoner examples
-print text directly. The output directory is ignored by the repository.
+applicable—under `cookbooks/cosmos3/nim/examples/outputs/`. A specialist policy
+can return action JSON without visual media. Reasoner examples print text
+directly. The output directory is ignored by the repository.
 
 ## Safety, license, and notices
 
