@@ -40,6 +40,48 @@ print(model)
 Runtime discovery is the preferred contract; do not hard-code a model ID from
 another image or deployment.
 
+## Run representative tasks
+
+The task runner reuses media and prompt intent from the general Cosmos3
+Reasoner cookbook while adapting transport, thinking, and structured output to
+the Certified NIM contract:
+
+| Case | Media | Result |
+| --- | --- | --- |
+| `image_caption` | `robot_153.jpg` | Detailed text caption |
+| `video_caption` | `video_caption.mp4` | Detailed text caption |
+| `temporal_localization` | `temporal_localization_1.mp4` | Validated JSON event intervals |
+| `robotics_next_action` | `robotics_next_action.mp4` | Concise proposed next action |
+| `robot_planning` | `robot_planning.png` | Ordered text plan |
+| `grounding_2d` | `grounding_2d.png` | Validated JSON bounding boxes |
+| `trajectory_2d` | `action_cot_trajectory.png` | Validated JSON image points |
+| `physical_plausibility` | `physical_plausibility.mp4` | Possible/impossible assessment |
+| `situation_understanding` | `situation_understanding.mp4` | Current and likely next event |
+
+Pass any table entry as `CASE`:
+
+```bash
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case CASE
+```
+
+The original `image` and `video` case names remain aliases for `image_caption`
+and `video_caption`. Every video case requests 4 FPS sampling. Task quality can
+differ between Nano and Super; these cases demonstrate the API and output
+contract rather than guaranteeing a particular answer.
+
+For each run, the script prints the final answer and writes an ignored
+`examples/outputs/reasoner_<case>/` directory containing:
+
+- `request.json`: case, model, asset, prompt, and request-option metadata without
+  the embedded media data URL;
+- `response.json`: the raw OpenAI client response;
+- `output.txt`: final `message.content`;
+- `output.json`: parsed and validated output for structured cases; and
+- `reasoning.txt`: parsed reasoning when explicitly requested and returned.
+
+Streaming and Responses examples continue to use the image-caption case so API
+transport differences do not multiply the task matrix.
+
 ## Image reasoning with Chat Completions
 
 Place the media item before the text instruction:
@@ -77,7 +119,7 @@ print(response.choices[0].message.content)
 Run the equivalent cookbook example:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case image
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case image_caption
 ```
 
 Use the OpenAI client for normal applications. For direct HTTP integration,
@@ -122,7 +164,7 @@ print(response.choices[0].message.content)
 Run the complete example:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case video
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case video_caption
 ```
 
 Data URLs are the portable baseline. Public HTTP(S) media URLs may work when
@@ -172,12 +214,23 @@ extra_body = {
 }
 ```
 
-Pass that object as `extra_body=extra_body` in a normal Chat Completions call.
-`include_reasoning` must be a JSON boolean. When the released response schema
-includes parsed reasoning, read its dedicated message field and keep the final
-answer in `message.content`; do not parse `<think>` tags. Reasoning text is not
-a stable machine-readable explanation and should not be required by downstream
-logic.
+Pass that object as `extra_body=extra_body` in a normal Chat Completions call,
+or run a task with explicit reasoning:
+
+```bash
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py \
+  --case robotics_next_action \
+  --reasoning \
+  --thinking-token-budget 512
+```
+
+`include_reasoning` must be a JSON boolean. The task runner keeps the canonical
+question but does not copy prompt-authored `<think>` formatting instructions
+from older task-gallery examples. When the response includes parsed reasoning,
+it saves the dedicated `reasoning_content` field separately and keeps the final
+answer in `message.content`; it never parses `<think>` tags. Reasoning text is
+not a stable machine-readable explanation and should not be required by
+downstream logic.
 
 The current Chat Completions middleware also:
 
@@ -232,35 +285,47 @@ the target image before relying on it in production.
 ## Structured output
 
 The Reasoner middleware normalizes OpenAI `response_format`, vLLM
-`structured_outputs`, and legacy guided-decoding fields. A Chat Completions
-request can ask for a small JSON schema, for example:
+`structured_outputs`, and legacy guided-decoding fields. Prefer the standard
+OpenAI JSON-schema shape in portable client code:
 
 ```json
 {
   "response_format": {
     "type": "json_schema",
     "json_schema": {
-      "name": "scene_summary",
+      "name": "temporal_events",
       "schema": {
-        "type": "object",
-        "properties": {
-          "summary": {"type": "string"},
-          "objects": {"type": "array", "items": {"type": "string"}}
-        },
-        "required": ["summary", "objects"],
-        "additionalProperties": false
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "start": {"type": "number"},
+            "end": {"type": "number"},
+            "caption": {"type": "string"}
+          },
+          "required": ["start", "end", "caption"],
+          "additionalProperties": false
+        }
       }
     }
   }
 }
 ```
 
-Combine this field with a normal request. Validate the exact released schema in
-`/openapi.json`, especially when upgrading the OpenAI client or vLLM runtime.
+The runnable task catalog uses JSON schemas for temporal localization, 2D
+grounding, and 2D trajectory proposals. It parses `message.content` with the
+standard JSON parser and then validates semantic invariants that a schema alone
+does not establish, such as ordered timestamps, ordered box corners, non-empty
+labels, and coordinates in `[0,1000]`. Do not recover structured results with a
+regular expression over prose or Markdown fences.
+
+Validate the exact released schema in `/openapi.json`, especially when upgrading
+the OpenAI client or vLLM runtime.
 
 ## Prompting patterns
 
-The Reasoner supports several task families without separate endpoints:
+The Reasoner supports several task families through the same Chat Completions
+endpoint; task names do not select separate server routes:
 
 | Task | Prompt intent |
 | --- | --- |
@@ -272,9 +337,21 @@ The Reasoner supports several task families without separate endpoints:
 | 2D grounding | Return normalized coordinates for named objects or regions |
 | Action trajectories | Return ordered normalized points or poses for a requested path |
 
-Put the output contract in the prompt when machine parsing matters. For 2D
-grounding, the existing cookbook convention uses coordinates normalized to
-`[0,1000]`; convert them to pixels only after validating the model's output.
+Use `response_format` rather than prompt-only formatting when machine parsing
+matters. For 2D grounding and trajectory points, the existing cookbook
+convention independently normalizes each axis to `[0,1000]`, with the origin at
+the upper-left, X increasing rightward, and Y increasing downward. Convert a
+validated point to pixels with:
+
+```python
+pixel_x = normalized_x / 1000 * image_width
+pixel_y = normalized_y / 1000 * image_height
+```
+
+A Reasoner next-action answer or 2D trajectory is text/JSON describing a
+semantic proposal in visual coordinates. It is not a domain-specific Generator
+Action tensor and must not be sent directly to a robot. See
+[Generator Action representations](action.md#domains-and-representations).
 
 For a broader gallery, see the existing
 [Reasoner Prompt Guide](../reasoner/reasoner_prompt_guide.md). Treat its task
