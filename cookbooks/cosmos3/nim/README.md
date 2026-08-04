@@ -102,15 +102,13 @@ generation.
 For a general-purpose Generator:
 
 ```bash
-python -m pip install requests
-python cookbooks/cosmos3/nim/examples/t2v.py
+uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py
 ```
 
 For a Reasoner:
 
 ```bash
-python -m pip install openai
-python cookbooks/cosmos3/nim/examples/reasoner.py --case image
+uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case image
 ```
 
 Specialist models accept only their documented task contract. Use
