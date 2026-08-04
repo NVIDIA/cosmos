@@ -66,7 +66,6 @@ Common controls:
 | `NIM_LOG_LEVEL` | `INFO` | Service/NIMlib log threshold |
 | `NIM_LOGGING_JSONL` | false | JSON-line logs for aggregation |
 | `NIM_TRITON_LOG_VERBOSE` | 0 | Generator backend verbosity |
-| `NIM_VRAM_MONITORING` | false | Generator per-request peak-VRAM logging for diagnosis |
 | `NIM_DISABLE_LOG_REQUESTS` | true | Reasoner request-body logging control |
 
 Use `DEBUG` or verbose backend logging only during diagnosis; it can increase
@@ -156,9 +155,7 @@ artifacts.
 Low-VRAM Generator profiles can independently sleep the text guard and output
 visual guardrails during diffusion. Profile tags own the normal policy;
 `NIM_OFFLOAD_TEXT_GUARDRAIL` and `NIM_OFFLOAD_VIDEO_GUARDRAIL` are advanced
-overrides. `NIM_QWEN3GUARD_MAX_GPU_MEMORY_GB` and
-`NIM_QWEN3GUARD_ENFORCE_EAGER` tune the text guard itself and do not select
-model offload. Change one dimension at a time and measure memory, latency, and
+overrides. Change one dimension at a time and measure memory, latency, and
 safety behavior.
 
 ## Prompt-upsampling diagnostics

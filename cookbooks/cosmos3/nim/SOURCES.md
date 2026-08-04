@@ -117,8 +117,8 @@ Current high-impact contracts:
   generation profile compatibility. `NIM_ALLOW_UNSAFE_TRANSFER=1` bypasses the
   check at OOM risk.
 - Generator profile policy includes independent model, text-guard, and
-  video-guard residency. New operator controls cover guardrail offload, text
-  guard memory/eager mode, VAE parallelism, and peak-VRAM monitoring.
+  video-guard residency. Public operator guidance covers the profile-backed
+  guardrail offload controls.
 - Reasoner video pruning adds `NIM_VIDEO_PRUNING_METHOD=vidcom2|evs`, used when
   `NIM_VIDEO_PRUNING_RATE` is nonzero.
 - Generator FP8's development compute-capability floor is 8.9; Reasoner keeps
@@ -1545,8 +1545,8 @@ Do not close these from memory or legacy docs:
   Release support remains unvalidated.
 - The same refresh asserted current source constants and controls for shared
   `NIM_MODEL_PATH`, model variants, Reasoner pruning method, Transfer override,
-  VAE parallelism, VRAM monitoring, Nano-DROID `[32,8]`, and action-only
-  responses. It compiled all twelve local examples and validated JSON fences,
+  Nano-DROID `[32,8]`, and action-only responses. It compiled all twelve local
+  examples and validated JSON fences,
   SPDX headers, local links/anchors, Markdown table structure, and whitespace.
 - Confirmed every Reasoner row omits the performance-profile axis, fixes
   `nim_dp=nim_gp=nim_up=1`, and satisfies `n_gpus=nim_tp`.

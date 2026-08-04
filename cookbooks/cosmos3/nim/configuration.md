@@ -19,9 +19,6 @@ Use [deployment.md](deployment.md) for complete Docker launch commands and
 | --- | --- | --- | --- |
 | `NGC_API_KEY` | Conditional | Empty | NGC credentials used to download profile-owned artifacts on first boot. It is not required when all required artifacts are already present in the cache. |
 | `NIM_CACHE_PATH` | No | `/opt/nim/.cache` | In-container path for downloaded model artifacts. Mount a writable host directory here to share the cache across runs. |
-| `NIM_MODEL_PATH` | No | Empty | Checkpoint override. Generator accepts an absolute local path; Reasoner accepts an absolute local path or `hf://owner/repository[:revision]`. See [Bring your own checkpoint](bring-your-own-checkpoint.md). |
-| `NIM_DISABLE_MODEL_DOWNLOAD` | No | `false` | Disable profile artifact download. Valid for a local Reasoner override; incompatible with `hf://` and rejected for Generator because Generator guardrails remain profile-owned. |
-| `HF_TOKEN` | Conditional | Empty | Hugging Face credential for a private Reasoner `hf://` source. Inject as a secret; never include it in the URI. |
 
 ### Server and logging
 
@@ -46,6 +43,17 @@ Use [deployment.md](deployment.md) for complete Docker launch commands and
 Shorthands and the corresponding keys in `NIM_TAGS_SELECTOR` must not
 conflict. Use `NIM_MODEL_PROFILE` only to pin a reviewed profile from the exact
 image release.
+
+### Bring your own checkpoint
+
+| Name | Required? | Default | Notes |
+| --- | --- | --- | --- |
+| `NIM_MODEL_PATH` | No | Empty | Checkpoint override. Generator accepts an absolute local path; Reasoner accepts an absolute local path or `hf://owner/repository[:revision]`. |
+| `NIM_DISABLE_MODEL_DOWNLOAD` | No | `false` | Disable profile artifact download. Valid for a local Reasoner override; incompatible with `hf://` and rejected for Generator because Generator guardrails remain profile-owned. |
+| `HF_TOKEN` | Conditional | Empty | Hugging Face credential for a private Reasoner `hf://` source. Inject as a secret; never include it in the URI. |
+
+See [Bring your own checkpoint](bring-your-own-checkpoint.md) for runtime-specific
+layout, mount, download, and profile-validation requirements.
 
 ## Generator variables
 
@@ -75,9 +83,7 @@ image release.
 | Name | Required? | Default | Notes |
 | --- | --- | --- | --- |
 | `NIM_ENABLE_TORCH_COMPILE` | No | `true` | Enable the Generator `torch.compile` path. |
-| `NIM_ENABLE_VAE_PARALLELISM` | No | `true` | Enable the Generator's configurable VAE parallel execution path. Change only after validating the selected profile and workload. |
 | `NIM_MAX_SEQUENCE_LENGTH` | No | `5120` | Set the Generator prompt-token sequence length at startup. This is not a per-request control. |
-| `NIM_VRAM_MONITORING` | No | `false` | Log per-request peak GPU-memory measurements for diagnosis. It adds monitoring work and is not required for ordinary serving. |
 
 ### Diffusion caching
 
@@ -93,9 +99,6 @@ image release.
 | `NIM_ENABLE_TEXT_GUARDRAILS` | No | `true` | Enable input-text policy checks. |
 | `NIM_ENABLE_VIDEO_GUARDRAILS` | No | `true` | Enable the output face and video guardrail path. |
 | `NIM_ENABLE_SIGLIP_GUARDRAILS` | No | `true` | Enable the output-frame safety classifier when video guardrails run. |
-| `NIM_QWEN3GUARD_MAX_INPUT_TOKENS` | No | `8192` | Text-guard token budget; minimum accepted value is 512. |
-| `NIM_QWEN3GUARD_MAX_GPU_MEMORY_GB` | No | Auto-computed | Override the text guard's GPU-memory ceiling with a value from `0.1` through `16.0` GiB. Prefer the computed value unless profiling proves an override is needed. |
-| `NIM_QWEN3GUARD_ENFORCE_EAGER` | No | `false` | Enable eager execution for the text guard, disabling its CUDA graphs. This is independent of guardrail offload. |
 | `NIM_OFFLOAD_TEXT_GUARDRAIL` | No | Selected-profile policy | Force the text guard to sleep on CPU during diffusion (`true`) or remain resident (`false`), overriding the selected profile tag. |
 | `NIM_OFFLOAD_VIDEO_GUARDRAIL` | No | Selected-profile policy | Force output visual guardrail sessions to sleep during diffusion (`true`) or remain resident (`false`). |
 
@@ -105,8 +108,7 @@ image release.
 | --- | --- | --- | --- |
 | `NIM_ALLOW_UNSAFE_TRANSFER` | No | `false` | Allow Transfer even when startup determines that the selected profile lacks measured VRAM headroom. This can cause an out-of-memory failure; use only for an approved diagnostic. |
 
-Startup derives an internal Transfer-admission value from the selected profile
-and GPU. Do not set `NIM_TRANSFER_VRAM_OK` as a normal user selector.
+Transfer admission is derived internally from the selected profile and GPU.
 
 ### Prompt upsampling
 

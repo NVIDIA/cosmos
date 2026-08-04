@@ -346,8 +346,8 @@ The documentation project is complete only when:
 - [x] Receive explicit authorization to draft public documentation.
 - [x] Refresh the original source snapshots.
 - [x] Reconcile the 2026-08-03 NIM drift: model variants, shared BYOC,
-  Nano-DROID/action-only output, Transfer VRAM admission, guardrail residency,
-  VAE/VRAM controls, and Reasoner video pruning.
+  Nano-DROID/action-only output, Transfer VRAM admission, profile-backed
+  guardrail residency, and Reasoner video pruning.
 - [x] Create the public scaffold, API reference, and twelve Python files,
   including the shared helper and specialist four-step T2I/I2V requests.
 - [x] Write the generation, reasoning, action, and transfer guides.
