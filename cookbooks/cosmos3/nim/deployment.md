@@ -4,8 +4,9 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Deploy the Cosmos3 Certified NIM
 
 Use this page to authenticate to NGC, choose a model, launch Generator or
-Reasoner, and verify the selected service. The final NGC image and released
-hardware matrix remain **TBD**.
+Reasoner, and verify the selected service. The final NGC image remains **TBD**;
+semi-final source-profile hardware requirements are documented in the
+[support matrix](support-matrix.md) pending release approval.
 
 ## How selection works
 
@@ -201,10 +202,11 @@ See [Configuration](configuration.md#advanced-profile-controls) for details.
 | `-e NGC_API_KEY` | Pass the exported NGC credential |
 | `-v ...:/opt/nim/.cache` | Persist model artifacts |
 
-Final resource values are release-specific. Some lower-VRAM profiles require
-substantial system RAM; the current Super BF16 offload profiles require 150
-GiB. Docker or Kubernetes memory limits count as the available system memory.
-Do not infer support from these structural examples.
+GPU counts, compute-capability gates, and VRAM floors are summarized in the
+[semi-final profile matrix](support-matrix.md). Current Super-family BF16 model-
+and layer-offload profiles require 150 GiB of effective system memory. Docker
+or Kubernetes memory limits count as the available system memory. Confirm that
+the selected row is present in the target image before deployment.
 
 ## Next steps
 

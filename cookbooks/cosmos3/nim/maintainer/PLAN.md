@@ -366,7 +366,9 @@ The documentation project is complete only when:
   and BYOC into focused canonical pages.
 - [x] Reduce `api-reference.md` to shared routing and Generator envelope
   material; move mode-specific contracts to task and operations pages.
-- [x] Keep provisional profile details structural and release-owned values TBD.
+- [x] Initially keep provisional profile details structural and release-owned
+  values TBD; after authorization, publish grouped semi-final source-profile
+  floors without exposing development profile IDs or claiming release support.
 - [x] Simplify the user journey around runtime, model, optional precision, and
   Generator latency/throughput; leave exact profiles and tags as advanced.
 - [x] Move planning and source provenance into the maintainer-only directory.
@@ -434,9 +436,10 @@ reasoning/tool-call QA contract. Together they supersede the older current
 contracts for profile inventory, BYOC, Generator request/response
 modality, Action, Transfer admission, and advanced environment variables. The
 source profile generator produced 122 development rows (115 Generator and 7
-Reasoner) in a temporary output; those rows remain pre-release evidence.
-Offline validation compiled all twelve examples, validated 16 cookbook
-Generator payloads and eight documented JSON payloads against the latest
+Reasoner) in a temporary output. Exact profile IDs and release inclusion remain
+pre-release evidence; grouped hardware requirements are now published with a
+semi-final source-profile label. Offline validation compiled all twelve
+examples, validated 16 cookbook Generator payloads and eight documented JSON payloads against the latest
 `Cosmos3Request`, parsed every JSON fence, checked local Markdown links/anchors
 and SPDX headers, verified profile parallelism, DFlash artifacts, system-memory
 tags, and all seven variants, asserted the refreshed source contracts, and
@@ -452,8 +455,15 @@ again.
 The Reasoner QA refresh asserted developer-role normalization, default and
 explicit thinking controls, strict reasoning/logprob types, and advertised
 Qwen3/Hermes parser settings directly against the import-safe source contract.
-The changed development hardware floors remain maintainer evidence because the
-public release matrix is still TBD.
+The later hardware refresh advanced source provenance to `5862d3a5`, regenerated
+all 122 rows, and confirmed synchronized Reasoner floors of 46 GiB/device for
+Super BF16 TP2, 67 GiB for Super FP8, and 73 GiB for Super NVFP4. The grouped
+Generator and Reasoner requirements were then authorized as semi-final public
+planning data while remaining distinct from released and tested support rows.
+Validation matched all 13 grouped Generator rows and seven Reasoner rows to the
+122-row generated catalog, including compute gates, GPU counts, per-device
+VRAM, system-memory floors, and Transfer thresholds; all five source profile
+catalog tests passed.
 
 The generation-example alignment reuses the reviewed audiovisual structured
 prompts, negative prompts, and I2V image without copying assets into the NIM

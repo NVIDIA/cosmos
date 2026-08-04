@@ -18,8 +18,9 @@ Prepare:
 - outbound NGC access or an approved pre-populated-cache workflow; and
 - an `NGC_API_KEY` with NGC Catalog access.
 
-Choose a model/hardware combination from the released
-[Support matrix](support-matrix.md) before setting GPU resources.
+Choose a model/hardware combination from the semi-final
+[Support matrix](support-matrix.md), then confirm that the released chart/image
+contains that row before setting GPU resources.
 
 ## Inspect the released chart
 

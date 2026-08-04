@@ -15,7 +15,7 @@ Use an explicit image tag from the corresponding release entry.
 | NGC image repository and tag | **TBD** |
 | NGC Catalog and model-card URLs | **TBD** |
 | Helm chart and version | **TBD** |
-| Supported hardware and model matrix | **TBD** |
+| Supported hardware and model matrix | Semi-final source-profile requirements documented; released-row approval pending |
 | Released Generator model variants | **TBD** |
 | Released Generator and Reasoner BYOC boundary | **TBD** |
 | Transfer-enabled model/GPU rows | **TBD** |
