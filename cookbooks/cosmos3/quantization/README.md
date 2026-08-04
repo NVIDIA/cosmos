@@ -16,8 +16,6 @@ No other quantization pipeline is required.
 | --- | --- |
 | [`src/`](./src) | The Cosmos3 model + the complete FP8 recipe (load, calibrate, export). |
 | [`notebooks/`](./notebooks) | Three customer-facing walkthroughs (one per model family). |
-| [`dev/`](./dev) | Maintainer tooling — the notebook generator and a validation script. Not needed to use the cookbook. |
-| [`STATUS.md`](./STATUS.md) | Which files are active vs. superseded (some earlier prototypes are kept for reference). |
 
 ### The `src/` package
 
