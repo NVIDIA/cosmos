@@ -115,10 +115,8 @@ generation (see [`run_fd_with_vllm_omni.ipynb`](./run_fd_with_vllm_omni.ipynb) a
 | `guidance_scale` | `1.0` |
 | `flow_shift` | `10.0` |
 
-The notebooks build the full request body for AV, DROID, UMI and human hand-pose examples,
-including autoregressive chunked generation for the robotics examples. Policy
-inference uses async `POST /v1/videos` to retrieve a rollout video plus
-top-level `action` metadata.
+The notebooks build the full request body for AV, DROID, UMI, and human hand-pose examples,
+including autoregressive chunked generation for the robotics examples.
 
 ### VLLM-Omni Notebook Walkthrough
 
@@ -129,8 +127,6 @@ write outputs under `outputs/cosmos3_action_vllm/`:
   DROID, UMI, and human hand-pose examples.
 - [`run_id_with_vllm_omni.ipynb`](./run_id_with_vllm_omni.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
-- [`run_policy_with_vllm_omni.ipynb`](./run_policy_with_vllm_omni.ipynb) — policy
-  inference for DROID through the async video API.
 
 ## Post-Train for Cosmos3-Nano-Policy-DROID
 
