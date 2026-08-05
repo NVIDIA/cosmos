@@ -82,16 +82,16 @@ configuration review remain excluded and are not reintroduced by this update.
 
 ### Full source refresh for the documentation update
 
-Reviewed through 2026-08-04:
+Reviewed through 2026-08-05:
 
 | Repository | Branch | Reviewed commit | Change covered |
 | --- | --- | --- | --- |
-| Cosmos cookbook | `egor/cosmos3_nim_docs` | `3f3395365024a7373d2891058d5583f718140905` | Merged documentation baseline before the latest Reasoner QA refresh |
-| Cosmos3 Certified NIM | `cosmos3` | `5862d3a552be94c12875ecfbebab115c63a65451` | Semi-final profile catalog, synchronized Reasoner VRAM floors, Reasoner QA, explicit Generator modes, DFlash, system-memory admission, and earlier model/BYOC/Transfer contracts |
+| Cosmos cookbook | `egor/cosmos3_nim_docs` | `6750fc8ce99ff33d855eb1a1ecb9b24c0a22a15d` | Merged documentation baseline including semi-final grouped hardware requirements |
+| Cosmos3 Certified NIM | `cosmos3` | `90a77482335b87cfcd25bf9d61c65278acd3f5ce` | Shared model-variant profile axis, integrated-GPU unified-memory policy, semi-final profile catalog, synchronized Reasoner VRAM floors, Reasoner QA, explicit Generator modes, DFlash, system-memory admission, and earlier model/BYOC/Transfer contracts |
 
-The current NIM commit is 61 commits beyond the incremental `74064b23` pin and
-10 commits beyond the preceding `280bbea3` documentation pin.
-The tracked source diff under `cosmos3/` changes 142 files. The source checkout
+The current NIM commit is 70 commits beyond the incremental `74064b23` pin and
+19 commits beyond the preceding `280bbea3` documentation pin.
+The tracked source diff under `cosmos3/` changes 154 files. The source checkout
 also contains an unrelated untracked `cosmos3/bugs/` directory; it was not used
 as evidence. This section supersedes stale current-state conclusions in the
 older snapshot sections below while retaining those sections as historical
@@ -108,10 +108,11 @@ Current high-impact contracts:
   local checkpoint and retains profile-owned guardrails. Reasoner accepts an
   absolute local path or `hf://owner/repository[:revision]`, with optional
   `HF_TOKEN` and explicit download/offline policy.
-- Generator profiles carry `model_variant`. Current variants are `nano`,
-  `nano-droid`, `super`, `super-t2i`, `super-t2i-4step`, `super-i2v`, and
-  `super-i2v-4step`. `NIM_MODEL_SIZE` selects the corresponding base variant;
-  `NIM_MODEL_VARIANT` selects a specialist contract.
+- Generator and Reasoner profiles carry `model_variant` as their shared model
+  selector axis. Generator variants are `nano`, `nano-droid`, `super`,
+  `super-t2i`, `super-t2i-4step`, `super-i2v`, and `super-i2v-4step`;
+  Reasoner variants are `nano` and `super`. `NIM_MODEL_VARIANT` selects the
+  exact runtime checkpoint contract.
 - Four-step T2I/I2V variants own `num_inference_steps=4`,
   `guidance_scale=1.0`, and scheduler flow shift. Clients omit those controls;
   specialist variants reject the
@@ -146,9 +147,19 @@ Current high-impact contracts:
   for public hardware planning, with an explicit non-release caveat.
 - `/v1/metadata` reports checkpoint source for either runtime and
   `model_variant` for Generator.
+- Reasoner streaming is intentionally outside the public documentation scope;
+  no public page, configuration table, or runnable example describes it.
+- Benchmark-result processing changes are internal validation tooling and do
+  not change the documented runtime contract.
+- On integrated GPUs with unified host/device memory, profile selection reserves
+  16 GiB for the host by default, compares profile floors with the remainder,
+  and offers only resident-model/resident-guardrail Generator rows. The
+  operator-facing `NIM_UNIFIED_MEMORY_HOST_RESERVE_GIB` adjusts the reserve;
+  discrete-GPU selection is unchanged.
 
 Running `local_nimcraft/make_profiles.py` from this source into an untracked
 temporary output generated 122 development rows: 115 Generator and 7 Reasoner.
+Every row carries the shared `model_variant` selector tag.
 The Generator rows split across 18 `nano`, 7 `nano-droid`, 18 `super`, and 18
 rows for each of the four specialist Super variants. Three Nano Reasoner rows
 include the DFlash draft artifact, and ten Super BF16 offload rows carry the
@@ -179,6 +190,8 @@ Primary changed evidence:
 - `serving_stack/generator_mapping.py`
 - `serving_stack/nano_droid.py`
 - `serving_stack/profile_selection/selection.py`
+- `serving_stack/profile_selection/criteria.py`
+- `serving_stack/profile_selection/hardware.py`
 - `serving_stack/profile_selection/startup.py`
 - `serving_stack/profile_selection/transfer_vram.py`
 - `serving_stack/profile_selection/vram_profiles.yaml`
@@ -228,17 +241,17 @@ image/manifest before publication.
 - One selected profile starts one API/backend: Generator uses `pytriton` and
   Reasoner uses `vllm`.
 - With no model-type selector, startup chooses `generator`.
-- Unpinned selection softly prefers `model_size=nano` and `precision=fp8`.
+- Unpinned selection softly preferred the Nano profile family and FP8.
 - Generator additionally softly prefers `profile=latency` and then the offload
   order `none`, `model`, `layer`.
 - Soft defaults are skipped rather than failing when they would empty the
   compatible candidate set.
-- Generator and Reasoner share the `model_size`, `precision`, `n_gpus`, and
-  `nim_*` selector axes. `profile=latency|throughput` is Generator-only and is
-  rejected for Reasoner.
-- `NIM_MODEL_TYPE`, `NIM_MODEL_SIZE`, `NIM_PRECISION`, `NIM_PERF_PROFILE`, and
-  `NIM_OFFLOAD_MODE` are shorthands for selector tags. Explicit
-  `NIM_MODEL_PROFILE` pins one exact manifest profile.
+- Generator and Reasoner shared model-family, precision, `n_gpus`, and `nim_*`
+  selector axes. `profile=latency|throughput` was Generator-only and rejected
+  for Reasoner.
+- Runtime, precision, Generator performance, and offload controls acted as
+  shorthands for selector tags. Explicit `NIM_MODEL_PROFILE` pinned one exact
+  manifest profile.
 
 Primary evidence:
 
@@ -303,8 +316,8 @@ Primary evidence:
   dynamics, policy, and inverse dynamics.
 - Image-to-image and sound conditioning/output are not surfaced by this NIM
   source snapshot.
-- Reasoner uses the OpenAI-compatible Chat Completions surface, inherited
-  Responses routes, and streaming.
+- Reasoner uses the OpenAI-compatible Chat Completions surface and inherited
+  Responses routes.
 - Responses routes can be disabled, and persisted response state is not on by
   default.
 - Reasoner served names are fixed by source to
@@ -465,8 +478,7 @@ Reasoner profiles expose OpenAI-compatible completion APIs rather than
 
 | Surface | Proven behavior and local cookbook coverage |
 | --- | --- |
-| `POST /v1/chat/completions` | Image and video messages, non-streaming; `cookbooks/cosmos3/nim/examples/reasoner.py`. |
-| `POST /v1/chat/completions` with `stream=true` | Streaming deltas; `cookbooks/cosmos3/nim/examples/reasoner_stream.py`. |
+| `POST /v1/chat/completions` | Image and video messages; `cookbooks/cosmos3/nim/examples/reasoner.py`. |
 | `POST /v1/completions` | Registered and passed through the same normalization/validation middleware; no local cookbook example is provided. |
 | `POST /v1/responses` | Image input using `input_image` before `input_text`; `cookbooks/cosmos3/nim/examples/reasoner_responses.py`. |
 | `GET /v1/responses/{response_id}` | Registered through NIMlib when Responses routes are enabled; requires stored state for meaningful retrieval. |
@@ -571,7 +583,7 @@ Important `documentation.md` regions:
 | --- | --- |
 | `serving_stack/inference.py` | Unified dispatch from the selected manifest profile to `generator_inference` or `reasoner_inference` |
 | `serving_stack/generator_inference.py` | Generator HTTP interface and workflow wiring |
-| `serving_stack/reasoner_inference.py` | Reasoner NIMlib/vLLM interface, request normalization, streaming, and route behavior |
+| `serving_stack/reasoner_inference.py` | Reasoner NIMlib/vLLM interface, request normalization, and route behavior |
 | `serving_stack/environment.py` | Environment-variable parsing, profile selector shorthands, Reasoner tuning, BYOC, guardrails, logging, and media URL policy |
 | `serving_stack/prompt_upsampling.py` | Optional Generator T2I/T2V/I2V prompt rewriting through an operator-supplied OpenAI-compatible endpoint |
 | `serving_stack/profile_selection/` | Hardware discovery, selection criteria, supported tags, and selection cascade |
@@ -609,9 +621,9 @@ Generator Pydantic models. Verify it using these sources together:
 
 | Source | Use it for |
 | --- | --- |
-| `serving_stack/reasoner_inference.py` | Enabled routes, engine arguments, model-name resolution, normalization, errors, and streaming behavior |
+| `serving_stack/reasoner_inference.py` | Enabled routes, engine arguments, model-name resolution, normalization, and errors |
 | `serving_stack/environment.py` (`ReasonerEngineOptions`) | Prompt media limits and Reasoner-specific runtime variables |
-| `serving_stack/tests/test_reasoner_inference.py` | Route inheritance, disable flags, normalization, errors, and streaming coverage |
+| `serving_stack/tests/test_reasoner_inference.py` | Route inheritance, disable flags, normalization, and errors |
 
 Known current Reasoner routes from runtime code and tests:
 
@@ -636,7 +648,6 @@ not imply persistent response storage is on by default.
 | `cookbooks/cosmos3/nim/examples/i2v_4step.py` | Four-step specialist image-to-video with profile-owned sampling omitted |
 | `cookbooks/cosmos3/nim/examples/v2v.py` | Video-to-video using local media |
 | `cookbooks/cosmos3/nim/examples/reasoner.py` | Nine canonical image/video Chat tasks, optional explicit reasoning, structured output validation, and saved artifacts |
-| `cookbooks/cosmos3/nim/examples/reasoner_stream.py` | Reasoner streaming |
 | `cookbooks/cosmos3/nim/examples/reasoner_responses.py` | Reasoner Responses API |
 | `cookbooks/cosmos3/nim/examples/action.py` | Forward dynamics, policy, and inverse dynamics |
 | `cookbooks/cosmos3/nim/examples/transfer.py` | Precomputed and derived transfer controls |
@@ -808,7 +819,7 @@ Parity matrix:
 | Error handling | Cover stable 4xx/5xx semantics and mode-specific validation without promising exact error strings | `operations.md` and task guides |
 | OpenAPI | Explain live `/openapi.json`; capture/validate it under both Generator and Reasoner profiles | `api-reference.md`; runtime capture pending |
 | Resolution and frame-cap tables | Preserve exact key-to-WxH shapes and per-tier frame caps | `generation.md` |
-| Model sizes, precisions, and VRAM | Provide grouped source-profile requirements now, then reconcile against the release manifest and tested SKU inventory | `support-matrix.md`; source compute/VRAM floors documented, release approval pending |
+| Model variants, precisions, and VRAM | Provide grouped source-profile requirements now, then reconcile against the release manifest and tested SKU inventory | `support-matrix.md`; source compute/VRAM floors documented, release approval pending |
 | Parallelism/profile selection | Explain latency versus throughput, replicas/sharding, offload, selection cascade, and explicit pinning | `deployment.md` |
 | Input/output codecs | State current VP9-in-MP4 output and validate all claimed image/video inputs against the release | `support-matrix.md`, `generation.md` |
 | BYOC | Preserve mount pattern, expected checkpoint layout, profile cross-check, readiness, cache/ulimits, path rules, and metadata verification | `bring-your-own-checkpoint.md`; Generator-only unless release proves more |
@@ -877,7 +888,6 @@ Reusable topics:
 
 - Nano/Super launch pattern.
 - OpenAI Chat Completions with public URL and base64 image input.
-- Streaming output.
 - Video URL, base64 video, and pre-decoded video frames.
 - `media_io_kwargs` and `mm_processor_kwargs`.
 - Reasoning prompt format and task-oriented examples.
@@ -900,9 +910,8 @@ current authority, explicitly marked TBD, or explained as superseded.
 | Model selection and served names | Current code maps Nano and Super to `nvidia/cosmos3-nano-reasoner` and `nvidia/cosmos3-super-reasoner`; prefer `/v1/models` discovery in runnable examples | `deployment.md`, `reasoning.md`, `api-reference.md` |
 | NGC authentication, cache, shared memory, UID, and Docker launch | Merge with the unified launch flow and use `NGC_API_KEY`; explain cold-start materialization and writable cache permissions | `README.md`, `deployment.md` |
 | Liveness, readiness, and startup delay | Preserve the distinction and explain that model download/load can outlast liveness | `README.md`, `deployment.md`, `operations.md` |
-| Chat Completions with curl | Provide one complete non-streaming multimodal request against `/v1/chat/completions` | `reasoning.md` |
+| Chat Completions with curl | Provide one complete multimodal request against `/v1/chat/completions` | `reasoning.md` |
 | OpenAI Python client | Use `base_url=<NIM_URL>/v1`, a non-secret placeholder client key, model discovery, and explicit `extra_body` handling | `reasoning.md`, `examples/reasoner.py` |
-| Streaming Chat Completions | Runtime tests establish streamed deltas; the local example prints them incrementally | `reasoning.md`, `examples/reasoner_stream.py` |
 | Image by public URL | Retain only after release smoke testing of remote URL access and failure behavior | `reasoning.md`; live validation pending |
 | Image by data URL/base64 | Runtime handling and tests support `image_url`; document MIME-aware data URLs and media-before-text ordering | `reasoning.md`, `examples/reasoner.py` |
 | Accepted image formats | Historical JPG/JPEG/PNG claims are not a current release contract | `support-matrix.md`; exact release formats TBD |
@@ -1002,7 +1011,7 @@ facts.
 | Manual table of contents on selected long pages | Adapt | Use the landing-page guide table and strong headings; add a manual page TOC only when the rendered page is genuinely difficult to scan |
 | Large `<details>` blocks in the root README | Avoid inside focused guides | Hidden/collapsed content is less discoverable and unnecessary when pages are already split by concern |
 | Repeating complete backend setup in multiple READMEs | Avoid | One canonical deployment page prevents image, selector, and credential drift |
-| Unqualified model size/count and hardware claims | Avoid | Label grouped current-source profile requirements as semi-final; reserve supported/tested claims for released manifest/model-card evidence |
+| Unqualified model-variant/count and hardware claims | Avoid | Label grouped current-source profile requirements as semi-final; reserve supported/tested claims for released manifest/model-card evidence |
 | Backend-specific request examples copied between integrations | Avoid | Validate each local example against the Certified NIM contract |
 
 ### File and example presentation rules
@@ -1082,7 +1091,6 @@ Primary style/integration evidence:
 | Generator prompt upsampling | `prompt_upsampling.py`, `generator_inference.py`, `environment.py`, tests | `documentation.md` | `configuration.md`, `generation.md`, `operations.md` |
 | Chat Completions | `reasoner_inference.py`, tests | Previous Reasoner API page and local cookbook example | `reasoning.md` |
 | Responses API | `reasoner_inference.py`, Reasoner tests | Local cookbook example | `reasoning.md` |
-| Reasoner streaming | `reasoner_inference.py`, Reasoner tests | Local cookbook example | `reasoning.md` |
 | Reasoner media limits/preprocessing | `environment.py`, runtime tests | Previous Reasoner API page and prompt guide | `reasoning.md`, `configuration.md` |
 | Forward dynamics | `actions.py`, runtime/tests | Local cookbook example and task documentation | `action.md` |
 | Policy | `actions.py`, runtime/tests | Local cookbook example and task documentation | `action.md` |
@@ -1151,8 +1159,8 @@ Keep this page concise. It is a landing page, not the full reference.
 - NGC API key and Docker login.
 - Cache and volume permissions.
 - Container image, ports, shared memory, and ulimits.
-- Choosing `generator` or `reasoner`, model size, precision, performance profile,
-  GPU exposure, and explicit profile selection.
+- Choosing `generator` or `reasoner`, model variant, precision, performance
+  profile, GPU exposure, and explicit profile selection.
 - Readiness and cold-start expectations.
 - Links to focused requirements, configuration, support, Helm, and BYOC pages.
 
@@ -1227,7 +1235,6 @@ Workflow pages should link here instead of repeating full field tables.
 - Reasoner profile and served-model discovery.
 - Chat Completions for text, image, and video.
 - Responses API and its storage limitations.
-- Streaming Chat Completions.
 - Media ordering and prompt guidance.
 - Request-level `media_io_kwargs`, operator defaults, prompt media limits, and
   the live-validation status of legacy `mm_processor_kwargs`.
@@ -1302,7 +1309,6 @@ Planned scripts:
 - `i2v_4step.py`
 - `v2v.py`
 - `reasoner.py`
-- `reasoner_stream.py`
 - `reasoner_responses.py`
 - `action.py`
 - `transfer.py`
@@ -1330,7 +1336,7 @@ API material to two large pages.
 | `api-reference.md` — Frame cadence, resolution keys, media representations | `generation.md`; released codecs in `support-matrix.md` |
 | `api-reference.md` — Action fields and predicted-action response | `action.md` |
 | `api-reference.md` — Transfer fields and defaults | `transfer.md` |
-| `api-reference.md` — Reasoner APIs, sampling, streaming, and Responses | `reasoning.md` |
+| `api-reference.md` — Reasoner APIs, sampling, and Responses | `reasoning.md` |
 | `api-reference.md` — Generic errors | `operations.md` |
 | `api-reference.md` — OpenAPI inspection | Compact command in `api-reference.md`; operational capture in `operations.md` |
 
@@ -1362,7 +1368,7 @@ handoff from research to drafting.
 | `bring-your-own-checkpoint.md` | Generator and Reasoner checkpoint sources, layouts, local mounts/Hugging Face resolution, profile cross-check, cache, launch, verification, and failures | `environment.py`, `reasoner_model_source.py`, startup code, tests, previous BYOC page | Published formats and runtime boundary | Historical checkpoint variables, unsupported repository protocols |
 | `api-reference.md` | Runtime routing, common Generator fields, strict JSON typing, common response, task links, and live OpenAPI | Generator request model/tests and routing code | Generator and Reasoner live OpenAPI | Detailed Action/Transfer/Reasoner tables, management semantics, generic errors |
 | `generation.md` | T2I/T2V/I2V/V2V workflows, frame/resolution/media rules, conditioning, optional prompt upsampling, JPEG/MP4 decoding, reproducibility | `data_models/generation.py`, `data_models/responses.py`, `generator_mapping.py`, `prompt_upsampling.py`, tests, and local cookbook examples | Published capability set, live media/URL validation, prompt-upsampling smoke test, output playback | Action/transfer contracts, operator configuration tables |
-| `reasoning.md` | Chat Completions, Responses, streaming, media ordering, task prompts, structured outputs, Reasoner-specific sampling/media guidance | `reasoner_inference.py`, Reasoner environment/startup, tests, local cookbook examples, and current prompt guide | Text-only/public-URL/media-format checks, Responses state features, approved reasoning-trace wording | Generic vLLM tuning reference, unsupported legacy `video_frames`/`mm_processor_kwargs`, hidden chain-of-thought promises |
+| `reasoning.md` | Chat Completions, Responses, media ordering, task prompts, structured outputs, Reasoner-specific sampling/media guidance | `reasoner_inference.py`, Reasoner environment/startup, tests, local cookbook examples, and current prompt guide | Text-only/public-URL/media-format checks, Responses state features, approved reasoning-trace wording | Generic vLLM tuning reference, unsupported legacy `video_frames`/`mm_processor_kwargs`, hidden chain-of-thought promises |
 | `action.md` | Complete action contract plus forward dynamics, policy, inverse dynamics, response, and validation | `data_models/actions.py`, runtime/tests, and the local cookbook example | Published-image/profile smoke tests and released domain/model boundary | General generation tutorial, framework/vLLM-Omni syntax |
 | `transfer.md` | Complete transfer contract, control taxonomy, defaults, precomputed/derived forms, combinations, and validation | `data_models/transfer.py`, runtime/tests, and the local cookbook example | Published-image/profile smoke tests, exact supported combination matrix | Duplicate example for every asset, vLLM-Omni multipart syntax |
 | `operations.md` | Health/readiness, management endpoints, generic errors, metrics/logs, guardrails, diagnostics, and troubleshooting | Runtime interface/environment/profile/guardrail code, tests, and previous operations docs | Live metrics, log/error samples, chart probes, release limitations | Basic launch tutorial, duplicate task-schema tables, secret values |
@@ -1449,7 +1455,7 @@ claim or command that needs the missing fact. Use these readiness labels:
 | `bring-your-own-checkpoint.md` | Source-ready with live gates | Current Generator boundary, layout, mount, cross-check, verification, failures | Released checkpoint formats and supported profile boundary |
 | `api-reference.md` | Source-ready with live gates | Runtime routing, common Generator envelope, strict typing, response, task links | Live OpenAPI for both modes and generated route inventory |
 | `generation.md` | Source-ready with live gates | T2I/T2V/I2V/V2V request construction, current fields/constraints, prompt-upsampling mode boundary and fallback, JPEG/MP4 base64 decoding, deterministic-seed guidance | Published-image capability and prompt-upsampling smoke results, remote-input behavior, playback/codec observations |
-| `reasoning.md` | Ready with TBDs | Chat Completions, Responses create flow, streaming, data URLs, media ordering, sampling, structured outputs, task taxonomy | Text-only and public-URL smoke tests, exact media formats, Responses persistence features, approved reasoning-trace wording |
+| `reasoning.md` | Ready with TBDs | Chat Completions, Responses create flow, data URLs, media ordering, sampling, structured outputs, task taxonomy | Text-only and public-URL smoke tests, exact media formats, Responses persistence features, approved reasoning-trace wording |
 | `action.md` | Source-ready with live gates | Forward dynamics, policy, inverse dynamics, action shapes/domains, current representative payloads | Published-profile availability and one smoke result per documented mode/domain boundary |
 | `transfer.md` | Source-ready with live gates | Precomputed and derived controls, current fields/validators, representative request shapes | Published-profile availability, exact supported combination matrix, smoke results |
 | `operations.md` | Ready with TBDs | Health/readiness, management endpoints, stable error classes, current controls, prompt-upsampling fallback, troubleshooting | Live endpoint inventory, metrics scrape, log/failure samples, chart probes, release limitations |
@@ -1611,13 +1617,18 @@ Do not close these from memory or legacy docs:
   Generator modes/field names, shared `NIM_MODEL_PATH`, model variants,
   Reasoner pruning, DFlash, reasoning/tool contracts and strict extension
   types, Transfer override, Nano-DROID `[32,8]`, and action-only responses. It
-  compiled all twelve local examples and validated JSON fences, SPDX headers,
-  local links/anchors, Markdown table structure, and whitespace.
+  compiled all then-current local examples and validated JSON fences, SPDX
+  headers, local links/anchors, Markdown table structure, and whitespace.
+- The `90a77482` refresh regenerated 122 rows, confirmed `model_variant` on
+  every profile, preserved all grouped profile floors, passed 52 focused
+  profile/benchmark/BYOC/Reasoner/Transfer source tests, statically verified the
+  unified-memory reserve/residency policy, and compiled all eleven current local
+  examples.
 - Confirmed every Reasoner row omits the performance-profile axis, fixes
   `nim_dp=nim_gp=nim_up=1`, and satisfies `n_gpus=nim_tp`.
 - Confirmed the checked-in tests cover Generator validation, action modes,
-  transfer cases, Reasoner media handling, streaming, Responses routes, route
-  disabling, normalization, and error behavior.
+  transfer cases, Reasoner media handling, Responses routes, route disabling,
+  normalization, and error behavior.
 - Re-audited the authoring-ready contract tables against current field
   declarations, validators, runtime defaults, response models, and local
   cookbook requests.

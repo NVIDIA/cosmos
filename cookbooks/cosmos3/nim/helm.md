@@ -62,7 +62,7 @@ Map the following concepts to names from the released chart schema:
 - explicit image repository and tag;
 - image-pull and runtime NGC secrets;
 - `NIM_MODEL_TYPE`;
-- `NIM_MODEL_VARIANT` for Generator or `NIM_MODEL_SIZE` for Reasoner;
+- `NIM_MODEL_VARIANT` for Generator or Reasoner;
 - `NIM_PERF_PROFILE` for Generator;
 - optional `NIM_PRECISION` pin;
 - GPU and system-memory limits matching a released configuration, including

@@ -22,14 +22,13 @@ complete Docker commands.
 | Name | Default | Use |
 | --- | --- | --- |
 | `NIM_MODEL_TYPE` | `generator` | Select `generator` or `reasoner` |
-| `NIM_MODEL_VARIANT` | `nano` preference | Select a Generator model: `nano`, `nano-droid`, `super`, `super-t2i`, `super-t2i-4step`, `super-i2v`, or `super-i2v-4step` |
-| `NIM_MODEL_SIZE` | Nano preference | Select Reasoner `nano` or `super`; for Generator, acts as shorthand for the matching general-purpose variant |
+| `NIM_MODEL_VARIANT` | `nano` preference | Select `nano` or `super` for either runtime; Generator also accepts `nano-droid`, `super-t2i`, `super-t2i-4step`, `super-i2v`, and `super-i2v-4step` |
 | `NIM_PRECISION` | FP8 preference | Optionally pin a released precision; omit it to prefer FP8 when compatible and fall back automatically |
 | `NIM_PERF_PROFILE` | `latency` | Generator only: choose `latency` or `throughput` |
 
-For Generator, prefer `NIM_MODEL_VARIANT`; it also determines Nano versus
-Super. Reasoner accepts `NIM_MODEL_SIZE` and rejects `NIM_MODEL_VARIANT` and
-`NIM_PERF_PROFILE`. Nano-DROID currently has BF16 profiles only.
+`NIM_MODEL_VARIANT` selects the checkpoint contract for either runtime.
+Reasoner accepts `nano` or `super` and does not use `NIM_PERF_PROFILE`.
+Nano-DROID currently has BF16 profiles only.
 
 The NIM chooses the best compatible profile for these settings and the visible
 GPUs. A normal deployment does not need a profile ID.
@@ -60,12 +59,16 @@ Use these only when automatic model selection is not sufficient:
 | Name | Default | Use |
 | --- | --- | --- |
 | `NIM_OFFLOAD_MODE` | Automatic compatible preference | Request `none`, `model`, or `layer` when the released model provides that mode |
+| `NIM_UNIFIED_MEMORY_HOST_RESERVE_GIB` | `16` | Reserve shared memory for the host before profile selection on integrated GPUs; use a nonnegative binary-GiB value validated for the system |
 | `NIM_TAGS_SELECTOR` | Empty | Filter by comma-separated exact manifest tags |
 | `NIM_MODEL_PROFILE` | Empty | Pin an exact profile ID from the current image |
 
 Do not combine shorthand variables with conflicting values in
-`NIM_TAGS_SELECTOR`. Exact tags and profile IDs are tied to an image release and
-are less portable than automatic selection.
+`NIM_TAGS_SELECTOR`. Use the `model_variant` tag when filtering by model. Exact
+tags and profile IDs are tied to an image release and are less portable than
+automatic selection. Leave the unified-memory host reserve at its default unless
+host measurements establish a safe system-specific value; it does not affect
+discrete GPUs.
 
 ## Generator configuration
 
@@ -150,7 +153,6 @@ the draft artifact before enabling it.
 | `NIM_MAX_MODEL_LEN` | `-1` (auto) | Let vLLM choose a context length bounded by the model |
 | `NIM_MAX_NUM_BATCHED_TOKENS` | `8192` | Set the scheduler token budget |
 | `NIM_MAX_NUM_SEQS` | `256` | Set maximum scheduled sequences |
-| `NIM_STREAM_INTERVAL` | `10` | Set the streaming update interval |
 | `NIM_GPU_MEMORY_UTILIZATION` | `0.90` | Set the vLLM GPU-memory target in `(0,1]` |
 
 ### Caching and multimodal processing

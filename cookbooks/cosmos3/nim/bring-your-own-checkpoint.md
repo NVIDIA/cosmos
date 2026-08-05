@@ -39,9 +39,11 @@ The current Generator path expects this structural shape:
 └── model_index.json
 ```
 
-The runtime reads `transformer/config.json` to infer model size and precision,
-then cross-checks both against the selected profile. Directory names alone do
-not prove compatibility with the released image.
+The runtime reads `transformer/config.json` to infer the Nano or Super base
+variant and precision, then cross-checks both against the selected profile.
+Transformer dimensions do not identify a specialist Generator contract, so
+select the exact checkpoint contract with `NIM_MODEL_VARIANT`. Directory names
+alone do not prove compatibility with the released image.
 
 ### Launch
 
@@ -76,10 +78,10 @@ at minimum:
 - tokenizer files; and
 - processor or preprocessor configuration.
 
-The runtime infers Nano versus Super, BF16/FP8/NVFP4 precision, and Reasoner
-versus Omni layout. It then selects a compatible Reasoner profile. An explicit
-`NIM_MODEL_SIZE`, `NIM_PRECISION`, or `NIM_MODEL_PROFILE` must agree with the
-checkpoint.
+The runtime infers the `nano` or `super` variant, BF16/FP8/NVFP4 precision,
+and Reasoner versus Omni layout. It then selects a compatible Reasoner profile.
+An explicit `NIM_MODEL_VARIANT`, `NIM_PRECISION`, or `NIM_MODEL_PROFILE` must
+agree with the checkpoint.
 
 Use the same read-only mount pattern as the Generator, but select the Reasoner:
 
@@ -156,7 +158,7 @@ the checkpoint's validation baseline.
 | Relative path rejected | Local checkpoint sources must be absolute | Use an absolute in-container path |
 | Permission denied | Container cannot traverse or read the mount | Fix host ownership/ACLs while retaining a read-only checkpoint mount |
 | Required file missing | Checkpoint layout, tokenizer, processor, index, or weight shards are incomplete | Compare with the released BYOC contract and export again |
-| Model size or precision mismatch | Explicit selector/profile disagrees with inferred checkpoint properties | Select a compatible released profile or use a matching checkpoint |
+| Model variant or precision mismatch | Explicit selector/profile disagrees with inferred checkpoint properties | Select a compatible released profile or use a matching checkpoint |
 | Generator rejects disabled downloads | Generator still needs profile-owned guardrails | Remove `NIM_DISABLE_MODEL_DOWNLOAD=1` and provide NGC/cache access |
 | Hugging Face source rejected offline | `hf://` requires download but downloads are disabled | Use an absolute pre-downloaded local path |
 | Hugging Face authorization fails | Token, repository ID, revision, network, or cache is invalid | Check `HF_TOKEN`, URI, connectivity, and writable cache without logging the token |

@@ -4,8 +4,8 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Reason over images and video with the Cosmos3 Certified NIM
 
 Use this page for Cosmos3 Reasoner requests through OpenAI-compatible Chat
-Completions, streaming, and Responses APIs. These workflows require a running
-**Reasoner** model; `/v1/infer` is a Generator endpoint and is not used here.
+Completions and Responses APIs. These workflows require a running **Reasoner**
+model; `/v1/infer` is a Generator endpoint and is not used here.
 
 See [Deployment](deployment.md) to select and launch a Reasoner model. This
 page covers Reasoner routes, media, sampling, and responses.
@@ -26,7 +26,7 @@ requires a non-empty value. Use a clearly non-secret placeholder such as
 
 ## Discover the served model
 
-Do not assume the selected model size in reusable code:
+Do not assume the served model ID in reusable code:
 
 ```python
 from openai import OpenAI
@@ -79,8 +79,8 @@ For each run, the script prints the final answer and writes an ignored
 - `output.json`: parsed and validated output for structured cases; and
 - `reasoning.txt`: parsed reasoning when explicitly requested and returned.
 
-Streaming and Responses examples continue to use the image-caption case so API
-transport differences do not multiply the task matrix.
+The Responses example uses the image-caption case so API transport differences
+do not multiply the task matrix.
 
 ## Image reasoning with Chat Completions
 
@@ -171,18 +171,6 @@ Data URLs are the portable baseline. Public HTTP(S) media URLs may work when
 the container has network access, but exact released fetch, timeout, format,
 container, and codec behavior remains **TBD (release-dependent)**. Local
 `file://` URLs from standalone vLLM examples are not a portable NIM contract.
-
-## Stream Chat Completions
-
-Set `stream=True`, print each non-empty delta, and retain the assembled output
-if downstream code needs the complete result:
-
-```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner_stream.py
-```
-
-The example reads `choices[0].delta.content`; chunks without choices or content
-are skipped.
 
 ## Use the Responses API
 

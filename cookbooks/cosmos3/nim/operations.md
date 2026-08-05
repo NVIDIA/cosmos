@@ -228,6 +228,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | Artifact download fails | Container lacks `NGC_API_KEY`, entitlement, DNS/network, or storage | Verify key injection and NGC connectivity; inspect cache capacity/ownership |
 | Cache permission denied | Host mount is not writable by the container | Fix ownership/ACLs and retain a persistent writable `/opt/nim/.cache` |
 | No compatible profile | Visible GPUs or system memory do not satisfy the selected model/precision/offload requirements | Remove unnecessary pins, choose a smaller model or compatible precision, or use supported hardware |
+| Integrated GPU has no compatible profile | The host reserve lowers usable shared memory, and Generator offload profiles are not eligible | Choose a resident profile that fits after the reserve; change `NIM_UNIFIED_MEMORY_HOST_RESERVE_GIB` only from validated host-memory measurements |
 | Offload profile requires more system memory | The container cgroup or host exposes less RAM than the profile requires | Raise the container memory limit or choose a compatible precision/profile; current Super BF16 offload profiles require 150 GiB |
 | Conflicting selectors | A shorthand disagrees with `NIM_TAGS_SELECTOR` | Set each selector in one place and inspect the full launch environment |
 | Visible GPUs sit idle | Selected profile uses fewer GPUs than Docker exposed | Restrict `--gpus` or intentionally pin a released layout matching the desired count |
@@ -286,7 +287,7 @@ mount, selector, and verification procedures.
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
-| Checkpoint/profile mismatch | Inferred model size or precision disagrees with selected profile | Pin compatible `NIM_MODEL_SIZE`/`NIM_PRECISION` and use a released BYOC-supported profile |
+| Checkpoint/profile mismatch | Inferred model variant or precision disagrees with selected profile | Pin compatible `NIM_MODEL_VARIANT`/`NIM_PRECISION` and use a released BYOC-supported profile |
 | Required file missing | BYOC directory does not match the runtime-specific layout | Generator: check transformer, weights, VAE, scheduler, and model index. Reasoner: check config, safetensors, tokenizer, and processor files |
 | Path/mount failure | Local `NIM_MODEL_PATH` is not the exact absolute container mount | Align the read-only bind target and environment path |
 | `hf://` source fails offline | Remote source requires download while model download is disabled | Pre-download the Reasoner checkpoint and use an absolute local path |
