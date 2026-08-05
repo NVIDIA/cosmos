@@ -15,7 +15,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 - Source discovery and information-architecture planning are complete.
 - Public documentation has been refreshed against Cosmos3 NIM source commit
-  `280bbea3581427ccf75285beec0f143dc936af04`.
+  `90a77482335b87cfcd25bf9d61c65278acd3f5ce`.
 - The user journey now starts with runtime, model, optional precision, and the
   Generator latency/throughput choice; profile IDs are advanced controls.
 - Maintainer planning and provenance live under `maintainer/`, outside the
@@ -24,6 +24,8 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
   validation remains pending.
 - Release-owned facts remain `TBD (release-dependent)` until authoritative
   release evidence is available.
+- Reasoner streaming is intentionally outside the documentation scope. Public
+  pages and runnable examples do not describe that capability.
 
 ## Objective
 
@@ -75,7 +77,6 @@ cookbooks/cosmos3/nim/
     ├── i2v_4step.py
     ├── v2v.py
     ├── reasoner.py
-    ├── reasoner_stream.py
     ├── reasoner_responses.py
     ├── action.py
     └── transfer.py
@@ -100,7 +101,7 @@ or a hand-maintained machine-readable manifest.
 | `bring-your-own-checkpoint.md` | Generator and Reasoner checkpoint sources, layouts, mounts/downloads, profile validation, launch, and verification |
 | `api-reference.md` | Runtime routing, common Generator top-level fields, strict JSON behavior, common response, and live schema |
 | `generation.md` | T2I, T2V, I2V, V2V, conditioning media, frame/resolution rules, prompt upsampling, output decoding, reproducibility, generation failures |
-| `reasoning.md` | Chat Completions, Responses, streaming, image/video media, sampling, structured outputs, prompt/task guidance |
+| `reasoning.md` | Chat Completions, Responses, image/video media, sampling, structured outputs, prompt/task guidance |
 | `action.md` | Complete `action_params` contract, forward dynamics, policy, inverse dynamics, domains, action shapes, and response |
 | `transfer.md` | Complete `transfer` contract, controls, defaults, derived/precomputed forms, combinations, and chunking |
 | `operations.md` | Health/readiness, management endpoints, generic errors, metrics, logs, guardrails, diagnostics, and troubleshooting |
@@ -358,7 +359,12 @@ The documentation project is complete only when:
 - [x] Reconcile the Reasoner QA drift through `280bbea3`: thinking/reasoning
   controls, developer instructions, tool calling, strict extension types, and
   stable HTTP 400/422 behavior.
-- [x] Create the public scaffold, API reference, and twelve Python files,
+- [x] Reconcile the `c0878804` profile-selector schema around one shared
+  `model_variant` axis for Generator and Reasoner.
+- [x] Reconcile the `90a77482` unified-memory policy: reserve host memory before
+  profile selection and keep Generator model/guardrail residency on the shared
+  memory pool.
+- [x] Create the public scaffold, API reference, and eleven Python files,
   including the shared helper and specialist four-step T2I/I2V requests.
 - [x] Write the generation, reasoning, action, and transfer guides.
 - [x] Write deployment, operations, acknowledgements, and the overview.
@@ -438,7 +444,7 @@ modality, Action, Transfer admission, and advanced environment variables. The
 source profile generator produced 122 development rows (115 Generator and 7
 Reasoner) in a temporary output. Exact profile IDs and release inclusion remain
 pre-release evidence; grouped hardware requirements are now published with a
-semi-final source-profile label. Offline validation compiled all twelve
+semi-final source-profile label. Offline validation compiled all eleven
 examples, validated 16 cookbook Generator payloads and eight documented JSON payloads against the latest
 `Cosmos3Request`, parsed every JSON fence, checked local Markdown links/anchors
 and SPDX headers, verified profile parallelism, DFlash artifacts, system-memory
@@ -457,9 +463,15 @@ explicit thinking controls, strict reasoning/logprob types, and advertised
 Qwen3/Hermes parser settings directly against the import-safe source contract.
 The later hardware refresh advanced source provenance to `5862d3a5`, regenerated
 all 122 rows, and confirmed synchronized Reasoner floors of 46 GiB/device for
-Super BF16 TP2, 67 GiB for Super FP8, and 73 GiB for Super NVFP4. The grouped
-Generator and Reasoner requirements were then authorized as semi-final public
-planning data while remaining distinct from released and tested support rows.
+Super BF16 TP2, 67 GiB for Super FP8, and 73 GiB for Super NVFP4. A subsequent
+refresh through `90a77482` confirmed that all 122 rows use the shared
+`model_variant` profile axis without changing the grouped profile floors. It
+also added integrated-GPU host-memory reservation and resident-only Generator
+selection on unified memory. Fifty-two focused source tests passed, and all
+eleven current
+cookbook examples compiled. The grouped Generator and Reasoner requirements
+remain authorized as semi-final public planning data while remaining distinct
+from released and tested support rows.
 Validation matched all 13 grouped Generator rows and seven Reasoner rows to the
 122-row generated catalog, including compute gates, GPU counts, per-device
 VRAM, system-memory floors, and Transfer thresholds; all five source profile

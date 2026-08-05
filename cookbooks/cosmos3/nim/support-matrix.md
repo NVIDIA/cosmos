@@ -62,6 +62,13 @@ All memory values below are binary GiB per device, despite the manifest tag's
 historical `_gb` suffix. Do not add VRAM across devices to satisfy a
 per-device floor.
 
+For an integrated GPU with unified host/device memory, automatic selection
+subtracts a 16-GiB host reserve from the reported shared-memory total before
+applying these floors. Generator selection keeps the model and both guardrails
+resident, so only rows with **Model offload = None** and **Guardrails =
+Resident** are eligible. Reasoner floors are also compared with the remaining
+shared-memory total.
+
 ## Semi-final Generator profiles
 
 The **Super family** in this table means `super`, `super-t2i`,
@@ -126,7 +133,7 @@ artifact, but DFlash remains opt-in.
 Users normally set:
 
 - runtime;
-- Generator variant or Reasoner model size;
+- model variant;
 - Generator latency or throughput; and
 - precision only when it must be pinned.
 

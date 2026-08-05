@@ -20,7 +20,7 @@ Reasoner completion APIs, and a Reasoner profile does not serve `/v1/infer`.
 | Generator | `POST /v1/infer` for T2I, T2V, I2V, and V2V | [Generation](generation.md) |
 | Generator | `POST /v1/infer` with `action_params` | [Action](action.md) |
 | Generator | `POST /v1/infer` with `transfer` | [Transfer](transfer.md) |
-| Reasoner | `POST /v1/chat/completions`, including streaming | [Reasoning](reasoning.md) |
+| Reasoner | `POST /v1/chat/completions` | [Reasoning](reasoning.md) |
 | Reasoner | `POST /v1/responses` and optional state routes | [Reasoning](reasoning.md#use-the-responses-api) |
 | Reasoner | `POST /v1/completions` legacy-compatible route | Verify the released schema before use |
 

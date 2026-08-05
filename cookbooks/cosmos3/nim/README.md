@@ -54,8 +54,8 @@ prioritize individual request latency or `throughput` to prioritize aggregate
 request rate. Latency is the software default, but make the choice explicit in
 deployment automation.
 
-Reasoner provides `nano` and `super`, selected with `NIM_MODEL_SIZE`. Reasoner
-does not use `NIM_MODEL_VARIANT` or `NIM_PERF_PROFILE`.
+Reasoner provides `nano` and `super`, also selected with
+`NIM_MODEL_VARIANT`. Reasoner does not use `NIM_PERF_PROFILE`.
 
 If `NIM_PRECISION` is omitted, selection prefers FP8 when the chosen model,
 released profiles, and host support it, then falls back to another compatible
@@ -78,7 +78,6 @@ See [Deploy the NIM](deployment.md#advanced-profile-controls).
 | Inverse dynamics | Generator | Video | Video + predicted action | [Action](action.md#inverse-dynamics) |
 | Video Transfer | Generator | Prompt + spatial control | Controlled MP4 video | [Transfer](transfer.md) |
 | Image/video reasoning | Reasoner | Media + text | Text or structured result | [Reasoning](reasoning.md) |
-| Streaming reasoning | Reasoner | Chat request | Text deltas | [Reasoning](reasoning.md#stream-chat-completions) |
 | Responses API | Reasoner | Responses input | Response object/text | [Reasoning](reasoning.md#use-the-responses-api) |
 
 The public Generator request model does not expose image-to-image or sound

@@ -41,6 +41,12 @@ for either runtime because mixed-GPU support is not established. The profile
 selector evaluates the smallest per-device memory total exposed to the
 container.
 
+On an integrated GPU where device and host share one memory pool, the selector
+withholds 16 GiB for the host by default before comparing the remaining shared
+memory with profile floors. Generator selection uses resident model and
+resident guardrail profiles on these systems; CPU-offload profiles do not
+reduce shared-memory use.
+
 Lower-VRAM profiles can keep model weights in system memory. Every current
 Super-family BF16 model- and layer-offload row requires 150 GiB of effective
 system memory. The NIM checks a container memory limit before host physical

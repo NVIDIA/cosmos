@@ -13,7 +13,7 @@ semi-final source-profile hardware requirements are documented in the
 Users normally select a runtime and model, not a profile ID:
 
 1. Choose Generator or Reasoner.
-2. Choose a Generator variant or Reasoner model size.
+2. Choose a model variant.
 3. Optionally pin precision; otherwise FP8 is preferred when compatible.
 4. For Generator, choose latency or throughput.
 5. The NIM selects the best compatible profile for those choices and the
@@ -21,9 +21,12 @@ Users normally select a runtime and model, not a profile ID:
 
 A profile is the resolved deployment configuration: model artifacts,
 precision, GPU layout, and any required GPU/system-memory residency policy.
-Automatic selection prefers a compatible profile that avoids offload and makes effective
-use of the available GPUs. Startup fails if the chosen model cannot run on the
-host.
+Automatic selection prefers a compatible profile that avoids offload and makes
+effective use of the available GPUs. On an integrated GPU with unified
+host/device memory, selection reserves host memory and uses resident Generator
+model and guardrail profiles. Startup fails if the chosen model cannot run on
+the host. See [Support matrix](support-matrix.md#gpu-architecture-and-topology)
+for the shared-memory rule.
 
 ### Select a Generator model
 
@@ -37,9 +40,8 @@ host.
 | `super-i2v` | Full-step I2V specialist |
 | `super-i2v-4step` | Four-step I2V specialist |
 
-For Generator, `NIM_MODEL_VARIANT` also determines Nano versus Super.
-`NIM_MODEL_SIZE=nano` or `super` remains a shorthand for the corresponding
-base variant, but explicit variant selection is clearer.
+For Generator, `NIM_MODEL_VARIANT` determines Nano versus Super and selects
+an exact general-purpose or specialist checkpoint contract.
 
 Choose the workload objective explicitly:
 
@@ -52,9 +54,9 @@ The software defaults to `latency` when the selector is omitted.
 
 ### Select a Reasoner model
 
-Set `NIM_MODEL_TYPE=reasoner` and choose `NIM_MODEL_SIZE=nano` or `super`.
-Reasoner does not accept `NIM_MODEL_VARIANT` or `NIM_PERF_PROFILE`. Nano
-Reasoner can optionally enable DFlash speculative decoding with
+Set `NIM_MODEL_TYPE=reasoner` and choose `NIM_MODEL_VARIANT=nano` or `super`.
+Reasoner does not use `NIM_PERF_PROFILE`. Nano Reasoner can optionally enable
+DFlash speculative decoding with
 `NIM_USE_DFLASH=1`; see [Configuration](configuration.md#speculative-decoding).
 
 ### Precision selection
@@ -141,7 +143,7 @@ docker run --rm --name cosmos3-reasoner \
   -p 8001:8000 \
   -e NGC_API_KEY \
   -e NIM_MODEL_TYPE=reasoner \
-  -e NIM_MODEL_SIZE=nano \
+  -e NIM_MODEL_VARIANT=nano \
   -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
   "$NIM_IMAGE"
 ```

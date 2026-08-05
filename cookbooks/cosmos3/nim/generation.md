@@ -275,8 +275,9 @@ released profiles. Super also provides task-specific variants:
 | `super-i2v` | I2V only | Full-step I2V; omitted `flow_shift` becomes `1.0` |
 | `super-i2v-4step` | I2V only | Fixed four-step scheduler |
 
-A specialist rejects other Generator tasks. Select the matching variant before
-launch; `NIM_MODEL_SIZE=super` alone selects general-purpose `super`.
+A specialist rejects other Generator tasks. Select the exact matching variant
+before launch; `NIM_MODEL_VARIANT=super` selects the general-purpose `super`
+contract.
 
 Launch T2I with `NIM_MODEL_VARIANT=super-t2i-4step`, then run:
 
