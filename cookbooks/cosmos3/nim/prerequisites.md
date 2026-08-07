@@ -122,10 +122,19 @@ For a normal cold start, the host must reach:
 - `nvcr.io` to pull the container; and
 - the NGC model storage used to download and materialize profile artifacts.
 
-You also need an NGC personal API key with NGC Catalog access. The runtime
-variable is `NGC_API_KEY`, not `NGC_TOKEN`. See
-[Authenticate to NGC](deployment.md#authenticate-to-ngc)
-for export and Docker-login instructions.
+You also need an NGC personal API key with NGC Catalog access. Create the key
+in the NGC user interface, then read it into the shell that you will use for
+deployment without placing the secret in shell history:
+
+```bash
+read -rsp "Enter your NGC API key: " NGC_API_KEY
+export NGC_API_KEY
+echo
+```
+
+The runtime variable is `NGC_API_KEY`, not `NGC_TOKEN`. Keep this shell open,
+do not save the key in source control, and continue with
+[Authenticate to NGC](deployment.md#authenticate-to-ngc) to log Docker in.
 
 An air-gapped deployment requires the released image and a correctly
 pre-populated cache prepared through an approved workflow. Merely disabling

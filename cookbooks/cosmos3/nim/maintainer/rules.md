@@ -17,3 +17,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 - Update prerequisite text, dependency metadata, the lockfile, and every
   affected command together. Validate that the lockfile is current and search
   the complete documentation set for stale command forms before publishing.
+- On every Cosmos3 2.2 release-candidate bump, update the exact `NIM_IMAGE`
+  reference in both `deployment.md` and `release-notes.md`. Never replace the
+  versioned RC tag with `latest`; the documentation check requires both files
+  to agree.
+- Keep unresolved values out of runnable fenced blocks. Run
+  `python3 maintainer/check_code_fences.py` from this cookbook directory before
+  publishing; CI runs the same check.

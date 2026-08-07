@@ -9,10 +9,15 @@ Use an explicit image tag from the corresponding release entry.
 
 ## Initial unified release — TBD
 
+> **Current release candidate:** Deployment examples use
+> `nvcr.io/nvstaging/nim/cosmos3:2.2.0-rc.20260805164511-12ca3dacb921e392`.
+> This staging reference is not a final release identity and changes with each
+> approved RC bump.
+
 | Item | Status |
 | --- | --- |
 | Release version and date | **TBD** |
-| NGC image repository and tag | **TBD** |
+| NGC image repository and tag | Current RC: `nvcr.io/nvstaging/nim/cosmos3:2.2.0-rc.20260805164511-12ca3dacb921e392`; final release **TBD** |
 | NGC Catalog and model-card URLs | **TBD** |
 | Helm chart and version | **TBD** |
 | Supported hardware and model matrix | Semi-final source-profile requirements documented; released-row approval pending |

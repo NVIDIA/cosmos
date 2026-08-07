@@ -61,13 +61,15 @@ the Certified NIM contract:
 | `physical_plausibility` | `physical_plausibility.mp4` | Possible/impossible assessment |
 | `situation_understanding` | `situation_understanding.mp4` | Current and likely next event |
 
-Pass any table entry as `CASE`:
+Run a representative case:
 
 ```bash
-uv run python examples/reasoner.py --case CASE
+uv run python examples/reasoner.py --case image_caption
 ```
 
-The original `image` and `video` case names remain aliases for `image_caption`
+The `--case` option belongs to this cookbook runner, not the NIM API. Substitute
+any other exact case name from the table. The original `image` and `video` case
+names remain aliases for `image_caption`
 and `video_caption`. Every video case requests 4 FPS sampling. Task quality can
 differ between Nano and Super; these cases demonstrate the API and output
 contract rather than guaranteeing a particular answer.

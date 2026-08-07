@@ -136,10 +136,10 @@ Gate: every changed source fact is reconciled or explicitly deferred.
    artifact.
 3. Add stable page titles, one-paragraph scope statements, and relative
    navigation links.
-4. Add semantic placeholders only for ledger-backed release facts, for example
-   `<NIM_IMAGE:TBD>`.
+4. Mark unresolved ledger-backed release facts explicitly in prose or tables.
+   Keep unresolved values out of runnable fenced blocks.
 
-Gate: all navigation targets exist; no placeholder implies a usable value.
+Gate: all navigation targets exist; every fenced command uses a usable value.
 
 ### Phase 2: Establish shared and task API contracts
 

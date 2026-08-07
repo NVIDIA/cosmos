@@ -1412,9 +1412,9 @@ Use this table during drafting and review to resolve tempting duplication:
 - Prefer tables for exact mappings, defaults, ranges, conflicts, profile rows,
   and status matrices. Keep explanations in prose when order or rationale is
   more important than lookup.
-- Keep JSON bodies complete and valid. Use fenced blocks with language labels,
-  semantic placeholders such as `<NIM_IMAGE:TBD>`, and no realistic-looking
-  secret values.
+- Keep JSON bodies complete and valid. Use fenced blocks with language labels
+  and no realistic-looking secret values. Put unresolved release values in
+  prose or tables, never in runnable fenced blocks.
 - Label evidence status explicitly when it affects correctness:
   `Current source snapshot`, `Validated against release`, `Historical`, or
   `TBD (release-dependent)`. Public docs should not expose internal commit IDs
