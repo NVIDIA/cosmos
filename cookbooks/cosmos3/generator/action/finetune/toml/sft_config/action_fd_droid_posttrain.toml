@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# ============================================================================
+# DROID-Merged LeRobot forward-dynamics post-training.
+#
+# Env required:
+#   DATASET_PATH=/path/to/Cosmos3-DROID
+#   BASE_CHECKPOINT_PATH=<base DCP dir or object-store path>
+#   WAN_VAE_PATH=<Wan2.2_VAE.pth>
+#   IMAGINAIRE_OUTPUT_ROOT=/path/to/output_root
+#
+# The registered experiment owns dataset mode/action-space wiring:
+#   mode="forward_dynamics", action_space="ee_pose", chunk_length=16, res480.
+# ============================================================================
+
+[job]
+task       = "vfm"
+experiment = "action_fd_droid_posttrain"
+project    = "cosmos3_action_fd"
+group      = "action_sft"
+name       = "action_fd_droid_posttrain"
+wandb_mode = "online"
+
+[model]
+precision = "bfloat16"
+
+[model.parallelism]
+data_parallel_shard_degree     = 8
+data_parallel_replicate_degree = 1
+
+[model.activation_checkpointing]
+mode = "selective"
+
+[model.tokenizer]
+vae_path = "${oc.env:WAN_VAE_PATH}"
+
+[scheduler]
+cycle_lengths = [20000]
+
+[trainer]
+max_iter     = 20000
+logging_iter = 50
+
+[checkpoint]
+load_path = "${oc.env:BASE_CHECKPOINT_PATH}"
+save_iter = 250

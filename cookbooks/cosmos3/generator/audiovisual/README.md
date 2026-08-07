@@ -145,12 +145,18 @@ export_to_video(result.video, "/tmp/cosmos3_t2v_diffusers.mp4", fps=24)
 To run **Cosmos3-Super** instead, load the larger checkpoint:
 `Cosmos3OmniPipeline.from_pretrained("nvidia/Cosmos3-Super", ...)`.
 
+To run **Cosmos3-Edge** instead, load `nvidia/Cosmos3-Edge` and use its
+single-GPU, no-audio settings: `height=480`, `width=832`, `num_frames=121`,
+`num_inference_steps=50`, `guidance_scale=5.0`, and `flow_shift=3.0`.
+
 ### Notebook walkthrough
 
 [`run_with_diffusers.ipynb`](./run_with_diffusers.ipynb) is the full tutorial for
 the Diffusers backend: it provisions a dedicated venv, then walks through
-text-to-image, text-to-video, and image-to-video generation (with and without
-audio) using `Cosmos3OmniPipeline`, including how to preview the generated media.
+text-to-image, text-to-video, image-to-video, and video-to-video generation (with
+and without audio) using `Cosmos3OmniPipeline`, including a dedicated Cosmos3-Edge
+section with 480p text-to-image, text-to-video, and image-to-video examples and
+previews.
 
 ## Run with vLLM-Omni
 

@@ -15,18 +15,21 @@ The rest of this doc shows how to run these modes on selected embodiments direct
 - [Run with Cosmos Framework](#run-with-cosmos-framework)
   - [Quickstart](#quickstart)
   - [Cosmos Framework Walkthrough](#cosmos-framework-walkthrough)
-- [Run with vLLM-Omni](#run-with-vllm-omni)
+- [Run with Diffusers](#run-with-diffusers)
   - [Quickstart](#quickstart-1)
+  - [Notebook walkthrough](#diffusers-notebook-walkthrough)
+- [Run with vLLM-Omni](#run-with-vllm-omni)
+  - [Quickstart](#quickstart-2)
   - [Notebook walkthrough](#vllm-omni-notebook-walkthrough)
 - [Post-Train for Cosmos3-Nano-Policy-DROID](#post-train-for-cosmos3-nano-policy-droid)
 
 ## Overview
 
-All examples are shown across two different inference backends — native
-PyTorch (Cosmos Framework) and vLLM-Omni. Both backends use the sample assets
-under [`assets/`](./assets) and cover three tasks:
+All examples are shown across three different inference backends — native
+PyTorch (Cosmos Framework), Diffusers, and vLLM-Omni. Every backend uses the sample
+assets under [`assets/`](./assets) and covers three tasks:
 
-Environment setup for both backends is centralized in the shared
+Environment setup for all backends is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide; each backend below
 links to the section you need.
 
@@ -89,6 +92,79 @@ visualize the generated videos:
   inverse dynamics, predicting ego-motion trajectories from input AV videos using Cosmos3-Nano.
 - [`run_policy_with_cosmos_framework.md`](./run_policy_with_cosmos_framework.md) - policy, predicting future observations and action trajectories for DROID robot using Cosmos3-Nano-Policy-DROID and Cosmos3-Edge-Policy-DROID.
 
+## Run with Diffusers
+
+### Quickstart
+
+Set up the environment: [Diffusers setup](../../README.md#diffusers). Action inputs are
+grouped into a `CosmosActionCondition`. The pipeline derives the frame count from
+`chunk_size + 1` and the conditioning canvas from `resolution_tier`, so `height`, `width`,
+and `num_frames` stay unset:
+
+```python
+import json
+from pathlib import Path
+
+import torch
+from diffusers import Cosmos3OmniPipeline, CosmosActionCondition
+from diffusers.utils import export_to_video, load_image
+
+action_root = Path("cookbooks/cosmos3/generator/action")
+raw_actions = torch.as_tensor(
+    json.load(open(action_root / "assets/actions/av_traj_forward.json")), dtype=torch.float32
+)
+
+pipe = Cosmos3OmniPipeline.from_pretrained("nvidia/Cosmos3-Nano", torch_dtype=torch.bfloat16)
+pipe.to("cuda")
+
+result = pipe(
+    prompt="You are an autonomous vehicle planning system.",
+    action=CosmosActionCondition(
+        mode="forward_dynamics",
+        chunk_size=60,
+        domain_name="av",
+        resolution_tier=480,
+        raw_actions=raw_actions,
+        image=load_image(str(action_root / "assets/images/av_0.jpg")),
+        view_point="ego_view",
+    ),
+    fps=10,
+    num_inference_steps=30,
+    guidance_scale=1.0,
+    use_system_prompt=False,
+    generator=torch.Generator(device="cuda").manual_seed(0),
+)
+export_to_video(result.video, "/tmp/cosmos3_action_fd.mp4", fps=10, macro_block_size=1)
+```
+
+For inverse dynamics, pass `mode="inverse_dynamics"` with `video=` instead of `image=` and
+no `raw_actions`; the predicted trajectory comes back as `result.action`. `mode="policy"`
+conditions on a first frame like forward dynamics but takes no `raw_actions`, predicting the
+action chunk alongside the video. Cosmos3-Super also ships `action_gen=True`, so the forward
+and inverse calls work against that checkpoint too.
+
+### Diffusers Notebook Walkthrough
+
+The Diffusers notebooks provision a dedicated venv with the LeRobot readers, pose helpers, and
+plotting extras, register it as the `Cosmos3 Diffusers Action` kernel, then run each task with
+`Cosmos3OmniPipeline` and write outputs under `outputs/notebooks/diffusers/`:
+
+- [`run_fd_with_diffusers.ipynb`](./run_fd_with_diffusers.ipynb) — forward dynamics for
+  three AV ego trajectories and three camera-pose trajectories, an autoregressive multiview
+  DROID rollout, an autoregressive UMI rollout, and a bimanual hand-pose chunk.
+- [`run_id_with_diffusers.ipynb`](./run_id_with_diffusers.ipynb) — inverse dynamics for the
+  checked-in AV clips plus the Bridge, AgiBotWorld-Beta, RoboMIND (Franka, Franka dual-arm, UR),
+  UMI, and Fractal episodes, plotting each prediction as a camera or end-effector trajectory.
+- [`run_policy_with_diffusers.ipynb`](./run_policy_with_diffusers.ipynb) — policy, jointly
+  predicting future observations and an action chunk for DROID with Cosmos3-Nano-Policy-DROID,
+  with the predicted chunk plotted as an end-effector trajectory.
+
+The examples that read the checked-in LeRobot episodes use the readers from the Cosmos framework,
+and the trajectory plots use its pose helpers, so set `COSMOS3_REPO` to your framework checkout
+before running them. The DROID reader resolves its feature layout from the name of the directory
+it is given, so also set `COSMOS3_DROID_ROOT` to a directory named after the DROID release you
+have available.
+
 ## Run with vLLM-Omni
 
 ### Quickstart
@@ -115,8 +191,10 @@ generation (see [`run_fd_with_vllm_omni.ipynb`](./run_fd_with_vllm_omni.ipynb) a
 | `guidance_scale` | `1.0` |
 | `flow_shift` | `10.0` |
 
-The notebooks build the full request body for AV, DROID, UMI, and human hand-pose examples,
-including autoregressive chunked generation for the robotics examples.
+The notebooks build the full request body for AV, DROID, UMI and human hand-pose examples,
+including autoregressive chunked generation for the robotics examples. Policy
+inference uses async `POST /v1/videos` to retrieve a rollout video plus
+top-level `action` metadata.
 
 ### VLLM-Omni Notebook Walkthrough
 
@@ -127,6 +205,8 @@ write outputs under `outputs/cosmos3_action_vllm/`:
   DROID, UMI, and human hand-pose examples.
 - [`run_id_with_vllm_omni.ipynb`](./run_id_with_vllm_omni.ipynb) — inverse dynamics,
   predicting ego-motion trajectories from input AV videos.
+- [`run_policy_with_vllm_omni.ipynb`](./run_policy_with_vllm_omni.ipynb) — policy
+  inference for DROID through the async video API.
 
 ## Post-Train for Cosmos3-Nano-Policy-DROID
 

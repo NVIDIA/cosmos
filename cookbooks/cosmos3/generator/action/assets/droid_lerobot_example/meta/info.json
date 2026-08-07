@@ -11,8 +11,8 @@
   "splits": {
     "train": "0:57639"
   },
-  "data_path": "data/chunk-{episode_chunk:03d}/file-{episode_file:03d}.parquet",
-  "video_path": "videos/{video_key}/chunk-{episode_chunk:03d}/file-{episode_file:03d}.mp4",
+  "data_path": "data/chunk-{chunk_index:03d}/file-{file_index:03d}.parquet",
+  "video_path": "videos/{video_key}/chunk-{chunk_index:03d}/file-{file_index:03d}.mp4",
   "features": {
     "observation.state.cartesian_position": {
       "dtype": "float32",
@@ -23,22 +23,30 @@
     },
     "observation.state.joint_positions": {
       "dtype": "float32",
-      "shape": [],
+      "shape": [
+        7
+      ],
       "names": null
     },
     "observation.state.gripper_position": {
       "dtype": "float32",
-      "shape": [],
+      "shape": [
+        1
+      ],
       "names": null
     },
     "action.gripper_position": {
       "dtype": "float32",
-      "shape": [],
+      "shape": [
+        1
+      ],
       "names": null
     },
     "action.joint_position": {
       "dtype": "float32",
-      "shape": [],
+      "shape": [
+        7
+      ],
       "names": null
     },
     "observation.image.wrist_image_left": {
