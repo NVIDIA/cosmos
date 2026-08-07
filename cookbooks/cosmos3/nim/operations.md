@@ -37,7 +37,7 @@ Use the active runtime rather than launch-time assumptions:
 ```bash
 for endpoint in metadata models manifest version license; do
   curl -fsS "$NIM_URL/v1/$endpoint" -o "$endpoint.json"
-  python -m json.tool "$endpoint.json" >/dev/null
+  python3 -m json.tool "$endpoint.json" >/dev/null
 done
 
 curl -fsS "$NIM_URL/openapi.json" -o openapi.json

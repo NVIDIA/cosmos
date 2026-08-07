@@ -173,8 +173,8 @@ frame rate, or remote source.
 ## Verify a running deployment
 
 ```bash
-curl -fsS http://localhost:8000/v1/metadata | python -m json.tool
-curl -fsS http://localhost:8000/v1/manifest | python -m json.tool
+curl -fsS http://localhost:8000/v1/metadata | python3 -m json.tool
+curl -fsS http://localhost:8000/v1/manifest | python3 -m json.tool
 ```
 
 The selected image's manifest is authoritative for the rows it actually ships.

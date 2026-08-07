@@ -142,7 +142,7 @@ until curl -fsS http://localhost:8000/v1/health/ready >/dev/null; do
   sleep 10
 done
 
-curl -fsS http://localhost:8000/v1/metadata | python -m json.tool
+curl -fsS http://localhost:8000/v1/metadata | python3 -m json.tool
 ```
 
 The `checkpoint` field reports `default` for bundled artifacts or identifies the

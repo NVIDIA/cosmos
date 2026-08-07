@@ -4,8 +4,9 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Deploy the Cosmos3 Certified NIM
 
 Use this page to authenticate to NGC, choose a model, launch Generator or
-Reasoner, and verify the selected service. The final NGC image remains **TBD**;
-semi-final source-profile hardware requirements are documented in the
+Reasoner, and verify the selected service. The commands pin the current 2.2.0
+release-candidate image; this is not a final release identity. Semi-final
+source-profile hardware requirements are documented in the
 [support matrix](support-matrix.md) pending release approval.
 
 ## How selection works
@@ -75,11 +76,11 @@ Verify the host against [Prerequisites](prerequisites.md) and the released
 
 ## Authenticate to NGC
 
-Create an API key with NGC Catalog access, then export it in the shell that
-launches the NIM:
+Create and export `NGC_API_KEY` as described under
+[Network and NGC access](prerequisites.md#network-and-ngc-access), then
+authenticate in the same shell:
 
 ```bash
-export NGC_API_KEY='<your-ngc-api-key>'
 echo "$NGC_API_KEY" \
   | docker login nvcr.io --username '$oauthtoken' --password-stdin
 ```
@@ -88,11 +89,15 @@ The literal Docker username is `$oauthtoken`. `NGC_API_KEY` authorizes model
 artifact download inside the container; do not substitute `NGC_TOKEN` or place
 the key in source control.
 
-Set the released image with an explicit tag:
+Pin and pull the current release-candidate image:
 
 ```bash
-export NIM_IMAGE='<NIM_IMAGE:TBD>'
+export NIM_IMAGE='nvcr.io/nvstaging/nim/cosmos3:2.2.0-rc.20260805164511-12ca3dacb921e392'
+docker pull "$NIM_IMAGE"
 ```
+
+Do not replace the versioned tag with `latest`. Confirm the release-candidate
+reference in the [release notes](release-notes.md) before deployment.
 
 ## Prepare the model cache
 
@@ -170,8 +175,8 @@ much longer than HTTP startup. Send inference only after readiness succeeds.
 ## Verify the selection
 
 ```bash
-curl -fsS "$NIM_URL/v1/metadata" | python -m json.tool
-curl -fsS "$NIM_URL/v1/manifest" | python -m json.tool
+curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
+curl -fsS "$NIM_URL/v1/manifest" | python3 -m json.tool
 ```
 
 Metadata confirms the selected model, profile, and Generator variant. This is

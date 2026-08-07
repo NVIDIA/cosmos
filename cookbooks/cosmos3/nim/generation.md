@@ -20,13 +20,15 @@ export NIM_URL=${NIM_URL:-http://localhost:8000}
 curl -f "$NIM_URL/v1/health/ready"
 ```
 
-Run the examples from the repository root. They use `requests`, reuse the
-canonical audiovisual prompts and media already tracked by this cookbook, and
-decode responses under `cookbooks/cosmos3/nim/examples/outputs/`. Use `uv` to
-create the temporary client environment for each command, for example:
+Install the [client tooling](prerequisites.md#client-tooling). Then, from the
+repository root, enter the cookbook directory before running examples. They use
+the pinned `requests` dependency, reuse the canonical audiovisual
+prompts and media already tracked by this cookbook, and decode responses under
+`examples/outputs/`:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py
+cd cookbooks/cosmos3/nim
+uv run python examples/t2v.py
 ```
 
 ## Choose a modality
@@ -37,10 +39,10 @@ constant while each backend uses its own API adapter.
 
 | Modality | Canonical scenario | Conditioning input | Response field | Run |
 | --- | --- | --- | --- | --- |
-| T2I | Robot draping satin over a mannequin | None | `b64_image` | `uv run --with requests python cookbooks/cosmos3/nim/examples/t2i.py` |
-| T2V | Robot cleaning a kitchen | None | `b64_video` | `uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py` |
-| I2V | Car traveling along a coastal road | `car_driving.jpg` | `b64_video` | `uv run --with requests python cookbooks/cosmos3/nim/examples/i2v.py` |
-| V2V | Continue or transform a car-driving video | `car_driving_plain.mp4` | `b64_video` | `uv run --with requests python cookbooks/cosmos3/nim/examples/v2v.py` |
+| T2I | Robot draping satin over a mannequin | None | `b64_image` | `uv run python examples/t2i.py` |
+| T2V | Robot cleaning a kitchen | None | `b64_video` | `uv run python examples/t2v.py` |
+| I2V | Car traveling along a coastal road | `car_driving.jpg` | `b64_video` | `uv run python examples/i2v.py` |
+| V2V | Continue or transform a car-driving video | `car_driving_plain.mp4` | `b64_video` | `uv run python examples/v2v.py` |
 
 The scripts load the full structured JSON prompts from
 `cookbooks/cosmos3/generator/audiovisual/assets/`, compact each JSON document
@@ -74,7 +76,7 @@ curl -fsS -X POST "$NIM_URL/v1/infer" \
   }' \
   -o /tmp/cosmos3-t2i-response.json
 
-python - <<'PY'
+python3 - <<'PY'
 import base64
 import json
 from pathlib import Path
@@ -89,7 +91,7 @@ PY
 Run the complete editable comparison case:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/t2i.py
+uv run python examples/t2i.py
 ```
 
 It uses the canonical `assets/prompts/text2image/robot_draping.json` prompt and
@@ -132,7 +134,7 @@ curl -fsS -X POST "$NIM_URL/v1/infer" \
   }' \
   -o /tmp/cosmos3-response.json
 
-python - <<'PY'
+python3 - <<'PY'
 import base64
 import json
 from pathlib import Path
@@ -147,7 +149,7 @@ PY
 Run the complete editable comparison case:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py
+uv run python examples/t2v.py
 ```
 
 It uses `assets/prompts/text2video/robot_kitchen.json`, the shared T2V negative
@@ -170,8 +172,7 @@ from pathlib import Path
 
 nim_url = "http://localhost:8000"
 image_path = Path(
-    "cookbooks/cosmos3/generator/audiovisual/assets/"
-    "images/image2video/car_driving.jpg"
+    "../generator/audiovisual/assets/images/image2video/car_driving.jpg"
 )
 mime = mimetypes.guess_type(image_path.name)[0] or "image/jpeg"
 image = f"data:{mime};base64,{base64.b64encode(image_path.read_bytes()).decode()}"
@@ -200,7 +201,7 @@ Path("i2v_car_driving.mp4").write_bytes(base64.b64decode(result["b64_video"]))
 Run the complete editable comparison case:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/i2v.py
+uv run python examples/i2v.py
 ```
 
 It pairs `assets/images/image2video/car_driving.jpg` with
@@ -250,7 +251,7 @@ V2V sets `model_mode` to `video2video`, supplies a video in
 Run the complete local-media example:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/v2v.py
+uv run python examples/v2v.py
 ```
 
 `condition_frame_indexes_vision` indexes latent frames, not pixel frames. The
@@ -282,13 +283,13 @@ contract.
 Launch T2I with `NIM_MODEL_VARIANT=super-t2i-4step`, then run:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/t2i_4step.py
+uv run python examples/t2i_4step.py
 ```
 
 Launch I2V with `NIM_MODEL_VARIANT=super-i2v-4step`, then run:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/i2v_4step.py
+uv run python examples/i2v_4step.py
 ```
 
 Each script must run against the matching active model. Four-step requests must
@@ -395,13 +396,18 @@ it to `t2v_robot_kitchen.mp4`, `i2v_car_driving.mp4`, or `v2v.mp4` under the
 examples `outputs/` directory. Specialist examples add `_4step` to the
 corresponding scenario name. The inactive media field is omitted.
 
-VP9-in-MP4 is not supported by every browser or stock player; `mpv` and
-`ffplay` are reliable choices.
+VP9-in-MP4 is not supported by every browser or stock player. The declared
+FFmpeg client package includes `ffplay` for direct playback:
+
+```bash
+ffplay examples/outputs/t2v_robot_kitchen.mp4
+```
 
 For a broadly compatible H.264 copy:
 
 ```bash
-ffmpeg -i t2v_robot_kitchen.mp4 -c:v libx264 -crf 18 -pix_fmt yuv420p t2v_robot_kitchen-h264.mp4
+ffmpeg -i examples/outputs/t2v_robot_kitchen.mp4 -c:v libx264 -crf 18 \
+  -pix_fmt yuv420p examples/outputs/t2v_robot_kitchen-h264.mp4
 ```
 
 ## Common failures
@@ -415,6 +421,6 @@ ffmpeg -i t2v_robot_kitchen.mp4 -c:v libx264 -crf 18 -pix_fmt yuv420p t2v_robot_
 | HTTP 422, reference mismatch | `input_reference` is missing, forbidden, or does not match `model_mode` | Omit it for text modes; provide the required image/video for conditioned modes |
 | URL media fails | URL inputs are disabled, unreachable from the container, or rejected by the decoder | Use a data URL and verify `NIM_ALLOW_URL_INPUT` |
 | Request times out in the client | Generation exceeded the client timeout, not necessarily the server timeout | Use the examples' 30-minute timeout and inspect NIM logs |
-| MP4 does not play | Player lacks VP9-in-MP4 support | Use `mpv`/`ffplay` or re-encode to H.264 |
+| MP4 does not play | Player lacks VP9-in-MP4 support | Use `ffplay` or re-encode to H.264 with the declared FFmpeg tooling |
 
 For service-level diagnosis, see [operations.md](operations.md#troubleshooting).

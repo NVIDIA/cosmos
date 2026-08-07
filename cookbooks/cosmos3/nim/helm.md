@@ -24,17 +24,11 @@ contains that row before setting GPU resources.
 
 ## Inspect the released chart
 
-When the chart is published, pin its version and inspect that exact schema:
-
-```bash
-export NIM_HELM_CHART='<NIM_HELM_CHART:TBD>'
-export NIM_HELM_VERSION='<NIM_HELM_VERSION:TBD>'
-
-helm show readme "$NIM_HELM_CHART" --version "$NIM_HELM_VERSION"
-helm show values "$NIM_HELM_CHART" --version "$NIM_HELM_VERSION"
-```
-
-Do not copy values from another NIM or chart version.
+No Cosmos3 Certified NIM Helm chart is published yet, so there is no runnable
+chart-inspection command. When the chart is published, take its exact repository
+and version from the release notes, pin both values, and inspect that version's
+README and values schema before installation. Do not copy values from another
+NIM or chart version.
 
 ## Create NGC secrets
 
