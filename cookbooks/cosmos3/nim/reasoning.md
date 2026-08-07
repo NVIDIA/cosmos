@@ -10,14 +10,17 @@ model; `/v1/infer` is a Generator endpoint and is not used here.
 See [Deployment](deployment.md) to select and launch a Reasoner model. This
 page covers Reasoner routes, media, sampling, and responses.
 
-## Install the client and verify readiness
+## Prepare the client and verify readiness
 
-The runnable examples use the OpenAI Python client through `uv run --with openai`:
+Install the [client tooling](prerequisites.md#client-tooling). Then, from the
+repository root, enter the cookbook directory. The runnable examples use the
+pinned OpenAI Python client from the `uv` project in that directory:
 
 ```bash
+cd cookbooks/cosmos3/nim
 export NIM_URL=${NIM_URL:-http://localhost:8000}
 curl -f "$NIM_URL/v1/health/ready"
-curl -sS "$NIM_URL/v1/models" | python -m json.tool
+curl -sS "$NIM_URL/v1/models" | python3 -m json.tool
 ```
 
 The NIM does not require a request API key on localhost, but the OpenAI client
@@ -61,7 +64,7 @@ the Certified NIM contract:
 Pass any table entry as `CASE`:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case CASE
+uv run python examples/reasoner.py --case CASE
 ```
 
 The original `image` and `video` case names remain aliases for `image_caption`
@@ -92,7 +95,7 @@ from pathlib import Path
 from openai import OpenAI
 
 nim_url = "http://localhost:8000"
-image_path = Path("cookbooks/cosmos3/reasoner/assets/robot_153.jpg")
+image_path = Path("../reasoner/assets/robot_153.jpg")
 image_url = "data:image/jpeg;base64," + base64.b64encode(
     image_path.read_bytes()
 ).decode()
@@ -119,7 +122,7 @@ print(response.choices[0].message.content)
 Run the equivalent cookbook example:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case image_caption
+uv run python examples/reasoner.py --case image_caption
 ```
 
 Use the OpenAI client for normal applications. For direct HTTP integration,
@@ -137,7 +140,7 @@ from pathlib import Path
 from openai import OpenAI
 
 nim_url = "http://localhost:8000"
-video_path = Path("cookbooks/cosmos3/reasoner/assets/video_caption.mp4")
+video_path = Path("../reasoner/assets/video_caption.mp4")
 video_url = "data:video/mp4;base64," + base64.b64encode(
     video_path.read_bytes()
 ).decode()
@@ -164,7 +167,7 @@ print(response.choices[0].message.content)
 Run the complete example:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case video_caption
+uv run python examples/reasoner.py --case video_caption
 ```
 
 Data URLs are the portable baseline. Public HTTP(S) media URLs may work when
@@ -179,7 +182,7 @@ The current NIM provides a Responses create route unless the operator sets
 `input_text`:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner_responses.py
+uv run python examples/reasoner_responses.py
 ```
 
 The request uses `store=false`. Persisted retrieval, cancellation, background
@@ -206,7 +209,7 @@ Pass that object as `extra_body=extra_body` in a normal Chat Completions call,
 or run a task with explicit reasoning:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py \
+uv run python examples/reasoner.py \
   --case robotics_next_action \
   --reasoning \
   --thinking-token-budget 512

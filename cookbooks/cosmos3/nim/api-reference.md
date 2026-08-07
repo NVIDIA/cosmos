@@ -163,7 +163,7 @@ Save the active runtime's OpenAPI document:
 
 ```bash
 curl -fsS http://localhost:8000/openapi.json -o openapi.json
-python -m json.tool openapi.json >/dev/null
+python3 -m json.tool openapi.json >/dev/null
 ```
 
 Repeat this under Generator and Reasoner profiles. Treat the released image's

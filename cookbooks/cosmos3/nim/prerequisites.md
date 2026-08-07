@@ -77,6 +77,44 @@ container. Follow the driver and Container Toolkit installation instructions
 for the released image instead of installing an unrelated host CUDA toolkit
 solely for the NIM.
 
+## Client tooling
+
+Run the documented API and Python example commands from a client machine. The
+client can be the NIM host or another Linux system that can reach the service.
+These tools are separate from the software inside the NIM container:
+
+| Tool | Minimum version | Used for |
+| --- | --- | --- |
+| `curl` | 7.61 | Health checks and direct HTTP API requests |
+| `uv` | 0.11.0 | Creating the pinned Python environment and running examples |
+| `python3` | 3.10 | Standard-library JSON formatting and inline decoding snippets |
+| `ffmpeg` and `ffplay` | 6.1 | Optional playback and conversion of generated VP9-in-MP4 video |
+
+On Ubuntu 24.04, install the distribution-provided client tools, then install
+`uv` with its official standalone installer:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y curl python3 ffmpeg
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+The `uv` installer installs the current release. Verify that every client tool
+meets the table before continuing:
+
+```bash
+curl --version | head -n 1
+uv --version
+python3 --version
+ffmpeg -version | head -n 1
+ffplay -version | head -n 1
+```
+
+For another supported client distribution, use its package manager for
+`curl`, Python 3, and FFmpeg; use the same official installer for `uv`. The
+cookbook's `pyproject.toml` and `uv.lock` define the example environment.
+
 ## Network and NGC access
 
 For a normal cold start, the host must reach:

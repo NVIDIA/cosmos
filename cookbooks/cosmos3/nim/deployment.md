@@ -170,8 +170,8 @@ much longer than HTTP startup. Send inference only after readiness succeeds.
 ## Verify the selection
 
 ```bash
-curl -fsS "$NIM_URL/v1/metadata" | python -m json.tool
-curl -fsS "$NIM_URL/v1/manifest" | python -m json.tool
+curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
+curl -fsS "$NIM_URL/v1/manifest" | python3 -m json.tool
 ```
 
 Metadata confirms the selected model, profile, and Generator variant. This is

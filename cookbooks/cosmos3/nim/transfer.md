@@ -38,14 +38,18 @@ use the same structured prompt, shared negative prompt, control media, geometry,
 and seed as the Cosmos Framework and vLLM-Omni tutorials. Choose one case so a
 single command does not run several expensive generations:
 
+Install the [client tooling](prerequisites.md#client-tooling). Then, from the
+repository root, enter the cookbook directory before running a case:
+
 ```bash
+cd cookbooks/cosmos3/nim
 export NIM_URL=${NIM_URL:-http://localhost:8000}
 
-uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_edge
-uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_blur
-uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_depth
-uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_seg
-uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case precomputed_wsm
+uv run python examples/transfer.py --case precomputed_edge
+uv run python examples/transfer.py --case precomputed_blur
+uv run python examples/transfer.py --case precomputed_depth
+uv run python examples/transfer.py --case precomputed_seg
+uv run python examples/transfer.py --case precomputed_wsm
 ```
 
 The NIM can also derive edge or blur controls from a source video. These are
@@ -53,12 +57,11 @@ additional NIM API examples rather than members of the precomputed comparison
 set:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case derived_edge
-uv run --with requests python cookbooks/cosmos3/nim/examples/transfer.py --case derived_blur
+uv run python examples/transfer.py --case derived_edge
+uv run python examples/transfer.py --case derived_blur
 ```
 
-The decoded result is written to
-`cookbooks/cosmos3/nim/examples/outputs/transfer_<case>.mp4`.
+The decoded result is written to `examples/outputs/transfer_<case>.mp4`.
 
 ## Precomputed control
 

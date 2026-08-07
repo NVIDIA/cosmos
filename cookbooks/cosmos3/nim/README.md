@@ -98,18 +98,25 @@ generation.
    until curl -fsS "$NIM_URL/v1/health/ready" >/dev/null; do sleep 10; done
    ```
 
-5. Run an example that matches the active runtime and model.
+5. From the repository root, enter this cookbook directory. `uv` automatically
+   creates the pinned client environment from `pyproject.toml` and `uv.lock`:
+
+   ```bash
+   cd cookbooks/cosmos3/nim
+   ```
+
+6. Run an example that matches the active runtime and model.
 
 For a general-purpose Generator:
 
 ```bash
-uv run --with requests python cookbooks/cosmos3/nim/examples/t2v.py
+uv run python examples/t2v.py
 ```
 
 For a Reasoner:
 
 ```bash
-uv run --with openai python cookbooks/cosmos3/nim/examples/reasoner.py --case image_caption
+uv run python examples/reasoner.py --case image_caption
 ```
 
 Specialist models accept only their documented task contract. Use
