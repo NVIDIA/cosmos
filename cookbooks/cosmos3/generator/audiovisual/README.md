@@ -258,7 +258,7 @@ the [shared environment setup guide](../../README.md#vllm-omni).
 ### Quickstart
 
 Set up the environment and start the server:
-[TensorRT-LLM setup](../../README.md#tensorrt-llm). The notebook targets the
+[TensorRT-LLM setup](../../README.md#tensorrt-llm-generator). The notebook targets the
 OpenAI-compatible VisualGen API served by `trtllm-serve`.
 
 Send a text-to-video request with the synchronous video API:
@@ -283,7 +283,7 @@ response = requests.post(
         "num_frames": 189,
         "num_inference_steps": 35,
         "guidance_scale": 6.0,
-        "max_sequence_length": 2048,
+        "max_sequence_length": 4096,
         "seed": 0,
         "extra_params": {
             "use_resolution_template": False,
@@ -299,8 +299,62 @@ Path(f"/tmp/cosmos3_t2v_trtllm{suffix}").write_bytes(response.content)
 ```
 
 For image-to-video, post multipart form data to the same endpoint with the
-reference image under `input_reference`. TensorRT-LLM Cosmos3 audio/action
-generation is not covered by this backend section.
+reference image under `input_reference`. To generate synchronized audio for a
+text-to-video or image-to-video request, add `"enable_audio": True` to
+`extra_params`. Keep `ffmpeg` installed in the server environment so TensorRT-LLM
+can mux the generated audio into the MP4; its fallback AVI encoder is video-only.
+
+For video-to-video, upload an MP4 or AVI reference under `input_reference`.
+TensorRT-LLM classifies the upload by content and forwards the encoded bytes to
+the Cosmos3 workers, which decode the conditioning window with NVDEC:
+
+```python
+import json
+from pathlib import Path
+
+import requests
+
+source_video = Path("assets/videos/car_driving_plain.mp4").resolve()
+v2v_prompt = json.load(open("assets/prompts/image2video/car_driving.json"))
+v2v_negative = json.load(open("assets/negative_prompts/image2video/neg_prompt.json"))
+
+with source_video.open("rb") as video_file:
+    response = requests.post(
+        "http://localhost:8000/v1/videos/generations",
+        data={
+            "prompt": json.dumps(v2v_prompt, ensure_ascii=True, separators=(",", ":")),
+            "negative_prompt": json.dumps(v2v_negative, ensure_ascii=True, separators=(",", ":")),
+            "size": "1280x720",
+            "num_frames": "189",
+            "fps": "24",
+            "num_inference_steps": "35",
+            "guidance_scale": "6.0",
+            "max_sequence_length": "4096",
+            "seed": "0",
+            "extra_params": json.dumps(
+                {
+                    "use_resolution_template": False,
+                    "use_duration_template": False,
+                    "use_system_prompt": True,
+                    "use_guardrails": True,
+                    "condition_video_latent_indexes": [0, 1],
+                    "condition_video_keep": "first",
+                },
+                separators=(",", ":"),
+            ),
+        },
+        files={"input_reference": (source_video.name, video_file, "video/mp4")},
+        headers={"Accept": "video/mp4, video/x-msvideo"},
+    )
+response.raise_for_status()
+suffix = ".avi" if "x-msvideo" in response.headers.get("content-type", "") else ".mp4"
+Path(f"/tmp/cosmos3_v2v_trtllm{suffix}").write_bytes(response.content)
+```
+
+`condition_video_latent_indexes` identifies clean latent frames in the output;
+with `[0, 1]`, TensorRT-LLM consumes the first five pixel frames from the input.
+Set `condition_video_keep` to `"last"` to condition on the corresponding tail
+window instead.
 
 For text-to-image, use the same video generation endpoint with `num_frames=1`,
 `seconds=1`, and `fps=8`; TensorRT-LLM Cosmos3 returns a one-frame video
@@ -309,16 +363,17 @@ derive an eight-frame clip from `seconds * fps`.
 
 The TRT-LLM notebook always sends model-specific `extra_params`, so use a
 TensorRT-LLM release with the Cosmos3 VisualGen API schema. The notebook sets
-request-level `max_sequence_length=2048` for longer structured JSON prompts.
+request-level `max_sequence_length=4096` for longer structured JSON prompts.
 
 ### Notebook walkthrough
 
 [`run_with_trt_llm.ipynb`](./run_with_trt_llm.ipynb) is the full tutorial for the
-TensorRT-LLM backend: it walks through text-to-image, text-to-video, and
-image-to-video requests against an already-running VisualGen server. Server
-launch options (Nano and Super, FP8 dynamic quantization, CFG parallelism,
-Ulysses, and parallel VAE) live in the
-[shared environment setup guide](../../README.md#tensorrt-llm).
+TensorRT-LLM backend: it walks through text-to-image, text-to-video and
+image-to-video with or without synchronized audio, and video-to-video requests
+against an already-running VisualGen server. Server launch options (Nano and
+Super, FP8 dynamic quantization, CFG parallelism, Ulysses, and parallel VAE)
+live in the
+[shared environment setup guide](../../README.md#tensorrt-llm-generator).
 
 ## Run with NIM
 
