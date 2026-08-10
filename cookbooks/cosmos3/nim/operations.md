@@ -174,7 +174,7 @@ configuration:
 
 | Variable | Current default | Effect |
 | --- | --- | --- |
-| `NIM_ENABLE_TEXT_GUARDRAILS` | true | Input prompt/negative-prompt blocklist and text classifier path |
+| `NIM_ENABLE_TEXT_GUARDRAILS` | true | Input-prompt blocklist and text classifier path |
 | `NIM_ENABLE_VIDEO_GUARDRAILS` | true | Output image/video face-privacy guardrail path |
 | `NIM_ENABLE_SIGLIP_GUARDRAILS` | true | Per-frame safety classifier when output visual guardrails are enabled |
 
@@ -290,9 +290,9 @@ Task-specific validation belongs to [Generation](generation.md),
 | Image pull unauthorized | Docker is not logged in or key lacks repository access | Re-run password-stdin login with `NGC_API_KEY` and literal `$oauthtoken` |
 | Artifact download fails | Container lacks `NGC_API_KEY`, entitlement, DNS/network, or storage | Verify key injection and NGC connectivity; inspect cache capacity/ownership |
 | Cache permission denied | Host mount is not writable by the container | Fix ownership/ACLs and retain a persistent writable `/opt/nim/.cache` |
-| No compatible profile | Visible GPUs or system memory do not satisfy the selected model/precision/offload requirements | Remove unnecessary pins, choose a smaller model or compatible precision, or use supported hardware |
+| No compatible profile | GPU compute capability, per-device VRAM, or effective system memory does not satisfy the selected model/precision/offload requirements | Inspect the exact image manifest, remove unnecessary pins, choose a smaller model or compatible precision, or use supported hardware |
 | Integrated GPU has no compatible profile | The host reserve lowers usable shared memory, and Generator offload profiles are not eligible | Choose a resident profile that fits after the reserve; change `NIM_UNIFIED_MEMORY_HOST_RESERVE_GIB` only from validated host-memory measurements |
-| Offload profile requires more system memory | The container cgroup or host exposes less RAM than the profile requires | Raise the container memory limit or choose a compatible precision/profile; current Super BF16 offload profiles require 150 GiB |
+| Profile filtered by system memory | The container cgroup or host exposes less RAM than the profile requires | Raise the container memory limit or choose a compatible profile; floors are 16 GiB for resident/Reasoner, 64 GiB for Nano offload, and 150 GiB for Super offload |
 | Conflicting selectors | A shorthand disagrees with `NIM_TAGS_SELECTOR` | Set each selector in one place and inspect the full launch environment |
 | Visible GPUs sit idle | Selected profile uses fewer GPUs than Docker exposed | Restrict `--gpus` or intentionally pin an available layout matching the desired count |
 | Compute-capability precision failure | Requested precision needs a newer GPU architecture | Select an available precision compatible with the hardware |
@@ -304,7 +304,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | Kubernetes Pod stays Pending | GPU request, scheduling constraints, or quota cannot be satisfied | Inspect Pod events and match the GPU count to an available configuration in the [support matrix](support-matrix.md) |
 | Kubernetes volume mount fails | PVC, access mode, ownership, or storage class is incompatible | Inspect Pod and PVC events; verify that the cache mount is writable |
 | Kubernetes startup probe fails | Cold startup exceeds the probe budget or startup has failed | Increase the startup budget and inspect container logs, cache, and NGC access |
-| Helm values are rejected or ignored | Values do not match the published Cosmos3 chart version | Use the chart version and schema linked from [Deploy with Helm](helm.md) |
+| Helm values are rejected or ignored | Values do not match the pinned evaluation chart version | Use the exact staging reference in [Deploy with Helm](helm.md) and only values approved for that version |
 
 ### Generator and media
 
@@ -341,8 +341,9 @@ Task-specific validation belongs to [Generation](generation.md),
 | Chat Completions route 404 | Client reached Generator or the selected image lacks the route | Confirm Reasoner through `/v1/metadata` and inspect live OpenAPI |
 | Responses route 404 | Route disabled, absent, or requested from Generator | Confirm Reasoner metadata, then use Chat Completions and inspect live OpenAPI/operator setting |
 | Retrieval/cancel does not work | Response storage/background support is not enabled | Use `store=false` create flow or validate storage configuration for the selected image |
+| Structured output is prose or invalid JSON | The request uses the wrong schema shape or the backend did not return a constrained result | Use the standard Chat Completions `response_format`, inspect live OpenAPI and logs, and preserve the response for diagnosis |
 | KV-cache/context OOM | Context, media tokens, batching, or concurrency is too large | Reduce media FPS/token budget/concurrency before raising memory utilization |
-| DFlash startup is rejected | DFlash was enabled for Generator/Super Reasoner or its Nano draft artifact is missing | Use Nano Reasoner with an available DFlash artifact, or set `NIM_USE_DFLASH=0` |
+| DFlash startup is rejected | DFlash was enabled for Generator/Super Reasoner, its draft is missing, or an independent path/configuration is invalid | Use Nano Reasoner with an available bundled draft or valid absolute local `NIM_DFLASH_MODEL_PATH`; otherwise set `NIM_USE_DFLASH=0` |
 | Reasoner checkpoint source fails | Local layout, `hf://` URI, revision, token, or inferred profile properties are invalid | Validate `NIM_MODEL_PATH`, `HF_TOKEN`, cache/network access, and matching selectors |
 
 ### BYOC

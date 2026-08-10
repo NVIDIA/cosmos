@@ -38,6 +38,7 @@ GPUs. A normal deployment does not need a profile ID.
 | Name | Default | Use |
 | --- | --- | --- |
 | `NIM_MODEL_PATH` | Empty | Generator: absolute local directory. Reasoner: absolute local directory or `hf://owner/repository[:revision]` |
+| `NIM_DFLASH_MODEL_PATH` | Empty | Nano Reasoner only: independently override the DFlash draft with an absolute local directory |
 | `NIM_DISABLE_MODEL_DOWNLOAD` | `false` | Disable profile download for a completely local Reasoner override; incompatible with Reasoner `hf://` and rejected for Generator |
 | `HF_TOKEN` | Empty | Authenticate to a private Reasoner Hugging Face repository |
 
@@ -93,7 +94,7 @@ discrete GPUs.
 
 | Name | Default | Use |
 | --- | --- | --- |
-| `NIM_ENABLE_TEXT_GUARDRAILS` | `true` | Enable input-text policy checks |
+| `NIM_ENABLE_TEXT_GUARDRAILS` | `true` | Enable input-prompt policy checks |
 | `NIM_ENABLE_VIDEO_GUARDRAILS` | `true` | Enable output image/video face and visual guardrails |
 | `NIM_ENABLE_SIGLIP_GUARDRAILS` | `true` | Enable the output-frame safety classifier |
 | `NIM_OFFLOAD_TEXT_GUARDRAIL` | Profile policy | Override whether the text guard sleeps on CPU during diffusion |
@@ -141,10 +142,21 @@ latency, quality, and correctness.
 | Name | Default | Use |
 | --- | --- | --- |
 | `NIM_USE_DFLASH` | `false` | Enable DFlash speculative decoding for Nano Reasoner only |
+| `NIM_DFLASH_MODEL_PATH` | Empty | Use an independent absolute local DFlash directory containing `config.json` and `model.safetensors` |
+| `NIM_DFLASH_BF16_KV_CACHE` | `false` | Use a BF16 KV cache for DFlash instead of the profile-derived cache dtype |
+| `NIM_DFLASH_CONFIG` | Empty object | Add or override advanced vLLM DFlash speculative-configuration fields as JSON |
 
 DFlash does not change the Reasoner request API. Startup rejects it for
 Generator and Super Reasoner. Confirm that the selected Nano Reasoner includes
-the draft artifact before enabling it.
+the draft artifact before enabling it. `NIM_DFLASH_MODEL_PATH` accepts only an
+absolute local path, not an `hf://` source. `NIM_DFLASH_CONFIG` requires
+`NIM_USE_DFLASH=1` and cannot set the reserved `method` or `model` keys.
+
+The BF16 KV-cache option is intended to improve DFlash acceptance length and
+provide a compatible Blackwell path, but it uses more KV-cache memory. Treat the
+independent draft path, BF16 KV cache, and `NIM_DFLASH_CONFIG` as advanced
+controls; measure memory, correctness, latency, and throughput on the exact
+image before production use.
 
 ### Context and scheduling
 

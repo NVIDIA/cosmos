@@ -28,9 +28,9 @@ Plan for:
 | Requirement | Current requirement |
 | --- | --- |
 | CPU architecture | Not yet available |
-| GPU compute capability | Generator: BF16 `>=8.7`, FP8 `>=8.9`; Reasoner: BF16 `>=8.0`, FP8 `>=8.9`, NVFP4 `>=10.0` |
+| GPU compute capability | Generator: BF16 `>=8.0`, FP8 `>=8.9`; Reasoner: BF16 `>=8.0`, FP8 `>=8.9`, NVFP4 `>=10.0` |
 | GPU count and per-device VRAM | See the [Generator](support-matrix.md#generator-configurations) and [Reasoner](support-matrix.md#reasoner-configurations) tables |
-| Host RAM | General minimum not yet available; Super-family BF16 model/layer offload requires 150 GiB of effective system memory |
+| Host RAM | General minimum not yet available; profile-selection floors are 16 GiB for resident/Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload |
 | Free disk | Not yet available |
 | Container shared memory | Not yet available |
 
@@ -40,10 +40,11 @@ If the deployment must serve Transfer, provision each GPU against the
 [Generator configurations](support-matrix.md#generator-configurations), not the
 **Generation minimum VRAM/device** value.
 
-Reasoner requires GPUs with the same compute capability; use homogeneous GPUs
-for either runtime because mixed-GPU support is not established.
-The profile selector evaluates the smallest per-device memory total exposed to
-the container.
+Reasoner requires GPUs with the same compute capability. Use homogeneous GPUs
+for either runtime because mixed-GPU support is not established. The profile
+selector evaluates the smallest per-device memory total and effective system
+RAM exposed to the container. Confirm the selected configuration in the exact
+image's manifest before deployment.
 
 On an integrated GPU where device and host share one memory pool, the selector
 withholds 16 GiB for the host by default before comparing the remaining shared
@@ -51,13 +52,13 @@ memory with profile floors. Generator selection uses resident model and
 resident guardrail profiles on these systems; CPU-offload profiles do not
 reduce shared-memory use.
 
-Lower-VRAM profiles can keep model weights in system memory. Every current
-Super-family BF16 model- and layer-offload row requires 150 GiB of effective
-system memory. The NIM checks a container memory limit before host physical
-memory, so a lower Docker or Kubernetes limit can make an otherwise capable
-host incompatible. A profile without an explicit RAM floor still requires
-memory for the container, runtime, materialized artifacts, and offloaded
-weights.
+Lower-VRAM profiles can keep model weights in system memory. Resident Generator
+and Reasoner profiles carry a 16-GiB selection floor, Nano model/layer-offload
+profiles carry 64 GiB, and Super model/layer-offload profiles carry 150 GiB. The
+NIM checks a container memory limit before host physical memory, so a lower
+Docker or Kubernetes limit can make an otherwise capable host incompatible.
+These profile-selection floors do not resolve the release-wide host-RAM
+requirement for the container, runtime, materialized artifacts, and workload.
 
 ## Software requirements
 

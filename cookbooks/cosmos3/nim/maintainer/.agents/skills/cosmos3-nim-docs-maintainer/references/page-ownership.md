@@ -16,7 +16,7 @@ may include the minimum needed for a complete workflow and link to the owner.
 | `deployment.md` | NGC login, exact image, cache, Docker launch flags, selectors, ports, readiness, and shutdown |
 | `configuration.md` | Shared, Generator, Reasoner, profile-selection, and prompt-upsampling environment variables |
 | `support-matrix.md` | Model, precision, GPU, VRAM, profile, offload, and media/codec compatibility with evidence status |
-| `helm.md` | Kubernetes prerequisites and concepts; exact chart commands only after chart publication |
+| `helm.md` | Approved staging chart reference, Kubernetes prerequisites and concepts, and the TBD public chart boundary; exact commands only after the public URL, schema, and workflow are approved |
 | `bring-your-own-checkpoint.md` | Generator and Reasoner checkpoint sources, layouts, mounts/downloads, validation, launch, and failures |
 | `api-reference.md` | Runtime routing, common Generator envelope and response, strict JSON behavior, and live schema inspection |
 | `generation.md` | T2I, T2V, I2V, V2V, frame/resolution/media rules, prompt upsampling, decoding, and generation failures |
@@ -44,8 +44,9 @@ may include the minimum needed for a complete workflow and link to the owner.
 - Before public release, `deployment.md` owns the exact evaluation image.
   Release notes describe only the initial unified release without duplicating a
   mutable staging tag.
-- The Helm page states chart availability without inventing commands. The
-  acknowledgements page states notice availability without inventing inventory.
+- The Helm page states the approved staging reference and TBD public URL without
+  inventing commands or values. The acknowledgements page states notice
+  availability without inventing inventory.
 
 ## Integration surfaces
 

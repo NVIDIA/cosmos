@@ -3,10 +3,16 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Deploy the Cosmos3 Certified NIM with Helm
 
-A Cosmos3 Certified NIM Helm chart is not yet published. The chart repository,
-version, values schema, resource names, and monitoring integration will be added
-when they are available. This page describes the deployment requirements that
-can be prepared in advance.
+The current pre-release evaluation chart is pinned to:
+
+```text
+nvstaging/nim/nim-wfm:1.3.0
+```
+
+This is a staging chart reference, not a final public chart identity. Pin the
+exact chart and NIM image versions together. Approved Cosmos3 values, resource
+names, installation commands, and monitoring integration are not yet available
+in this cookbook.
 
 ## Prerequisites
 
@@ -23,13 +29,12 @@ Choose a model and hardware configuration from the
 [Support matrix](support-matrix.md), then confirm that the selected image
 contains that configuration before setting GPU resources.
 
-## Inspect the released chart
+## Inspect the evaluation chart
 
-No Cosmos3 Certified NIM Helm chart is published yet, so there is no runnable
-chart-inspection command. When the chart is published, take its exact repository
-and version from the release notes, pin both values, and inspect that version's
-README and values schema before installation. Do not copy values from another
-NIM or chart version.
+Use the exact `nvstaging/nim/nim-wfm:1.3.0` reference through the approved NGC
+Helm workflow and inspect that version's README and values schema before
+installation. This cookbook does not yet publish a pull or install command for
+the staging chart. Do not copy values from another NIM or chart version.
 
 ## Create NGC secrets
 
@@ -52,7 +57,7 @@ expose credentials through shell history or process inspection.
 
 ## Required chart concepts
 
-Map the following concepts to names from the released chart schema:
+Map the following concepts to names from the pinned chart schema:
 
 - explicit image repository and tag;
 - image-pull and runtime NGC secrets;
@@ -69,7 +74,8 @@ Map the following concepts to names from the released chart schema:
 - a startup budget for cold download, materialization, load, and warmup; and
 - a security context that can write to the cache.
 
-No conceptual values file is included until the released key names are known.
+No values file is included until the approved Cosmos3 key names and settings
+for this chart version are available.
 
 ## Storage and scaling
 
@@ -87,8 +93,8 @@ budgets before production use.
 
 ## Install and verify
 
-Use the install command, resource names, and port-forward instructions from the
-released chart documentation. After rollout, require readiness before sending
+Use only approved install values, resource names, and port-forward instructions
+for the pinned chart version. After rollout, require readiness before sending
 traffic:
 
 ```bash

@@ -204,16 +204,22 @@ The Responses create route is enabled unless the deployment sets
 uv run python examples/reasoner_responses.py
 ```
 
-The request uses `store=false`. Persisted retrieval, cancellation, background
-responses, and `previous_response_id` require response storage, which is
-disabled by default. Use Chat Completions for video requests in this pre-release
-version.
+The request uses `store=false`. Responses create requests apply
+`chat_template_kwargs.enable_thinking=false`, so an ordinary answer is returned
+as a message item and exposed by the OpenAI client through
+`response.output_text` rather than appearing only as a reasoning item.
+
+Persisted retrieval, cancellation, background responses, and
+`previous_response_id` require response storage, which is disabled by default.
+Use Chat Completions for video requests in this pre-release version.
 
 ## Reasoning, instructions, and tool calls
 
 Chat requests default to `chat_template_kwargs.enable_thinking=false`, so
-ordinary untagged output remains in `message.content`. To enable thinking and
-request parsed reasoning, pass the controls through `extra_body`:
+ordinary untagged output remains in `message.content`. Responses requests use
+the same chat-template default while retaining their Responses-specific
+sampling and structured-output field names. To enable thinking and request
+parsed reasoning in Chat Completions, pass the controls through `extra_body`:
 
 ```python
 extra_body = {
@@ -257,11 +263,13 @@ depending on reasoning or tool-call fields.
 Set `NIM_USE_DFLASH=1` at launch to enable DFlash speculative decoding for a
 Nano Reasoner. The request routes and payloads do not change. Startup rejects
 the option for Generator and Super Reasoner, or when the required draft
-artifact is unavailable.
+artifact is unavailable. An independent local draft path, a BF16 KV-cache
+option, and advanced JSON configuration are also supported.
 
-Treat DFlash as an advanced performance option. Compare latency, throughput,
-and output quality on representative requests before production use. See
-[Reasoner configuration](configuration.md#speculative-decoding).
+Treat DFlash as an advanced performance option. Compare memory, latency,
+throughput, correctness, and output quality on representative requests before
+production use. See [Reasoner configuration](configuration.md#speculative-decoding)
+and [Reasoner checkpoint](bring-your-own-checkpoint.md#reasoner-checkpoint).
 
 ## Advanced sampling and request extensions
 
@@ -317,6 +325,10 @@ client code:
   }
 }
 ```
+
+The service normalizes the standard `response_format` shape and enables
+guided-decoding enforcement for Reasoner output, including output processed by
+the reasoning parser.
 
 The runnable task catalog uses JSON schemas for temporal localization, 2D
 grounding, and 2D trajectory proposals. It parses `message.content` with the

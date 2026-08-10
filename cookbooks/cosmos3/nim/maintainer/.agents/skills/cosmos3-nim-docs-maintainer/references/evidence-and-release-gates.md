@@ -40,15 +40,39 @@ against the NIM contract rather than copying another backend's adapter.
 
 ## Active release maintenance
 
-- Deployment currently uses a versioned Cosmos3 2.2 staging RC, not a final
-  release identity. Before public release, `deployment.md` owns the exact
-  evaluation image reference; update it on every RC bump.
+- Deployment currently uses a versioned Cosmos3 2.3 staging RC, not a final
+  release identity. Record source-derived evidence in maintainer files only and
+  require the exact image manifest or live behavior before presenting claims as
+  validated in the evaluation image. Before public release, `deployment.md`
+  owns the exact evaluation image reference; update it on every RC bump.
 - Never replace an RC reference with `latest`.
 - The final public image, release version/date, catalog URL, and model-card URL
   remain release-owned until approved.
-- No Cosmos3 Certified NIM Helm chart is published yet. Keep the public Helm
-  page explicit about availability and omit exact chart commands until the
-  repository, version, and schema are available.
+- The current evaluation chart reference is
+  `nvstaging/nim/nim-wfm:1.3.0`. The public chart URL is TBD and must replace
+  the staging reference when approved. Keep the public Helm page explicit about
+  this boundary and omit pull/install commands and values until the public URL,
+  schema, and workflow are approved.
+
+## Current source-derived contracts
+
+Track evidence provenance in this maintainer reference. Public pages state the
+corresponding product behavior directly without mentioning source-code
+provenance, and direct users to runtime interfaces where availability must be
+confirmed:
+
+- Generator BF16 compute capability 8.0, updated Super VRAM/Transfer floors,
+  and Reasoner Super BF16 TP2 at 73 GiB/device;
+- effective system-memory selection floors of 16 GiB for resident Generator and
+  Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload;
+- Reasoner guided-decoding enforcement and Responses create normalization;
+- independent local DFlash draft overrides, BF16 KV-cache selection, and
+  advanced DFlash JSON configuration; and
+- runtime-aware metadata, health responses, and wrong-runtime diagnostics.
+
+Regenerate the source profile export before reconciling tables. Generated
+artifacts can lag profile policy source and must not silently override current
+implementation or be presented as an approved image manifest.
 
 ## Open release gates
 
@@ -56,19 +80,24 @@ Review this list on every substantive documentation update and remove, add, or
 refine entries when evidence changes:
 
 - final public image identity and release URLs;
-- released profile rows, tested GPU boundary, and driver/toolkit floors;
+- released profile rows, including current-source compute capability, VRAM,
+  Transfer, effective system-memory boundaries, and driver/toolkit floors;
 - general CPU architecture, RAM, disk, and shared-memory requirements;
 - exact supported image formats, video containers/codecs, URL fetching, and
   VP9-in-MP4 playback observations;
 - exact released support for specialist Generator, Action, Transfer, and V2V
   combinations;
-- Reasoner Responses storage/background/retrieve behavior;
+- Reasoner Responses create normalization plus storage/background/retrieve
+  behavior, and guided-output enforcement in the selected image;
 - Reasoner public-URL, text-only, and request-level video sampling behavior;
 - live management endpoints, metrics, logs, errors, and chart probes;
 - approved startup, latency, and throughput measurements for each published
   reference configuration;
 - prompt-upsampling integration behavior in the selected image;
-- final Helm chart identity, values, and monitoring integration;
+- DFlash draft override, KV-cache, and advanced configuration behavior in the
+  selected image;
+- public Helm chart URL to replace the staging reference, plus approved values,
+  installation workflow, and monitoring integration;
 - approved reasoning-trace wording; and
 - approved acknowledgements and product license/model-card links for the exact
   release.

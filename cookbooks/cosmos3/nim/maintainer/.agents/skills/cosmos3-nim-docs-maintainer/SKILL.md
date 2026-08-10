@@ -34,7 +34,10 @@ Identify whether the request changes:
 
 Read every affected public page and example completely before editing. For a
 contract change, inspect the authoritative current NIM source/tests or supplied
-release evidence rather than relying on the existing prose alone.
+release evidence rather than relying on the existing prose alone. For profile
+or support-matrix changes, regenerate the current source profile export and
+compare its tags with profile policy code before editing; generated artifacts
+can lag source and are not image-validation evidence.
 
 ## 2. Choose the canonical owner
 
@@ -48,6 +51,10 @@ only when that scope is authorized; otherwise report the stale integration
 surface in the handoff.
 
 ## 3. Label the evidence correctly
+
+Classify each changed claim for maintainer records. Keep the classification
+internal: customer-facing pages state product behavior directly and never say
+that the documentation or a behavior claim is based on source code.
 
 Classify each changed claim as:
 
@@ -82,10 +89,12 @@ values to fill an unresolved release fact.
   update all affected commands and prerequisite text in the same change.
 
 For a pre-release image bump, update `NIM_IMAGE` in `deployment.md`. Do not use
-`latest`. Keep Helm guidance conceptual until an approved chart exists, keep
-acknowledgement inventory visibly unavailable until approved notices exist, and
-keep release notes limited to the initial unified release rather than migrations
-between unreleased development contracts.
+`latest`. Keep the exact approved staging Helm reference in `helm.md`, but keep
+pull/install guidance conceptual until the public chart URL, schema, and
+workflow are approved. Replace the staging reference when that public release
+artifact is available. Keep acknowledgement inventory visibly unavailable until
+approved notices exist, and keep release notes limited to the initial unified
+release rather than migrations between unreleased development contracts.
 
 ## 5. Synchronize editor guidance
 

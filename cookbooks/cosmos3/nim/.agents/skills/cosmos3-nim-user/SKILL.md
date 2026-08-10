@@ -20,8 +20,8 @@ Ask only for information needed to route the workflow:
 1. Do they already have a reachable NIM endpoint, or must they deploy one?
 2. Do they need Generator or Reasoner?
 3. Which task do they want to perform?
-4. For a new deployment, what GPU count, compute capability, and per-device VRAM
-   are available?
+4. For a new deployment, what GPU count, compute capability, per-device VRAM,
+   and effective host/container RAM are available?
 
 Do not ask for the value of `NGC_API_KEY`, another token, private input media, or
 unredacted logs. It is sufficient to confirm that required secrets are set.
@@ -70,6 +70,8 @@ For hardware guidance:
 - never add VRAM across devices;
 - use the Transfer minimum when Transfer must be served;
 - treat named GPUs as examples, not as an allowlist;
+- use `/v1/manifest` for the active image's available profiles and the support
+  matrix for documented requirements;
 - use the current RTX 5090 guidance and thresholds in `support-matrix.md` to
   distinguish ordinary generation from Transfer eligibility; and
 - leave requirements described as not yet available unresolved.

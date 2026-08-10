@@ -6,10 +6,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 Use this page to match a model to precision, GPU compute capability, GPU count,
 per-device VRAM, and system-memory requirements.
 
-> **Pre-release status:** These configurations are available for evaluation and
-> may change before the public release. Confirm the selected configuration in
-> `/v1/manifest` for the image you run. Final supported configurations will be
-> published with the release.
+> **Pre-release status:** The tables below list the current evaluation
+> configurations and selection requirements. Confirm the available
+> configurations in `/v1/manifest` for the exact evaluation image you run.
+> Final supported configurations will be published with the release.
 
 ## Choose a model
 
@@ -37,11 +37,12 @@ support `NIM_USE_DFLASH=1`.
 
 ## GPU architecture and topology
 
-Compatibility uses CUDA compute capability rather than a GPU SKU allowlist:
+Compatibility uses CUDA compute capability, per-device VRAM, and effective
+system RAM rather than a GPU SKU allowlist:
 
 | Runtime | Precision | Minimum compute capability |
 | --- | --- | ---: |
-| Generator | BF16 | 8.7 |
+| Generator | BF16 | 8.0 |
 | Generator | FP8 | 8.9 |
 | Reasoner | BF16 | 8.0 |
 | Reasoner | FP8 | 8.9 |
@@ -73,19 +74,19 @@ only to the general-purpose `nano` and `super` variants.
 
 | Variant group | Precision | Model offload | Guardrails during diffusion | GPUs | Generation minimum VRAM/device | Minimum effective system RAM | Transfer minimum VRAM/device |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `nano` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | No additional floor | 64 GiB |
-| `nano` | BF16 | Layer | Automatic offload | 1 | 31 GiB | No additional floor | 35 GiB |
-| `nano` | FP8 | None | Resident | 1, 2, 4, 8 | 44 GiB | No additional floor | 50 GiB |
-| `nano` | FP8 | Model | Resident | 1 | 38 GiB | No additional floor | 44 GiB |
-| `nano` | FP8 | Layer | Resident | 1 | 32 GiB | No additional floor | 38 GiB |
-| `nano` | FP8 | Layer | Automatic offload | 1 | 31 GiB | No additional floor | 35 GiB |
-| `nano-droid` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | No additional floor | N/A |
-| Super family | BF16 | None | Resident | 1, 2, 4, 8 | 150 GiB | No additional floor | Base `super`: 160 GiB |
-| Super family | BF16 | Model | Resident | 1 | 94 GiB | 150 GiB | Base `super`: 100 GiB |
+| `nano` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 16 GiB | 64 GiB |
+| `nano` | BF16 | Layer | Automatic offload | 1 | 31 GiB | 64 GiB | 35 GiB |
+| `nano` | FP8 | None | Resident | 1, 2, 4, 8 | 44 GiB | 16 GiB | 50 GiB |
+| `nano` | FP8 | Model | Resident | 1 | 38 GiB | 64 GiB | 44 GiB |
+| `nano` | FP8 | Layer | Resident | 1 | 32 GiB | 64 GiB | 38 GiB |
+| `nano` | FP8 | Layer | Automatic offload | 1 | 31 GiB | 64 GiB | 35 GiB |
+| `nano-droid` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 16 GiB | N/A |
+| Super family | BF16 | None | Resident | 1, 2, 4, 8 | 150 GiB | 16 GiB | Base `super`: 160 GiB |
+| Super family | BF16 | Model | Resident | 1 | 93 GiB | 150 GiB | Base `super`: 99 GiB |
 | Super family | BF16 | Layer | Resident | 1 | 42 GiB | 150 GiB | Base `super`: 50 GiB |
-| Super family | FP8 | None | Resident | 1, 2, 4, 8 | 94 GiB | No additional floor | Base `super`: 104 GiB |
-| Super family | FP8 | Model | Resident | 1 | 64 GiB | No additional floor | Base `super`: 76 GiB |
-| Super family | FP8 | Layer | Resident | 1 | 38 GiB | No additional floor | Base `super`: 50 GiB |
+| Super family | FP8 | None | Resident | 1, 2, 4, 8 | 93 GiB | 16 GiB | Base `super`: 103 GiB |
+| Super family | FP8 | Model | Resident | 1 | 64 GiB | 150 GiB | Base `super`: 76 GiB |
+| Super family | FP8 | Layer | Resident | 1 | 38 GiB | 150 GiB | Base `super`: 50 GiB |
 
 The 31-GiB Nano layer-offload configurations are intended to support ordinary
 generation on 32-GB client GPUs such as the NVIDIA GeForce RTX 5090. This is not
@@ -93,11 +94,12 @@ a GPU SKU allowlist: the device must expose at least 31 binary GiB to the
 runtime and meet the precision's compute-capability requirement. The RTX 5090
 does not meet the 35-GiB Transfer minimum for these configurations.
 
-A configuration without a listed system-memory floor still needs enough RAM
-for the container, runtime, artifact materialization, and offloaded weights; a
-general minimum is not yet available. The 150-GiB requirement is an explicit
-startup gate for every Super-family BF16 model- and layer-offload configuration.
-The NIM checks a container memory limit before host physical memory.
+The NIM applies a system-memory floor to every profile and filters incompatible
+profiles before final selection. Resident Generator profiles use a 16-GiB
+selection floor, Nano offload profiles use 64 GiB, and all Super offload
+profiles use 150 GiB. These profile floors are not final general host-RAM
+requirements; the release-wide CPU and RAM requirements remain unresolved. The
+NIM checks a container memory limit before host physical memory.
 
 Leave offload and guardrail residency on automatic selection unless a specific
 configuration has been validated for the deployment.
@@ -106,15 +108,15 @@ configuration has been validated for the deployment.
 
 Reasoner does not use Generator latency/throughput or model-offload selectors:
 
-| Model | Precision | GPUs | Tensor parallelism | Minimum VRAM/device | Minimum compute capability |
-| --- | --- | ---: | ---: | ---: | ---: |
-| `nano` | BF16 | 1 | 1 | 23.1 GiB | 8.0 |
-| `nano` | FP8 | 1 | 1 | 23.1 GiB | 8.9 |
-| `nano` | NVFP4 | 1 | 1 | 23.1 GiB | 10.0 |
-| `super` | BF16 | 1 | 1 | 135 GiB | 8.0 |
-| `super` | BF16 | 2 | 2 | 46 GiB | 8.0 |
-| `super` | FP8 | 1 | 1 | 67 GiB | 8.9 |
-| `super` | NVFP4 | 1 | 1 | 73 GiB | 10.0 |
+| Model | Precision | GPUs | Tensor parallelism | Minimum VRAM/device | Minimum effective system RAM | Minimum compute capability |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `nano` | BF16 | 1 | 1 | 23.1 GiB | 16 GiB | 8.0 |
+| `nano` | FP8 | 1 | 1 | 23.1 GiB | 16 GiB | 8.9 |
+| `nano` | NVFP4 | 1 | 1 | 23.1 GiB | 16 GiB | 10.0 |
+| `super` | BF16 | 1 | 1 | 135 GiB | 16 GiB | 8.0 |
+| `super` | BF16 | 2 | 2 | 73 GiB | 16 GiB | 8.0 |
+| `super` | FP8 | 1 | 1 | 67 GiB | 16 GiB | 8.9 |
+| `super` | NVFP4 | 1 | 1 | 73 GiB | 16 GiB | 10.0 |
 
 When at least two compatible GPUs are visible for Super BF16, profile ranking
 prefers the two-GPU TP2 layout. Nano Reasoner profiles include the DFlash draft
@@ -129,10 +131,11 @@ Users normally set:
 - Generator latency or throughput; and
 - precision only when it must be pinned.
 
-The NIM finds a compatible profile for those choices and the visible GPUs.
-Automatic selection prefers FP8 when available, avoids offload when the model
-fits normally, and prefers the largest compatible GPU layout. If no profile
-fits, startup fails rather than selecting an incompatible combination.
+The NIM finds a compatible profile for those choices, the visible GPUs, and
+the effective system memory. Automatic selection prefers FP8 when available,
+avoids offload when the model fits normally, and prefers the largest compatible
+GPU layout. If no profile fits, startup fails rather than selecting an
+incompatible combination.
 
 Exact profile IDs and low-level manifest tags are advanced image-specific
 controls. Do not copy them between images or hosts.

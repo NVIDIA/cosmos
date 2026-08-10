@@ -20,7 +20,10 @@ maintainer instructions take precedence over the customer-assistant guidance in
   image when available. Historical documentation is a coverage source, not an
   authority for current names, defaults, commands, or support claims.
 - Distinguish source-derived, RC/release-validated, historical, and unresolved
-  claims. Do not silently fill release-owned gaps from memory or old releases.
+  claims in maintainer records. Keep that provenance internal: customer-facing
+  pages state documented product behavior directly and never say that guidance
+  is based on source code. Do not silently fill release-owned gaps from memory
+  or old releases.
 - Treat timeout ceilings, individual observations, and end-to-end client command
   times as distinct from validated service latency. Publish expected
   performance only with an approved release image, reference configuration, and
@@ -51,8 +54,10 @@ maintainer instructions take precedence over the customer-assistant guidance in
   as not yet available in prose or tables, not as runnable placeholders.
 - Never use `latest` for the NIM image. Before public release, keep the exact
   evaluation image reference in `deployment.md`.
-- Do not invent Helm commands, chart names, versions, or values before an
-  approved chart is published. Keep the Helm page explicit about availability.
+- Keep the approved staging Helm reference exact, but do not invent pull/install
+  commands, values, schema details, or a public URL. The public chart URL is TBD;
+  replace the staging reference when the approved public release artifact is
+  available and keep the Helm page explicit about that boundary.
 - Keep release notes user-facing and concise. Until the first public release,
   document only the initial unified release and the current request and
   configuration contract, not development migration history.

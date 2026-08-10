@@ -14,7 +14,9 @@ For guided customer workflows, load
 ## Default behavior
 
 - Start by asking whether the customer already has a NIM endpoint or needs to
-  deploy one, which runtime they need, and what task they want to perform.
+  deploy one, which runtime they need, and what task they want to perform. For
+  a new deployment, also confirm effective host/container RAM before choosing a
+  profile family.
 - Treat the public pages and examples in this directory as the authority. Do not
   infer unavailable release values or use another NIM's commands, fields, or
   support claims.

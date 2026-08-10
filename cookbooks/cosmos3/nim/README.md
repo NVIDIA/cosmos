@@ -11,11 +11,11 @@ contains two runtimes, but each container runs only one:
 - **Reasoner** serves OpenAI-compatible image/video understanding through Chat
   Completions and, when enabled, the Responses API.
 
-> **Pre-release documentation:** These instructions describe the current
-> evaluation version of the unified Cosmos3 NIM. The public image, final system
-> requirements, supported configurations, and release URLs are not yet
-> available. Do not use the evaluation documentation as a public support
-> commitment.
+> **Pre-release documentation:** Deployment commands pin the current evaluation
+> image. Inspect the running image's manifest and OpenAPI before use. The public
+> image, final system requirements, supported configurations, and release URLs
+> are not yet available. Do not use the evaluation documentation as a public
+> support commitment.
 
 ## Choose what to run
 

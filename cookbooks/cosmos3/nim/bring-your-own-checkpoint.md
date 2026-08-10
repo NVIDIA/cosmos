@@ -18,6 +18,7 @@ preserving the Certified NIM server, profile selection, and runtime contract.
 | --- | --- | --- |
 | Generator | Absolute local directory | Server, profile, and Generator guardrail artifacts |
 | Reasoner | Absolute local directory or `hf://owner/repository[:revision]` | Server, selected runtime layout, and profile compatibility policy |
+| Nano Reasoner DFlash draft | Absolute local directory only | Primary Reasoner checkpoint, server, and profile policy |
 
 ## Generator checkpoint
 
@@ -90,10 +91,34 @@ Use the same read-only mount pattern as the Generator, but select the Reasoner:
 For a completely local checkpoint, `NIM_DISABLE_MODEL_DOWNLOAD=1` prevents
 profile artifact download after source resolution.
 
-When `NIM_USE_DFLASH=1`, a Nano Reasoner workspace must also contain the draft
-artifact at `dflash-nano-bf16-v1/`, including `config.json` and
-`model.safetensors`. If the selected image does not provide that artifact for BYOC, leave DFlash
-disabled or use the bundled checkpoint workflow.
+When `NIM_USE_DFLASH=1`, a Nano Reasoner needs a draft artifact containing
+`config.json` and `model.safetensors`. The selected profile can provide it under
+the primary model workspace. A separate read-only local draft can be supplied
+through `NIM_DFLASH_MODEL_PATH`; the draft does not need the target model's
+tokenizer or processor files:
+
+```text
+/byoc/cosmos3-dflash/
+├── config.json
+└── model.safetensors
+```
+
+To use an independent draft, set a host directory and add the following options
+to the standard Reasoner `docker run` command:
+
+```bash
+export DFLASH_CHECKPOINT="$HOME/models/cosmos3-dflash"
+```
+
+```text
+-e NIM_USE_DFLASH=1 \
+-e NIM_DFLASH_MODEL_PATH=/byoc/cosmos3-dflash \
+-v "$DFLASH_CHECKPOINT:/byoc/cosmos3-dflash:ro"
+```
+
+`NIM_DFLASH_MODEL_PATH` must be an absolute in-container local path and does not
+accept `hf://`. If neither the selected image nor an independent mount supplies
+the required draft, leave DFlash disabled.
 
 ### Hugging Face source
 
@@ -111,9 +136,9 @@ The downloaded snapshot is stored under the writable NIM cache.
 
 An `hf://` source requires network materialization, so it cannot be combined
 with `NIM_DISABLE_MODEL_DOWNLOAD=1`. For offline operation, pre-download the
-checkpoint and use an absolute local path instead. If DFlash is enabled, the
-resolved repository must also include the nested draft artifact described
-above.
+checkpoint and use an absolute local path instead. If DFlash is enabled, use the
+draft supplied by the selected profile or mount a separate local draft with
+`NIM_DFLASH_MODEL_PATH`; a Hugging Face URI is not accepted for the draft.
 
 ## Discovery and validation
 
@@ -157,6 +182,8 @@ the checkpoint's validation baseline.
 | Generator rejects disabled downloads | Generator still needs NIM-provided guardrails | Remove `NIM_DISABLE_MODEL_DOWNLOAD=1` and provide NGC/cache access |
 | Hugging Face source rejected offline | `hf://` requires download but downloads are disabled | Use an absolute pre-downloaded local path |
 | Hugging Face authorization fails | Token, repository ID, revision, network, or cache is invalid | Check `HF_TOKEN`, URI, connectivity, and writable cache without logging the token |
+| DFlash path is rejected | The draft path is relative, uses `hf://`, is not mounted, or lacks one of its two required files | Use an absolute local mount containing `config.json` and `model.safetensors` |
+| DFlash configuration is rejected | DFlash is disabled or `NIM_DFLASH_CONFIG` sets reserved `method`/`model` keys | Enable Nano Reasoner DFlash and remove reserved keys; see [Speculative decoding](configuration.md#speculative-decoding) |
 | Metadata shows `default` | Override was omitted, rejected, or applied to another container | Inspect launch environment, mounts, startup logs, and `/v1/metadata` |
 
 For broader startup, cache, GPU, and readiness diagnosis, see
