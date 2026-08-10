@@ -8,8 +8,8 @@ or world-space-map (WSM) video controls. Transfer uses synchronous JSON
 `POST /v1/infer` with `model_mode=video2video` and a top-level `transfer`
 object.
 
-> Control and model availability must be confirmed in the released
-> [support matrix](support-matrix.md).
+> Confirm control and model availability for the selected image in the
+> [Support matrix](support-matrix.md).
 
 See [Deployment](deployment.md) to start a compatible Generator model. Begin
 with one precomputed control, then use derived or multiple controls only when
@@ -32,11 +32,9 @@ base64/data-URL/allowed-public-URL contract as `input_reference`.
 
 ## Run the examples
 
-The script reuses prompts and control videos already tracked by the transfer
-cookbook. The five precomputed cases are the cross-backend comparison set: they
-use the same structured prompt, shared negative prompt, control media, geometry,
-and seed as the Cosmos Framework and vLLM-Omni tutorials. Choose one case so a
-single command does not run several expensive generations:
+The script includes five precomputed control cases with matching prompts,
+control media, geometry, and seeds. Run one case at a time so one command does
+not start several expensive generations.
 
 Transfer inference is synchronous. The connection can remain open without a
 response body while the request is running. The example client allows up to 30
@@ -51,29 +49,28 @@ repository root, enter the cookbook directory before running a case:
 ```bash
 cd cookbooks/cosmos3/nim
 export NIM_URL=${NIM_URL:-http://localhost:8000}
-
 uv run python examples/transfer.py --case precomputed_edge
-uv run python examples/transfer.py --case precomputed_blur
-uv run python examples/transfer.py --case precomputed_depth
-uv run python examples/transfer.py --case precomputed_seg
-uv run python examples/transfer.py --case precomputed_wsm
 ```
 
-The NIM can also derive edge or blur controls from a source video. These are
-additional NIM API examples rather than members of the precomputed comparison
-set:
+For another precomputed control, replace `precomputed_edge` with
+`precomputed_blur`, `precomputed_depth`, `precomputed_seg`, or
+`precomputed_wsm`.
+
+The NIM can also derive edge or blur controls from a source video. Run one
+derived case:
 
 ```bash
 uv run python examples/transfer.py --case derived_edge
-uv run python examples/transfer.py --case derived_blur
 ```
+
+Replace `derived_edge` with `derived_blur` to use a derived blur control.
 
 The decoded result is written to `examples/outputs/transfer_<case>.mp4`.
 
 ## Precomputed control
 
-Put the control media inside the matching nested object. Do not use a
-server-local `control_path` from a vLLM-Omni example:
+Put the control media inside the matching nested object. A server-local file
+path is not accepted as control media:
 
 ```json
 {
@@ -161,9 +158,8 @@ Current defaults by family:
 All current transfer families default to 50 denoising steps and flow shift
 10.0. The comparison script explicitly uses a 121-frame chunk for edge, blur,
 depth, and segmentation, and a 101-frame chunk for the 101-frame WSM case.
-Explicit request values override defaults when valid. Treat these as the current
-source contract, not a promise that every release or model profile has identical
-quality-optimal settings.
+Explicit request values override defaults when valid. Use these defaults for
+the current pre-release version and recheck them when moving to a later image.
 
 ## Advanced multiple controls
 
@@ -171,10 +167,8 @@ The request schema can enable more than one control in the same `transfer`
 object. Current default selection deliberately uses the general edge-family
 defaults for mixed requests rather than combining defaults from each control.
 
-The exact combinations validated and supported by the published image remain
-**TBD (release-dependent)**. Until that matrix is available, use one control per
-production request and smoke-test any multi-control payload on the target
-release before documenting or automating it. Controls in a multi-control smoke
+Validated multi-control combinations are not yet available. Use one control per
+request during pre-release evaluation. Controls in a multi-control smoke
 test must be spatially and temporally aligned; do not combine unrelated
 single-control fixtures and interpret the result as a quality comparison.
 
@@ -185,7 +179,8 @@ the same profile. Startup compares the visible GPU's headroom above the
 selected profile floor with the measured Transfer overhead. A deployment can
 therefore be ready and serve generation without Transfer while rejecting it.
 
-If Transfer is unavailable, use a larger GPU or a released lower-VRAM profile.
+If Transfer is unavailable, use a larger GPU or an available lower-VRAM
+configuration.
 `NIM_ALLOW_UNSAFE_TRANSFER=1` bypasses the admission check, but the request can
 run out of memory and the deployment does not become supported. Do not use the
 override as a normal production setting. See
@@ -194,10 +189,10 @@ override as a normal production setting. See
 ## Media and output
 
 Control videos and video `input_reference` values accept raw base64, a video
-data URL, or an allowed HTTP(S) URL, with the current
-100,000,000-character encoded ceiling. Prefer
-data URLs for reproducible local assets. Exact released container/codec support
-and remote-fetch behavior remain validation-gated.
+data URL, or an allowed HTTP(S) URL, with a 100,000,000-character encoded
+ceiling. Prefer data URLs and the included MP4 fixtures during pre-release
+evaluation; the final container, codec, and remote-fetch inventory is not yet
+available.
 
 The response uses the Generator video shape: `b64_video` plus
 `action: null`. The inactive image field is omitted. The public script decodes
@@ -220,9 +215,8 @@ Transfer rejects:
 | --- | --- |
 | HTTP 422 says derived control needs `video` | Add top-level source video or provide a nested precomputed edge/blur video |
 | HTTP 422 says control video required | Add nested video for depth, segmentation, or WSM |
-| Unknown `control_path`, `max_frames`, or `show_*` field | Remove vLLM-Omni-only fields and use the typed transfer object |
+| Unknown field | Remove fields that are not defined in the Transfer request object |
 | Control/output lengths are incompatible | Recheck frame cadence, chunk size, and conditional frame values |
-| Request works in vLLM-Omni but not NIM | Translate semantics rather than copying multipart transport or `extra_params` |
-| Transfer is disabled while T2V works | Selected profile fits T2V but GPU headroom is below Transfer overhead; use a larger GPU or lower-VRAM released profile |
+| Transfer is disabled while T2V works | Selected configuration fits T2V but GPU headroom is below Transfer overhead; use a larger GPU or lower-VRAM configuration |
 
 For service-level failures, see [operations.md](operations.md#troubleshooting).

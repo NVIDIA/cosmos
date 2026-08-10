@@ -5,9 +5,9 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 Use this page to authenticate to NGC, choose a model, launch Generator or
 Reasoner, and verify the selected service. The commands pin the current 2.2.0
-release-candidate image; this is not a final release identity. Semi-final
-source-profile hardware requirements are documented in the
-[support matrix](support-matrix.md) pending release approval.
+pre-release evaluation image. It is not a public release. Use the
+[Support matrix](support-matrix.md) to choose a compatible evaluation
+configuration.
 
 ## How selection works
 
@@ -31,10 +31,10 @@ for the shared-memory rule.
 
 ### Select a Generator model
 
-| `NIM_MODEL_VARIANT` | Contract |
+| `NIM_MODEL_VARIANT` | Supported use |
 | --- | --- |
 | `nano` | General-purpose Nano Generator |
-| `nano-droid` | Nano-DROID policy; current implementation is BF16 only |
+| `nano-droid` | Nano-DROID policy; BF16 only |
 | `super` | General-purpose Super Generator |
 | `super-t2i` | Full-step T2I specialist |
 | `super-t2i-4step` | Four-step T2I specialist |
@@ -42,7 +42,7 @@ for the shared-memory rule.
 | `super-i2v-4step` | Four-step I2V specialist |
 
 For Generator, `NIM_MODEL_VARIANT` determines Nano versus Super and selects
-an exact general-purpose or specialist checkpoint contract.
+an exact general-purpose or specialist model.
 
 Choose the workload objective explicitly:
 
@@ -63,16 +63,16 @@ DFlash speculative decoding with
 ### Precision selection
 
 Omit `NIM_PRECISION` for normal automatic selection. FP8 is preferred when the
-chosen model, released profiles, and GPU support it; otherwise selection falls
-back to another compatible precision. Set `NIM_PRECISION=bf16`, `fp8`, or
-another released value only when the workload requires an explicit precision.
+chosen model, available configurations, and GPU support it; otherwise selection
+falls back to another compatible precision. Set `NIM_PRECISION=bf16`, `fp8`, or
+another available value only when the workload requires an explicit precision.
 Nano-DROID currently has BF16 profiles only.
 
 ## Before you deploy
 
-Verify the host against [Prerequisites](prerequisites.md) and the released
-[Support matrix](support-matrix.md). For Kubernetes, see
-[Deploy with Helm](helm.md).
+Verify the host against [Prerequisites](prerequisites.md) and choose a
+compatible configuration from the [Support matrix](support-matrix.md). For
+Kubernetes availability and requirements, see [Deploy with Helm](helm.md).
 
 ## Authenticate to NGC
 
@@ -96,8 +96,7 @@ export NIM_IMAGE='nvcr.io/nvstaging/nim/cosmos3:2.2.0-rc.20260805164511-12ca3dac
 docker pull "$NIM_IMAGE"
 ```
 
-Do not replace the versioned tag with `latest`. Confirm the release-candidate
-reference in the [release notes](release-notes.md) before deployment.
+Do not replace the versioned tag with `latest` or another unvalidated image.
 
 ## Prepare the model cache
 
@@ -119,7 +118,7 @@ Run one runtime at a time when using this default host port.
 This example explicitly chooses the general-purpose Nano model and latency:
 
 ```bash
-docker run --rm --name cosmos3-generator \
+docker run -d --name cosmos3-generator \
   --gpus '"device=0"' \
   --shm-size 16g \
   --ulimit memlock=-1 \
@@ -134,22 +133,28 @@ docker run --rm --name cosmos3-generator \
   "$NIM_IMAGE"
 ```
 
-Replace the model and performance objective with values supported by the
-released image. Add `-e NIM_PRECISION=fp8` only when precision must be pinned.
+The command starts the container in the background. Follow startup logs with
+`docker logs -f cosmos3-generator`; press Ctrl+C to stop following logs without
+stopping the container.
+
+Replace the model and performance objective with values supported by the image.
+Expose the GPU count required by the selected configuration instead of keeping
+`--gpus '"device=0"'` when a multi-GPU configuration is required. Add
+`-e NIM_PRECISION=fp8` only when precision must be pinned.
 
 ## Launch Reasoner
 
 The Reasoner uses the same default host URL as the Generator. If you launched
-Generator above, stop it before reusing host port `8000`:
+Generator above, remove it before reusing host port `8000`:
 
 ```bash
-docker stop cosmos3-generator
+docker rm -f cosmos3-generator
 ```
 
 Then launch the Reasoner:
 
 ```bash
-docker run --rm --name cosmos3-reasoner \
+docker run -d --name cosmos3-reasoner \
   --gpus '"device=0"' \
   --shm-size 16g \
   --ulimit memlock=-1 \
@@ -162,6 +167,11 @@ docker run --rm --name cosmos3-reasoner \
   -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
   "$NIM_IMAGE"
 ```
+
+The command starts the Reasoner in the background. Follow startup logs with
+`docker logs -f cosmos3-reasoner`; press Ctrl+C to stop following logs without
+stopping the container. Expose all GPUs required by the selected Reasoner
+configuration.
 
 Both runtimes listen on container HTTP port `8000`; the Docker mapping chooses
 the host port. To run both containers concurrently, publish one on another
@@ -191,8 +201,8 @@ curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
 curl -fsS "$NIM_URL/v1/manifest" | python3 -m json.tool
 ```
 
-Metadata confirms the selected model and profile. Current source also reports
-`model_type` and `inference_endpoint`; verify that they identify `generator`
+Metadata confirms the selected model and profile. It also reports `model_type`
+and `inference_endpoint`; verify that they identify `generator`
 and `/v1/infer`, or `reasoner` and `/v1/chat/completions`, before sending an
 inference request. This is verification, not a normal profile-selection step.
 
@@ -203,7 +213,7 @@ latency/throughput selection. Use these controls only for a validated need:
 
 | Variable | Use |
 | --- | --- |
-| `NIM_OFFLOAD_MODE` | Request a released lower-memory model offload mode |
+| `NIM_OFFLOAD_MODE` | Request an available lower-memory model offload mode |
 | `NIM_TAGS_SELECTOR` | Filter profiles by exact manifest tags |
 | `NIM_MODEL_PROFILE` | Pin one reviewed profile ID from the exact image |
 
@@ -224,8 +234,8 @@ See [Configuration](configuration.md#advanced-profile-controls) for details.
 | `-v ...:/opt/nim/.cache` | Persist model artifacts |
 
 GPU counts, compute-capability gates, and VRAM floors are summarized in the
-[semi-final profile matrix](support-matrix.md). Current Super-family BF16 model-
-and layer-offload profiles require 150 GiB of effective system memory. Docker
+[configuration matrix](support-matrix.md). Super-family BF16 model- and
+layer-offload configurations require 150 GiB of effective system memory. Docker
 or Kubernetes memory limits count as the available system memory. Confirm that
 the selected row is present in the target image before deployment.
 
@@ -237,11 +247,11 @@ the selected row is present in the target image before deployment.
 - [API reference](api-reference.md) routes requests to the right task guide.
 - [Operations](operations.md) covers health, logs, metrics, and failures.
 
-Stop the examples with:
+Remove the example containers when finished:
 
 ```bash
-docker stop cosmos3-generator
-docker stop cosmos3-reasoner
+docker rm -f cosmos3-generator
+docker rm -f cosmos3-reasoner
 ```
 
-The containers use `--rm`; the persistent model cache remains.
+The persistent model cache remains.

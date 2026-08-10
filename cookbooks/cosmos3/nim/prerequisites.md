@@ -7,20 +7,19 @@ Use this page to prepare and verify a host before pulling or launching the
 Cosmos3 Certified NIM. Profile-specific GPU, precision, and VRAM compatibility
 belongs to the [support matrix](support-matrix.md).
 
-> **Release status:** Semi-final GPU compute, count, VRAM, and profile-specific
-> system-memory requirements are available in the current source and summarized
-> in the [support matrix](support-matrix.md). Exact CPU architecture, general
-> host RAM, disk, shared-memory, driver, and container-toolkit requirements
-> remain **TBD (release-dependent)**. Historical requirements from separate
-> Cosmos NIMs are not substitutes for the unified image's release requirements.
+> **Pre-release status:** GPU compute, count, VRAM, and configuration-specific
+> system-memory requirements are summarized in the
+> [Support matrix](support-matrix.md). CPU architecture, general host RAM, disk,
+> shared-memory, driver, and Container Toolkit requirements are not yet
+> available for the public release.
 
 ## Hardware requirements
 
 Plan for:
 
-- the CPU architecture supported by the released image;
-- homogeneous NVIDIA GPUs compatible with at least one released
-  model/precision/profile combination;
+- the CPU architecture supported by the selected image;
+- homogeneous NVIDIA GPUs compatible with at least one available
+  model/precision/configuration combination;
 - enough GPU memory on every participating device for the selected profile;
 - enough host RAM and free disk for the container, downloaded artifacts,
   materialization, and temporary files; and
@@ -28,12 +27,12 @@ Plan for:
 
 | Requirement | Current requirement |
 | --- | --- |
-| CPU architecture | **TBD (release-dependent)** |
+| CPU architecture | Not yet available |
 | GPU compute capability | Generator: BF16 `>=8.7`, FP8 `>=8.9`; Reasoner: BF16 `>=8.0`, FP8 `>=8.9`, NVFP4 `>=10.0` |
-| GPU count and per-device VRAM | See the semi-final [Generator](support-matrix.md#semi-final-generator-profiles) and [Reasoner](support-matrix.md#semi-final-reasoner-profiles) tables |
-| Host RAM | General minimum **TBD**; Super-family BF16 model/layer offload requires 150 GiB of effective system memory |
-| Free disk | **TBD (release-dependent)** |
-| Container shared memory | **TBD (release-dependent)** |
+| GPU count and per-device VRAM | See the [Generator](support-matrix.md#generator-configurations) and [Reasoner](support-matrix.md#reasoner-configurations) tables |
+| Host RAM | General minimum not yet available; Super-family BF16 model/layer offload requires 150 GiB of effective system memory |
+| Free disk | Not yet available |
+| Container shared memory | Not yet available |
 
 Do not add together memory from multiple GPUs to satisfy a per-device floor.
 Reasoner requires GPUs with the same compute capability; use homogeneous GPUs
@@ -61,20 +60,20 @@ The host requires:
 
 - a Linux distribution supported by NVIDIA Container Toolkit;
 - a compatible `glibc`;
-- an NVIDIA driver supported by the released image;
+- an NVIDIA driver compatible with the selected image;
 - Docker Engine; and
 - NVIDIA Container Toolkit configured for Docker.
 
-| Software | Minimum released version |
+| Software | Required version |
 | --- | --- |
-| Linux and `glibc` | **TBD** |
-| NVIDIA driver | **TBD** |
-| Docker Engine | **TBD** |
-| NVIDIA Container Toolkit | **TBD** |
+| Linux and `glibc` | Not yet available |
+| NVIDIA driver | Not yet available |
+| Docker Engine | Not yet available |
+| NVIDIA Container Toolkit | Not yet available |
 
 The CUDA user-space libraries required by the NIM are provided inside the
 container. Follow the driver and Container Toolkit installation instructions
-for the released image instead of installing an unrelated host CUDA toolkit
+for the selected image instead of installing an unrelated host CUDA toolkit
 solely for the NIM.
 
 ## Client tooling
@@ -149,7 +148,7 @@ The runtime variable is `NGC_API_KEY`, not `NGC_TOKEN`. Keep this shell open,
 do not save the key in source control, and continue with
 [Authenticate to NGC](deployment.md#authenticate-to-ngc) to log Docker in.
 
-An air-gapped deployment requires the released image and a correctly
+An air-gapped deployment requires the selected image and a correctly
 pre-populated cache prepared through an approved workflow. Merely disabling
 model download does not create the required artifacts.
 
@@ -178,8 +177,7 @@ The earlier detailed query reports compute capability and memory in MiB; divide
 MiB by 1024 when comparing with the binary-GiB profile floors. The Docker
 command may pull the `ubuntu` image. It verifies GPU container access, not
 Cosmos3 profile compatibility. Compare the reported devices and memory with the
-[support matrix](support-matrix.md) before launch, then confirm that the target
-image actually contains the selected row.
+[support matrix](support-matrix.md) before launch.
 
 For installation and verification failures, see
 [Troubleshooting](operations.md#troubleshooting).

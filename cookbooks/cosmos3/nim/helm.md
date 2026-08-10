@@ -3,9 +3,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Deploy the Cosmos3 Certified NIM with Helm
 
-The final chart repository, version, values schema, resource names, and
-monitoring integration are **TBD**. This page records the deployment
-requirements without inventing values that might be copied into production.
+A Cosmos3 Certified NIM Helm chart is not yet published. The chart repository,
+version, values schema, resource names, and monitoring integration will be added
+when they are available. This page describes the deployment requirements that
+can be prepared in advance.
 
 ## Prerequisites
 
@@ -18,9 +19,9 @@ Prepare:
 - outbound NGC access or an approved pre-populated-cache workflow; and
 - an `NGC_API_KEY` with NGC Catalog access.
 
-Choose a model/hardware combination from the semi-final
-[Support matrix](support-matrix.md), then confirm that the released chart/image
-contains that row before setting GPU resources.
+Choose a model and hardware configuration from the
+[Support matrix](support-matrix.md), then confirm that the selected image
+contains that configuration before setting GPU resources.
 
 ## Inspect the released chart
 

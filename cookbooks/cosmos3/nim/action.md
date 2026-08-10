@@ -7,8 +7,8 @@ Use this page for forward dynamics, policy, and inverse dynamics requests. All
 three use a compatible **Generator** model and synchronous JSON
 `POST /v1/infer`; top-level `model_mode` selects the task.
 
-> Model and domain availability must be confirmed in the released
-> [support matrix](support-matrix.md).
+> Confirm model and domain availability for the selected image in the
+> [Support matrix](support-matrix.md).
 
 See [Deployment](deployment.md) to start the NIM. There are two distinct
 contracts:
@@ -29,7 +29,7 @@ o0 --a0--> o1 --a1--> o2 ... --a(T-1)--> oT
 
 An action trajectory with shape `[T,D]` therefore describes `T` transitions
 across `T+1` observations. `T` is `action_chunk_size`; `D` is the action width
-for the selected domain. For example, the canonical AV cases provide 60 rows of
+for the selected domain. For example, the included AV cases provide 60 rows of
 9 values and produce a 61-frame rollout.
 
 Clients must omit top-level `num_frames` for every Action request. The service
@@ -50,19 +50,18 @@ Action settings establish the visual request shape.
 
 ## Domains and representations
 
-| `domain_name` | Domain ID | General `raw_action_dim` | Canonical example chunk |
+| `domain_name` | Domain ID | General `raw_action_dim` | Example chunk |
 | --- | ---: | ---: | ---: |
 | `av` | 1 | 9 | 60 actions at 10 action FPS |
 | `umi` | 6 | 10 | 16 actions at 20 action FPS |
 | `bridge_orig_lerobot` | 7 | 10 | 16 actions at 5 action FPS |
 | `droid_lerobot` | 8 | 10 | 16 actions in the general contract |
 
-The general Action cookbook describes AV 9D actions as translation plus a 6D
-continuous rotation representation, and its UMI and DROID examples combine a
-9D end-effector pose representation with a gripper value. The NIM API contract,
-however, validates the domain and numeric width; it does not define
-checkpoint-specific units, normalization statistics, coordinate frames,
-gripper conventions, or denormalization.
+The AV examples use 9D actions with translation and a 6D continuous rotation
+representation. The UMI and DROID examples combine a 9D end-effector pose
+representation with a gripper value. The API validates the domain and numeric
+width, but checkpoint-specific units, normalization statistics, coordinate
+frames, gripper conventions, and denormalization come from the selected model.
 
 Do not send returned values directly to physical hardware based only on this
 width table. Use the representation and transformations published for the
@@ -84,11 +83,11 @@ Action requests have several related but distinct controls:
 - the actual conditioning image or video still has its own decoded dimensions
   and aspect ratio.
 
-The canonical cases align `fps` and `action_fps`, but the API treats them as
+The included cases align `fps` and `action_fps`, but the API treats them as
 separate fields. `image_size` is not a replacement for top-level `resolution`;
 Action requests forbid `resolution`.
 
-## Run the canonical examples
+## Run the examples
 
 Install the [client tooling](prerequisites.md#client-tooling). Then, from the
 repository root, enter the cookbook directory. `uv` reads the pinned client
@@ -99,8 +98,7 @@ cd cookbooks/cosmos3/nim
 export NIM_URL=${NIM_URL:-http://localhost:8000}
 ```
 
-The executable cases reuse the same AV and UMI assets as the Cosmos Framework
-and vLLM-Omni tutorials:
+The executable cases include AV, UMI, and robot examples:
 
 | Case | Mode and scenario | Run |
 | --- | --- | --- |
@@ -111,10 +109,7 @@ and vLLM-Omni tutorials:
 | `av_inverse_0` | AV inverse dynamics for `av_0.mp4` | `uv run python examples/action.py --case av_inverse_0` |
 | `av_inverse_1` | AV inverse dynamics for `av_1.mp4` | `uv run python examples/action.py --case av_inverse_1` |
 | `bridge_inverse` | Bridge inverse dynamics using the pinned public fixture | `uv run python examples/action.py --case bridge_inverse` |
-| `av_policy` | General AV policy API-contract example | `uv run python examples/action.py --case av_policy` |
-
-The original example names `forward_dynamics`, `inverse_dynamics`, and `policy`
-remain aliases for `av_forward`, `bridge_inverse`, and `av_policy`.
+| `av_policy` | General AV policy request | `uv run python examples/action.py --case av_policy` |
 
 The script writes `action_<case>.mp4` for the visual rollout and, for policy or
 inverse dynamics, `action_<case>.json` for the validated predicted trajectory.
@@ -128,7 +123,7 @@ checkpoint-specific transformations required for execution.
 
 Forward dynamics receives an initial observation and a complete action chunk,
 then predicts the resulting visual observations. The AV comparison cases share
-`images/av_0.jpg` and differ only in the canonical forward, left, or right
+`images/av_0.jpg` and differ only in the forward, left, or right
 trajectory:
 
 ```python
@@ -160,7 +155,7 @@ finite JSON numbers. Forward dynamics does not accept `history_length`,
 predicted action because the trajectory was an input.
 
 The `umi_forward` case uses `images/umi.png` and the first 16 rows of the
-canonical 32-row `actions/umi.json` trajectory. It demonstrates one synchronous
+included 32-row `actions/umi.json` trajectory. It demonstrates one synchronous
 chunk. A longer autoregressive rollout is client orchestration: extract the
 last generated observation, use it to condition the next action chunk, and
 remove duplicate boundary observations when joining output videos.
@@ -189,9 +184,9 @@ Policy predicts an action chunk instead of receiving one:
 }
 ```
 
-The `av_policy` case is an API-contract example, not a claim that every released
-profile includes an AV policy checkpoint. Confirm model/domain support in the
-released matrix before running it. Policy must omit `action` and may also use:
+The `av_policy` case demonstrates the request contract. Confirm that the
+selected image supports the AV policy model and domain before running it.
+Policy must omit `action` and may also use:
 
 - `history_length`: number of state-history steps;
 - `use_state`: whether to condition on supplied state; and
@@ -199,7 +194,7 @@ released matrix before running it. Policy must omit `action` and may also use:
   schema.
 
 Use state conditioning only with a model/profile and observation shape that
-has been validated for the released deployment.
+has been validated for the selected deployment.
 
 ### Integrate a policy loop
 
@@ -228,8 +223,7 @@ Nano-DROID is a specialist policy checkpoint selected with:
 -e NIM_MODEL_VARIANT=nano-droid
 ```
 
-Its request uses the same `POST /v1/infer` API, not a separate WebSocket or
-vLLM-Omni endpoint:
+Its request uses the same `POST /v1/infer` API as other Generator tasks:
 
 ```json
 {
@@ -251,10 +245,10 @@ vLLM-Omni endpoint:
 The observation must contain exactly seven finite joint positions and one
 finite gripper position. The current fixture is a 640×540 composition with the
 wrist view above two exterior views. Use the exact observation composition
-required by the released checkpoint and a task prompt that describes the
+required by the selected checkpoint and a task prompt that describes the
 desired manipulation.
 
-The client must omit profile-owned fields:
+The client must omit model-owned fields:
 
 - `raw_action_dim`, `action_space`, `image_size`, `action_fps`,
   `history_length`, and `use_state` inside `action_params`; and
@@ -287,7 +281,7 @@ available.
 ## Inverse dynamics
 
 Inverse dynamics receives an observed video and estimates the action transitions
-between its visual states. The canonical local cases use `videos/av_0.mp4` and
+between its visual states. The included local cases use `videos/av_0.mp4` and
 `videos/av_1.mp4`:
 
 ```json
@@ -310,11 +304,10 @@ between its visual states. The canonical local cases use `videos/av_0.mp4` and
 }
 ```
 
-The additional `bridge_inverse` case retains the commit-pinned public fixture
-used by the NIM source example. It requires URL input to be enabled and network
-access from the container; use a data URL instead when reproducible offline
-execution is required. Inverse dynamics does not accept `action` or the
-policy-only state fields.
+The additional `bridge_inverse` case uses a pinned public fixture. It requires
+URL input to be enabled and network access from the container; use a data URL
+instead for reproducible offline execution. Inverse dynamics does not accept
+`action` or the policy-only state fields.
 
 ## Response action object
 
@@ -385,7 +378,7 @@ Action mode rejects:
 - `condition_frame_indexes_vision` and `condition_video_keep`;
 - video for forward dynamics or policy;
 - image for inverse dynamics; and
-- unknown action fields such as vLLM-Omni-only `view_point`.
+- unknown action fields.
 
 Request-level `guardrails` is not part of `/v1/infer`. Guardrails are operator
 configuration; see [operations.md](operations.md#guardrails).
@@ -398,9 +391,9 @@ configuration; see [operations.md](operations.md#guardrails).
 | Action rows or width do not match | Validate `[T,D]` and finite values before sending; use the domain table above |
 | `num_frames` is rejected | Omit it; the service always derives `action_chunk_size + 1` |
 | Wrong conditioning media | Image for forward/policy; video for inverse dynamics |
-| Profile/model cannot run the action case | Confirm the released image's action-capable model variant and supported domain |
+| Configuration cannot run the action case | Confirm the selected image's action-capable model variant and supported domain |
 | Bridge URL input fails | Enable allowed URL input and container network access, or replace it with a data URL |
-| Nano-DROID rejects profile-owned fields | Omit fixed action dimensions, cadence, state flags, and top-level media-output controls |
+| Nano-DROID rejects model-owned fields | Omit fixed action dimensions, cadence, state flags, and top-level media-output controls |
 | Client fails on missing `b64_video` | Handle action-only specialist responses separately from general visual Action responses |
 
 For startup, OOM, and service diagnostics, see

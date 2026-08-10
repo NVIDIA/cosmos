@@ -14,7 +14,7 @@ complete Docker commands.
 
 | Name | Default | Use |
 | --- | --- | --- |
-| `NGC_API_KEY` | Empty | Download profile-owned artifacts when they are not already cached |
+| `NGC_API_KEY` | Empty | Download required model and runtime artifacts when they are not already cached |
 | `NIM_CACHE_PATH` | `/opt/nim/.cache` | Set the writable in-container artifact cache |
 
 ### Choose the runtime and model
@@ -23,7 +23,7 @@ complete Docker commands.
 | --- | --- | --- |
 | `NIM_MODEL_TYPE` | `generator` | Select `generator` or `reasoner` |
 | `NIM_MODEL_VARIANT` | `nano` preference | Select `nano` or `super` for either runtime; Generator also accepts `nano-droid`, `super-t2i`, `super-t2i-4step`, `super-i2v`, and `super-i2v-4step` |
-| `NIM_PRECISION` | FP8 preference | Optionally pin a released precision; omit it to prefer FP8 when compatible and fall back automatically |
+| `NIM_PRECISION` | FP8 preference | Optionally pin a precision available in the selected image; omit it to prefer FP8 when compatible and fall back automatically |
 | `NIM_PERF_PROFILE` | `latency` | Generator only: choose `latency` or `throughput` |
 
 `NIM_MODEL_VARIANT` selects the checkpoint contract for either runtime.
@@ -58,7 +58,7 @@ Use these only when automatic model selection is not sufficient:
 
 | Name | Default | Use |
 | --- | --- | --- |
-| `NIM_OFFLOAD_MODE` | Automatic compatible preference | Request `none`, `model`, or `layer` when the released model provides that mode |
+| `NIM_OFFLOAD_MODE` | Automatic compatible preference | Request `none`, `model`, or `layer` when the selected model provides that mode |
 | `NIM_UNIFIED_MEMORY_HOST_RESERVE_GIB` | `16` | Reserve shared memory for the host before profile selection on integrated GPUs; use a nonnegative binary-GiB value validated for the system |
 | `NIM_TAGS_SELECTOR` | Empty | Filter by comma-separated exact manifest tags |
 | `NIM_MODEL_PROFILE` | Empty | Pin an exact profile ID from the current image |
@@ -78,7 +78,7 @@ discrete GPUs.
 | --- | --- | --- |
 | `NIM_ALLOW_URL_INPUT` | `true` | Allow HTTP(S) image, video, and Transfer inputs; set `false` to require encoded input |
 | `NIM_VIDEO_SAVE_QUALITY` | `7` | Set VP9 output quality from 1 through 9; this affects encoding, not diffusion quality |
-| `NIM_TRITON_REQUEST_TIMEOUT` | 30 minutes | Set the queue-plus-execution timeout in microseconds; source default is `1800000000` |
+| `NIM_TRITON_REQUEST_TIMEOUT` | 30 minutes (`1800000000` microseconds) | Set the queue-plus-execution timeout in microseconds |
 
 ### Startup and execution
 
@@ -143,17 +143,17 @@ latency, quality, and correctness.
 | `NIM_USE_DFLASH` | `false` | Enable DFlash speculative decoding for Nano Reasoner only |
 
 DFlash does not change the Reasoner request API. Startup rejects it for
-Generator and Super Reasoner. Confirm that the released Nano Reasoner includes
+Generator and Super Reasoner. Confirm that the selected Nano Reasoner includes
 the draft artifact before enabling it.
 
 ### Context and scheduling
 
 | Name | Default | Use |
 | --- | --- | --- |
-| `NIM_MAX_MODEL_LEN` | `-1` (auto) | Let vLLM choose a context length bounded by the model |
+| `NIM_MAX_MODEL_LEN` | `-1` (auto) | Let the runtime choose a context length bounded by the model |
 | `NIM_MAX_NUM_BATCHED_TOKENS` | `8192` | Set the scheduler token budget |
 | `NIM_MAX_NUM_SEQS` | `256` | Set maximum scheduled sequences |
-| `NIM_GPU_MEMORY_UTILIZATION` | `0.90` | Set the vLLM GPU-memory target in `(0,1]` |
+| `NIM_GPU_MEMORY_UTILIZATION` | `0.90` | Set the Reasoner GPU-memory target in `(0,1]` |
 
 ### Caching and multimodal processing
 
@@ -178,7 +178,7 @@ operator-wide media object.
 | --- | --- | --- |
 | `NIM_GUIDED_DECODING_BACKEND` | `xgrammar` | Select the structured-output backend |
 | `NIM_DISABLE_LOG_REQUESTS` | `true` | Keep Reasoner request bodies out of logs |
-| `NIM_DISABLE_RESPONSES_ROUTE` | `false` in current route tests | Remove Responses routes when set to `true` |
+| `NIM_DISABLE_RESPONSES_ROUTE` | `false` | Remove Responses routes when set to `true` |
 
 ## Secret handling
 

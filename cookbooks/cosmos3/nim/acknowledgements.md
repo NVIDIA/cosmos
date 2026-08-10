@@ -3,26 +3,11 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Cosmos3 Certified NIM acknowledgements
 
-> **TBD:** Third-party component acknowledgements and notices for the released
-> Cosmos3 Certified NIM image have not yet been supplied or approved.
+Image-specific third-party acknowledgements and notices are not yet available
+for the public Cosmos3 Certified NIM release. They will be published on this
+page after the release image inventory is approved.
 
-This page will contain that inventory once the release artifact is available. It must be generated or reviewed against the exact image
-repository, tag, and digest documented by this cookbook.
-
-The final content should include, as applicable:
-
-- third-party component name and version;
-- copyright attribution;
-- license identifier and required notice text;
-- source/offer information required by the applicable license; and
-- release/build provenance sufficient to show that the inventory belongs to
-  the documented image.
-
-Do not infer this inventory from source-tree dependencies, Python package
-metadata, or a different container. In particular, the historical
-Cosmos3-Generator acknowledgement artifact belongs to the previous Generator
-image and is not evidence for the unified Certified NIM.
-
-Product license/EULA information is separate from third-party notices. See the
-repository [LICENSE](../../../LICENSE), the final NGC model card when published,
-and `/v1/license` on the running NIM.
+The running NIM exposes bundled product license information at `/v1/license`.
+The cookbook source is covered by the repository
+[LICENSE](../../../LICENSE). The public NGC model card will provide the
+product terms and intended-use information when the NIM is released.

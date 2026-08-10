@@ -54,7 +54,8 @@ Classify each changed claim as:
 - **RC/release-validated:** observed from the exact image, manifest, OpenAPI, or
   approved release artifact.
 - **Historical:** retained only for rationale or coverage.
-- **Unresolved:** release-owned and kept visibly TBD in prose or a table.
+- **Unresolved:** release-owned and clearly identified as not yet available in
+  prose or a table.
 
 Never upgrade source evidence to a tested support claim. Never use historical
 values to fill an unresolved release fact.
@@ -78,9 +79,11 @@ values to fill an unresolved release fact.
 - When dependencies change, update `pyproject.toml`, regenerate `uv.lock`, and
   update all affected commands and prerequisite text in the same change.
 
-For an RC image bump, update `NIM_IMAGE` in `deployment.md` and the matching
-entry in `release-notes.md`. Do not use `latest`. Keep Helm guidance descriptive
-until an exact approved chart and version exist.
+For a pre-release image bump, update `NIM_IMAGE` in `deployment.md`. Do not use
+`latest`. Keep Helm guidance conceptual until an approved chart exists, keep
+acknowledgement inventory visibly unavailable until approved notices exist, and
+keep release notes limited to the initial unified release rather than migrations
+between unreleased development contracts.
 
 ## 5. Synchronize editor guidance
 

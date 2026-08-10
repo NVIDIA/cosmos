@@ -8,28 +8,27 @@ envelope, and the common Generator response. Detailed fields, constraints, and
 examples live with each task workflow.
 
 > Check `/openapi.json` on the running Generator or Reasoner for routes supplied
-> by the active runtime and image release.
+> by the active runtime and selected image.
 
 ## Runtime and primary endpoints
 
 One selected profile starts one backend. A Generator profile does not serve
 Reasoner completion APIs, and a Reasoner profile does not serve `/v1/infer`.
 
-| Runtime | API | Canonical documentation |
+| Runtime | API | Guide |
 | --- | --- | --- |
 | Generator | `POST /v1/infer` for T2I, T2V, I2V, and V2V | [Generation](generation.md) |
 | Generator | `POST /v1/infer` with `action_params` | [Action](action.md) |
 | Generator | `POST /v1/infer` with `transfer` | [Transfer](transfer.md) |
 | Reasoner | `POST /v1/chat/completions` | [Reasoning](reasoning.md) |
 | Reasoner | `POST /v1/responses` and optional state routes | [Reasoning](reasoning.md#use-the-responses-api) |
-| Reasoner | `POST /v1/completions` legacy-compatible route | Verify the released schema before use |
 
 Reasoner Chat Completions supports media, parsed-reasoning controls, developer
 instructions, and OpenAI tool calls as described in
-[Reasoning](reasoning.md#reasoning-instructions-and-tool-calls). Current source
-reports the active `model_type` and primary `inference_endpoint` through
-`/v1/metadata`; check those fields before treating `/v1/models` as Reasoner
-model discovery.
+[Reasoning](reasoning.md#reasoning-instructions-and-tool-calls).
+`/v1/metadata` reports the active `model_type` and primary
+`inference_endpoint`; check those fields before treating `/v1/models` as
+Reasoner model discovery.
 
 The NIM framework also exposes health, model, metadata, manifest, version,
 license, metrics, and OpenAPI endpoints. See
@@ -39,8 +38,7 @@ their paths and operational meaning.
 ## Generator: `POST /v1/infer`
 
 The Generator accepts one synchronous JSON object and rejects unknown fields.
-Every request must set `model_mode`; the task is no longer inferred from media
-or frame count.
+Every request must set `model_mode` to identify the task.
 
 `NIM_MODEL_VARIANT` and `model_mode` select different things:
 
@@ -81,22 +79,9 @@ The task guides define the remaining required inputs and invalid combinations.
 | `transfer` | object | `video2video` only; [Transfer](transfer.md) |
 
 Empty or whitespace-only media strings are treated as absent. Media
-representations and release codec boundaries are documented under
+representations and codec boundaries are documented under
 [Generation media representations](generation.md#media-representations) and
 the [Support matrix](support-matrix.md#media-and-codecs).
-
-### Migrate older Generator requests
-
-| Previous contract | Current contract |
-| --- | --- |
-| Task inferred from request shape | Required `model_mode` |
-| `num_output_frames` | `num_frames` |
-| `steps` | `num_inference_steps` |
-| Top-level `image` or `video` | `input_reference` |
-| `action_params.mode` | Top-level `model_mode` |
-
-The old fields are not aliases; requests that use them return HTTP 422.
-Responses are unchanged.
 
 ### Strict JSON types
 
@@ -151,15 +136,15 @@ In that case both `b64_image` and `b64_video` are absent or null. Clients must
 branch on the fields actually present rather than assuming every non-T2I
 request has `b64_video`. See [Nano-DROID policy](action.md#nano-droid-policy).
 
-The current source encoder emits JPEG for T2I and a VP9 video track in an MP4
-container for video modes. Released output codec support belongs to the
+The Generator emits JPEG for T2I and a VP9 video track in an MP4 container for
+video modes. The final output codec inventory will be published in the
 [Support matrix](support-matrix.md#media-and-codecs).
 
 ## Errors and live schema
 
-A request for the other runtime's primary route returns HTTP 404. Current
-source wraps that response in the common NIM error envelope and identifies the
-active runtime, its primary endpoint, and the runtime required by the request.
+A request for the other runtime's primary route returns HTTP 404. The response
+uses the common NIM error envelope and identifies the active runtime, its
+primary endpoint, and the runtime required by the request.
 For the representative envelope, other HTTP status guidance, and symptom-based
 diagnosis, see [Errors](operations.md#errors) and
 [Troubleshooting](operations.md#troubleshooting). Do not build automation
@@ -173,7 +158,6 @@ python3 -m json.tool openapi.json >/dev/null
 ```
 
 The local deployment guide publishes either selected runtime on this same host
-port. Stop the active container, launch the other runtime, and repeat the
-capture. Treat the released image's live schema as authoritative for generated
-routes and release-specific constraints; report documentation conflicts instead
-of silently choosing one.
+port. Remove the active example container, launch the other runtime, and repeat the
+capture. Treat the running NIM's schema as authoritative for available routes
+and constraints in the pre-release version.

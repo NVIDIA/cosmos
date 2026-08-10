@@ -30,36 +30,33 @@ first.
 
 Install the [client tooling](prerequisites.md#client-tooling). Then, from the
 repository root, enter the cookbook directory before running examples. They use
-the pinned `requests` dependency, reuse the canonical audiovisual
-prompts and media already tracked by this cookbook, and decode responses under
+the pinned `requests` dependency, use the included prompts and media, and
+decode responses under
 `examples/outputs/`:
 
 ```bash
 cd cookbooks/cosmos3/nim
-uv run python examples/t2v.py
+uv run python examples/t2i.py
 ```
 
 ## Choose a modality
 
-The standard examples use the same representative scenarios as the Cosmos3
-Framework, Diffusers, and vLLM-Omni audiovisual tutorials. The scenario stays
-constant while each backend uses its own API adapter.
+Choose an example based on the input and output you need:
 
-| Modality | Canonical scenario | Conditioning input | Response field | Run |
+| Modality | Example scenario | Conditioning input | Response field | Run |
 | --- | --- | --- | --- | --- |
 | T2I | Robot draping satin over a mannequin | None | `b64_image` | `uv run python examples/t2i.py` |
 | T2V | Robot cleaning a kitchen | None | `b64_video` | `uv run python examples/t2v.py` |
 | I2V | Car traveling along a coastal road | `car_driving.jpg` | `b64_video` | `uv run python examples/i2v.py` |
 | V2V | Continue or transform a car-driving video | `car_driving_plain.mp4` | `b64_video` | `uv run python examples/v2v.py` |
 
-The scripts load the full structured JSON prompts from
-`cookbooks/cosmos3/generator/audiovisual/assets/`, compact each JSON document
-into the string accepted by the Generator `prompt` field, and use the shared
-negative prompt for video modes. The shorter prompts below emphasize request
-shape; use the scripts for the cross-backend comparison cases.
+The scripts load prompts and media from the repository, build the Generator
+request, and save decoded output under `examples/outputs/`. The shorter prompts
+below emphasize the request shape; use the scripts for complete editable
+examples.
 
 A standard script can run against an active general-purpose `nano` or `super`
-variant when that task is included by its released profile. Specialist
+variant when the selected image includes that task. Specialist
 four-step variants require their matching scripts and request contract.
 
 ## Text-to-image
@@ -102,7 +99,7 @@ Run the complete editable comparison case:
 uv run python examples/t2i.py
 ```
 
-It uses the canonical `assets/prompts/text2image/robot_draping.json` prompt and
+It uses the included `assets/prompts/text2image/robot_draping.json` prompt and
 saves `examples/outputs/t2i_robot_draping.jpg`.
 
 Set `model_mode` to `text2image`. T2I requires a non-empty prompt, forbids
@@ -121,8 +118,7 @@ When their fields are omitted, T2I uses:
 | `fps` | `24.0`; retained in the request but not encoded in the JPEG |
 
 All resolution keys listed under [Resolution keys](#resolution-keys) are
-accepted for T2I. The current public allow-list stops at the 720 tier; do not
-send upstream image-only 1080 keys to this NIM.
+accepted for T2I. The supported keys stop at the 720 tier.
 
 ## Text-to-video
 
@@ -217,9 +213,9 @@ It pairs `assets/images/image2video/car_driving.jpg` with
 prompt, and saves `examples/outputs/i2v_car_driving.mp4`.
 
 `input_reference` is required and interpreted as an image because
-`model_mode=image2video`. The current encoded-image ceiling
-is 20,000,000 characters. Exact released decoder formats remain
-**TBD (release-dependent)**; JPEG, PNG, and WebP are the source-tested baseline.
+`model_mode=image2video`. The encoded-image ceiling is 20,000,000 characters.
+For pre-release evaluation, use JPEG, PNG, or WebP input; the final format
+inventory is not yet available.
 
 ## Choose a video-conditioned workflow
 
@@ -267,15 +263,15 @@ service sorts and deduplicates it. Its largest value must fit the requested
 output latent length. `condition_video_keep` selects frames from the beginning
 or end of the input and defaults to `first`.
 
-The current decoded-video ceiling is 75 MB. Data URLs expand binary media by
-roughly one third, so large videos can make the JSON request substantially
-larger. Exact released container/codec support and remote-fetch behavior remain
-validation-gated.
+The decoded-video ceiling is 75 MB. Data URLs expand binary media by roughly
+one third, so large videos can make the JSON request substantially larger. For
+pre-release evaluation, use the MP4 fixtures included with the examples; the
+final container, codec, and remote-fetch inventory is not yet available.
 
 ## Specialist T2I and I2V variants
 
-General-purpose `nano` and `super` models support the tasks included by their
-released profiles. Super also provides task-specific variants:
+General-purpose `nano` and `super` models support the tasks included by the
+selected image. Super also provides task-specific variants:
 
 | Variant | Accepted request | Sampling behavior |
 | --- | --- | --- |
@@ -317,7 +313,7 @@ frame, so video pixel-frame counts follow:
 num_frames = 1 + 4k
 ```
 
-Current video source ceilings are:
+Video output limits are:
 
 | Resolution tier | Maximum frames |
 | --- | ---: |
@@ -367,8 +363,8 @@ Generator image and video inputs recognize:
 
 Prefer data URLs for portable local-file examples. Remote inputs require
 container network access and introduce download, timeout, and content-change
-risks. Exact released image formats, video containers, codecs, and remote-fetch
-limits belong to the [support matrix](support-matrix.md).
+risks. The final image-format, video-container, codec, and remote-fetch
+inventory will be published in the [support matrix](support-matrix.md).
 
 ## Reproducibility
 
@@ -422,10 +418,9 @@ ffmpeg -i examples/outputs/t2v_robot_kitchen.mp4 -c:v libx264 -crf 18 \
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
-| HTTP 422, extra field | A vLLM-Omni field such as `extra_params`, `control_path`, or request-level `guardrails` was copied into `/v1/infer` | Translate the request using the [API reference](api-reference.md); unknown fields are rejected |
+| HTTP 422, extra field | The request includes a field that is not part of the selected task | Remove unsupported fields using the [API reference](api-reference.md); unknown fields are rejected |
 | HTTP 422, frame cadence | A video request has fewer than 25 frames, is not on the `4k+1` cadence, or exceeds its tier ceiling | Pick a valid video count and recheck the tier |
 | HTTP 422, missing or invalid mode | `model_mode` is absent or conflicts with fields in the request | Set the explicit mode and include only its fields |
-| HTTP 422, deprecated field | The request uses `image`, `video`, `num_output_frames`, or `steps` | Migrate to `input_reference`, `num_frames`, and `num_inference_steps` |
 | HTTP 422, reference mismatch | `input_reference` is missing, forbidden, or does not match `model_mode` | Omit it for text modes; provide the required image/video for conditioned modes |
 | URL media fails | URL inputs are disabled, unreachable from the container, or rejected by the decoder | Use a data URL and verify `NIM_ALLOW_URL_INPUT` |
 | Request times out in the client | Generation exceeded the client timeout, not necessarily the server timeout | Use the examples' 30-minute timeout and inspect NIM logs |

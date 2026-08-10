@@ -6,22 +6,18 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 Use this page to replace the selected Generator or Reasoner checkpoint while
 preserving the Certified NIM server, profile selection, and runtime contract.
 
-> `NIM_MODEL_PATH` provides the implementation described below. Confirm the
-> accepted checkpoint inventory in the released [support matrix](support-matrix.md).
+> Set `NIM_MODEL_PATH` to replace the bundled Generator or Reasoner checkpoint.
+> At startup, the NIM validates the checkpoint layout, inferred model properties,
+> and compatibility with the selected configuration before serving requests.
 
 ## Supported boundary
 
 `NIM_MODEL_PATH` is the shared checkpoint-source variable:
 
-| Runtime | Accepted source | What remains profile-owned |
+| Runtime | Accepted source | What the NIM still provides |
 | --- | --- | --- |
 | Generator | Absolute local directory | Server, profile, and Generator guardrail artifacts |
 | Reasoner | Absolute local directory or `hf://owner/repository[:revision]` | Server, selected runtime layout, and profile compatibility policy |
-
-The former Generator variable `NIM_FT_CHECKPOINT` is not part of the current
-contract. Do not reuse historical Transfer variables such as
-`NIM_EDGE_CHECKPOINT`, `NIM_VIS_CHECKPOINT`, `NIM_DEPTH_CHECKPOINT`, or
-`NIM_SEG_CHECKPOINT`.
 
 ## Generator checkpoint
 
@@ -43,7 +39,7 @@ The runtime reads `transformer/config.json` to infer the Nano or Super base
 variant and precision, then cross-checks both against the selected profile.
 Transformer dimensions do not identify a specialist Generator contract, so
 select the exact checkpoint contract with `NIM_MODEL_VARIANT`. Directory names
-alone do not prove compatibility with the released image.
+alone do not prove compatibility with the selected image.
 
 ### Launch
 
@@ -62,8 +58,8 @@ Add these options to the `docker run` command:
 ```
 
 Choose a Generator variant, precision, and latency/throughput objective that
-match the checkpoint. Generator guardrails remain profile-owned artifacts. The cache must be writable,
-NGC artifact access may still be required, and
+match the checkpoint. The NIM still provides Generator guardrail artifacts.
+The cache must be writable, NGC artifact access may still be required, and
 `NIM_DISABLE_MODEL_DOWNLOAD=1` is rejected for Generator profiles.
 
 ## Reasoner checkpoint
@@ -96,8 +92,8 @@ profile artifact download after source resolution.
 
 When `NIM_USE_DFLASH=1`, a Nano Reasoner workspace must also contain the draft
 artifact at `dflash-nano-bf16-v1/`, including `config.json` and
-`model.safetensors`. If that artifact is not part of the released BYOC
-contract, leave DFlash disabled or use the profile-owned checkpoint workflow.
+`model.safetensors`. If the selected image does not provide that artifact for BYOC, leave DFlash
+disabled or use the bundled checkpoint workflow.
 
 ### Hugging Face source
 
@@ -130,8 +126,7 @@ At startup, the NIM:
 5. fails before inference when the source, layout, or profile is incompatible.
 
 Adjust the selectors or checkpoint rather than bypassing compatibility checks.
-The exact accepted release inventory belongs in the
-[Support matrix](support-matrix.md).
+Use only checkpoint types confirmed for the selected image.
 
 ## Verify the active checkpoint
 
@@ -157,9 +152,9 @@ the checkpoint's validation baseline.
 | Local path does not exist | Host path was not mounted at the exact `NIM_MODEL_PATH` value | Align the read-only bind destination and environment path |
 | Relative path rejected | Local checkpoint sources must be absolute | Use an absolute in-container path |
 | Permission denied | Container cannot traverse or read the mount | Fix host ownership/ACLs while retaining a read-only checkpoint mount |
-| Required file missing | Checkpoint layout, tokenizer, processor, index, or weight shards are incomplete | Compare with the released BYOC contract and export again |
-| Model variant or precision mismatch | Explicit selector/profile disagrees with inferred checkpoint properties | Select a compatible released profile or use a matching checkpoint |
-| Generator rejects disabled downloads | Generator still needs profile-owned guardrails | Remove `NIM_DISABLE_MODEL_DOWNLOAD=1` and provide NGC/cache access |
+| Required file missing | Checkpoint layout, tokenizer, processor, index, or weight shards are incomplete | Compare with the required layout and export again |
+| Model variant or precision mismatch | Explicit selector/profile disagrees with inferred checkpoint properties | Select a compatible configuration or use a matching checkpoint |
+| Generator rejects disabled downloads | Generator still needs NIM-provided guardrails | Remove `NIM_DISABLE_MODEL_DOWNLOAD=1` and provide NGC/cache access |
 | Hugging Face source rejected offline | `hf://` requires download but downloads are disabled | Use an absolute pre-downloaded local path |
 | Hugging Face authorization fails | Token, repository ID, revision, network, or cache is invalid | Check `HF_TOKEN`, URI, connectivity, and writable cache without logging the token |
 | Metadata shows `default` | Override was omitted, rejected, or applied to another container | Inspect launch environment, mounts, startup logs, and `/v1/metadata` |

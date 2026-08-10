@@ -11,11 +11,11 @@ contains two runtimes, but each container runs only one:
 - **Reasoner** serves OpenAI-compatible image/video understanding through Chat
   Completions and, when enabled, the Responses API.
 
-> **Documentation status:** API behavior follows the current implementation.
-> The support matrix records semi-final source-profile hardware requirements;
-> the target image manifest determines which rows it actually ships. Release
-> identity, final approval, codecs, and checkpoint combinations that are not yet
-> authoritative remain marked **TBD**.
+> **Pre-release documentation:** These instructions describe the current
+> evaluation version of the unified Cosmos3 NIM. The public image, final system
+> requirements, supported configurations, and release URLs are not yet
+> available. Do not use the evaluation documentation as a public support
+> commitment.
 
 ## Choose what to run
 
@@ -38,10 +38,10 @@ chooses T2I, T2V, I2V, V2V, Transfer, or an Action operation.
 
 ### Generator variants
 
-| Variant | Intended task contract |
+| Variant | Supported use |
 | --- | --- |
 | `nano` | General-purpose generation and compatible Generator tasks |
-| `nano-droid` | DROID policy with an action-only response; BF16 only in the current implementation |
+| `nano-droid` | DROID policy with an action-only response; BF16 only |
 | `super` | General-purpose generation and compatible Generator tasks |
 | `super-t2i` | Text-to-image only |
 | `super-t2i-4step` | Four-step text-to-image only |
@@ -58,8 +58,8 @@ Reasoner provides `nano` and `super`, also selected with
 `NIM_MODEL_VARIANT`. Reasoner does not use `NIM_PERF_PROFILE`.
 
 If `NIM_PRECISION` is omitted, selection prefers FP8 when the chosen model,
-released profiles, and host support it, then falls back to another compatible
-precision. Pin precision only when the workload requires it.
+available configurations, and host support it, then falls back to another
+compatible precision. Pin precision only when the workload requires it.
 
 Exact profile IDs, low-level tags, and offload overrides are advanced controls.
 See [Deploy the NIM](deployment.md#advanced-profile-controls).
@@ -82,43 +82,31 @@ See [Deploy the NIM](deployment.md#advanced-profile-controls).
 
 The public Generator request model does not expose image-to-image or sound
 generation. Local examples publish either selected runtime at
-`http://localhost:8000`; stop the active container before launching the other
+`http://localhost:8000`; remove the active example container before launching the other
 runtime on the same host port.
 
 ## Get started
 
-1. Verify the host against [Prerequisites](prerequisites.md).
-2. Choose a model/hardware combination from the semi-final
-   [Support matrix](support-matrix.md), then confirm that the target image
-   contains that row.
-3. Follow [Deployment](deployment.md) to authenticate, prepare the cache, and
-   launch Generator or Reasoner.
-4. Wait for readiness:
+### Use an existing NIM endpoint
 
-   ```bash
-   export NIM_URL=${NIM_URL:-http://localhost:8000}
-   until curl -fsS "$NIM_URL/v1/health/ready" >/dev/null; do sleep 10; done
-   curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
-   ```
-
-   Before inference, confirm that metadata identifies the runtime and its
-   primary endpoint: Generator uses `/v1/infer`; Reasoner uses
-   `/v1/chat/completions`.
-
-5. After completing the pinned environment setup under
-   [Client tooling](prerequisites.md#initialize-the-example-environment), enter
-   this cookbook directory from the repository root:
-
-   ```bash
-   cd cookbooks/cosmos3/nim
-   ```
-
-6. Run an example that matches the active runtime and model.
-
-For a general-purpose Generator:
+If an administrator already deployed the NIM, install and initialize the
+[client tooling](prerequisites.md#client-tooling), then set the service URL:
 
 ```bash
-uv run python examples/t2v.py
+cd cookbooks/cosmos3/nim
+export NIM_URL=${NIM_URL:-http://localhost:8000}
+curl -fsS "$NIM_URL/v1/health/ready"
+curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
+```
+
+Confirm that metadata identifies the intended runtime and primary endpoint:
+Generator uses `/v1/infer`; Reasoner uses `/v1/chat/completions`.
+
+Run an example that matches the active runtime and model. For a general-purpose
+Generator, start with an image request:
+
+```bash
+uv run python examples/t2i.py
 ```
 
 For a Reasoner:
@@ -127,7 +115,17 @@ For a Reasoner:
 uv run python examples/reasoner.py --case image_caption
 ```
 
-Specialist models accept only their documented task contract. Use
+### Deploy the NIM yourself
+
+1. Verify the GPU host against [Prerequisites](prerequisites.md).
+2. Choose a compatible model and hardware configuration from the
+   [Support matrix](support-matrix.md).
+3. Follow [Deployment](deployment.md) to authenticate, prepare the cache, and
+   launch either Generator or Reasoner.
+4. Return to [Use an existing NIM endpoint](#use-an-existing-nim-endpoint) to
+   verify the service and run the first request.
+
+Specialist models accept only their documented task. Use
 [`t2i_4step.py`](examples/t2i_4step.py),
 [`i2v_4step.py`](examples/i2v_4step.py), or the
 [Nano-DROID request](action.md#nano-droid-policy) only after launching the
@@ -158,7 +156,7 @@ structured cases under the same ignored output directory.
 - [Transfer](transfer.md)
 - [Python examples](examples/)
 
-### Operate and maintain
+### Operate
 
 - [Operations and troubleshooting](operations.md)
 - [Release notes](release-notes.md)
@@ -172,8 +170,6 @@ content-policy and face-privacy protections; see
 
 This cookbook is licensed under the repository
 [LICENSE](../../../LICENSE). The running NIM exposes bundled product license
-information at `/v1/license`; use the released NGC model card for authoritative
-product terms and intended-use information.
-
-Third-party notices for the released image belong in
-[acknowledgements.md](acknowledgements.md).
+information at `/v1/license`. The public NGC model card and product terms will
+be linked when the NIM is released. See
+[Acknowledgements](acknowledgements.md) for third-party notice status.

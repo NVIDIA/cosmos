@@ -41,14 +41,14 @@ against the NIM contract rather than copying another backend's adapter.
 ## Active release maintenance
 
 - Deployment currently uses a versioned Cosmos3 2.2 staging RC, not a final
-  release identity. The exact reference is intentionally canonical in both
-  `deployment.md` and `release-notes.md`; update both on every RC bump.
+  release identity. Before public release, `deployment.md` owns the exact
+  evaluation image reference; update it on every RC bump.
 - Never replace an RC reference with `latest`.
 - The final public image, release version/date, catalog URL, and model-card URL
   remain release-owned until approved.
-- No Cosmos3 Certified NIM Helm chart is published yet. Keep Helm guidance
-  conceptual and omit chart commands until the exact repository, version, and
-  schema are available.
+- No Cosmos3 Certified NIM Helm chart is published yet. Keep the public Helm
+  page explicit about availability and omit exact chart commands until the
+  repository, version, and schema are available.
 
 ## Open release gates
 
@@ -60,12 +60,10 @@ refine entries when evidence changes:
 - general CPU architecture, RAM, disk, and shared-memory requirements;
 - exact supported image formats, video containers/codecs, URL fetching, and
   VP9-in-MP4 playback observations;
-- published Generator and Reasoner BYOC formats and source boundary;
 - exact released support for specialist Generator, Action, Transfer, and V2V
   combinations;
 - Reasoner Responses storage/background/retrieve behavior;
-- Reasoner public-URL, text-only, legacy media, and request-level video sampling
-  behavior;
+- Reasoner public-URL, text-only, and request-level video sampling behavior;
 - live management endpoints, metrics, logs, errors, and chart probes;
 - approved startup, latency, and throughput measurements for each published
   reference configuration;
@@ -104,8 +102,9 @@ Before publication:
 
 - reconcile affected claims with current source and approved release evidence;
 - verify canonical ownership and deliberate duplicates;
-- update the RC image in deployment and release notes together;
-- inspect all remaining TBDs and confirm none implies a usable value;
+- update the evaluation image in deployment;
+- inspect all unresolved release statements and confirm none implies a usable
+  value;
 - validate links, JSON, examples, dependencies, paths, and ignored outputs;
 - search for obsolete fields, legacy images/endpoints, realistic secrets,
   private paths, and unsupported backend syntax;
