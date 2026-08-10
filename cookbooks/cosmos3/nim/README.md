@@ -136,6 +136,17 @@ Generator examples save decoded media and action JSON under
 request metadata, the raw response, final text, and validated JSON for
 structured cases under the same ignored output directory.
 
+## AI-assisted usage
+
+Open this directory in a compatible coding assistant to get guided help with
+host preparation, deployment, endpoint verification, request selection, and
+troubleshooting. The bundled customer instructions and skill use the public
+pages and examples as their source of truth and default to read-only assistance.
+
+Documentation maintainers should instead open the
+[`maintainer` directory](maintainer/) to load the evidence, editing, ownership,
+and validation workflow.
+
 ## Documentation
 
 ### Deploy and configure

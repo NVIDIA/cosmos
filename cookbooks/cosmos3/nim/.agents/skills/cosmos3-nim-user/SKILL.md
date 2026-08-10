@@ -1,0 +1,129 @@
+---
+name: cosmos3-nim-user
+description: Guide customers through Cosmos3 Certified NIM deployment, endpoint verification, API example selection, hardware compatibility, and troubleshooting. Use for operating or calling the NIM from the public cookbooks/cosmos3/nim directory; do not use for maintaining the documentation itself.
+license: OpenMDW-1.1
+---
+
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: OpenMDW-1.1 -->
+
+# Cosmos3 Certified NIM customer workflow
+
+Work from `cookbooks/cosmos3/nim` and read `AGENTS.md`. Use the public pages in
+this directory as the source of truth. If the user wants to edit these pages,
+direct them to open `maintainer/` instead of applying this skill.
+
+## 1. Identify the customer's path
+
+Ask only for information needed to route the workflow:
+
+1. Do they already have a reachable NIM endpoint, or must they deploy one?
+2. Do they need Generator or Reasoner?
+3. Which task do they want to perform?
+4. For a new deployment, what GPU count, compute capability, and per-device VRAM
+   are available?
+
+Do not ask for the value of `NGC_API_KEY`, another token, private input media, or
+unredacted logs. It is sufficient to confirm that required secrets are set.
+
+## 2. Use an existing endpoint
+
+Help the customer establish `NIM_URL`, then use the documented client tooling
+and perform the runtime preflight:
+
+```bash
+export NIM_URL=${NIM_URL:-http://localhost:8000}
+curl -fsS "$NIM_URL/v1/health/ready"
+curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
+```
+
+Require metadata to identify the intended runtime and endpoint before choosing
+an example:
+
+- Generator: `model_type` is `generator`; primary endpoint is `/v1/infer`.
+- Reasoner: `model_type` is `reasoner`; primary endpoint is
+  `/v1/chat/completions`.
+
+Use `/v1/models` only after this runtime check. If metadata identifies the wrong
+runtime, do not rewrite the request for that runtime; correct the deployment or
+`NIM_URL`.
+
+## 3. Prepare a new deployment
+
+Guide the customer through the canonical pages in this order:
+
+1. `prerequisites.md` for host and client preparation.
+2. `support-matrix.md` for model, precision, GPU, VRAM, system-memory, and
+   Transfer eligibility.
+3. `deployment.md` for the exact image, authentication, cache, runtime selector,
+   launch, readiness, logs, and cleanup.
+4. `configuration.md` only when a documented non-default setting is needed.
+5. The existing-endpoint preflight above before the first inference request.
+
+Use only the exact image and commands in `deployment.md`; never substitute
+`latest`. One container starts one runtime. Preserve a failed container long
+enough to inspect its logs, and ask before removing containers or cached data.
+
+For hardware guidance:
+
+- evaluate every participating device against the per-device floor;
+- never add VRAM across devices;
+- use the Transfer minimum when Transfer must be served;
+- treat named GPUs as examples, not as an allowlist;
+- use the current RTX 5090 guidance and thresholds in `support-matrix.md` to
+  distinguish ordinary generation from Transfer eligibility; and
+- leave requirements described as not yet available unresolved.
+
+## 4. Route the task
+
+Use the canonical task page and its committed example instead of constructing a
+new transport or translating another backend's request:
+
+| Customer intent | Runtime | Page | Primary example |
+| --- | --- | --- | --- |
+| Text-to-image | Generator | `generation.md` | `examples/t2i.py` |
+| Text-to-video | Generator | `generation.md` | `examples/t2v.py` |
+| Image-to-video | Generator | `generation.md` | `examples/i2v.py` |
+| Video-to-video | Generator | `generation.md` | `examples/v2v.py` |
+| Forward, policy, or inverse dynamics | Generator | `action.md` | `examples/action.py` |
+| Controlled video generation | Generator | `transfer.md` | `examples/transfer.py` |
+| Image or video understanding | Reasoner | `reasoning.md` | `examples/reasoner.py` |
+| Responses API | Reasoner | `reasoning.md` | `examples/reasoner_responses.py` |
+| Custom checkpoint | Either | `bring-your-own-checkpoint.md` | Follow the runtime-specific launch flow |
+
+Initialize the pinned client environment through `prerequisites.md` before
+running `uv run python examples/...`. Do not add ad hoc dependencies.
+
+## 5. Troubleshoot safely
+
+Use `operations.md` as the owner for health, logs, generic errors, resource
+failures, and diagnostics. Use the task page for task-specific validation.
+
+Collect the minimum sanitized evidence needed:
+
+- the exact image identifier, without credentials;
+- intended runtime and model variant;
+- redacted `/v1/metadata` and, when configuration is relevant,
+  `/v1/manifest`;
+- GPU count, compute capability, and per-device memory;
+- HTTP status and response error envelope; and
+- the relevant container log excerpt with tokens, private URLs, and media
+  removed.
+
+Before retrying a synchronous Generator or Transfer request, check whether it is
+still active and inspect service health and logs. Treat the documented 30-minute
+value as a client timeout ceiling, not expected latency or an SLO.
+
+Do not use unsafe overrides as fixes. If an approved diagnostic requires one,
+state its risk, limit it to that diagnostic, and restore the default afterward.
+
+## 6. State the result
+
+Tell the customer:
+
+- what was checked;
+- which runtime, page, and example apply;
+- which commands are safe to run next;
+- which assumptions or unresolved release requirements remain; and
+- whether the conclusion comes from documentation or from observed endpoint
+  output.

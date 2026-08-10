@@ -110,5 +110,6 @@ Before publication:
   private paths, and unsupported backend syntax;
 - report tests that could not run and do not present static checks as live NIM
   validation; and
-- review `AGENTS.md`, `SKILL.md`, and both references so editor guidance remains
-  synchronized with the public documentation.
+- review maintainer `AGENTS.md`, `SKILL.md`, and both references, plus the
+  customer-assistant instructions and skill when affected, so AI guidance
+  remains synchronized with the public documentation.

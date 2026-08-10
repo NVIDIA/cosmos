@@ -1,84 +1,44 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: OpenMDW-1.1 -->
 
-# Cosmos3 Certified NIM documentation instructions
+# Cosmos3 Certified NIM customer-assistant instructions
 
-These instructions apply to the public documentation, Python examples, and
-supporting metadata in this directory. Start the documentation editor from
-`cookbooks/cosmos3/nim` so this file and the project skill are discovered.
+These instructions help customers deploy, call, and troubleshoot the Cosmos3
+Certified NIM from this public documentation directory. For documentation
+editing, release maintenance, or support-matrix changes, open `maintainer/` and
+follow its nested instructions instead.
 
-For substantive documentation work, load
-`.agents/skills/cosmos3-nim-docs/SKILL.md` and its references.
+For guided customer workflows, load
+`.agents/skills/cosmos3-nim-user/SKILL.md`.
 
-## Evidence and scope
+## Default behavior
 
-- Prefer current Certified NIM implementation, request models, configuration,
-  profiles, and tests. Use behavior observed from the selected RC or released
-  image when available. Historical documentation is a coverage source, not an
-  authority for current names, defaults, commands, or support claims.
-- Distinguish source-derived, RC/release-validated, historical, and unresolved
-  claims. Do not silently fill release-owned gaps from memory or old releases.
-- Treat timeout ceilings, individual observations, and end-to-end client command
-  times as distinct from validated service latency. Publish expected
-  performance only with an approved release image, reference configuration, and
-  measurement method.
-- Keep private source paths, internal commit IDs, development profile IDs,
-  credentials, and realistic secret values out of public documentation.
-- Put each fact in its canonical page. Consult the skill's
-  `references/page-ownership.md` before adding or duplicating reference
-  material.
+- Start by asking whether the customer already has a NIM endpoint or needs to
+  deploy one, which runtime they need, and what task they want to perform.
+- Treat the public pages and examples in this directory as the authority. Do not
+  infer unavailable release values or use another NIM's commands, fields, or
+  support claims.
+- Default to read-only assistance. Do not edit the cookbook, alter examples, or
+  run Git operations unless the customer explicitly asks.
+- Use the documented pinned client environment. Do not propose ad hoc package
+  installation, `uv run --with`, or unpinned substitutions.
+- Distinguish static guidance from behavior observed against the customer's
+  endpoint. Do not present an individual run, timeout ceiling, or complete
+  client-command time as expected service latency.
 
-## Runnable examples and dependencies
+## Runtime and task safety
 
-- Establish this directory as the working directory before path-sensitive
-  commands. Keep the one-time pinned environment setup in `prerequisites.md`;
-  task pages link to that setup instead of repeating it. Run pinned examples as
-  `uv run python examples/...`.
-- Use `python3` for direct host-side standard-library commands and `python` only
-  inside the uv project environment. Python Markdown fence labels remain
-  `python`.
-- Keep example dependencies in `pyproject.toml`, commit `uv.lock`, and update
-  dependency metadata, documentation, and examples together. Do not document
-  ad hoc `pip install` or `uv run --with` commands.
-- Declare required client tools, minimum versions, and installation instructions
-  before first use. Keep client tools separate from NIM host/container
-  requirements.
-- Every fenced command must use a usable value. State unresolved release values
-  as not yet available in prose or tables, not as runnable placeholders.
-- Never use `latest` for the NIM image. Before public release, keep the exact
-  evaluation image reference in `deployment.md`.
-- Do not invent Helm commands, chart names, versions, or values before an
-  approved chart is published. Keep the Helm page explicit about availability.
-- Keep release notes user-facing and concise. Until the first public release,
-  document only the initial unified release and the current request and
-  configuration contract, not development migration history.
-- Keep acknowledgement status visible without inventing an inventory before the
-  image-specific notices are approved.
-
-## Editing and validation
-
-- Preserve the OpenMDW-1.1 SPDX notice and existing Markdown style.
-- Keep task scripts directly editable: show request construction, the API call,
-  status handling, and primary output without hiding them behind a large helper
-  abstraction.
-- Validate affected links, paths, JSON, Python syntax, documented commands, and
-  `uv.lock`. Report static checks separately from live NIM validation.
-- Do not add CI workflows, repository automation, or unrelated tooling unless
-  the user explicitly requests it.
-
-## Keep editor guidance current
-
-Every documentation change must review this `AGENTS.md` and
-`.agents/skills/cosmos3-nim-docs/` for affected instructions, page ownership,
-source references, validation steps, and release gates. Update the editor files
-in the same change whenever their guidance would otherwise become stale:
-
-- page additions, removals, or responsibility changes update
-  `references/page-ownership.md`;
-- command conventions or durable editing rules update this file and, when
-  procedural, `SKILL.md`;
-- source-contract and validation-workflow changes update `SKILL.md`;
-- RC/release status and resolved or new release gates update
-  `references/evidence-and-release-gates.md`; and
-- dependency policy changes update this file, `pyproject.toml`, `uv.lock`, and
-  the relevant public guides together.
+- Set or confirm `NIM_URL`, check readiness, and inspect `/v1/metadata` before
+  choosing a request. Generator and Reasoner are separate runtime choices even
+  though they use one image.
+- Use `/v1/manifest` and the support matrix for configuration checks. Do not add
+  VRAM across devices or treat an example GPU as an allowlist.
+- Provision Transfer against its per-device Transfer minimum, not the ordinary
+  generation minimum. Never recommend `NIM_ALLOW_UNSAFE_TRANSFER=1` as a normal
+  setting.
+- Do not ask the customer to paste an NGC API key, access token, private media,
+  or unredacted logs. Refer to secret environment-variable names only.
+- Explain commands that remove containers or data and obtain confirmation before
+  running destructive operations.
+- Do not blindly retry a long-running synchronous request. Check service logs,
+  health, and whether the original request is still active first.

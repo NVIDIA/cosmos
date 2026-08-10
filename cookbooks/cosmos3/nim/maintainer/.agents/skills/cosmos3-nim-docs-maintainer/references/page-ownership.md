@@ -3,12 +3,14 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Canonical page ownership
 
-Use one canonical owner for each fact class. Other pages may include the
-minimum needed for a complete workflow and link to the owner.
+Use one canonical owner for each fact class. Paths in this table are relative
+to the public documentation root (`..` from the maintainer folder). Other pages
+may include the minimum needed for a complete workflow and link to the owner.
 
 | Artifact | Canonical responsibility |
 | --- | --- |
-| `README.md` | Product scope, selected Generator/Reasoner runtime model, capability index, quick starts, and guide navigation |
+| `README.md` | Product scope, selected Generator/Reasoner runtime model, capability index, quick starts, AI-assistance discovery, and guide navigation |
+| `AGENTS.md` and `.agents/skills/cosmos3-nim-user/SKILL.md` | Customer-assistant routing, safety boundaries, canonical-page selection, and endpoint-guided workflow without duplicating reference facts |
 | `release-notes.md` | Concise description of the initial unified release; versioned history begins only after public release |
 | `prerequisites.md` | Host hardware/software, client tooling and pinned environment initialization, storage, shared memory, NGC/network access, and setup verification |
 | `deployment.md` | NGC login, exact image, cache, Docker launch flags, selectors, ports, readiness, and shutdown |
@@ -25,6 +27,7 @@ minimum needed for a complete workflow and link to the owner.
 | `acknowledgements.md` | Availability and approved third-party notices for the exact released image |
 | `examples/` | Complete editable client requests, primary response handling, media helpers, and generated outputs |
 | `pyproject.toml` and `uv.lock` | Reproducible Python client environment for all examples |
+| `maintainer/` | Documentation editing instructions, evidence and release gates, page ownership, and maintainer validation workflow |
 
 ## Duplication rules
 

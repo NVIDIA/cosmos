@@ -1,15 +1,17 @@
 ---
-name: cosmos3-nim-docs
-description: Edit and review the Cosmos3 Certified NIM documentation, examples, client environment, and release-specific guidance. Use for documentation changes under cookbooks/cosmos3/nim, including RC bumps, API updates, page ownership changes, and consistency reviews.
+name: cosmos3-nim-docs-maintainer
+description: Edit and review the Cosmos3 Certified NIM public documentation, examples, client environment, and release-specific guidance. Use from cookbooks/cosmos3/nim/maintainer for documentation changes, including RC bumps, API updates, page ownership changes, and consistency reviews.
 license: OpenMDW-1.1
 ---
 
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: OpenMDW-1.1 -->
 
-# Cosmos3 NIM documentation workflow
+# Cosmos3 NIM documentation maintainer workflow
 
-Work from `cookbooks/cosmos3/nim`. Read `AGENTS.md` before editing.
+Work from `cookbooks/cosmos3/nim/maintainer`. Read `AGENTS.md` before editing.
+The public documentation root is `..`; run path-sensitive documentation and
+validation commands from that directory.
 
 Use these references on demand:
 
@@ -88,7 +90,9 @@ between unreleased development contracts.
 ## 5. Synchronize editor guidance
 
 Every public documentation or example change must review `AGENTS.md`, this
-skill, and both reference files. Update them in the same change when needed:
+skill, and both reference files. Review the customer-assistant instructions and
+skill when a change affects customer routing, commands, or safety. Update them
+in the same change when needed:
 
 | Change | Editor file to update |
 | --- | --- |
@@ -96,6 +100,7 @@ skill, and both reference files. Update them in the same change when needed:
 | Durable command, dependency, security, or style rule changed | `AGENTS.md` and, if procedural, `SKILL.md` |
 | Source authority or editing/validation workflow changed | `SKILL.md` |
 | RC/release status, validation boundary, or open gate changed | `references/evidence-and-release-gates.md` |
+| Customer workflow, task routing, command, or operational-safety behavior changed | `../AGENTS.md` and `../.agents/skills/cosmos3-nim-user/SKILL.md` |
 
 A wording-only correction normally requires review but no editor-file edit.
 The final handoff should state whether editor guidance changed or remained
@@ -107,6 +112,7 @@ Run checks appropriate to the change, without claiming unavailable live
 coverage:
 
 ```bash
+cd ..
 uv lock --check
 uv run --locked python -m compileall -q examples
 git diff --check
