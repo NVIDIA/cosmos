@@ -113,6 +113,9 @@ repeated downloads and materialization.
 
 ## Launch Generator
 
+The local examples publish the selected runtime at `http://localhost:8000`.
+Run one runtime at a time when using this default host port.
+
 This example explicitly chooses the general-purpose Nano model and latency:
 
 ```bash
@@ -136,16 +139,23 @@ released image. Add `-e NIM_PRECISION=fp8` only when precision must be pinned.
 
 ## Launch Reasoner
 
-Use another GPU and host port when Generator remains active:
+The Reasoner uses the same default host URL as the Generator. If you launched
+Generator above, stop it before reusing host port `8000`:
+
+```bash
+docker stop cosmos3-generator
+```
+
+Then launch the Reasoner:
 
 ```bash
 docker run --rm --name cosmos3-reasoner \
-  --gpus '"device=1"' \
+  --gpus '"device=0"' \
   --shm-size 16g \
   --ulimit memlock=-1 \
   --ulimit stack=67108864 \
   --ulimit nofile=65536:65536 \
-  -p 8001:8000 \
+  -p 8000:8000 \
   -e NGC_API_KEY \
   -e NIM_MODEL_TYPE=reasoner \
   -e NIM_MODEL_VARIANT=nano \
@@ -153,7 +163,9 @@ docker run --rm --name cosmos3-reasoner \
   "$NIM_IMAGE"
 ```
 
-Point Reasoner clients at `http://localhost:8001` in this two-container setup.
+Both runtimes listen on container HTTP port `8000`; the Docker mapping chooses
+the host port. To run both containers concurrently, publish one on another
+unused host port and set that client's `NIM_URL` accordingly.
 
 ## Wait for readiness
 
@@ -179,8 +191,10 @@ curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
 curl -fsS "$NIM_URL/v1/manifest" | python3 -m json.tool
 ```
 
-Metadata confirms the selected model, profile, and Generator variant. This is
-verification, not a normal profile-selection step.
+Metadata confirms the selected model and profile. Current source also reports
+`model_type` and `inference_endpoint`; verify that they identify `generator`
+and `/v1/infer`, or `reasoner` and `/v1/chat/completions`, before sending an
+inference request. This is verification, not a normal profile-selection step.
 
 ## Advanced profile controls
 

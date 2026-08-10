@@ -6,7 +6,7 @@
 import os
 from pathlib import Path
 
-from common import media_to_data_url
+from common import media_to_data_url, require_runtime
 from openai import OpenAI
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
@@ -14,6 +14,11 @@ IMAGE = Path(__file__).resolve().parents[2] / "reasoner" / "assets" / "robot_153
 
 
 def main() -> None:
+    require_runtime(
+        NIM_URL,
+        expected_runtime="reasoner",
+        expected_endpoint="/v1/chat/completions",
+    )
     client = OpenAI(base_url=f"{NIM_URL}/v1", api_key="not-used", timeout=1800)
     response = client.responses.create(
         model=client.models.list().data[0].id,

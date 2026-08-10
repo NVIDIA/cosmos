@@ -26,6 +26,23 @@ curl -i "$NIM_URL/v1/health/live"
 curl -i "$NIM_URL/v1/health/ready"
 ```
 
+Current source normalizes successful health responses across Generator and
+Reasoner. Readiness returns:
+
+```json
+{
+  "object": "health.response",
+  "message": "Service is ready",
+  "status": "ready"
+}
+```
+
+Liveness uses the same schema with `"message": "Service is live"` and
+`"status": "live"`. Pollers should treat a successful HTTP status as the
+primary result. If a poller also parses the body, compare `status` with the
+specific probe: `ready` for readiness and `live` for liveness. Failed backend
+probes remain non-2xx and do not use the successful response contract.
+
 Cold startup can include NGC download, cache materialization, engine build,
 model load, and warmup. A live-but-not-ready interval is expected. Kubernetes
 startup/readiness budgets must accommodate the slowest supported cold start.
@@ -45,8 +62,8 @@ curl -fsS "$NIM_URL/openapi.json" -o openapi.json
 
 | Endpoint | Operational question |
 | --- | --- |
-| `/v1/metadata` | Which profile/checkpoint did the NIM report, and which `model_variant` is active for Generator? |
-| `/v1/models` | Which model ID should the Reasoner client send? |
+| `/v1/metadata` | Which `model_type`, primary `inference_endpoint`, profile/checkpoint, and Generator `model_variant` did the NIM report? |
+| `/v1/models` | Which model ID should the Reasoner client send? This endpoint alone does not identify the active runtime. |
 | `/v1/manifest` | Which profile/artifact information is present in this image? |
 | `/v1/version` | Which release/server API is running? |
 | `/v1/license` | Where is the bundled product license information? |
@@ -215,6 +232,24 @@ typical NIM error envelope is:
 }
 ```
 
+Current source replaces a bare missing-route response with a runtime-aware 404.
+For example, sending Chat Completions to Generator returns this shape:
+
+```json
+{
+  "error": {
+    "message": "The selected runtime is 'generator', which serves POST /v1/infer. POST /v1/chat/completions requires a reasoner deployment.",
+    "type": "NotFoundError",
+    "code": 404
+  }
+}
+```
+
+The inverse error identifies Reasoner, `/v1/chat/completions`, and the need for
+a Generator deployment when a client sends `POST /v1/infer`. Use the status,
+error fields, and runtime guidance for diagnosis; continue to treat exact
+message wording as mutable.
+
 Task-specific validation belongs to [Generation](generation.md),
 [Action](action.md), [Transfer](transfer.md), and [Reasoning](reasoning.md).
 
@@ -234,7 +269,8 @@ Task-specific validation belongs to [Generation](generation.md),
 | Visible GPUs sit idle | Selected profile uses fewer GPUs than Docker exposed | Restrict `--gpus` or intentionally pin a released layout matching the desired count |
 | Compute-capability precision failure | Requested precision needs a newer GPU architecture | Select a released precision compatible with the hardware |
 | Container live but never ready | Cold materialization/build/warmup is still running or failed | Follow logs, cache/NGC/VRAM errors, and extend startup probe budget; do not send inference |
-| Port already allocated | Another container uses the host port | Choose a different `-p HOST:8000` mapping and update `NIM_URL` |
+| Port already allocated | Another container uses the host port | Stop the active runtime before reusing the default `-p 8000:8000`, or choose another host port and update that client's `NIM_URL` |
+| Wrong-runtime 404 | `NIM_URL` reaches Generator for a Reasoner request, or Reasoner for `/v1/infer` | Inspect `/v1/metadata`, then start the intended runtime or correct the URL |
 | `/dev/shm` or resource error | Shared memory/ulimits are too small | Apply the release-recommended `--shm-size` and documented ulimits |
 | Kubernetes Pod stays Pending | GPU resource request, node selector, taint/toleration, or quota cannot be satisfied | Inspect Pod events and GPU Operator/device-plugin status; match a released profile's GPU count in the [support matrix](support-matrix.md) |
 | Kubernetes volume mount fails | PVC, access mode, ownership, or storage class is incompatible | Inspect Pod/PVC events and verify the cache mount is writable by the container |
@@ -274,7 +310,8 @@ Task-specific validation belongs to [Generation](generation.md),
 | Model not found | Client hard-coded the wrong served ID | Discover it through `/v1/models` |
 | HTTP 400 request error | Sampling, `include_reasoning`, `top_logprobs`, or extension placement is invalid | Check current ranges, use strict JSON types, and place NIM/vLLM extensions in `extra_body` |
 | HTTP 422 media error | Media content/order/count/preprocessing failed | Put media before text, use data URLs, and check operator media limits |
-| Responses route 404 | Route disabled or absent in this release | Use Chat Completions and inspect live OpenAPI/operator setting |
+| Chat Completions route 404 | Client reached Generator or the selected image lacks the route | Confirm Reasoner through `/v1/metadata` and inspect live OpenAPI |
+| Responses route 404 | Route disabled, absent, or requested from Generator | Confirm Reasoner metadata, then use Chat Completions and inspect live OpenAPI/operator setting |
 | Retrieval/cancel does not work | Response storage/background support is not enabled | Use `store=false` create flow or validate storage configuration for the release |
 | KV-cache/context OOM | Context, media tokens, batching, or concurrency is too large | Reduce media FPS/token budget/concurrency before raising memory utilization |
 | DFlash startup is rejected | DFlash was enabled for Generator/Super Reasoner or its Nano draft artifact is missing | Use Nano Reasoner with a released DFlash artifact, or set `NIM_USE_DFLASH=0` |

@@ -38,6 +38,12 @@ OpenAI tool calling, `developer`-message normalization, and strict
 `include_reasoning` and `top_logprobs` types. Media errors return HTTP 422;
 other request-shape and sampling errors return HTTP 400.
 
+Current shared runtime diagnostics normalize successful Generator and Reasoner
+health responses, report `model_type` and `inference_endpoint` through
+`/v1/metadata`, and return a runtime-aware NIM error envelope for missing and
+wrong-runtime routes. These source-derived behaviors still require validation
+against the selected release image.
+
 The current documentation describes the source-backed unified runtime model:
 one image contains Generator and Reasoner profiles, and one selected profile
 starts one backend. This statement is not a substitute for a published release

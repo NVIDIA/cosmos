@@ -26,7 +26,10 @@ Reasoner completion APIs, and a Reasoner profile does not serve `/v1/infer`.
 
 Reasoner Chat Completions supports media, parsed-reasoning controls, developer
 instructions, and OpenAI tool calls as described in
-[Reasoning](reasoning.md#reasoning-instructions-and-tool-calls).
+[Reasoning](reasoning.md#reasoning-instructions-and-tool-calls). Current source
+reports the active `model_type` and primary `inference_endpoint` through
+`/v1/metadata`; check those fields before treating `/v1/models` as Reasoner
+model discovery.
 
 The NIM framework also exposes health, model, metadata, manifest, version,
 license, metrics, and OpenAPI endpoints. See
@@ -154,7 +157,10 @@ container for video modes. Released output codec support belongs to the
 
 ## Errors and live schema
 
-For HTTP status guidance, the common error envelope, and symptom-based
+A request for the other runtime's primary route returns HTTP 404. Current
+source wraps that response in the common NIM error envelope and identifies the
+active runtime, its primary endpoint, and the runtime required by the request.
+For the representative envelope, other HTTP status guidance, and symptom-based
 diagnosis, see [Errors](operations.md#errors) and
 [Troubleshooting](operations.md#troubleshooting). Do not build automation
 around exact mutable error-message text.
@@ -166,6 +172,8 @@ curl -fsS http://localhost:8000/openapi.json -o openapi.json
 python3 -m json.tool openapi.json >/dev/null
 ```
 
-Repeat this under Generator and Reasoner profiles. Treat the released image's
-live schema as authoritative for generated routes and release-specific
-constraints; report documentation conflicts instead of silently choosing one.
+The local deployment guide publishes either selected runtime on this same host
+port. Stop the active container, launch the other runtime, and repeat the
+capture. Treat the released image's live schema as authoritative for generated
+routes and release-specific constraints; report documentation conflicts instead
+of silently choosing one.
