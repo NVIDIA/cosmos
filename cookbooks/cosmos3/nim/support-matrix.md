@@ -71,7 +71,7 @@ The **Super family** in this table means `super`, `super-t2i`,
 `super-t2i-4step`, `super-i2v`, and `super-i2v-4step`. Transfer thresholds apply
 only to the general-purpose `nano` and `super` variants.
 
-| Variant group | Precision | Model offload | Guardrails during diffusion | GPUs | Minimum VRAM/device | Minimum effective system RAM | Transfer minimum/device |
+| Variant group | Precision | Model offload | Guardrails during diffusion | GPUs | Generation minimum VRAM/device | Minimum effective system RAM | Transfer minimum VRAM/device |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
 | `nano` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | No additional floor | 64 GiB |
 | `nano` | BF16 | Layer | Automatic offload | 1 | 31 GiB | No additional floor | 35 GiB |
@@ -86,6 +86,12 @@ only to the general-purpose `nano` and `super` variants.
 | Super family | FP8 | None | Resident | 1, 2, 4, 8 | 94 GiB | No additional floor | Base `super`: 104 GiB |
 | Super family | FP8 | Model | Resident | 1 | 64 GiB | No additional floor | Base `super`: 76 GiB |
 | Super family | FP8 | Layer | Resident | 1 | 38 GiB | No additional floor | Base `super`: 50 GiB |
+
+The 31-GiB Nano layer-offload configurations are intended to support ordinary
+generation on 32-GB client GPUs such as the NVIDIA GeForce RTX 5090. This is not
+a GPU SKU allowlist: the device must expose at least 31 binary GiB to the
+runtime and meet the precision's compute-capability requirement. The RTX 5090
+does not meet the 35-GiB Transfer minimum for these configurations.
 
 A configuration without a listed system-memory floor still needs enough RAM
 for the container, runtime, artifact materialization, and offloaded weights; a

@@ -35,10 +35,15 @@ Plan for:
 | Container shared memory | Not yet available |
 
 Do not add together memory from multiple GPUs to satisfy a per-device floor.
+If the deployment must serve Transfer, provision each GPU against the
+**Transfer minimum VRAM/device** column in the
+[Generator configurations](support-matrix.md#generator-configurations), not the
+**Generation minimum VRAM/device** value.
+
 Reasoner requires GPUs with the same compute capability; use homogeneous GPUs
-for either runtime because mixed-GPU support is not established. The profile
-selector evaluates the smallest per-device memory total exposed to the
-container.
+for either runtime because mixed-GPU support is not established.
+The profile selector evaluates the smallest per-device memory total exposed to
+the container.
 
 On an integrated GPU where device and host share one memory pool, the selector
 withholds 16 GiB for the host by default before comparing the remaining shared
