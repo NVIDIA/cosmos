@@ -67,6 +67,8 @@ refine entries when evidence changes:
 - Reasoner public-URL, text-only, legacy media, and request-level video sampling
   behavior;
 - live management endpoints, metrics, logs, errors, and chart probes;
+- approved startup, latency, and throughput measurements for each published
+  reference configuration;
 - prompt-upsampling integration behavior in the selected image;
 - final Helm chart identity, values, and monitoring integration;
 - approved reasoning-trace wording; and

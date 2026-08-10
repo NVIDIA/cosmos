@@ -38,6 +38,13 @@ use the same structured prompt, shared negative prompt, control media, geometry,
 and seed as the Cosmos Framework and vLLM-Omni tutorials. Choose one case so a
 single command does not run several expensive generations:
 
+Transfer inference is synchronous. The connection can remain open without a
+response body while the request is running. The example client allows up to 30
+minutes for the request; that timeout is a ceiling, not an expected completion
+time. Do not retry only because the connection is quiet. Check the active
+request using the [long-running request
+guidance](operations.md#long-running-requests) first.
+
 Install the [client tooling](prerequisites.md#client-tooling). Then, from the
 repository root, enter the cookbook directory before running a case:
 

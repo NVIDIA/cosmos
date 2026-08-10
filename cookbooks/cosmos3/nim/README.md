@@ -105,8 +105,9 @@ runtime on the same host port.
    primary endpoint: Generator uses `/v1/infer`; Reasoner uses
    `/v1/chat/completions`.
 
-5. From the repository root, enter this cookbook directory. `uv` automatically
-   creates the pinned client environment from `pyproject.toml` and `uv.lock`:
+5. After completing the pinned environment setup under
+   [Client tooling](prerequisites.md#initialize-the-example-environment), enter
+   this cookbook directory from the repository root:
 
    ```bash
    cd cookbooks/cosmos3/nim

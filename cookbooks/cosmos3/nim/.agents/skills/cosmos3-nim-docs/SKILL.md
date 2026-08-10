@@ -63,6 +63,8 @@ values to fill an unresolved release fact.
 
 - State the required runtime and endpoint near each request.
 - Establish the working directory before relative commands.
+- Keep the one-time pinned environment initialization in `prerequisites.md`;
+  link to it from task pages instead of repeating it.
 - Use `uv run python examples/...` for project examples and `python3` only for
   direct host-side standard-library snippets.
 - Keep commands copyable: no unresolved values, unsupported metavariables, or
@@ -70,6 +72,9 @@ values to fill an unresolved release fact.
 - Keep NGC credentials out of shell history and source control.
 - Keep request dictionaries, API calls, status handling, and primary outputs
   visible in task scripts.
+- Do not present a timeout, one observed run, or complete client-command wall
+  time as expected service latency. Require release-specific configuration and
+  measurement evidence before publishing performance expectations.
 - When dependencies change, update `pyproject.toml`, regenerate `uv.lock`, and
   update all affected commands and prerequisite text in the same change.
 

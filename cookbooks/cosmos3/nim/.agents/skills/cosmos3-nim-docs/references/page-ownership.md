@@ -10,7 +10,7 @@ minimum needed for a complete workflow and link to the owner.
 | --- | --- |
 | `README.md` | Product scope, selected Generator/Reasoner runtime model, capability index, quick starts, and guide navigation |
 | `release-notes.md` | RC/release image identity, versions, compatibility changes, known limitations, and upgrade guidance |
-| `prerequisites.md` | Host hardware/software, client tooling, storage, shared memory, NGC/network access, and setup verification |
+| `prerequisites.md` | Host hardware/software, client tooling and pinned environment initialization, storage, shared memory, NGC/network access, and setup verification |
 | `deployment.md` | NGC login, exact image, cache, Docker launch flags, selectors, ports, readiness, and shutdown |
 | `configuration.md` | Shared, Generator, Reasoner, profile-selection, and prompt-upsampling environment variables |
 | `support-matrix.md` | Model, precision, GPU, VRAM, profile, offload, and media/codec compatibility with evidence status |

@@ -138,6 +138,39 @@ scrape_configs:
 The final Helm `ServiceMonitor`/OpenTelemetry values and any recommended Grafana
 dashboard are **TBD (release-dependent)**.
 
+## Long-running requests
+
+Generator `/v1/infer` requests are synchronous. The client receives the image
+or video response only after inference and response serialization complete, so
+a connection can remain open without a response body while work is active. A
+quiet connection by itself does not prove that the request is hung.
+
+The cookbook clients set a 30-minute HTTP request timeout. The Generator backend
+also has a separately configurable queue-plus-execution timeout whose current
+source default is 30 minutes; see
+[`NIM_TRITON_REQUEST_TIMEOUT`](configuration.md#generator-configuration).
+Both values are timeout ceilings, not expected latency or a service-level
+objective.
+
+Before retrying a quiet request:
+
+1. confirm that the client connection is still open and has not reported an
+   HTTP or network error;
+2. follow the active container logs and correlate them with the request start;
+3. inspect approved GPU telemetry and runtime metrics for activity; and
+4. wait for the configured client or backend timeout unless the logs identify a
+   failure that requires intervention.
+
+Do not use readiness as request progress: readiness reports whether the backend
+can serve, not how far an individual request has advanced. Avoid blind retries,
+which can submit duplicate expensive work.
+
+Complete the pinned [client environment
+setup](prerequisites.md#initialize-the-example-environment) before running an
+example. The elapsed time of `uv run python examples/...` includes local client
+startup, media preparation, response decoding, and output-file writes, so do
+not interpret the complete command time as NIM inference latency.
+
 ## Guardrails
 
 Generator profiles run input/output guardrails controlled by operator
@@ -288,7 +321,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | HTTP 422, frame or resolution | Request violates T2I/video cadence rules or supplies `num_frames` for Action | Recompute with the task tables; Action derives frames from its chunk size |
 | Content-policy 422 | Text or generated frames triggered guardrails | Rephrase and review content; disable only under approved diagnostic policy |
 | Backend 500/OOM | Profile fit or runtime workload exceeded available memory | Reduce workload/concurrency, choose Nano/offload, or use a larger supported GPU; retain logs |
-| Request/client timeout | Image or video generation exceeded client/backend timeout | Use a long client timeout, inspect server progress, and tune only after measurement |
+| Request/client timeout | Image or video generation exceeded client/backend timeout | Use the documented timeout ceiling, inspect NIM logs and runtime metrics, and tune only after measurement |
 | MP4 will not play | Player lacks VP9-in-MP4 support | Use `mpv`/`ffplay` or re-encode to H.264 |
 
 ### Action and transfer

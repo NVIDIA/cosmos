@@ -20,6 +20,14 @@ export NIM_URL=${NIM_URL:-http://localhost:8000}
 curl -f "$NIM_URL/v1/health/ready"
 ```
 
+Generator inference is synchronous. In particular, a video request can keep the
+connection open without returning a response body until generation completes.
+The examples allow up to 30 minutes for the HTTP request; that timeout is a
+ceiling, not an expected completion time. Do not retry only because the
+connection is quiet. Use the [long-running request
+guidance](operations.md#long-running-requests) to check the active deployment
+first.
+
 Install the [client tooling](prerequisites.md#client-tooling). Then, from the
 repository root, enter the cookbook directory before running examples. They use
 the pinned `requests` dependency, reuse the canonical audiovisual

@@ -112,8 +112,21 @@ ffplay -version | head -n 1
 ```
 
 For another supported client distribution, use its package manager for
-`curl`, Python 3, and FFmpeg; use the same official installer for `uv`. The
-cookbook's `pyproject.toml` and `uv.lock` define the example environment.
+`curl`, Python 3, and FFmpeg; use the same official installer for `uv`.
+
+### Initialize the example environment
+
+After checking out the repository, create the pinned client environment once:
+
+```bash
+cd cookbooks/cosmos3/nim
+uv sync --locked
+```
+
+This command creates or updates the project `.venv` from `pyproject.toml` and
+`uv.lock`. Run it again after either file changes. Subsequent `uv run python
+examples/...` commands reuse that environment instead of installing ad hoc
+request dependencies as part of an example invocation.
 
 ## Network and NGC access
 

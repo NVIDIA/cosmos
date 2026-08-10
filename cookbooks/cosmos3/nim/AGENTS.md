@@ -18,6 +18,10 @@ For substantive documentation work, load
   authority for current names, defaults, commands, or support claims.
 - Distinguish source-derived, RC/release-validated, historical, and unresolved
   claims. Do not silently fill release-owned gaps from memory or old releases.
+- Treat timeout ceilings, individual observations, and end-to-end client command
+  times as distinct from validated service latency. Publish expected
+  performance only with an approved release image, reference configuration, and
+  measurement method.
 - Keep private source paths, internal commit IDs, development profile IDs,
   credentials, and realistic secret values out of public documentation.
 - Put each fact in its canonical page. Consult the skill's
@@ -27,7 +31,9 @@ For substantive documentation work, load
 ## Runnable examples and dependencies
 
 - Establish this directory as the working directory before path-sensitive
-  commands. Run pinned examples as `uv run python examples/...`.
+  commands. Keep the one-time pinned environment setup in `prerequisites.md`;
+  task pages link to that setup instead of repeating it. Run pinned examples as
+  `uv run python examples/...`.
 - Use `python3` for direct host-side standard-library commands and `python` only
   inside the uv project environment. Python Markdown fence labels remain
   `python`.
