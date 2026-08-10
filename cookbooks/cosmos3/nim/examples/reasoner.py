@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from common import media_to_data_url
+from common import media_to_data_url, require_runtime
 from openai import OpenAI
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
@@ -292,6 +292,11 @@ def main() -> None:
     case = CASE_ALIASES.get(args.case, args.case)
     spec = CASES[case]
 
+    require_runtime(
+        NIM_URL,
+        expected_runtime="reasoner",
+        expected_endpoint="/v1/chat/completions",
+    )
     with OpenAI(base_url=f"{NIM_URL}/v1", api_key="not-used", timeout=1800) as client:
         model = client.models.list().data[0].id
         request = build_request(

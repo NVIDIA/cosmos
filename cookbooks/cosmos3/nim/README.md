@@ -81,7 +81,9 @@ See [Deploy the NIM](deployment.md#advanced-profile-controls).
 | Responses API | Reasoner | Responses input | Response object/text | [Reasoning](reasoning.md#use-the-responses-api) |
 
 The public Generator request model does not expose image-to-image or sound
-generation.
+generation. Local examples publish either selected runtime at
+`http://localhost:8000`; stop the active container before launching the other
+runtime on the same host port.
 
 ## Get started
 
@@ -96,7 +98,12 @@ generation.
    ```bash
    export NIM_URL=${NIM_URL:-http://localhost:8000}
    until curl -fsS "$NIM_URL/v1/health/ready" >/dev/null; do sleep 10; done
+   curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
    ```
+
+   Before inference, confirm that metadata identifies the runtime and its
+   primary endpoint: Generator uses `/v1/infer`; Reasoner uses
+   `/v1/chat/completions`.
 
 5. From the repository root, enter this cookbook directory. `uv` automatically
    creates the pinned client environment from `pyproject.toml` and `uv.lock`:

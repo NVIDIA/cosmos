@@ -20,8 +20,14 @@ pinned OpenAI Python client from the `uv` project in that directory:
 cd cookbooks/cosmos3/nim
 export NIM_URL=${NIM_URL:-http://localhost:8000}
 curl -f "$NIM_URL/v1/health/ready"
-curl -sS "$NIM_URL/v1/models" | python3 -m json.tool
+curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
+curl -fsS "$NIM_URL/v1/models" | python3 -m json.tool
 ```
+
+Before model discovery, confirm that metadata reports `model_type` as
+`reasoner` and `inference_endpoint` as `/v1/chat/completions`. A successful
+health check and `/v1/models` response do not by themselves prove that the URL
+reaches the Reasoner runtime.
 
 The NIM does not require a request API key on localhost, but the OpenAI client
 requires a non-empty value. Use a clearly non-secret placeholder such as
@@ -32,16 +38,27 @@ requires a non-empty value. Use a clearly non-secret placeholder such as
 Do not assume the served model ID in reusable code:
 
 ```python
+import requests
 from openai import OpenAI
 
-client = OpenAI(base_url="http://localhost:8000/v1", api_key="not-used")
+nim_url = "http://localhost:8000"
+metadata_response = requests.get(f"{nim_url}/v1/metadata", timeout=30)
+metadata_response.raise_for_status()
+metadata = metadata_response.json()
+if (
+    metadata.get("model_type") != "reasoner"
+    or metadata.get("inference_endpoint") != "/v1/chat/completions"
+):
+    raise RuntimeError(f"NIM_URL does not target a Reasoner runtime: {metadata}")
+
+client = OpenAI(base_url=f"{nim_url}/v1", api_key="not-used")
 models = client.models.list()
 model = models.data[0].id
 print(model)
 ```
 
-Runtime discovery is the preferred contract; do not hard-code a model ID from
-another image or deployment.
+Use metadata for runtime discovery and `/v1/models` for served-model discovery;
+do not hard-code a model ID from another image or deployment.
 
 ## Run representative tasks
 
@@ -66,6 +83,9 @@ Run a representative case:
 ```bash
 uv run python examples/reasoner.py --case image_caption
 ```
+
+The Reasoner scripts check `/v1/metadata` before model discovery and fail with
+an actionable message if `NIM_URL` reaches a Generator runtime.
 
 The `--case` option belongs to this cookbook runner, not the NIM API. Substitute
 any other exact case name from the table. The original `image` and `video` case
@@ -358,8 +378,9 @@ final answers; do not depend on `<think>` blocks or hidden chain-of-thought.
 | --- | --- | --- |
 | HTTP 400 | Sampling or request-shape validation commonly failed | Check model, sampling ranges, extension placement, and strict `include_reasoning`/`top_logprobs` types |
 | HTTP 422 | Media validation or preprocessing commonly failed | Check data URL, media ordering, prompt media limits, and release format support |
+| Chat Completions route 404 | `NIM_URL` reaches Generator or the route is absent from the selected image | Inspect `/v1/metadata`, start Reasoner, and verify the live OpenAPI document |
 | Empty/no choices | Backend did not return a normal Chat Completion | Preserve response/log details and check the selected Reasoner profile |
-| Responses route 404 | Operator disabled Responses or the release does not expose it | Use Chat Completions or inspect `NIM_DISABLE_RESPONSES_ROUTE` and live OpenAPI |
+| Responses route 404 | Operator disabled Responses, the release does not expose it, or `NIM_URL` reaches Generator | Verify metadata first; then use Chat Completions or inspect `NIM_DISABLE_RESPONSES_ROUTE` and live OpenAPI |
 | Context or KV-cache failure | Request/media exceeded runtime limits | Reduce media sampling, token budget, concurrency, or adjust operator limits carefully |
 
 See [operations.md](operations.md#troubleshooting) for deployment-level

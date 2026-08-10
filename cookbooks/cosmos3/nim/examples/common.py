@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: OpenMDW-1.1
 
-"""Small media helpers shared by the Cosmos3 NIM examples."""
+"""Small client and media helpers shared by the Cosmos3 NIM examples."""
 
 import base64
 import binascii
 import json
 from pathlib import Path
+
+import requests
 
 _MIME_TYPES = {
     ".jpeg": "image/jpeg",
@@ -15,6 +17,31 @@ _MIME_TYPES = {
     ".png": "image/png",
     ".webp": "image/webp",
 }
+
+
+def require_runtime(
+    nim_url: str,
+    *,
+    expected_runtime: str,
+    expected_endpoint: str,
+) -> dict:
+    """Fail before inference when ``nim_url`` targets the wrong runtime."""
+    response = requests.get(f"{nim_url}/v1/metadata", timeout=30)
+    response.raise_for_status()
+    metadata = response.json()
+    if not isinstance(metadata, dict):
+        raise TypeError("/v1/metadata must return a JSON object")
+
+    actual_runtime = metadata.get("model_type")
+    actual_endpoint = metadata.get("inference_endpoint")
+    if actual_runtime != expected_runtime or actual_endpoint != expected_endpoint:
+        raise RuntimeError(
+            f"Expected the {expected_runtime!r} runtime at {nim_url}, but "
+            f"/v1/metadata reported model_type={actual_runtime!r} and "
+            f"inference_endpoint={actual_endpoint!r}. Start the correct runtime "
+            "or update NIM_URL."
+        )
+    return metadata
 
 
 def compact_json_file(path: Path) -> str:
