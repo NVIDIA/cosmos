@@ -147,7 +147,7 @@ To run **Cosmos3-Super** instead, load the larger checkpoint:
 
 To run **Cosmos3-Edge** instead, load `nvidia/Cosmos3-Edge` and use its
 single-GPU, no-audio settings: `height=480`, `width=832`, `num_frames=121`,
-`num_inference_steps=50`, `guidance_scale=5.0`, and `flow_shift=3.0`.
+`num_inference_steps=20`, `guidance_scale=6.0`, and `flow_shift=12.0`.
 
 ### Notebook walkthrough
 
