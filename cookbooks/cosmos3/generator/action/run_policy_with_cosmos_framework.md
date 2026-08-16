@@ -70,8 +70,13 @@ Inside the container, start the policy server:
    python -m cosmos_framework.scripts.action_policy_server_robolab \
      --checkpoint-path nvidia/Cosmos3-Edge-Policy-DROID \
      --port 8000 \
-     --format-prompt-as-json True
+     --format-prompt-as-json True \
+     --guidance-interval 960 1001
    ```
+
+   The guidance interval applies classifier-free guidance only to denoising
+   timesteps in the inclusive range `[960, 1001]`. Omit
+   `--guidance-interval` to apply guidance at every denoising step.
 
 ## Simulation Client
 
