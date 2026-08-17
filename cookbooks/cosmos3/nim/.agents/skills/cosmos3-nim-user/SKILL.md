@@ -55,14 +55,19 @@ Guide the customer through the canonical pages in this order:
 1. `prerequisites.md` for host and client preparation.
 2. `support-matrix.md` for model, precision, GPU, VRAM, system-memory, and
    Transfer eligibility.
-3. `deployment.md` for the exact image, authentication, cache, runtime selector,
-   launch, readiness, logs, and cleanup.
+3. `deployment.md` for the exact image, authentication, pre-download profile
+   preflight, cache, runtime selector, launch, readiness, logs, and cleanup.
 4. `configuration.md` only when a documented non-default setting is needed.
 5. The existing-endpoint preflight above before the first inference request.
 
 Use only the exact image and commands in `deployment.md`; never substitute
-`latest`. One container starts one runtime. Preserve a failed container long
-enough to inspect its logs, and ask before removing containers or cached data.
+`latest`. After the image pull, run the documented pre-download profile
+preflight with the intended selectors and GPUs. Treat success as evidence for a
+candidate profile only, not full host compatibility; cold start and
+representative requests remain required. One service container starts one
+runtime. The preflight container is temporary and `--rm` removes only that
+container. Preserve a failed service container long enough to inspect its logs,
+and ask before removing containers or cached data.
 
 For hardware guidance:
 
@@ -75,9 +80,12 @@ For hardware guidance:
   matrix for documented requirements;
 - use the current RTX 5090 guidance and thresholds in `support-matrix.md` to
   distinguish ordinary generation from Transfer eligibility;
-- explain that startup takes one free-memory snapshot and can fall back only to
-  an equivalent lower-memory layout; an explicit profile pin never falls back;
-  and
+- explain that preflight/startup takes one free-memory snapshot and can fall
+  back only to an equivalent lower-memory layout; an explicit profile pin never
+  falls back;
+- use the published floors to choose a candidate without claiming that they
+  resolve unavailable general CPU, RAM, disk, shared-memory, driver, Docker, or
+  Container Toolkit requirements; and
 - leave requirements described as not yet available unresolved.
 
 ## 4. Route the task

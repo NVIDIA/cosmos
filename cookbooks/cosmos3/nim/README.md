@@ -12,10 +12,11 @@ contains two runtimes, but each container runs only one:
   Completions and, when enabled, the Responses API.
 
 > **Pre-release documentation:** Deployment commands pin the current evaluation
-> image. Inspect the running image's manifest and OpenAPI before use. The public
-> image, final system requirements, supported configurations, and release URLs
-> are not yet available. Do not use the evaluation documentation as a public
-> support commitment.
+> image. The [Support matrix](support-matrix.md) publishes the approved release
+> profile-selection floors; confirm an available row in the running image's
+> manifest. The public image, general system requirements, and release URLs are
+> not yet available. Do not treat other evaluation behavior as a public support
+> commitment.
 
 ## Choose what to run
 
@@ -120,8 +121,9 @@ uv run python examples/reasoner.py --case image_caption
 1. Verify the GPU host against [Prerequisites](prerequisites.md).
 2. Choose a compatible model and hardware configuration from the
    [Support matrix](support-matrix.md).
-3. Follow [Deployment](deployment.md) to authenticate, prepare the cache, and
-   launch either Generator or Reasoner.
+3. Follow [Deployment](deployment.md) to authenticate, pull the image, run the
+   pre-download profile preflight, prepare the cache, and launch either
+   Generator or Reasoner.
 4. Return to [Use an existing NIM endpoint](#use-an-existing-nim-endpoint) to
    verify the service and run the first request.
 

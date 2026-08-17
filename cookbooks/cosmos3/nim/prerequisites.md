@@ -7,11 +7,12 @@ Use this page to prepare and verify a host before pulling or launching the
 Cosmos3 Certified NIM. Profile-specific GPU, precision, and VRAM compatibility
 belongs to the [support matrix](support-matrix.md).
 
-> **Pre-release status:** GPU compute, count, VRAM, and configuration-specific
-> system-memory requirements are summarized in the
-> [Support matrix](support-matrix.md). CPU architecture, general host RAM, disk,
-> shared-memory, driver, and Container Toolkit requirements are not yet
-> available for the public release.
+> **Published release floors:** GPU compute capability, GPU count, per-device
+> VRAM, Transfer headroom, and configuration-specific system-memory floors are
+> published in the [Support matrix](support-matrix.md). Full host compatibility
+> cannot be established before cold start: general CPU architecture, host RAM,
+> disk, shared-memory, driver, Docker, and Container Toolkit requirements are
+> not yet available.
 
 ## Hardware requirements
 
@@ -62,6 +63,10 @@ NIM checks a container memory limit before host physical memory, so a lower
 Docker or Kubernetes limit can make an otherwise capable host incompatible.
 These profile-selection floors do not resolve the release-wide host-RAM
 requirement for the container, runtime, materialized artifacts, and workload.
+They are sufficient to choose a candidate profile before model artifacts are
+downloaded. After pulling the image, run the documented
+[pre-download profile preflight](deployment.md#run-the-pre-download-profile-preflight)
+before cold start.
 
 ## Software requirements
 

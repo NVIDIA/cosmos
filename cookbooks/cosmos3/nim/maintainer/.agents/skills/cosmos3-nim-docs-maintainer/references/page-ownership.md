@@ -13,7 +13,7 @@ may include the minimum needed for a complete workflow and link to the owner.
 | `AGENTS.md` and `.agents/skills/cosmos3-nim-user/SKILL.md` | Customer-assistant routing, safety boundaries, canonical-page selection, and endpoint-guided workflow without duplicating reference facts |
 | `release-notes.md` | Concise description of the initial unified release; versioned history begins only after public release |
 | `prerequisites.md` | Host hardware/software, client tooling and pinned environment initialization, storage, shared memory, NGC/network access, and setup verification |
-| `deployment.md` | NGC login, exact image, cache, Docker launch flags, selectors, ports, readiness, and shutdown |
+| `deployment.md` | NGC login, exact image, pre-download profile preflight, cache, Docker launch flags, selectors, ports, readiness, and shutdown |
 | `configuration.md` | Shared, Generator, Reasoner, profile-selection, and prompt-upsampling environment variables |
 | `support-matrix.md` | Model, precision, GPU, VRAM, profile, offload, and media/codec compatibility with evidence status |
 | `helm.md` | Approved staging chart reference, Kubernetes prerequisites and concepts, and the TBD public chart boundary; exact commands only after the public URL, schema, and workflow are approved |

@@ -134,6 +134,9 @@ Also:
 - search for stale command forms, obsolete fields, unresolved runnable values,
   realistic secrets, and duplicated RC image references;
 - run CLI `--help` or import smoke tests when runner behavior changes; and
+- when the exact image and hardware are available, distinguish the documented
+  pre-download profile preflight from cold-start and inference validation; a
+  preflight pass establishes only candidate-profile compatibility; and
 - run live requests only when the exact image and required hardware are
   available, recording the image reference and active runtime.
 

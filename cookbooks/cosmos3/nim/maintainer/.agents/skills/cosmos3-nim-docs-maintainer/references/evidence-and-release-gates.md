@@ -46,6 +46,10 @@ against the NIM contract rather than copying another backend's adapter.
   claims as validated in the evaluation image. Before public release, `deployment.md`
   owns the exact evaluation image reference; update it on every RC bump.
 - Never replace an RC reference with `latest`.
+- The current support-matrix compute-capability, GPU-count, per-device VRAM,
+  Transfer, and effective system-memory thresholds are approved for publication
+  as release profile-selection floors. They establish a candidate profile, not
+  full host compatibility, and remain subject to the exact image manifest.
 - The final public image, release version/date, catalog URL, and model-card URL
   remain release-owned until approved.
 - The current evaluation chart reference is
@@ -65,7 +69,8 @@ confirmed:
   and Reasoner Super BF16 TP2 at 73 GiB/device;
 - effective system-memory selection floors of 16 GiB for resident Generator and
   Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload;
-- current-free-VRAM startup selection, equivalent-layout fallback, explicit-pin
+- current-free-VRAM startup selection before model materialization, the
+  container preflight invocation, equivalent-layout fallback, explicit-pin
   failure, and the Reasoner runtime reserve/utilization clamp;
 - Reasoner TP1 preference, TP2 availability fallback, guided-decoding
   enforcement, Responses create normalization, and VidCom2 pruning defaults;
@@ -79,15 +84,45 @@ Regenerate the source profile export before reconciling tables. Generated
 artifacts can lag profile policy source and must not silently override current
 implementation or be presented as an approved image manifest.
 
+## Current RC-validated contracts
+
+The pre-download selector was run from the exact evaluation image pinned in
+`deployment.md` (manifest digest
+`sha256:40fc1382a557fe22e60e4ddaae5c4be6b187431786e610208b5b3d5261dc5ce2`)
+on one NVIDIA H100 PCIe (compute capability 9.0, 81,559 MiB
+total and 81,081 MiB free):
+
+- Nano Generator selected an FP8, one-GPU profile with `offload=none` at the
+  44-GiB VRAM and 16-GiB effective-system-memory floors, with Transfer
+  admission enabled.
+- Nano Reasoner selected an FP8, one-GPU profile at the 23.1-GiB VRAM and
+  16-GiB effective-system-memory floors.
+- `NGC_API_KEY` and checkpoint overrides were absent inside the container, and
+  `/opt/nim/.cache` was absent both before and after the two selector runs.
+
+The same image manifest contains 115 Generator profiles. Normalizing away
+profile IDs, performance scenario, and repeated GPU topology produces 37
+variant-specific hardware rows: six each for the five Super-family variants,
+six for Nano, and one for Nano-DROID. The public table collapses the five
+identical Super-family sets into six shared rows, so its 13 rows cover every
+active Generator profile without retaining a documentation-only row. Transfer
+minimums also match each applicable installed generation floor plus Transfer
+overhead.
+
+The image was launched through Slurm/Pyxis because the documentation host could
+not access its Docker daemon. This validates the selector invocation, embedded
+manifest and Transfer-policy reconciliation, and no-model-download boundary
+inside the exact image, not the documented Docker wrapper, profile fallback
+cases, cold start, readiness, or inference.
+
 ## Open release gates
 
 Review this list on every substantive documentation update and remove, add, or
 refine entries when evidence changes:
 
 - final public image identity and release URLs;
-- released profile rows, including current-source compute capability, VRAM,
-  Transfer, effective system-memory boundaries, and driver/toolkit floors;
-- general CPU architecture, RAM, disk, and shared-memory requirements;
+- general CPU architecture, host RAM beyond profile-selection floors, disk,
+  shared-memory, driver, Docker, and Container Toolkit requirements;
 - exact supported image formats, video containers/codecs, URL fetching, and
   VP9-in-MP4 playback observations;
 - exact released support for specialist Generator, Action, Transfer, and V2V
@@ -128,6 +163,13 @@ Static validation cannot establish released profile availability, runtime
 behavior, hardware compatibility, media/codec support, metrics, logs, or
 performance. Claim those only after testing the exact image on appropriate
 hardware or receiving an approved release artifact.
+
+The container pre-download preflight sits between static review and cold-start
+validation. It can establish that the exact image has a candidate manifest row
+and that selectors, effective system-memory floor, compute capability, total
+VRAM, and current free VRAM pass profile selection. It cannot establish general
+host compatibility, model download/materialization, model load, readiness,
+media handling, inference behavior, or performance.
 
 For live validation, record the exact image, runtime, model variant, precision,
 hardware, endpoint, and request case. Validate Generator and Reasoner

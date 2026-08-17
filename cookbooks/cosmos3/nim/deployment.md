@@ -105,6 +105,49 @@ docker pull "$NIM_IMAGE"
 
 Do not replace the versioned tag with `latest` or another unvalidated image.
 
+## Run the pre-download profile preflight
+
+After the image is present locally, run profile selection without starting the
+server or downloading model artifacts. This example checks the same Nano
+Generator selectors used by the launch example:
+
+```bash
+docker run --rm \
+  --gpus '"device=0"' \
+  -e NIM_MODEL_TYPE=generator \
+  -e NIM_MODEL_VARIANT=nano \
+  -e NIM_PERF_PROFILE=latency \
+  --entrypoint /bin/bash \
+  "$NIM_IMAGE" \
+  -lc '
+    set -e
+    output=/tmp/cosmos3-preflight.env
+    /opt/nim/.venv/bin/python -m profile_selection.startup --output "$output"
+    printf "Profile preflight passed.\n"
+  '
+```
+
+Use the runtime, model, precision, performance, offload, profile-selection
+environment, GPU exposure, and container memory limit intended for the real
+deployment. Expose every GPU that deployment will use. For Reasoner, set
+`NIM_MODEL_TYPE=reasoner`, select `nano` or `super`, and omit
+`NIM_PERF_PROFILE`. Do not pass `NGC_API_KEY`, `NIM_MODEL_PATH`, or
+`NIM_DFLASH_MODEL_PATH` to this bundled-profile check. Checkpoint-source
+validation is a separate BYOC step, and an `hf://` source can download files.
+
+A successful preflight proves that the image manifest contains a candidate
+profile and that the selectors, effective system-memory floor, GPU compute
+capability, total VRAM, and current free VRAM pass profile selection. For
+Generator, it also reports Transfer VRAM admission in the logs. It does not
+load the model or establish general CPU, host-RAM, disk, shared-memory, driver,
+Docker, Container Toolkit, media, or inference compatibility. Only a successful
+cold start and representative requests establish those later stages.
+
+The preflight writes only inside its temporary container. `--rm` removes that
+container when the command exits; it does not remove the image or model cache.
+If preflight fails, resolve the reported selector or resource issue before
+starting a cold download.
+
 ## Prepare the model cache
 
 ```bash

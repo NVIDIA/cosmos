@@ -6,10 +6,12 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 Use this page to match a model to precision, GPU compute capability, GPU count,
 per-device VRAM, and system-memory requirements.
 
-> **Pre-release status:** The tables below list the current evaluation
-> configurations and selection requirements. Confirm the available
-> configurations in `/v1/manifest` for the exact evaluation image you run.
-> Final supported configurations will be published with the release.
+> **Published release floors:** The tables below define the release
+> profile-selection floors for GPU compute capability, GPU count, per-device
+> VRAM, effective system memory, and Transfer headroom. Confirm that a matching
+> configuration exists in `/v1/manifest` for the exact image you run. Meeting a
+> floor establishes a candidate profile, not full host compatibility; see
+> [Prerequisites](prerequisites.md#hardware-requirements).
 
 ## Choose a model
 
@@ -54,7 +56,7 @@ row.
 Reasoner requires all visible GPUs to have the same compute capability.
 Generator eligibility is calculated from the least-capable GPU and the smallest
 per-device memory total. Use homogeneous GPUs for either runtime; mixed-GPU
-configurations are not supported for pre-release evaluation.
+configurations are not supported.
 
 All memory values below are binary GiB per device. Do not add VRAM across
 devices to satisfy a per-device floor. Static compatibility first checks total
@@ -79,11 +81,11 @@ only to the general-purpose `nano` and `super` variants.
 | Variant group | Precision | Model offload | Guardrails during diffusion | GPUs | Generation minimum VRAM/device | Minimum effective system RAM | Transfer minimum VRAM/device |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
 | `nano` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 16 GiB | 64 GiB |
-| `nano` | BF16 | Layer | Automatic offload | 1 | 31 GiB | 64 GiB | 35 GiB |
+| `nano` | BF16 | Layer | Offloaded | 1 | 31 GiB | 64 GiB | 35 GiB |
 | `nano` | FP8 | None | Resident | 1, 2, 4, 8 | 44 GiB | 16 GiB | 50 GiB |
 | `nano` | FP8 | Model | Resident | 1 | 38 GiB | 64 GiB | 44 GiB |
 | `nano` | FP8 | Layer | Resident | 1 | 32 GiB | 64 GiB | 38 GiB |
-| `nano` | FP8 | Layer | Automatic offload | 1 | 31 GiB | 64 GiB | 35 GiB |
+| `nano` | FP8 | Layer | Offloaded | 1 | 31 GiB | 64 GiB | 35 GiB |
 | `nano-droid` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 16 GiB | N/A |
 | Super family | BF16 | None | Resident | 1, 2, 4, 8 | 150 GiB | 16 GiB | Base `super`: 160 GiB |
 | Super family | BF16 | Model | Resident | 1 | 93 GiB | 150 GiB | Base `super`: 99 GiB |
@@ -102,9 +104,8 @@ The NIM applies a system-memory floor to every profile and filters incompatible
 profiles before final selection. Generator startup also requires the current
 free memory on each participating GPU to meet the generation floor in the
 table. Resident Generator profiles use a 16-GiB selection floor, Nano offload
-profiles use 64 GiB, and all Super offload
-profiles use 150 GiB. These profile floors are not final general host-RAM
-requirements; the release-wide CPU and RAM requirements remain unresolved. The
+profiles use 64 GiB, and all Super offload profiles use 150 GiB. These profile floors do not define a general host-RAM
+minimum; the release-wide CPU and RAM requirements remain unresolved. The
 NIM checks a container memory limit before host physical memory.
 
 Leave offload and guardrail residency on automatic selection unless a specific
