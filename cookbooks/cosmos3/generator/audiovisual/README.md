@@ -155,8 +155,7 @@ single-GPU, no-audio settings: `height=480`, `width=832`, `num_frames=121`,
 the Diffusers backend: it provisions a dedicated venv, then walks through
 text-to-image, text-to-video, image-to-video, and video-to-video generation (with
 and without audio) using `Cosmos3OmniPipeline`, including a dedicated Cosmos3-Edge
-section with 480p text-to-image, text-to-video, and image-to-video examples and
-previews.
+section with a 480p image-to-video example and preview.
 
 ## Run with vLLM-Omni
 

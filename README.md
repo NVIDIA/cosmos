@@ -1181,7 +1181,7 @@ Cosmos 3 latency and serving results live in [`inference_benchmarks.md`](inferen
 
 | Benchmark | Surface | Model | What it covers |
 | --- | --- | --- | --- |
-| [Cosmos3-Edge generator](inference_benchmarks.md#cosmos3-edge-generator) | Generator | Cosmos3-Edge | 121-frame image-to-video and text-to-video latency, plus text-to-image latency, across PyTorch and vLLM-Omni |
+| [Cosmos3-Edge generator](inference_benchmarks.md#cosmos3-edge-generator) | Generator | Cosmos3-Edge | 121-frame image-to-video latency across PyTorch and vLLM-Omni |
 | [Cosmos3-Nano generator](inference_benchmarks.md#cosmos3-nano-generator) | Generator | Cosmos3-Nano | Text-to-image, text-to-video, and image-to-video latency across PyTorch, vLLM-Omni, Diffusers, and NIM |
 | [Cosmos3-Super generator](inference_benchmarks.md#cosmos3-super-generator) | Generator | Cosmos3-Super | The same modalities and engines at the larger checkpoint scale |
 | [Cosmos3-Edge reasoner](inference_benchmarks.md#cosmos3-edge-reasoner) | Reasoner | Cosmos3-Edge | vLLM serving metrics on RTX PRO GPUs and eager Transformers prefill, decode, and end-to-end latency on embedded platforms |
