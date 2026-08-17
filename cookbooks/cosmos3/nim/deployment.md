@@ -4,7 +4,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Deploy the Cosmos3 Certified NIM
 
 Use this page to authenticate to NGC, choose a model, launch Generator or
-Reasoner, and verify the selected service. The commands pin the current 2.3.1
+Reasoner, and verify the selected service. The commands pin the current 2.6.0
 pre-release evaluation image. It is not a public release. Use the
 [Support matrix](support-matrix.md) to choose a compatible evaluation
 configuration. For an active container, `/v1/manifest` is the authority for
@@ -23,10 +23,13 @@ Users normally select a runtime and model, not a profile ID:
 
 A profile is the resolved deployment configuration: model artifacts,
 precision, GPU layout, and any required GPU/system-memory residency policy.
-Automatic selection filters on effective system memory, prefers a compatible
-profile that avoids offload, and makes effective use of the available GPUs. On
-an integrated GPU with unified host/device memory, selection reserves host
-memory and uses resident Generator model and guardrail profiles. Startup fails
+Automatic selection filters on effective system memory and stable total VRAM,
+then takes one snapshot of current free memory on every visible GPU. It prefers
+a compatible profile that avoids offload and makes effective use of the
+available GPUs, but can choose an equivalent lower-memory offload or
+tensor-parallel layout when the preferred layout does not currently fit. On an
+integrated GPU with unified host/device memory, selection reserves host memory
+and uses resident Generator model and guardrail profiles. Startup fails
 if the chosen model cannot run on the host. See [Support
 matrix](support-matrix.md#gpu-architecture-and-topology) for the memory and
 shared-memory rules, then confirm the selected profile in the exact image
@@ -59,9 +62,10 @@ The software defaults to `latency` when the selector is omitted.
 ### Select a Reasoner model
 
 Set `NIM_MODEL_TYPE=reasoner` and choose `NIM_MODEL_VARIANT=nano` or `super`.
-Reasoner does not use `NIM_PERF_PROFILE`. Nano Reasoner can optionally enable
-DFlash speculative decoding with
-`NIM_USE_DFLASH=1`; see [Configuration](configuration.md#speculative-decoding).
+Reasoner does not use `NIM_PERF_PROFILE`. Nano and Super Reasoner enable their
+bundled DFlash speculative-decoding drafts by default. Set `NIM_USE_DFLASH=0`
+to run the selected Reasoner target model without DFlash; see
+[Configuration](configuration.md#speculative-decoding).
 
 ### Precision selection
 
@@ -95,7 +99,7 @@ the key in source control.
 Pin and pull the current release-candidate image:
 
 ```bash
-export NIM_IMAGE='nvcr.io/nvstaging/nim/cosmos3:2.3.1-rc.20260811104045-e5bf0211e0beea0c'
+export NIM_IMAGE='nvcr.io/nvstaging/nim/cosmos3:2.6.0-bugfixes-rc.20260817112350-5af4328d51488224'
 docker pull "$NIM_IMAGE"
 ```
 
@@ -237,12 +241,13 @@ See [Configuration](configuration.md#advanced-profile-controls) for details.
 | `-v ...:/opt/nim/.cache` | Persist model artifacts |
 
 GPU counts, compute-capability gates, VRAM floors, and system-memory floors are
-summarized in the [configuration matrix](support-matrix.md). Resident Generator
-and Reasoner profiles require 16 GiB, Nano offload profiles require 64 GiB, and
-Super offload profiles require 150 GiB. Docker or Kubernetes memory limits
-count as the available system memory.
-Confirm that the selected row and its tags are present in the target image
-before deployment.
+summarized in the [configuration matrix](support-matrix.md). Each participating
+GPU must have enough current free memory at startup, not only enough total
+capacity. Resident Generator and Reasoner profiles require 16 GiB of effective
+system memory, Nano offload profiles require 64 GiB, and Super offload profiles
+require 150 GiB. Docker or Kubernetes memory limits count as the available
+system memory. Confirm that the selected row and its tags are present in the
+target image before deployment.
 
 ## Next steps
 

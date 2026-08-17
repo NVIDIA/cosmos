@@ -204,9 +204,11 @@ The Responses create route is enabled unless the deployment sets
 uv run python examples/reasoner_responses.py
 ```
 
-The request uses `store=false`. Responses create requests apply
-`chat_template_kwargs.enable_thinking=false`, so an ordinary answer is returned
-as a message item and exposed by the OpenAI client through
+The request uses `store=false`. Responses create requests require a non-empty
+model, apply the same `temperature`, `top_p`, `top_k`, and
+`chat_template_kwargs.enable_thinking=false` defaults as Chat Completions, and
+map a `developer` input turn to a system instruction. An ordinary answer is
+returned as a message item and exposed by the OpenAI client through
 `response.output_text` rather than appearing only as a reasoning item.
 
 Persisted retrieval, cancellation, background responses, and
@@ -217,9 +219,10 @@ Use Chat Completions for video requests in this pre-release version.
 
 Chat requests default to `chat_template_kwargs.enable_thinking=false`, so
 ordinary untagged output remains in `message.content`. Responses requests use
-the same chat-template default while retaining their Responses-specific
-sampling and structured-output field names. To enable thinking and request
-parsed reasoning in Chat Completions, pass the controls through `extra_body`:
+the same chat-template and sampling defaults while retaining their
+Responses-specific token-limit and structured-output field names. To enable
+thinking and request parsed reasoning in Chat Completions, pass the controls
+through `extra_body`:
 
 ```python
 extra_body = {
@@ -239,7 +242,7 @@ uv run python examples/reasoner.py \
   --thinking-token-budget 512
 ```
 
-`include_reasoning` must be a JSON boolean. The task runner does not add
+For Chat Completions, `include_reasoning` must be a JSON boolean. The task runner does not add
 prompt-authored `<think>` formatting instructions. When the response includes
 parsed reasoning, it saves the dedicated `reasoning_content` field separately
 and keeps the final
@@ -247,9 +250,9 @@ answer in `message.content`; it never parses `<think>` tags. Reasoning text is
 not a stable machine-readable explanation and should not be required by
 downstream logic.
 
-Chat Completions also:
+Both API styles map a `developer` turn to a `system` instruction. Chat
+Completions also:
 
-- maps a `developer` message to a `system` instruction;
 - enables standard OpenAI tool definitions and automatic tool choice with the
   Hermes tool-call format; and
 - requires `top_logprobs` to be an integer or null. When `logprobs=true` and
@@ -258,18 +261,20 @@ Chat Completions also:
 Check the running NIM's `/openapi.json` and the client response model before
 depending on reasoning or tool-call fields.
 
-## Optional Nano Reasoner DFlash
+## Reasoner DFlash
 
-Set `NIM_USE_DFLASH=1` at launch to enable DFlash speculative decoding for a
-Nano Reasoner. The request routes and payloads do not change. Startup rejects
-the option for Generator and Super Reasoner, or when the required draft
-artifact is unavailable. An independent local draft path, a BF16 KV-cache
-option, and advanced JSON configuration are also supported.
+Nano and Super Reasoner use their bundled DFlash speculative-decoding drafts by
+default. The request routes and payloads do not change. Set
+`NIM_USE_DFLASH=0` at launch to run the selected target model without DFlash.
+Startup rejects DFlash for Generator or when the required variant-specific
+draft artifact is unavailable. An independent local draft path, a
+hardware-derived BF16 KV-cache default, and advanced JSON configuration are
+also supported.
 
-Treat DFlash as an advanced performance option. Compare memory, latency,
-throughput, correctness, and output quality on representative requests before
-production use. See [Reasoner configuration](configuration.md#speculative-decoding)
-and [Reasoner checkpoint](bring-your-own-checkpoint.md#reasoner-checkpoint).
+Compare DFlash and target-only operation for memory, latency, throughput,
+correctness, and output quality on representative requests before production
+use. See [Reasoner configuration](configuration.md#speculative-decoding) and
+[Reasoner checkpoint](bring-your-own-checkpoint.md#reasoner-checkpoint).
 
 ## Advanced sampling and request extensions
 
@@ -285,10 +290,12 @@ The service supplies these values when omitted:
 `nvext` are request extensions. With the OpenAI client, put them explicitly in
 `extra_body`, as the video example does.
 
-The default service limit is five images and one video per prompt. Use
-request-level `media_io_kwargs` for workload-specific video sampling; the
-example requests 4 FPS. Operator-wide media limits, preprocessing, and optional
-video-token pruning are documented under
+When the operator leaves the image and video limits unset, the NIM does not
+override the runtime's modality limits. Use request-level `media_io_kwargs` for
+workload-specific video sampling; the example requests 4 FPS. Video-token
+pruning defaults to a `0.6` rate with `vidcom2`; set the operator rate to `0` to
+disable it. Operator-wide media limits, preprocessing, and pruning are
+documented under
 [Reasoner configuration](configuration.md#reasoner-configuration). Verify
 additional request fields against the active `/openapi.json`.
 
@@ -326,9 +333,35 @@ client code:
 }
 ```
 
-The service normalizes the standard `response_format` shape and enables
-guided-decoding enforcement for Reasoner output, including output processed by
-the reasoning parser.
+The service normalizes the standard Chat Completions `response_format` shape
+and enables guided-decoding enforcement for Reasoner output, including output
+processed by the reasoning parser. Responses requests use their native
+`text.format` shape instead:
+
+```json
+{
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "name": "temporal_events",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "start": {"type": "number"},
+            "end": {"type": "number"},
+            "caption": {"type": "string"}
+          },
+          "required": ["start", "end", "caption"],
+          "additionalProperties": false
+        }
+      },
+      "strict": true
+    }
+  }
+}
+```
 
 The runnable task catalog uses JSON schemas for temporal localization, 2D
 grounding, and 2D trajectory proposals. It parses `message.content` with the

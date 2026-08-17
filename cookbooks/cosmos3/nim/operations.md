@@ -44,8 +44,12 @@ specific probe: `ready` for readiness and `live` for liveness. Failed backend
 probes remain non-2xx and do not use the successful response contract.
 
 Cold startup can include NGC download, cache materialization, engine build,
-model load, and warmup. A live-but-not-ready interval is expected. If you use an
-orchestrator, configure its startup and readiness budgets for this interval.
+model load, and warmup. Before materialization, profile selection captures the
+current free memory of each visible GPU once and commits to the selected
+layout. A competing allocation can cause a lower-memory fallback or a startup
+failure; free memory that changes afterward does not trigger reselection. A
+live-but-not-ready interval is expected. If you use an orchestrator, configure
+its startup and readiness budgets for this interval.
 
 ## Inspect the running service
 
@@ -231,6 +235,8 @@ supported merely because an OpenAI-compatible gateway for that provider works.
 Before accepting traffic:
 
 - require readiness, not only liveness;
+- start with enough free memory on every participating GPU and review any
+  profile-fallback warning;
 - record version, active model, profile/checkpoint metadata, and image digest;
 - verify the intended Generator or Reasoner route exists in live OpenAPI;
 - send one small representative request for each enabled capability;
@@ -290,7 +296,8 @@ Task-specific validation belongs to [Generation](generation.md),
 | Image pull unauthorized | Docker is not logged in or key lacks repository access | Re-run password-stdin login with `NGC_API_KEY` and literal `$oauthtoken` |
 | Artifact download fails | Container lacks `NGC_API_KEY`, entitlement, DNS/network, or storage | Verify key injection and NGC connectivity; inspect cache capacity/ownership |
 | Cache permission denied | Host mount is not writable by the container | Fix ownership/ACLs and retain a persistent writable `/opt/nim/.cache` |
-| No compatible profile | GPU compute capability, per-device VRAM, or effective system memory does not satisfy the selected model/precision/offload requirements | Inspect the exact image manifest, remove unnecessary pins, choose a smaller model or compatible precision, or use supported hardware |
+| No compatible profile | GPU compute capability, total or current free per-device VRAM, or effective system memory does not satisfy the selected model/precision/offload requirements | Inspect the exact image manifest, free unrelated GPU memory, remove unnecessary pins, choose a smaller model or compatible precision, or use supported hardware |
+| Discrete-GPU availability probe fails | NVML or the NVIDIA utility driver capability is unavailable, or CUDA-visible devices cannot be matched to NVML | Verify the driver, Container Toolkit configuration, GPU visibility, and utility capability before retrying |
 | Integrated GPU has no compatible profile | The host reserve lowers usable shared memory, and Generator offload profiles are not eligible | Choose a resident profile that fits after the reserve; change `NIM_UNIFIED_MEMORY_HOST_RESERVE_GIB` only from validated host-memory measurements |
 | Profile filtered by system memory | The container cgroup or host exposes less RAM than the profile requires | Raise the container memory limit or choose a compatible profile; floors are 16 GiB for resident/Reasoner, 64 GiB for Nano offload, and 150 GiB for Super offload |
 | Conflicting selectors | A shorthand disagrees with `NIM_TAGS_SELECTOR` | Set each selector in one place and inspect the full launch environment |
@@ -341,9 +348,9 @@ Task-specific validation belongs to [Generation](generation.md),
 | Chat Completions route 404 | Client reached Generator or the selected image lacks the route | Confirm Reasoner through `/v1/metadata` and inspect live OpenAPI |
 | Responses route 404 | Route disabled, absent, or requested from Generator | Confirm Reasoner metadata, then use Chat Completions and inspect live OpenAPI/operator setting |
 | Retrieval/cancel does not work | Response storage/background support is not enabled | Use `store=false` create flow or validate storage configuration for the selected image |
-| Structured output is prose or invalid JSON | The request uses the wrong schema shape or the backend did not return a constrained result | Use the standard Chat Completions `response_format`, inspect live OpenAPI and logs, and preserve the response for diagnosis |
+| Structured output is prose or invalid JSON | The request uses the wrong schema shape or the backend did not return a constrained result | Use Chat Completions `response_format` or Responses `text.format`, inspect live OpenAPI and logs, and preserve the response for diagnosis |
 | KV-cache/context OOM | Context, media tokens, batching, or concurrency is too large | Reduce media FPS/token budget/concurrency before raising memory utilization |
-| DFlash startup is rejected | DFlash was enabled for Generator/Super Reasoner, its draft is missing, or an independent path/configuration is invalid | Use Nano Reasoner with an available bundled draft or valid absolute local `NIM_DFLASH_MODEL_PATH`; otherwise set `NIM_USE_DFLASH=0` |
+| DFlash startup is rejected | DFlash was enabled for Generator, the selected Nano/Super draft is missing, or an independent path/configuration is invalid | Use the matching bundled draft or a valid absolute local `NIM_DFLASH_MODEL_PATH`; otherwise set `NIM_USE_DFLASH=0` for target-only Reasoner operation |
 | Reasoner checkpoint source fails | Local layout, `hf://` URI, revision, token, or inferred profile properties are invalid | Validate `NIM_MODEL_PATH`, `HF_TOKEN`, cache/network access, and matching selectors |
 
 ### BYOC

@@ -31,9 +31,9 @@ visible host.
 A Generator specialist rejects requests for other tasks. Confirm that
 the selected image includes the model before deployment.
 
-Nano Reasoner can optionally use DFlash speculative decoding. The selected
-profile must include the draft artifact; Generator and Super Reasoner do not
-support `NIM_USE_DFLASH=1`.
+Nano and Super Reasoner profiles include variant-specific DFlash drafts and use
+them by default. Set `NIM_USE_DFLASH=0` to run either target model without
+speculative decoding. Generator does not support DFlash.
 
 ## GPU architecture and topology
 
@@ -57,7 +57,11 @@ per-device memory total. Use homogeneous GPUs for either runtime; mixed-GPU
 configurations are not supported for pre-release evaluation.
 
 All memory values below are binary GiB per device. Do not add VRAM across
-devices to satisfy a per-device floor.
+devices to satisfy a per-device floor. Static compatibility first checks total
+VRAM. At startup, the NIM captures free memory once and requires each GPU used
+by the selected layout to meet the same floor. For Reasoner, usable free memory
+is measured after a runtime reserve: 2 GiB by default on a discrete GPU or the
+configured host reserve on an integrated GPU.
 
 For an integrated GPU with unified host/device memory, automatic selection
 subtracts a 16-GiB host reserve from the reported shared-memory total before
@@ -95,8 +99,10 @@ runtime and meet the precision's compute-capability requirement. The RTX 5090
 does not meet the 35-GiB Transfer minimum for these configurations.
 
 The NIM applies a system-memory floor to every profile and filters incompatible
-profiles before final selection. Resident Generator profiles use a 16-GiB
-selection floor, Nano offload profiles use 64 GiB, and all Super offload
+profiles before final selection. Generator startup also requires the current
+free memory on each participating GPU to meet the generation floor in the
+table. Resident Generator profiles use a 16-GiB selection floor, Nano offload
+profiles use 64 GiB, and all Super offload
 profiles use 150 GiB. These profile floors are not final general host-RAM
 requirements; the release-wide CPU and RAM requirements remain unresolved. The
 NIM checks a container memory limit before host physical memory.
@@ -118,9 +124,11 @@ Reasoner does not use Generator latency/throughput or model-offload selectors:
 | `super` | FP8 | 1 | 1 | 67 GiB | 16 GiB | 8.9 |
 | `super` | NVFP4 | 1 | 1 | 73 GiB | 16 GiB | 10.0 |
 
-When at least two compatible GPUs are visible for Super BF16, profile ranking
-prefers the two-GPU TP2 layout. Nano Reasoner profiles include the DFlash draft
-artifact, but DFlash remains opt-in.
+When both Super BF16 layouts fit, profile ranking prefers the one-GPU TP1
+layout. If TP1 does not have enough current free memory but TP2 fits on both
+participating GPUs, automatic selection can fall back to TP2. To require TP2,
+set `NIM_TAGS_SELECTOR='n_gpus=2,nim_tp=2'`. All Reasoner rows include the
+variant-specific DFlash draft, and DFlash is enabled by default.
 
 ## Automatic profile selection
 
@@ -131,14 +139,19 @@ Users normally set:
 - Generator latency or throughput; and
 - precision only when it must be pinned.
 
-The NIM finds a compatible profile for those choices, the visible GPUs, and
-the effective system memory. Automatic selection prefers FP8 when available,
-avoids offload when the model fits normally, and prefers the largest compatible
-GPU layout. If no profile fits, startup fails rather than selecting an
-incompatible combination.
+The NIM first finds statically compatible profiles for those choices, visible
+GPU totals, and effective system memory. It then uses one current-free-memory
+snapshot without changing the requested model, precision, or Generator
+performance objective. Automatic selection prefers FP8 when available and a
+resident Generator profile when it fits. If the preferred layout is currently
+too large, it can fall back across equivalent layouts, preferring Generator
+layer offload before model offload and allowing a fitting Reasoner TP layout.
+If none fits, startup fails. An explicit `NIM_MODEL_PROFILE` never falls back.
 
 Exact profile IDs and low-level manifest tags are advanced image-specific
-controls. Do not copy them between images or hosts.
+controls. Do not copy them between images or hosts. Free unrelated GPU memory
+before launch and restart the NIM if you want automatic selection to reconsider
+a layout.
 
 ## Transfer headroom
 

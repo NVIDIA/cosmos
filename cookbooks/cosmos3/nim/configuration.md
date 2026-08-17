@@ -38,7 +38,7 @@ GPUs. A normal deployment does not need a profile ID.
 | Name | Default | Use |
 | --- | --- | --- |
 | `NIM_MODEL_PATH` | Empty | Generator: absolute local directory. Reasoner: absolute local directory or `hf://owner/repository[:revision]` |
-| `NIM_DFLASH_MODEL_PATH` | Empty | Nano Reasoner only: independently override the DFlash draft with an absolute local directory |
+| `NIM_DFLASH_MODEL_PATH` | Empty | Nano or Super Reasoner: independently override the DFlash draft with an absolute local directory |
 | `NIM_DISABLE_MODEL_DOWNLOAD` | `false` | Disable profile download for a completely local Reasoner override; incompatible with Reasoner `hf://` and rejected for Generator |
 | `HF_TOKEN` | Empty | Authenticate to a private Reasoner Hugging Face repository |
 
@@ -61,6 +61,7 @@ Use these only when automatic model selection is not sufficient:
 | --- | --- | --- |
 | `NIM_OFFLOAD_MODE` | Automatic compatible preference | Request `none`, `model`, or `layer` when the selected model provides that mode |
 | `NIM_UNIFIED_MEMORY_HOST_RESERVE_GIB` | `16` | Reserve shared memory for the host before profile selection on integrated GPUs; use a nonnegative binary-GiB value validated for the system |
+| `NIM_GPU_MEMORY_HEADROOM_GIB` | `2` | Reasoner only: reserve this many binary GiB of free memory per discrete GPU during profile selection and runtime sizing |
 | `NIM_TAGS_SELECTOR` | Empty | Filter by comma-separated exact manifest tags |
 | `NIM_MODEL_PROFILE` | Empty | Pin an exact profile ID from the current image |
 
@@ -87,8 +88,13 @@ discrete GPUs.
 | --- | --- | --- |
 | `NIM_ENABLE_WARMUP` | `false` | Run synthetic inference before readiness |
 | `NIM_ENABLE_TORCH_COMPILE` | `true` | Enable the Generator compilation path |
+| `NIM_LINEAR_BACKEND` | Quantized profiles: `cutlass`; BF16: unset | Select `auto`, `cutlass`, `flashinfer_cutlass`, `flashinfer_cutedsl`, or `torch` for quantized Generator DiT linear layers |
 | `NIM_TRITON_LOG_VERBOSE` | `0` | Increase Generator backend logging during diagnosis |
 | `NIM_MAX_SEQUENCE_LENGTH` | `5120` | Set the startup prompt-token sequence length |
+
+Leave the quantized linear backend at its default unless the exact
+hardware/precision pairing has been validated. An incompatible backend fails
+during model load rather than silently falling back.
 
 ### Guardrails
 
@@ -141,22 +147,23 @@ latency, quality, and correctness.
 
 | Name | Default | Use |
 | --- | --- | --- |
-| `NIM_USE_DFLASH` | `false` | Enable DFlash speculative decoding for Nano Reasoner only |
+| `NIM_USE_DFLASH` | `true` for Reasoner | Use the bundled Nano or Super DFlash draft; set `false` to run the target model without speculative decoding |
 | `NIM_DFLASH_MODEL_PATH` | Empty | Use an independent absolute local DFlash directory containing `config.json` and `model.safetensors` |
-| `NIM_DFLASH_BF16_KV_CACHE` | `false` | Use a BF16 KV cache for DFlash instead of the profile-derived cache dtype |
+| `NIM_DFLASH_BF16_KV_CACHE` | `false` on Hopper; `true` otherwise | Override whether DFlash uses a BF16 KV cache instead of the profile-derived cache dtype |
 | `NIM_DFLASH_CONFIG` | Empty object | Add or override advanced vLLM DFlash speculative-configuration fields as JSON |
 
-DFlash does not change the Reasoner request API. Startup rejects it for
-Generator and Super Reasoner. Confirm that the selected Nano Reasoner includes
-the draft artifact before enabling it. `NIM_DFLASH_MODEL_PATH` accepts only an
-absolute local path, not an `hf://` source. `NIM_DFLASH_CONFIG` requires
-`NIM_USE_DFLASH=1` and cannot set the reserved `method` or `model` keys.
+DFlash does not change the Reasoner request API. Nano and Super Reasoner
+profiles include variant-specific drafts and enable them by default; Generator
+rejects an explicit DFlash enable. Confirm that the selected image contains the
+draft artifact. `NIM_DFLASH_MODEL_PATH` accepts only an absolute local path,
+not an `hf://` source. `NIM_DFLASH_CONFIG` requires DFlash to remain enabled and
+cannot set the reserved `method` or `model` keys.
 
-The BF16 KV-cache option is intended to improve DFlash acceptance length and
-provide a compatible Blackwell path, but it uses more KV-cache memory. Treat the
-independent draft path, BF16 KV cache, and `NIM_DFLASH_CONFIG` as advanced
-controls; measure memory, correctness, latency, and throughput on the exact
-image before production use.
+The BF16 KV-cache default is disabled on Hopper and enabled on every other
+architecture. BF16 can improve DFlash compatibility and acceptance length, but
+it uses more KV-cache memory. Treat the independent draft path, KV-cache
+override, and `NIM_DFLASH_CONFIG` as advanced controls; measure memory,
+correctness, latency, and throughput on the exact image before production use.
 
 ### Context and scheduling
 
@@ -165,7 +172,7 @@ image before production use.
 | `NIM_MAX_MODEL_LEN` | `-1` (auto) | Let the runtime choose a context length bounded by the model |
 | `NIM_MAX_NUM_BATCHED_TOKENS` | `8192` | Set the scheduler token budget |
 | `NIM_MAX_NUM_SEQS` | `256` | Set maximum scheduled sequences |
-| `NIM_GPU_MEMORY_UTILIZATION` | `0.90` | Set the Reasoner GPU-memory target in `(0,1]` |
+| `NIM_GPU_MEMORY_UTILIZATION` | Up to `0.93` | Set the Reasoner GPU-memory target in `(0,1]`; when unset, startup reduces `0.93` as needed to fit current free memory and the runtime reserve |
 
 ### Caching and multimodal processing
 
@@ -175,14 +182,16 @@ image before production use.
 | `NIM_ENABLE_CHUNKED_PREFILL` | `true` | Enable chunked prefill |
 | `NIM_DISABLE_CHUNKED_MM_INPUT` | `false` | Disable multimodal-input chunking |
 | `NIM_DISABLE_MM_PREPROCESSOR_CACHE` | `false` | Disable the multimodal preprocessor cache |
-| `NIM_MAX_IMAGES_PER_PROMPT` | `5` | Limit images in one request |
-| `NIM_MAX_VIDEOS_PER_PROMPT` | `1` | Limit videos in one request |
+| `NIM_MAX_IMAGES_PER_PROMPT` | Unset | Optionally set a nonnegative image limit; when unset, do not override the runtime limit |
+| `NIM_MAX_VIDEOS_PER_PROMPT` | Unset | Optionally set a nonnegative video limit; when unset, do not override the runtime limit |
 | `NIM_MEDIA_IO_KWARGS` | Video FPS 4 with `pynvvc` | Replace the complete operator-level media preprocessing object |
-| `NIM_VIDEO_PRUNING_RATE` | `0` | Set video-token pruning from 0 through 1 |
+| `NIM_VIDEO_PRUNING_RATE` | `0.6` | Set video-token pruning from 0 through 1; use `0` to disable pruning |
 | `NIM_VIDEO_PRUNING_METHOD` | `vidcom2` | Select `vidcom2` or `evs` when pruning is enabled |
 
 Prefer request-level `media_io_kwargs` for one workload rather than changing the
-operator-wide media object.
+operator-wide media object. Leave Reasoner GPU-memory headroom at its default
+unless system measurements establish another safe reserve; reducing it
+increases startup and runtime OOM risk.
 
 ### API behavior
 

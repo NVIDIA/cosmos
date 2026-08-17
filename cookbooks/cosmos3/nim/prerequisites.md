@@ -20,7 +20,8 @@ Plan for:
 - the CPU architecture supported by the selected image;
 - homogeneous NVIDIA GPUs compatible with at least one available
   model/precision/configuration combination;
-- enough GPU memory on every participating device for the selected profile;
+- enough total and currently free GPU memory on every participating device for
+  the selected profile;
 - enough host RAM and free disk for the container, downloaded artifacts,
   materialization, and temporary files; and
 - enough shared memory for staged image/video buffers and multi-process work.
@@ -41,10 +42,12 @@ If the deployment must serve Transfer, provision each GPU against the
 **Generation minimum VRAM/device** value.
 
 Reasoner requires GPUs with the same compute capability. Use homogeneous GPUs
-for either runtime because mixed-GPU support is not established. The profile
-selector evaluates the smallest per-device memory total and effective system
-RAM exposed to the container. Confirm the selected configuration in the exact
-image's manifest before deployment.
+for either runtime because mixed-GPU support is not established. Static profile
+compatibility evaluates the smallest per-device memory total and effective
+system RAM exposed to the container. At startup, the selector also captures the
+current free memory of each visible GPU once; existing allocations can force an
+equivalent lower-memory layout or make selection fail. Confirm the selected
+configuration in the exact image's manifest before deployment.
 
 On an integrated GPU where device and host share one memory pool, the selector
 withholds 16 GiB for the host by default before comparing the remaining shared
@@ -68,7 +71,9 @@ The host requires:
 - a compatible `glibc`;
 - an NVIDIA driver compatible with the selected image;
 - Docker Engine; and
-- NVIDIA Container Toolkit configured for Docker.
+- NVIDIA Container Toolkit configured for Docker; discrete-GPU deployments
+  must expose the NVML utility capability used to measure free memory without
+  creating CUDA contexts.
 
 | Software | Required version |
 | --- | --- |
@@ -167,7 +172,7 @@ Container Toolkit before pulling the NIM:
 uname -m
 ldd --version | head -n 1
 nvidia-smi
-nvidia-smi --query-gpu=index,name,compute_cap,memory.total --format=csv
+nvidia-smi --query-gpu=index,name,compute_cap,memory.total,memory.free --format=csv
 docker version
 nvidia-ctk --version
 docker info | sed -n '/Runtimes/,$p' | head
@@ -179,11 +184,13 @@ Then verify that Docker can expose the intended GPUs:
 docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 ```
 
-The earlier detailed query reports compute capability and memory in MiB; divide
-MiB by 1024 when comparing with the binary-GiB profile floors. The Docker
-command may pull the `ubuntu` image. It verifies GPU container access, not
-Cosmos3 profile compatibility. Compare the reported devices and memory with the
-[support matrix](support-matrix.md) before launch.
+The earlier detailed query reports compute capability and total and free memory
+in MiB; divide MiB by 1024 when comparing with the binary-GiB profile floors.
+Free memory can change after this check, so stop unrelated GPU workloads before
+launch. The Docker command may pull the `ubuntu` image. It verifies GPU
+container access and, on discrete systems, NVML access; it does not verify
+Cosmos3 profile compatibility. Compare the reported
+devices and memory with the [support matrix](support-matrix.md) before launch.
 
 For installation and verification failures, see
 [Troubleshooting](operations.md#troubleshooting).

@@ -40,10 +40,10 @@ against the NIM contract rather than copying another backend's adapter.
 
 ## Active release maintenance
 
-- Deployment currently uses a versioned Cosmos3 2.3 staging RC, not a final
-  release identity. Record source-derived evidence in maintainer files only and
-  require the exact image manifest or live behavior before presenting claims as
-  validated in the evaluation image. Before public release, `deployment.md`
+- Deployment currently uses a versioned Cosmos3 2.6 staging bugfix RC, not a
+  final release identity. Record source-derived evidence in maintainer files
+  only and require the exact image manifest or live behavior before presenting
+  claims as validated in the evaluation image. Before public release, `deployment.md`
   owns the exact evaluation image reference; update it on every RC bump.
 - Never replace an RC reference with `latest`.
 - The final public image, release version/date, catalog URL, and model-card URL
@@ -65,9 +65,14 @@ confirmed:
   and Reasoner Super BF16 TP2 at 73 GiB/device;
 - effective system-memory selection floors of 16 GiB for resident Generator and
   Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload;
-- Reasoner guided-decoding enforcement and Responses create normalization;
-- independent local DFlash draft overrides, BF16 KV-cache selection, and
-  advanced DFlash JSON configuration; and
+- current-free-VRAM startup selection, equivalent-layout fallback, explicit-pin
+  failure, and the Reasoner runtime reserve/utilization clamp;
+- Reasoner TP1 preference, TP2 availability fallback, guided-decoding
+  enforcement, Responses create normalization, and VidCom2 pruning defaults;
+- default-on Nano and Super DFlash drafts, independent local draft overrides,
+  hardware-derived BF16 KV-cache selection, and advanced DFlash JSON
+  configuration;
+- quantized Generator linear-backend selection; and
 - runtime-aware metadata, health responses, and wrong-runtime diagnostics.
 
 Regenerate the source profile export before reconciling tables. Generated
@@ -94,8 +99,11 @@ refine entries when evidence changes:
 - approved startup, latency, and throughput measurements for each published
   reference configuration;
 - prompt-upsampling integration behavior in the selected image;
-- DFlash draft override, KV-cache, and advanced configuration behavior in the
-  selected image;
+- current-free-VRAM fallback, Reasoner utilization clamping, and discrete-GPU
+  NVML startup behavior in the selected image;
+- default-on Nano/Super DFlash, draft override, KV-cache, and advanced
+  configuration behavior in the selected image;
+- quantized Generator linear-backend behavior in the selected image;
 - public Helm chart URL to replace the staging reference, plus approved values,
   installation workflow, and monitoring integration;
 - approved reasoning-trace wording; and
