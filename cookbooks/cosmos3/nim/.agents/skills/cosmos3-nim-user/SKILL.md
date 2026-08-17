@@ -68,6 +68,11 @@ representative requests remain required. One service container starts one
 runtime. The preflight container is temporary and `--rm` removes only that
 container. Preserve a failed service container long enough to inspect its logs,
 and ask before removing containers or cached data.
+Before NGC login, explain the documented Docker credential-storage behavior and
+external-helper option without presenting a helper as a prerequisite;
+`--password-stdin` protects shell input, not Docker's stored credential. Include
+`docker logout nvcr.io` when guiding evaluation cleanup, and explain that logout
+does not revoke the NGC personal key.
 
 For hardware guidance:
 

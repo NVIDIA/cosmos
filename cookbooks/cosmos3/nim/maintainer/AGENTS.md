@@ -52,6 +52,9 @@ maintainer instructions take precedence over the customer-assistant guidance in
   requirements.
 - Every fenced command must use a usable value. State unresolved release values
   as not yet available in prose or tables, not as runnable placeholders.
+- Document Docker's external credential-helper option without making it a
+  deployment prerequisite, and include evaluation logout. `--password-stdin`
+  protects command input but not Docker's stored credential.
 - Never use `latest` for the NIM image. Before public release, keep the exact
   evaluation image reference in `deployment.md`.
 - Keep the approved staging Helm reference exact, but do not invent pull/install

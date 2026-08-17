@@ -150,9 +150,13 @@ For a normal cold start, the host must reach:
 - `nvcr.io` to pull the container; and
 - the NGC model storage used to download and materialize profile artifacts.
 
-You also need an NGC personal API key with NGC Catalog access. Create the key
-in the NGC user interface, then read it into the shell that you will use for
-deployment without placing the secret in shell history:
+You also need an
+[NGC personal API key](https://docs.nvidia.com/ngc/latest/ngc-catalog-user-guide.html)
+with NGC Catalog access. For an evaluation, create a dedicated key with only
+the required services and the shortest practical expiration. NGC personal keys
+can be rotated, deactivated, or deleted from the NGC user interface. Read the
+key into the shell that you will use for deployment without placing the secret
+in shell history:
 
 ```bash
 read -rsp "Enter your NGC API key: " NGC_API_KEY

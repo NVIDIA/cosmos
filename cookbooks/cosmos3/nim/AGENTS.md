@@ -44,7 +44,10 @@ For guided customer workflows, load
   generation minimum. Never recommend `NIM_ALLOW_UNSAFE_TRANSFER=1` as a normal
   setting.
 - Do not ask the customer to paste an NGC API key, access token, private media,
-  or unredacted logs. Refer to secret environment-variable names only.
+  or unredacted logs. Refer to secret environment-variable names only. Explain
+  Docker's stored-credential behavior and optional external credential helper,
+  and include registry logout in evaluation cleanup; `--password-stdin` does
+  not protect the stored credential by itself.
 - Explain commands that remove containers or data and obtain confirmation before
   running destructive operations.
 - Do not blindly retry a long-running synchronous request. Check service logs,

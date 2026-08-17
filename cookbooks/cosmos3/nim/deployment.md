@@ -84,8 +84,31 @@ Kubernetes availability and requirements, see [Deploy with Helm](helm.md).
 ## Authenticate to NGC
 
 Create and export `NGC_API_KEY` as described under
-[Network and NGC access](prerequisites.md#network-and-ngc-access), then
-authenticate in the same shell:
+[Network and NGC access](prerequisites.md#network-and-ngc-access). Docker saves
+registry credentials after login. Docker Desktop configures a native credential
+store automatically. Without an available helper, standalone Docker Engine
+stores the credential in a base64-encoded form in `$HOME/.docker/config.json`
+and prints a warning.
+
+For stronger at-rest protection, optionally install and initialize a
+[supported credential helper](https://docs.docker.com/reference/cli/docker/login/#credential-stores),
+ensure its `docker-credential-*` program is on `PATH`, and merge a
+registry-specific entry into `$HOME/.docker/config.json`. For example, an
+initialized `pass` store uses:
+
+```json
+{
+  "credHelpers": {
+    "nvcr.io": "pass"
+  }
+}
+```
+
+This example requires `docker-credential-pass` on `PATH`. Use the suffix of
+the helper installed for your platform. If you previously logged in to
+`nvcr.io` without a helper and want to migrate the saved credential, run
+`docker logout nvcr.io` before configuring the helper. Then authenticate in the
+same shell:
 
 ```bash
 echo "$NGC_API_KEY" \
@@ -94,7 +117,10 @@ echo "$NGC_API_KEY" \
 
 The literal Docker username is `$oauthtoken`. `NGC_API_KEY` authorizes model
 artifact download inside the container; do not substitute `NGC_TOKEN` or place
-the key in source control.
+the key in source control. `--password-stdin` keeps the key out of shell history
+and command logs, but it does not encrypt the credential Docker stores after
+login. A credential helper protects that saved credential; without one, use the
+evaluation logout step when you finish.
 
 Pin and pull the current release-candidate image:
 
@@ -305,6 +331,10 @@ Remove the example containers when finished:
 ```bash
 docker rm -f cosmos3-generator
 docker rm -f cosmos3-reasoner
+docker logout nvcr.io
 ```
 
-The persistent model cache remains.
+Docker logout removes the saved `nvcr.io` login from the configured credential
+store; it does not revoke the NGC personal key. Deactivate or delete a dedicated
+evaluation key in the NGC user interface when it is no longer needed. The
+persistent model cache remains.

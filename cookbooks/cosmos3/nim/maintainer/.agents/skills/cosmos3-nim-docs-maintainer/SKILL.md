@@ -80,6 +80,9 @@ values to fill an unresolved release fact.
 - Keep commands copyable: no unresolved values, unsupported metavariables, or
   fake credentials in runnable fences.
 - Keep NGC credentials out of shell history and source control.
+- Document the external Docker credential-helper option without making it a
+  prerequisite, distinguish `--password-stdin` from at-rest credential
+  protection, and include registry logout in evaluation cleanup.
 - Keep request dictionaries, API calls, status handling, and primary outputs
   visible in task scripts.
 - Do not present a timeout, one observed run, or complete client-command wall

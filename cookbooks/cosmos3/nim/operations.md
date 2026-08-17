@@ -293,7 +293,7 @@ Task-specific validation belongs to [Generation](generation.md),
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
-| Image pull unauthorized | Docker is not logged in or key lacks repository access | Re-run password-stdin login with `NGC_API_KEY` and literal `$oauthtoken` |
+| Image pull unauthorized | Docker is not logged in or key lacks repository access | Review the complete [NGC authentication and credential-storage workflow](deployment.md#authenticate-to-ngc), then log in with `NGC_API_KEY` and literal `$oauthtoken` |
 | Artifact download fails | Container lacks `NGC_API_KEY`, entitlement, DNS/network, or storage | Verify key injection and NGC connectivity; inspect cache capacity/ownership |
 | Cache permission denied | Host mount is not writable by the container | Fix ownership/ACLs and retain a persistent writable `/opt/nim/.cache` |
 | No compatible profile | GPU compute capability, total or current free per-device VRAM, or effective system memory does not satisfy the selected model/precision/offload requirements | Run the [pre-download profile preflight](deployment.md#run-the-pre-download-profile-preflight), inspect the exact image manifest, free unrelated GPU memory, remove unnecessary pins, choose a smaller model or compatible precision, or use supported hardware |
