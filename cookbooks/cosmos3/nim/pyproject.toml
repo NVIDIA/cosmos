@@ -8,6 +8,7 @@ description = "Client environment for the Cosmos3 Certified NIM examples"
 requires-python = ">=3.10"
 dependencies = [
   "openai==2.53.0",
+  "pyyaml==6.0.3",
   "requests==2.34.2",
 ]
 

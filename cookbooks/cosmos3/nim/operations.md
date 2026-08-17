@@ -77,6 +77,23 @@ Capture these outputs with deployment evidence, but review them before sharing:
 paths, repository overrides, or other fields can reveal internal operational
 details.
 
+The manifest endpoint returns a JSON object whose `manifest_file` field is the
+complete YAML manifest. JSON formatting validates the outer response but does
+not decode that YAML or identify the active profile. To match the profile ID
+from `/v1/metadata` to its manifest tags without printing the artifact
+inventory, initialize the
+[pinned client environment](prerequisites.md#initialize-the-example-environment),
+then run:
+
+```bash
+uv run python examples/inspect_profile.py
+```
+
+The helper requests both endpoints, parses the embedded YAML, and prints the
+manifest model and release plus the selected profile's ID, tags, and workspace
+hash. Treat exact profile IDs and low-level tags as image-specific diagnostic
+data; do not copy them to another image or host.
+
 ## Logging
 
 Common controls:

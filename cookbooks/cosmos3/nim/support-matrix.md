@@ -183,8 +183,11 @@ frame rate, or remote source.
 
 ```bash
 curl -fsS http://localhost:8000/v1/metadata | python3 -m json.tool
-curl -fsS http://localhost:8000/v1/manifest | python3 -m json.tool
+uv run python examples/inspect_profile.py
 ```
 
-The selected image's manifest identifies the configurations it contains.
-Metadata confirms the configuration chosen for the running container.
+Metadata confirms the configuration chosen for the running container. The
+profile helper decodes the selected image's YAML manifest and prints the active
+profile without its full artifact inventory. See
+[Operations](operations.md#inspect-the-running-service) for the raw
+management-endpoint workflow.

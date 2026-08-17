@@ -109,11 +109,19 @@ active Generator profile without retaining a documentation-only row. Transfer
 minimums also match each applicable installed generation floor plus Transfer
 overhead.
 
-The image was launched through Slurm/Pyxis because the documentation host could
-not access its Docker daemon. This validates the selector invocation, embedded
-manifest and Transfer-policy reconciliation, and no-model-download boundary
-inside the exact image, not the documented Docker wrapper, profile fallback
-cases, cold start, readiness, or inference.
+The pre-download selector was launched through Slurm/Pyxis because the
+documentation host could not access its Docker daemon. This validates the
+selector invocation, embedded manifest and Transfer-policy reconciliation, and
+no-model-download boundary inside the exact image, not the documented Docker
+wrapper or profile fallback cases.
+
+The exact image was also launched separately as Nano Reasoner with Docker on one
+H100 PCIe and reached readiness. Its `/v1/manifest` response contained the full
+YAML manifest in the JSON `manifest_file` string, and `/v1/metadata` identified
+one matching selected profile. The committed profile-inspection helper was
+validated against these live responses. This establishes the
+management-endpoint join and helper output for this Nano Reasoner configuration,
+not Generator, inference behavior, or performance.
 
 ## Open release gates
 
@@ -130,7 +138,7 @@ refine entries when evidence changes:
 - Reasoner Responses create normalization plus storage/background/retrieve
   behavior, and guided-output enforcement in the selected image;
 - Reasoner public-URL, text-only, and request-level video sampling behavior;
-- live management endpoints, metrics, logs, errors, and chart probes;
+- remaining live management endpoints, metrics, logs, errors, and chart probes;
 - approved startup, latency, and throughput measurements for each published
   reference configuration;
 - prompt-upsampling integration behavior in the selected image;

@@ -81,8 +81,9 @@ For hardware guidance:
 - never add VRAM across devices;
 - use the Transfer minimum when Transfer must be served;
 - treat named GPUs as examples, not as an allowlist;
-- use `/v1/manifest` for the active image's available profiles and the support
-  matrix for documented requirements;
+- use `uv run python examples/inspect_profile.py` to match the active profile
+  from `/v1/metadata` to the YAML embedded in `/v1/manifest`, and use the
+  support matrix for documented requirements;
 - use the current RTX 5090 guidance and thresholds in `support-matrix.md` to
   distinguish ordinary generation from Transfer eligibility;
 - explain that preflight/startup takes one free-memory snapshot and can fall

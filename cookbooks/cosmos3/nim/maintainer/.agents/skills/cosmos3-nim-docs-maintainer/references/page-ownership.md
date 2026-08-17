@@ -25,7 +25,7 @@ may include the minimum needed for a complete workflow and link to the owner.
 | `transfer.md` | Transfer controls, precomputed/derived forms, defaults, combinations, chunking, and admission behavior |
 | `operations.md` | Health, management endpoints, generic errors, metrics, logs, guardrails, diagnostics, and troubleshooting |
 | `acknowledgements.md` | Availability and approved third-party notices for the exact released image |
-| `examples/` | Complete editable client requests, primary response handling, media helpers, and generated outputs |
+| `examples/` | Complete editable client requests, selected-profile inspection, primary response handling, media helpers, and generated outputs |
 | `pyproject.toml` and `uv.lock` | Reproducible Python client environment for all examples |
 | `maintainer/` | Documentation editing instructions, evidence and release gates, page ownership, and maintainer validation workflow |
 
