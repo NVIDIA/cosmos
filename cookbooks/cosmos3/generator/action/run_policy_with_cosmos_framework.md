@@ -24,6 +24,7 @@ Build the Docker image:
 
 ```bash
 docker build \
+  --build-arg INSTALL_APEX=0 \
   -t cosmos-framework:latest \
   .
 ```
@@ -48,15 +49,11 @@ docker run \
   bash -c '\
     uv sync \
       --all-extras \
-      --group=cu130-train \
+      --group=cu130-torch213-train \
       --group=policy-server && \
     exec bash; \
   '
 ```
-
-The `--group=cu130-train` line targets a CUDA 13 driver (the default). On CUDA
-12.x systems, replace it with `--group=cu128-train` (see the
-[Cosmos3 cookbooks environment setup](../../README.md) for details).
 
 Inside the container, start the policy server:
 
