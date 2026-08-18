@@ -80,7 +80,8 @@ For hardware guidance:
   the per-device floor, including the documented Reasoner runtime reserve;
 - never add VRAM across devices;
 - use the Transfer minimum when Transfer must be served;
-- treat named GPUs as examples, not as an allowlist;
+- use the tested-GPU inventory as the official validation scope, not as a
+  compatibility allowlist for every profile or task;
 - use `uv run python examples/inspect_profile.py` to match the active profile
   from `/v1/metadata` to the YAML embedded in `/v1/manifest`, and use the
   support matrix for documented requirements;

@@ -72,6 +72,70 @@ resident, so only rows with **Model offload = None** and **Guardrails =
 Resident** are eligible. Reasoner floors are also compared with the remaining
 shared-memory total.
 
+## Tested GPU inventory
+
+The following GPUs are configured for official NIM testing. Product names are
+shortened for readability, grouped by architecture, and sorted by nominal GPU
+memory within each group.
+
+Inventory membership does not mean that every runtime, model, precision, GPU
+count, offload mode, and task is tested or available on that SKU. Use the
+configuration tables below to find a candidate, and confirm that the exact
+image manifest contains a matching profile. A GPU outside this inventory can
+still be compatible when it meets the compute-capability and memory floors.
+
+### Blackwell Ultra
+
+| GPU | Nominal GPU memory |
+| --- | ---: |
+| GB300 Workstation | 252 GB HBM3e |
+| B300 SXM6 | 288 GB HBM3e |
+| GB300 | 288 GB HBM3e |
+
+### Blackwell
+
+| GPU | Nominal GPU memory |
+| --- | ---: |
+| GeForce RTX 5090 | 32 GB GDDR7 |
+| RTX PRO 4500 Blackwell Server Edition | 32 GB GDDR7 |
+| RTX PRO 6000 Blackwell Server Edition | 96 GB GDDR7 |
+| RTX PRO 6000 Blackwell Workstation Edition | 96 GB GDDR7 |
+| B200 | 192 GB HBM3e |
+| GB200 | 192 GB HBM3e |
+
+### Hopper and Grace Hopper
+
+| GPU | Nominal GPU memory |
+| --- | ---: |
+| H100 80 GB HBM3 | 80 GB HBM3 |
+| H100 PCIe | 80 GB HBM3 |
+| H100 NVL | 94 GB HBM3 |
+| GH200 480 GB | 96 GB HBM3 |
+| H20 | 96 GB HBM3 |
+| H200 | 141 GB HBM3e |
+| H200 NVL | 141 GB HBM3e |
+| GH200 144 GB HBM3e | 144 GB HBM3e |
+
+### Ada Lovelace
+
+| GPU | Nominal GPU memory |
+| --- | ---: |
+| L20 | 48 GB GDDR6 |
+| L40S | 48 GB GDDR6 |
+| RTX 6000 Ada Generation | 48 GB GDDR6 |
+
+### Ampere
+
+| GPU | Nominal GPU memory |
+| --- | ---: |
+| A100 SXM4 40 GB | 40 GB HBM2e |
+| A100 SXM4 80 GB | 80 GB HBM2e |
+
+Nominal memory is shown only to order this inventory. Profile selection uses
+the per-device binary-GiB floors below and the memory reported by the running
+system. For Grace Hopper, the table shows HBM GPU memory. In the GH200 480 GB
+entry, 480 GB identifies CPU memory and is not GPU VRAM.
+
 ## Generator configurations
 
 The **Super family** in this table means `super`, `super-t2i`,
@@ -95,7 +159,7 @@ only to the general-purpose `nano` and `super` variants.
 | Super family | FP8 | Layer | Resident | 1 | 38 GiB | 150 GiB | Base `super`: 50 GiB |
 
 The 31-GiB Nano layer-offload configurations are intended to support ordinary
-generation on 32-GB client GPUs such as the NVIDIA GeForce RTX 5090. This is not
+generation on 32-GB client GPUs such as the GeForce RTX 5090. This is not
 a GPU SKU allowlist: the device must expose at least 31 binary GiB to the
 runtime and meet the precision's compute-capability requirement. The RTX 5090
 does not meet the 35-GiB Transfer minimum for these configurations.

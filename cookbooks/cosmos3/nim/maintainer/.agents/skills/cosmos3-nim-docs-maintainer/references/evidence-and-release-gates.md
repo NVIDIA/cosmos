@@ -50,6 +50,11 @@ against the NIM contract rather than copying another backend's adapter.
   Transfer, and effective system-memory thresholds are approved for publication
   as release profile-selection floors. They establish a candidate profile, not
   full host compatibility, and remain subject to the exact image manifest.
+- The published tested-GPU inventory contains 22 of the SKUs in the current
+  NIMCraft NIM configuration; L4 is intentionally excluded from publication.
+  The published inventory identifies official validation targets; it does not
+  establish a passing result for every profile or task on every listed SKU and
+  is not a compatibility allowlist.
 - The final public image, release version/date, catalog URL, and model-card URL
   remain release-owned until approved.
 - The current evaluation chart reference is

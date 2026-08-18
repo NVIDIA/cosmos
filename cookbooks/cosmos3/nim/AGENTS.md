@@ -37,8 +37,8 @@ For guided customer workflows, load
 - Use `examples/inspect_profile.py` to match `/v1/metadata` to the embedded YAML
   from `/v1/manifest`, and use the published support-matrix floors for
   configuration checks. Evaluate both total and currently free VRAM per
-  participating device; do not add VRAM across devices or treat an example GPU
-  as an allowlist.
+  participating device; do not add VRAM across devices or treat the tested-GPU
+  inventory as a compatibility allowlist for every profile or task.
 - For a new deployment, use the documented pre-download profile preflight after
   the image pull. Present success only as candidate-profile compatibility; full
   host compatibility still requires cold start and representative requests.
