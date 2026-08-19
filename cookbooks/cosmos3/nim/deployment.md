@@ -227,7 +227,11 @@ Generator above, remove it before reusing host port `8000`:
 docker rm -f cosmos3-generator
 ```
 
-Then launch the Reasoner:
+Then launch the Super BF16 Reasoner in target-only mode with video-token
+pruning disabled. This one-GPU configuration requires compute capability 8.0
+or newer, at least 135 GiB of total and currently usable VRAM after the
+Reasoner reserve, and 16 GiB of effective system memory; see the
+[Reasoner configurations](support-matrix.md#reasoner-configurations):
 
 ```bash
 docker run -d --name cosmos3-reasoner \
@@ -239,15 +243,22 @@ docker run -d --name cosmos3-reasoner \
   -p 8000:8000 \
   -e NGC_API_KEY \
   -e NIM_MODEL_TYPE=reasoner \
-  -e NIM_MODEL_VARIANT=nano \
+  -e NIM_MODEL_VARIANT=super \
+  -e NIM_PRECISION=bf16 \
+  -e NIM_USE_DFLASH=0 \
+  -e NIM_VIDEO_PRUNING_RATE=0 \
   -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
   "$NIM_IMAGE"
 ```
 
-The command starts the Reasoner in the background. Follow startup logs with
+The command pins Super BF16 target-only and disables video-token pruning so the
+example configuration is reproducible. It starts the Reasoner in the
+background. Follow startup logs with
 `docker logs -f cosmos3-reasoner`; press Ctrl+C to stop following logs without
-stopping the container. Expose all GPUs required by the selected Reasoner
-configuration.
+stopping the container. Expose all GPUs
+required by the selected Reasoner configuration. To use another compatible
+Reasoner configuration, change the model and precision selectors together and
+revalidate representative requests.
 
 Both runtimes listen on container HTTP port `8000`; the Docker mapping chooses
 the host port. To run both containers concurrently, publish one on another

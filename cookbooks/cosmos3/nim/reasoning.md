@@ -60,47 +60,132 @@ print(model)
 Use metadata for runtime discovery and `/v1/models` for served-model discovery;
 do not hard-code a model ID from another image or deployment.
 
-## Run representative tasks
+## Run the task catalog
 
-The task runner provides representative image and video requests, including
-structured-output cases:
+The endpoint-independent catalog in
+[`examples/reasoner_cases.yaml`](examples/reasoner_cases.yaml) defines the
+media, prompt, sampling, output contract, native-thinking setting, and
+qualitative review criteria for every Reasoner example. Its user-prompt strings
+exactly match the runtime strings in the nearby vLLM notebook. The Python runner
+keeps the NIM-specific API adaptation in one place: it sends local media as data
+URLs, uses `media_io_kwargs` for video sampling, discovers the served model,
+keeps NIM-native parsed reasoning disabled for the catalog baseline, and uses
+JSON Schema rather than regular expressions for structured final answers.
 
-| Case | Media | Result |
-| --- | --- | --- |
-| `image_caption` | `robot_153.jpg` | Detailed text caption |
-| `video_caption` | `video_caption.mp4` | Detailed text caption |
-| `temporal_localization` | `temporal_localization_1.mp4` | Validated JSON event intervals |
-| `robotics_next_action` | `robotics_next_action.mp4` | Concise proposed next action |
-| `robot_planning` | `robot_planning.png` | Ordered text plan |
-| `grounding_2d` | `grounding_2d.png` | Validated JSON bounding boxes |
-| `trajectory_2d` | `action_cot_trajectory.png` | Validated JSON image points |
-| `physical_plausibility` | `physical_plausibility.mp4` | Possible/impossible assessment |
-| `situation_understanding` | `situation_understanding.mp4` | Current and likely next event |
+List or inspect cases without a running endpoint:
 
-Run a representative case:
+```bash
+uv run python examples/reasoner.py --list-cases
+uv run python examples/reasoner.py --describe trajectory_2d
+uv run python examples/reasoner.py --describe trajectory_2d --format json
+```
+
+The JSON description is suitable for tooling and AI assistants; the default
+YAML description is intended for direct reading. The catalog covers the same
+image and video task families as the general Cosmos3 Reasoner examples:
+
+| Category | Cases |
+| --- | --- |
+| Captioning | `image_caption`, `video_caption` |
+| Temporal localization | `temporal_localization`, `event_timeline`, `timestamp_query`, `interval_question` |
+| Embodied reasoning | `robotics_next_action`, `drive_scene_next_action`, `robot_planning`, `assisted_task_next_action` |
+| Common sense | `common_sense_reasoning` |
+| Spatial reasoning | `grounding_2d`, `describe_anything` |
+| Action CoT | `trajectory_2d`, `flower_trajectory_2d`, `driving_scene_action_cot` |
+| Physical and situation reasoning | `physical_plausibility`, `situation_understanding` |
+
+Run one case:
 
 ```bash
 uv run python examples/reasoner.py --case image_caption
 ```
 
-The Reasoner scripts check `/v1/metadata` before model discovery and fail with
-an actionable message if `NIM_URL` reaches a Generator runtime.
+The `--case` option belongs to this cookbook runner, not the NIM API. Every
+video case requests 4 FPS sampling. All catalog cases leave NIM-native parsed
+reasoning disabled and consume the response from `message.content`. Six vLLM
+prompt strings contain literal `<think>` formatting instructions. These tags
+are ordinary user-prompt text, not `chat_template_kwargs.enable_thinking`; text
+cases can therefore return visible tags in `message.content`, while the two
+structured trajectory cases remain constrained to their JSON schemas. The
+`--reasoning` option enables the separate NIM-native mechanism for an explicit
+API experiment and is not part of the parity baseline.
 
-The `--case` option belongs to this cookbook runner, not the NIM API. Substitute
-any other exact case name from the table. Every video case requests 4 FPS
-sampling. Task quality can differ between Nano and Super; these cases
-demonstrate the API and output
-contract rather than guaranteeing a particular answer.
+Running `--case all` sends all 18 requests sequentially and can take substantial
+time and resources. Use it for deliberate catalog validation, not as a first
+request:
+
+```bash
+uv run python examples/reasoner.py --case all
+```
+
+The runner checks `/v1/metadata` before model discovery and fails with an
+actionable message if `NIM_URL` reaches a Generator runtime.
+
+### Super BF16 example baseline
+
+Use the [Reasoner launch](deployment.md#launch-reasoner), which selects Super
+BF16 and sets both controls at container startup:
+
+```text
+NIM_USE_DFLASH=0
+NIM_VIDEO_PRUNING_RATE=0
+```
+
+This runs target-only decoding and disables video-token pruning. It is the
+documented baseline for the task catalog. The one-GPU Super BF16 configuration
+requires the hardware floor in the
+[support matrix](support-matrix.md#reasoner-configurations).
+After readiness, verify the selected model and profile through `/v1/metadata`
+and `/v1/manifest` before running the examples.
+
+Every catalog request explicitly sends `temperature=0.7`, `top_p=0.8`,
+`top_k=20`, `presence_penalty=0`, and `repetition_penalty=1` unless a case
+records an override. These values match the effective Super checkpoint and raw
+vLLM example defaults instead of relying on server-side default injection. The
+catalog preserves vLLM user-prompt text byte for byte, but media transport and
+structured-output enforcement remain NIM-specific.
+
+The `robot_planning` case overrides temperature and adds a fixed seed for its
+controlled parity request: `temperature=0`, `top_p=0.8`, `top_k=20`,
+`presence_penalty=0`, `repetition_penalty=1`, and `seed=0`. Greedy decoding
+removes sampled numeric variation across the NIM and raw vLLM deployments. In a
+controlled comparison, both paths returned the same five-subtask answer. This
+establishes request and deterministic-output parity for that case, not that the
+answer satisfies every application-specific planning requirement.
+
+The catalog cases have completed API and format validation against the pinned
+evaluation image on the documented target-only, unpruned-video configuration.
+Task-level quality remains case-specific and must be reviewed against the
+qualitative criteria recorded with each case. The runner warns rather than
+fails when the endpoint serves another Reasoner variant so the catalog remains
+usable for comparison; do not present a Nano result as a Super-validated
+example.
+
+### Artifacts and validation boundaries
 
 For each run, the script prints the final answer and writes an ignored
 `examples/outputs/reasoner_<case>/` directory containing:
 
-- `request.json`: case, model, asset, prompt, and request-option metadata without
-  the embedded media data URL;
+- `request.json`: the resolved case, selected model/profile, review criteria,
+  and request with the embedded media payload omitted;
 - `response.json`: the raw OpenAI client response;
 - `output.txt`: final `message.content`;
-- `output.json`: parsed and validated output for structured cases; and
-- `reasoning.txt`: parsed reasoning when explicitly requested and returned.
+- `output.json`: parsed output, written only after JSON and semantic format
+  checks pass for a structured case;
+- `reasoning.txt`: optional parsed reasoning from an explicit NIM-native API
+  experiment; prompt-authored `<think>` text remains in `output.txt`;
+- `validation.json`: separate API, format, and qualitative-review status;
+- `annotated.png`: validated normalized boxes or trajectories overlaid on image
+  cases that have spatial output; and
+- `report.md`: a human-readable prompt, answer, validation summary, and review
+  checklist.
+
+Format validation establishes properties such as JSON shape, timestamp order,
+non-empty labels, ordered box corners, and coordinates in `[0,1000]`. It does
+not establish that a caption is accurate, a plan completes its task, or a
+trajectory reaches, picks up, and transports an object. Those criteria remain
+`not_performed` in `validation.json` until a human or application-specific
+review performs them.
 
 The Responses example uses the image-caption case so API transport differences
 do not multiply the task matrix.
@@ -215,42 +300,22 @@ Persisted retrieval, cancellation, background responses, and
 `previous_response_id` require response storage, which is disabled by default.
 Use Chat Completions for video requests in this pre-release version.
 
-## Reasoning, instructions, and tool calls
+## Final answers, instructions, and tool calls
 
-Chat requests default to `chat_template_kwargs.enable_thinking=false`, so
-ordinary untagged output remains in `message.content`. Responses requests use
-the same chat-template and sampling defaults while retaining their
-Responses-specific token-limit and structured-output field names. To enable
-thinking and request parsed reasoning in Chat Completions, pass the controls
-through `extra_body`:
+The task catalog uses `chat_template_kwargs.enable_thinking=false`, which is the
+service default, and consumes responses from `message.content`. To maintain
+prompt parity, it preserves literal `<think>` formatting instructions in the six
+vLLM prompts that contain them. Those visible tags do not enable the NIM-native
+reasoning field and should not be parsed as a stable explanation. Responses
+requests use the same chat-template and sampling defaults while retaining their
+Responses-specific token-limit and structured-output field names.
 
-```python
-extra_body = {
-    "chat_template_kwargs": {"enable_thinking": True},
-    "include_reasoning": True,
-    "thinking_token_budget": 512,
-}
-```
+Reasoning traces are not a stable machine-readable explanation and should not
+be required by downstream logic. If evaluating optional reasoning fields
+outside the catalog baseline, first inspect the running NIM's `/openapi.json`
+and the installed OpenAI client response model.
 
-Pass that object as `extra_body=extra_body` in a normal Chat Completions call,
-or run a task with explicit reasoning:
-
-```bash
-uv run python examples/reasoner.py \
-  --case robotics_next_action \
-  --reasoning \
-  --thinking-token-budget 512
-```
-
-For Chat Completions, `include_reasoning` must be a JSON boolean. The task runner does not add
-prompt-authored `<think>` formatting instructions. When the response includes
-parsed reasoning, it saves the dedicated `reasoning_content` field separately
-and keeps the final
-answer in `message.content`; it never parses `<think>` tags. Reasoning text is
-not a stable machine-readable explanation and should not be required by
-downstream logic.
-
-Both API styles map a `developer` turn to a `system` instruction. Chat
+Both API styles map a `developer` turn to a system instruction. Chat
 Completions also:
 
 - enables standard OpenAI tool definitions and automatic tool choice with the
@@ -264,8 +329,9 @@ depending on reasoning or tool-call fields.
 ## Reasoner DFlash
 
 Nano and Super Reasoner use their bundled DFlash speculative-decoding drafts by
-default. The request routes and payloads do not change. Set
-`NIM_USE_DFLASH=0` at launch to run the selected target model without DFlash.
+default. The request routes and payloads do not change. The task catalog's
+Super BF16 baseline explicitly sets `NIM_USE_DFLASH=0` and runs the selected
+target model without DFlash.
 Startup rejects DFlash for Generator or when the required variant-specific
 draft artifact is unavailable. An independent local draft path, a
 hardware-derived BF16 KV-cache default, and advanced JSON configuration are
@@ -293,9 +359,9 @@ The service supplies these values when omitted:
 When the operator leaves the image and video limits unset, the NIM does not
 override the runtime's modality limits. Use request-level `media_io_kwargs` for
 workload-specific video sampling; the example requests 4 FPS. Video-token
-pruning defaults to a `0.6` rate with `vidcom2`; set the operator rate to `0` to
-disable it. Operator-wide media limits, preprocessing, and pruning are
-documented under
+pruning defaults to a `0.6` rate with `vidcom2`; the catalog baseline sets the
+operator rate to `0` and disables it. Operator-wide media limits, preprocessing,
+and pruning are documented under
 [Reasoner configuration](configuration.md#reasoner-configuration). Verify
 additional request fields against the active `/openapi.json`.
 
@@ -363,10 +429,11 @@ processed by the reasoning parser. Responses requests use their native
 }
 ```
 
-The runnable task catalog uses JSON schemas for temporal localization, 2D
-grounding, and 2D trajectory proposals. It parses `message.content` with the
-standard JSON parser and then validates semantic invariants that a schema alone
-does not establish, such as ordered timestamps, ordered box corners, non-empty
+The runnable task catalog uses JSON schemas for numeric and timecode temporal
+events, timestamp queries, marked-subject captions, 2D grounding, and 2D
+trajectory proposals. It parses `message.content` with the standard JSON parser
+and then validates semantic invariants that a schema alone does not establish,
+such as ordered timestamps, unique subject IDs, ordered box corners, non-empty
 labels, and coordinates in `[0,1000]`. Do not recover structured results with a
 regular expression over prose or Markdown fences.
 
@@ -404,11 +471,14 @@ semantic proposal in visual coordinates. It is not a domain-specific Generator
 Action tensor and must not be sent directly to a robot. See
 [Generator Action representations](action.md#domains-and-representations).
 
-For a broader gallery, see the existing
-[Reasoner Prompt Guide](../reasoner/reasoner_prompt_guide.md). Treat its task
-ideas and output schemas as guidance, not as a guarantee that the service
-exposes hidden reasoning traces. Ask for concise justifications or structured
-final answers; do not depend on `<think>` blocks or hidden chain-of-thought.
+The catalog preserves the exact user prompts from the
+[vLLM Reasoner notebook](../reasoner/run_with_vllm.ipynb) while adapting media
+transport and structured output to the NIM API. Treat recorded answers in the
+[Reasoner Prompt Guide](../reasoner/reasoner_prompt_guide.md) as examples from
+another run, not as golden NIM output. Literal `<think>` blocks requested by
+those prompts are visible response formatting, not a guarantee that the service
+exposes a stable hidden reasoning trace; downstream logic must not depend on
+them.
 
 ## Errors
 

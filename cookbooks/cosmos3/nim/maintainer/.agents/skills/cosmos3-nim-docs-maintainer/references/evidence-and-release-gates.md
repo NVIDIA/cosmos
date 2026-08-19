@@ -82,7 +82,12 @@ confirmed:
 - default-on Nano and Super DFlash drafts, independent local draft overrides,
   hardware-derived BF16 KV-cache selection, and advanced DFlash JSON
   configuration;
-- quantized Generator linear-backend selection; and
+- quantized Generator linear-backend selection;
+- the NIM API adaptation for the 18-case Reasoner catalog, including byte-equal
+  vLLM user-prompt strings, data-URL media, request-level 4-FPS video sampling,
+  an unpruned-video baseline, disabled NIM-native parsed reasoning, preserved
+  prompt-authored `<think>` text, standard JSON Schema output, and local
+  structural validators; and
 - runtime-aware metadata, health responses, and wrong-runtime diagnostics.
 
 Regenerate the source profile export before reconciling tables. Generated
@@ -128,6 +133,85 @@ validated against these live responses. This establishes the
 management-endpoint join and helper output for this Nano Reasoner configuration,
 not Generator, inference behavior, or performance.
 
+The exact image was launched separately on one NVIDIA B200 as Super FP8
+Reasoner with its bundled DFlash draft explicitly enabled. The committed
+`robot_planning` case used the shared `robot_planning.png` fixture, original
+Reasoner-notebook prompt, and seed 0. It completed with a five-subtask response
+covering movement to the flower, grasp, pickup, movement to the red bottle, and
+placement. This validates that one request and configuration, not a stable JSON
+format, other seeds, other tasks, general Reasoner quality, or performance.
+
+The same image and one-B200 Super FP8 profile were then run target-only with
+NIM-native parsed reasoning disabled and the default VidCom2 pruning rate of
+0.6. All 18 catalog
+cases completed API and format validation,
+including JSON parsing, timestamp/box/point invariants, and spatial artifact
+generation. Qualitative review passed 12 case-specific checklists. The video
+caption, first temporal-localization case, robotics next action, assisted-task
+next action, marked-subject description, and flower trajectory remained
+incomplete or semantically inaccurate. This validates the target-only catalog
+transport and format paths, not general task quality or performance.
+
+The target-only, native-reasoning-disabled FP8 profile was then rerun with
+`NIM_VIDEO_PRUNING_RATE=0`. All 18 cases again completed with
+`finish_reason=stop`, and all seven structured cases passed local format
+validation. Fourteen qualitative checklists passed. The video caption improved
+materially but stopped at preparation to place the white box rather than
+explicitly completing placement. Assisted-task next action, marked-subject
+description, and flower trajectory remained inaccurate. Disabling pruning
+restored the complete first temporal timeline and the expected smart-charger
+next action; this result motivated keeping pruning disabled in the catalog
+baseline.
+
+The exact image was then launched on one NVIDIA B200 as Super BF16 target-only,
+with NIM-native parsed reasoning and video pruning disabled. All 18 catalog
+cases completed with
+`finish_reason=stop`, and all seven structured cases passed format validation.
+The BF16 run corrected the flower-trajectory result seen with FP8; video caption,
+assisted-task next action, and marked-subject description remained incomplete.
+The `robot_planning` case explicitly sent `temperature=0`, `top_p=0.8`,
+`top_k=20`, `presence_penalty=0`, `repetition_penalty=1`, and `seed=0`. Its
+five-subtask response was byte-for-byte identical to the controlled raw-vLLM
+Super BF16 response, but both omitted an explicit flower release and arm
+retreat. This validates deterministic parity for that request, not sampled
+parity, complete task semantics, general model quality, or performance.
+
+The exact image was subsequently launched on one NVIDIA H200 as Super BF16
+without DFlash or video pruning. Before inference, all 18 catalog user prompts
+were checked byte for byte against the runtime strings in
+`cookbooks/cosmos3/reasoner/run_with_vllm.ipynb`. NIM-native parsed reasoning
+remained disabled; six prompts still contained their original literal `<think>`
+instructions. All 18 requests completed with `finish_reason=stop`, and all seven
+structured cases passed JSON and local semantic format validation. Four text
+cases returned visible `<think>` blocks in `message.content`; guided output kept
+the two structured trajectory responses as schema-conforming JSON.
+
+This exact-prompt run retained deterministic robot-planning parity, the physical
+plausibility answer `A`, a near-identical situation-understanding answer, a
+matching driving Action-CoT class, and a grounding box close to the recorded
+vLLM answer. It did not establish catalog-wide output parity: video captioning
+placed the white box back on the table instead of in the shipping box, and the
+assisted-task case proposed removing the old cartridge instead of obtaining the
+new one. The interval answer omitted one box carrier, and the timestamp range
+started earlier than the recorded vLLM answer. The vLLM notebook contains no
+embedded outputs and was not rerun concurrently, so comparisons other than the
+separately controlled robot-planning request use the recorded prompt-guide
+answers and are qualitative, not a backend equivalence test.
+
+Two live correctness findings remain internal release gates:
+
+- With native reasoning controls enabled, both DFlash and target-only returned
+  `finish_reason=stop` with `message.content=null` and placed the complete text
+  or structured answer in `message.reasoning`. This reproduced with 512- and
+  2048-token reasoning budgets, so the catalog keeps NIM-native parsed
+  reasoning disabled.
+- For a fixed-seed 2D grounding request, DFlash produced invalid coordinates.
+  In the follow-up control, DFlash passed 0/10 greedy requests at
+  `temperature=0` and 4/20 sampled seeds; target-only passed 10/10 and 20/20,
+  respectively. Failures included reversed corners, dropped digits,
+  out-of-range values, and malformed JSON. The public catalog therefore uses
+  the target-only baseline without describing this unresolved release finding.
+
 ## Open release gates
 
 Review this list on every substantive documentation update and remove, add, or
@@ -150,11 +234,17 @@ refine entries when evidence changes:
 - current-free-VRAM fallback, Reasoner utilization clamping, and discrete-GPU
   NVML startup behavior in the selected image;
 - default-on Nano/Super DFlash, draft override, KV-cache, and advanced
-  configuration behavior in the selected image;
+  configuration behavior in the selected image, including resolution of the
+  Super FP8 spatial-output correctness finding recorded above;
 - quantized Generator linear-backend behavior in the selected image;
 - public Helm chart URL to replace the staging reference, plus approved values,
   installation workflow, and monitoring integration;
-- approved reasoning-trace wording; and
+- controlled, concurrent vLLM/NIM review of all exact-prompt catalog outputs,
+  especially video captioning, assisted-task next action, interval/timestamp
+  completeness, trajectory semantics, and robot-planning release/retreat;
+  plus evaluation of default VidCom2 output quality on the video catalog;
+- native reasoning-parser separation of reasoning from non-empty final content,
+  plus approved reasoning-trace wording; and
 - approved acknowledgements and product license/model-card links for the exact
   release.
 
