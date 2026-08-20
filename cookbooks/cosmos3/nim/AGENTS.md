@@ -37,8 +37,8 @@ For guided customer workflows, load
   runtime, endpoint, selected-profile, and compatible-variant checks before
   inference and reject unknown CLI arguments before endpoint or media work; do
   not bypass those checks. For the Reasoner task catalog, use the documented
-  Super BF16 target-only baseline with video-token pruning, preserve the
-  catalog's exact vLLM user-prompt text and explicit sampling controls, and
+  Super BF16 target-only baseline with video-token pruning disabled, preserve
+  the catalog's exact vLLM user-prompt text and explicit sampling controls, and
   verify the selected profile before running requests. Literal `<think>` text in
   a parity prompt is response text. Use
   `examples/reasoner.py --list-cases` and `--describe <case> --format json` for

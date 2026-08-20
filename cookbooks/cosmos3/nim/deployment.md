@@ -125,7 +125,7 @@ evaluation logout step when you finish.
 Pin and pull the current release-candidate image:
 
 ```bash
-export NIM_IMAGE='nvcr.io/nvstaging/nim/cosmos3:1.0.0-rc.experimental.20260819162707-abe093ed5f4484b1'
+export NIM_IMAGE='nvcr.io/nvstaging/nim/cosmos3:1.0.0-rc.experimental.20260820180843-2873924bdfbb5f92'
 docker pull "$NIM_IMAGE"
 ```
 

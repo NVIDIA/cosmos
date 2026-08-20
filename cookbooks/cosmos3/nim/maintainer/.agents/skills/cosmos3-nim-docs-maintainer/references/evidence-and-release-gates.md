@@ -41,7 +41,7 @@ against the NIM contract rather than copying another backend's adapter.
 ## Active release maintenance
 
 - Deployment currently uses the versioned Cosmos3 1.0.0 experimental RC
-  `1.0.0-rc.experimental.20260819162707`, not a final release identity. Record
+  `1.0.0-rc.experimental.20260820180843`, not a final release identity. Record
   source-derived evidence in maintainer files only and require the exact image
   manifest or live behavior before presenting claims as validated in the
   evaluation image. Before public release, `deployment.md` owns the exact
@@ -87,7 +87,9 @@ confirmed:
   container preflight invocation, equivalent-layout fallback, explicit-pin
   failure, and the Reasoner runtime reserve/utilization clamp;
 - Reasoner TP1 preference, TP2 availability fallback, guided-decoding
-  enforcement, Responses create normalization, and VidCom2 pruning defaults;
+  enforcement, Responses create normalization, disabled-by-default video-token
+  pruning with VidCom2 as the selected method when enabled, and operator-level
+  media I/O and multimodal processor JSON options;
 - default-on Nano and Super DFlash drafts, independent local draft overrides,
   hardware-derived BF16 KV-cache selection, and advanced DFlash JSON
   configuration;
@@ -106,13 +108,41 @@ implementation or be presented as an approved image manifest.
 ## Current RC-validated contracts
 
 The exact evaluation image pinned in `deployment.md` has manifest digest
-`sha256:8fe7d7b2213ad999e9b0b8a5b75acc0c242509283fbed76d66fa04da6e1439f2`.
+`sha256:c0a6b8a14c05bee46609a87798876dca62cea7f703d6ae552a26559d2298ad51`.
 Its embedded manifest reports release
+`1.0.0-rc.experimental.20260820180843`, with 115 Generator profiles and 7
+Reasoner profiles. Compared with the superseded RC manifest, only the release
+value changed; profile IDs, tags, and workspaces are unchanged. Direct option
+parsing in the image confirmed that unset video pruning resolves to disabled
+and that `NIM_MM_PROCESSOR_KWARGS` accepts a JSON object. The Reasoner
+preflight exported `pynvvc` as the operator-level video backend.
+
+On NVIDIA H100 NVL (compute capability 9.0, 95,830 MiB total and 95,322 MiB
+free per visible device), the pre-download selector passed with one-GPU
+profiles for both runtimes:
+
+- Nano Generator selected FP8, `offload=none`, latency profile
+  `845653ddaf5445077909499d031b8e57a249052dced3c4644ef9dc2f71898c8c`, with
+  44-GiB VRAM and 16-GiB effective-system-memory floors; Transfer admission
+  passed.
+- Nano Reasoner selected FP8 profile
+  `0ef8dad974a6e18226d70838ead8161670fbdd871ce4bc1efcd3f707a2bce612`, with
+  23.1-GiB VRAM and 16-GiB effective-system-memory floors.
+
+These preflight results establish candidate-profile compatibility only. No
+cold-start, management-endpoint, or inference validation is retained for this
+exact RC.
+
+## Historical validation from the superseded 20260819 RC
+
+The superseded evaluation image had manifest digest
+`sha256:8fe7d7b2213ad999e9b0b8a5b75acc0c242509283fbed76d66fa04da6e1439f2`.
+Its embedded manifest reported release
 `1.0.0-rc.experimental.20260819162707`, with 115 Generator profiles and 7
 Reasoner profiles.
 
 On one NVIDIA B200 (compute capability 10.0, 183,359 MiB total and 182,625
-MiB free), the documented pre-download selector passed for both runtimes:
+MiB free), the pre-download selector passed for both runtimes:
 
 - Nano Generator selected FP8, one GPU, `offload=none`, latency profile
   `845653ddaf5445077909499d031b8e57a249052dced3c4644ef9dc2f71898c8c`, with
@@ -122,8 +152,8 @@ MiB free), the documented pre-download selector passed for both runtimes:
   23.1-GiB VRAM and 16-GiB effective-system-memory floors.
 
 These preflight results establish candidate-profile compatibility only. The
-exact image was then launched on the same B200 as Super BF16 Reasoner
-target-only with video pruning disabled. It reached readiness and reported
+image was then launched on the same B200 as Super BF16 Reasoner target-only
+with video pruning disabled. It reached readiness and reported
 `model_type=reasoner`, `inference_endpoint=/v1/chat/completions`, and selected
 profile `a914e500cd31122f4d73669fa6a61d67e9d9cf81e37777c4a2560cc06226cc37`.
 The documented image-caption, video-caption, Responses, and 18-case catalog
@@ -141,20 +171,20 @@ backends: robot planning and grounding were close, while video completion,
 next-action identification, and trajectories differed from the recorded vLLM
 answers.
 
-This validates the documented Reasoner transport and format paths for this
-configuration, not Generator behavior, catalog-wide quality parity, or
-performance. No exact-RC end-to-end validation record is retained for the
-unified-memory Thor T5000 or DGX Spark targets; their inventory inclusion
-records hardware/profile-policy verification, not full runtime validation on
-either device.
+This validates the documented Reasoner transport and format paths for the
+superseded configuration, not the current RC, Generator behavior, catalog-wide
+quality parity, or performance. No end-to-end validation record was retained
+for the unified-memory Thor T5000 or DGX Spark targets; their inventory
+inclusion records hardware/profile-policy verification, not full runtime
+validation on either device.
 
 The following records were collected before the 1.0.0 RC bump and are retained
 as historical coverage only; they do not validate the current image.
 
 ## Historical validation from the superseded 2.6.0 image
 
-The pre-download selector was run from the exact evaluation image pinned in
-`deployment.md` (manifest digest
+The pre-download selector was run from the evaluation image pinned at that
+time (manifest digest
 `sha256:40fc1382a557fe22e60e4ddaae5c4be6b187431786e610208b5b3d5261dc5ce2`)
 on one NVIDIA H100 PCIe (compute capability 9.0, 81,559 MiB
 total and 81,081 MiB free):
@@ -283,7 +313,8 @@ refine entries when evidence changes:
   combinations;
 - Reasoner Responses create normalization plus storage/background/retrieve
   behavior, and guided-output enforcement in the selected image;
-- Reasoner public-URL, text-only, and request-level video sampling behavior;
+- Reasoner public-URL, text-only, request-level video sampling, and
+  operator-level media I/O and multimodal processor behavior;
 - remaining live management endpoints, metrics, logs, errors, and chart probes;
 - approved startup, latency, and throughput measurements for each published
   reference configuration;
@@ -299,7 +330,8 @@ refine entries when evidence changes:
 - controlled, concurrent vLLM/NIM review of all exact-prompt catalog outputs,
   especially video captioning, assisted-task next action, interval/timestamp
   completeness, trajectory semantics, and robot-planning release/retreat;
-  plus evaluation of default VidCom2 output quality on the video catalog;
+  plus evaluation of explicitly enabled VidCom2 output quality on the video
+  catalog;
 - approved native-thinking output and reasoning-trace wording for the current
   image; and
 - approved acknowledgements and product license/model-card links for the exact

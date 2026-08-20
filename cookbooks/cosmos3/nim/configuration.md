@@ -184,14 +184,17 @@ correctness, latency, and throughput on the exact image before production use.
 | `NIM_DISABLE_MM_PREPROCESSOR_CACHE` | `false` | Disable the multimodal preprocessor cache |
 | `NIM_MAX_IMAGES_PER_PROMPT` | Unset | Optionally set a nonnegative image limit; when unset, do not override the runtime limit |
 | `NIM_MAX_VIDEOS_PER_PROMPT` | Unset | Optionally set a nonnegative video limit; when unset, do not override the runtime limit |
-| `NIM_MEDIA_IO_KWARGS` | Video FPS 4 with `pynvvc` | Replace the complete operator-level media preprocessing object |
-| `NIM_VIDEO_PRUNING_RATE` | `0.6` | Set video-token pruning from 0 through 1; use `0` to disable pruning |
+| `NIM_MEDIA_IO_KWARGS` | Video backend `pynvvc` | Replace the complete operator-level media I/O object with a JSON object |
+| `NIM_MM_PROCESSOR_KWARGS` | Unset | Set operator-level multimodal processor options as a JSON object |
+| `NIM_VIDEO_PRUNING_RATE` | `0` (disabled) | Set video-token pruning from 0 through 1; values greater than 0 enable pruning |
 | `NIM_VIDEO_PRUNING_METHOD` | `vidcom2` | Select `vidcom2` or `evs` when pruning is enabled |
 
 Prefer request-level `media_io_kwargs` for one workload rather than changing the
-operator-wide media object. Leave Reasoner GPU-memory headroom at its default
-unless system measurements establish another safe reserve; reducing it
-increases startup and runtime OOM risk.
+operator-wide media object. Leave `NIM_MM_PROCESSOR_KWARGS` unset unless the
+selected runtime has been validated with the complete processor-options object.
+Both operator-level options require JSON objects. Leave Reasoner GPU-memory
+headroom at its default unless system measurements establish another safe
+reserve; reducing it increases startup and runtime OOM risk.
 
 ### API behavior
 
