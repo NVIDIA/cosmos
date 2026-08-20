@@ -191,6 +191,35 @@ example. The elapsed time of `uv run python examples/...` includes local client
 startup, media preparation, response decoding, and output-file writes, so do
 not interpret the complete command time as NIM inference latency.
 
+## Unified-memory diagnostics
+
+On DGX Spark, Jetson AGX Thor, and other unified-memory systems, use the
+[`MemFree`, `MemAvailable`, and cache
+report](prerequisites.md#inspect-unified-memory-capacity-and-current-state) to
+distinguish total-capacity failures from temporary current-memory failures.
+`MemAvailable` already accounts for memory the kernel expects to reclaim; do
+not add cached memory to it or size a profile from `MemFree` alone.
+
+Host page-cache clearing, persistent NIM model-cache deletion, and rebooting
+are not normal recovery steps for a current-memory failure. Page-cache clearing
+affects the whole host and should be reserved for an approved diagnostic after
+its impact has been reviewed; retain before-and-after memory and preflight
+output. Deleting the disk-backed NIM model cache is a different destructive
+operation that forces artifact download or materialization and is not a normal
+way to make shared memory available. Stop an identified competing workload and
+rerun preflight instead.
+
+After a successful cold start, verify what actually ran rather than assuming a
+profile from the hardware calculation:
+
+```bash
+curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
+uv run python examples/inspect_profile.py
+```
+
+The helper joins the selected profile from metadata to the YAML embedded in
+`/v1/manifest`.
+
 ## Guardrails
 
 Generator profiles run input/output guardrails controlled by operator

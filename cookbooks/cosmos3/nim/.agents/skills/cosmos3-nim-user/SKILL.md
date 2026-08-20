@@ -21,7 +21,9 @@ Ask only for information needed to route the workflow:
 2. Do they need Generator or Reasoner?
 3. Which task do they want to perform?
 4. For a new deployment, what GPU count, compute capability, per-device total
-   and currently free VRAM, and effective host/container RAM are available?
+   and currently free VRAM, and effective host/container RAM are available? Is
+   the device discrete or unified memory? For unified memory, also collect
+   `MemFree`, `MemAvailable`, `Cached`, `SReclaimable`, and `Shmem`.
 
 Do not ask for the value of `NGC_API_KEY`, another token, private input media, or
 unredacted logs. It is sufficient to confirm that required secrets are set.
@@ -76,8 +78,14 @@ does not revoke the NGC personal key.
 
 For hardware guidance:
 
+- detect DGX Spark/GB10 and Jetson AGX Thor as unified-memory systems; for an
+  unfamiliar device, use the exact-image preflight's unified-memory report
+  rather than inferring from a marketing memory label;
 - evaluate every participating device's total and currently free memory against
   the per-device floor, including the documented Reasoner runtime reserve;
+- on unified memory, use `MemAvailable` for current state because it includes
+  reclaimable cache; report `MemFree` and the cache components separately and
+  never add cache to `MemAvailable`;
 - never add VRAM across devices;
 - use the Transfer minimum when Transfer must be served, and distinguish
   profile compatibility from the task's practical hardware recommendation:
@@ -85,9 +93,17 @@ For hardware guidance:
   compatible discrete GPU for Transfer rather than DGX Spark;
 - use the tested-GPU inventory as the official validation scope, not as a
   compatibility allowlist for every profile or task;
-- use `uv run python examples/inspect_profile.py` to match the active profile
-  from `/v1/metadata` to the YAML embedded in `/v1/manifest`, and use the
-  support matrix for documented requirements;
+- recommend Super on H200- and B200-class discrete GPUs when the workload needs
+  it; default to Nano for generation on H100, RTX PRO 6000 Blackwell, lower-
+  throughput discrete devices, and all unified-memory devices; treat a fitting
+  Super row on those systems as compatibility, not a performance
+  recommendation;
+- choose runtime, model variant, and Generator latency/throughput selectors
+  first, normally leaving precision, offload, tags, and profile ID unset; let
+  preflight choose the exact image-specific profile;
+- after cold start, require `examples/inspect_profile.py` to match the selected
+  profile from `/v1/metadata` to the YAML embedded in `/v1/manifest`, and use
+  the support matrix for documented requirements;
 - use the current RTX 5090 guidance and thresholds in `support-matrix.md` to
   distinguish ordinary generation from Transfer eligibility;
 - explain that preflight/startup takes one free-memory snapshot and can fall
@@ -97,6 +113,38 @@ For hardware guidance:
   resolve unavailable general CPU, RAM, disk, shared-memory, driver, Docker, or
   Container Toolkit requirements; and
 - leave requirements described as not yet available unresolved.
+
+### Unified-memory decision procedure
+
+1. Run the read-only memory report in
+   `prerequisites.md#inspect-unified-memory-capacity-and-current-state` and
+   present `MemFree`, `MemAvailable`, `Cached`, `SReclaimable`, `Shmem`, and the
+   approximate reclaimable cache. Explain that `MemAvailable` already includes
+   reclaimable memory.
+2. Compare the requested profile family's floor with effective total capacity
+   after the host reserve. If the floor exceeds effective total, report
+   **exceeds total capacity**; cache reclamation cannot change that result. For
+   example, Reasoner Super BF16 TP1 requires 135 GiB effective memory and cannot
+   fit the DGX Spark shared pool.
+3. If the floor fits effective total but preflight rejects current free memory,
+   report **fits hardware but not the current memory state**. Identify active
+   workloads and rerun preflight after the operator stops only those workloads.
+4. Recommend model-level selectors, not an image-specific profile ID. On
+   H200/B200-class hardware, a Generator Super request begins with
+   `NIM_MODEL_TYPE=generator`, `NIM_MODEL_VARIANT=super`, and
+   `NIM_PERF_PROFILE=latency`. On DGX Spark, Thor, H100, or RTX PRO 6000
+   Blackwell, recommend `NIM_MODEL_VARIANT=nano` for practical generation
+   turnaround unless the customer has an explicit Super requirement.
+5. Run preflight with those selectors and the intended GPU visibility. Present
+   a pass only as candidate-profile compatibility.
+6. After startup, check readiness and `/v1/metadata`, then run
+   `uv run python examples/inspect_profile.py`; report the model selector and
+   the actual profile selected from that image.
+
+Never clear host page cache, delete model cache, stop unidentified processes,
+or reboot automatically. Present host page-cache reclamation only as an
+approved diagnostic with its host-wide impact, require explicit operator
+confirmation, and collect before-and-after memory and preflight evidence.
 
 ## 4. Route the task
 

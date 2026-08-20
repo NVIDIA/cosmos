@@ -57,6 +57,12 @@ against the NIM contract rather than copying another backend's adapter.
   verified unified-memory targets. Inventory membership identifies an official
   validation target; it does not establish a passing result for every profile
   or task on every listed device and is not a compatibility allowlist.
+- Model-family compatibility remains floor-based, but practical guidance
+  recommends Super on H200- and B200-class discrete GPUs when needed and Nano
+  for generation on H100, RTX PRO 6000 Blackwell, lower-throughput discrete
+  GPUs, and unified-memory systems. A fitting Super row on those hosts remains
+  available but is not the default turnaround recommendation. Do not turn this
+  guidance into a fixed latency claim.
 - Transfer remains profile-compatible wherever its separate per-device memory
   floor is met, but its practical evaluation recommendation starts with an RTX
   PRO 6000 Blackwell 96-GB, H100 80-GB, or higher-throughput compatible
@@ -83,10 +89,15 @@ confirmed:
 - unified-memory selection subtracts the default 16-GiB host reserve from the
   reported shared-memory total for static profile floors, uses resident model
   and guardrails for Generator, and applies the same reserve to Reasoner
-  current-free-memory admission. The current implementation records the
-  Jetson AGX Thor T5000 as a 123-GiB unified-memory measurement target with an
-  approximately 6.8-GiB observed host working set, and identifies GB10/DGX
-  Spark for unified-memory Reasoner runtime defaults;
+  current-free-memory admission. Current-state selection uses Linux
+  `MemAvailable`, which includes the kernel's reclaimable-cache estimate,
+  rather than CUDA's `MemFree` view. Startup also attempts a scoped
+  `POSIX_FADV_DONTNEED` release for large files under the NIM cache on unified
+  memory; that product behavior does not authorize an assistant to clear host
+  caches. The current implementation records the Jetson AGX Thor T5000 as a
+  123-GiB unified-memory measurement target with an approximately 6.8-GiB
+  observed host working set, and identifies GB10/DGX Spark for unified-memory
+  Reasoner runtime defaults;
 - effective system-memory selection floors of 16 GiB for resident Generator and
   Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload;
 - current-free-VRAM startup selection before model materialization, the

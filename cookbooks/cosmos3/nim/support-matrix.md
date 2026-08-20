@@ -37,6 +37,29 @@ Nano and Super Reasoner profiles include variant-specific DFlash drafts and use
 them by default. Set `NIM_USE_DFLASH=0` to run either target model without
 speculative decoding. Generator does not support DFlash.
 
+### Practical model recommendation
+
+Profile compatibility is not a performance recommendation. Choose the model
+family first, then let preflight select an exact image-specific profile:
+
+- On H200- and B200-class discrete GPUs, use Super when the workload needs it.
+  Start with `NIM_MODEL_TYPE=generator` or `reasoner`, set
+  `NIM_MODEL_VARIANT=super`, and—for Generator—set
+  `NIM_PERF_PROFILE=latency`; normally leave precision, offload, tags, and the
+  profile ID unset.
+- On H100, RTX PRO 6000 Blackwell, and lower-throughput discrete devices,
+  default to Nano for image and especially video generation. Super can remain
+  profile-compatible through a resident or offload layout, but use it only for
+  an explicit model requirement after preflight and representative testing.
+- On unified-memory systems such as DGX Spark and Jetson AGX Thor, default to
+  Nano for both runtimes. Some Super precision rows can fit the shared-memory
+  floors, but Super is not recommended on these systems for practical
+  turnaround.
+
+These recommendations do not remove compatible profiles or replace the tables
+below. After startup, verify the selected profile through `/v1/metadata` and
+`/v1/manifest`; do not copy a profile ID from another image or host.
+
 ## GPU architecture and topology
 
 Compatibility uses CUDA compute capability, per-device VRAM, and effective
@@ -124,10 +147,16 @@ so confirm the binary-GiB total reported by the running system before launch.
 
 At these capacities, memory floors permit the resident Generator Nano BF16
 and FP8 rows and the resident Super FP8 rows. For Reasoner, the Nano rows and
-Super FP8 and NVFP4 TP1 rows meet the memory floor. Compute capability, GPU
-count, current free memory, and the exact image manifest still determine the
-selected profile. Super BF16 TP1 does not meet the unified-memory threshold on
-either nominal device capacity.
+Super FP8 and NVFP4 TP1 rows meet the memory floor. This is capacity
+compatibility, not a recommendation to use Super on these systems; prefer Nano
+for practical turnaround. Compute capability, GPU count, current free memory,
+and the exact image manifest still determine the selected profile.
+
+Reasoner Super BF16 TP1 requires a 135-GiB effective pool and a minimum
+151-GiB reported pool after accounting for the host reserve. It therefore
+exceeds the total capacity of both listed unified-memory systems; reclaimable
+cache cannot make that profile fit. This differs from a profile that fits the
+effective total but is temporarily blocked by the current memory state.
 
 ### Blackwell Ultra
 

@@ -56,6 +56,56 @@ memory with profile floors. Generator selection uses resident model and
 resident guardrail profiles on these systems; CPU-offload profiles do not
 reduce shared-memory use.
 
+### Inspect unified-memory capacity and current state
+
+DGX Spark/GB10 and Jetson AGX Thor use unified memory: the CPU and GPU share
+the same physical pool. Inspect the host memory state before choosing a
+candidate configuration. After the image pull, preflight confirms whether the
+exact image is applying its unified-memory selection policy. This read-only
+command summarizes the relevant host fields:
+
+```bash
+python3 - <<'PY'
+keys = ("MemTotal", "MemFree", "MemAvailable", "Cached", "SReclaimable", "Shmem")
+values = {}
+with open("/proc/meminfo", encoding="ascii") as meminfo:
+    for line in meminfo:
+        name, value, *_ = line.replace(":", "").split()
+        if name in keys:
+            values[name] = int(value) * 1024
+for name in keys:
+    print(f"{name}: {values.get(name, 0) / 1024**3:.2f} GiB")
+reclaimable = max(
+    values.get("Cached", 0)
+    + values.get("SReclaimable", 0)
+    - values.get("Shmem", 0),
+    0,
+)
+print(f"Approximate reclaimable cache: {reclaimable / 1024**3:.2f} GiB")
+PY
+```
+
+`MemFree` is immediately unused memory. `MemAvailable` is the kernel estimate
+of memory obtainable without swapping and already includes reclaimable cache;
+do not add the approximate cache value to it. A large gap between `MemFree` and
+`MemAvailable` can reflect reclaimable cache, but the approximate cache value
+is not a guarantee that every cached byte can be reclaimed.
+
+A memory-related preflight failure has two materially different causes:
+
+- A floor above the device-reported total after the unified-memory host reserve
+  **exceeds total capacity**. Stopping processes or reclaiming cache cannot make
+  that profile fit.
+- A floor that fits the effective total but fails the current-memory check
+  **fits the hardware but not the current memory state**. Inspect `MemFree`,
+  `MemAvailable`, and the cache components, stop identified competing
+  workloads, and rerun preflight.
+
+Preflight applies the runtime-specific current-memory and reserve rules.
+Clearing page cache or deleting the persistent NIM model cache is not part of
+the normal deployment workflow; see [Unified-memory
+diagnostics](operations.md#unified-memory-diagnostics).
+
 Lower-VRAM profiles can keep model weights in system memory. Resident Generator
 and Reasoner profiles carry a 16-GiB selection floor, Nano model/layer-offload
 profiles carry 64 GiB, and Super model/layer-offload profiles carry 150 GiB. The

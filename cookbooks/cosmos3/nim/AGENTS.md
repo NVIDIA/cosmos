@@ -17,7 +17,8 @@ For guided customer workflows, load
   deploy one, which runtime they need, and what task they want to perform. For
   a new deployment, also confirm total and currently free memory on every
   participating GPU and effective host/container RAM before choosing a profile
-  family.
+  family. Detect DGX Spark/GB10 and Jetson AGX Thor as unified memory; report
+  `MemFree`, `MemAvailable`, and reclaimable-cache components for those hosts.
 - Treat the public pages and examples in this directory as the authority. Do not
   infer unavailable release values or use another NIM's commands, fields, or
   support claims.
@@ -45,14 +46,24 @@ For guided customer workflows, load
   a parity prompt is response text. Use
   `examples/reasoner.py --list-cases` and `--describe <case> --format json` for
   endpoint-independent task discovery.
-- Use `examples/inspect_profile.py` to match `/v1/metadata` to the embedded YAML
-  from `/v1/manifest`, and use the published support-matrix floors for
-  configuration checks. Evaluate both total and currently free VRAM per
-  participating device; do not add VRAM across devices or treat the tested-GPU
-  inventory as a compatibility allowlist for every profile or task.
-- For a new deployment, use the documented pre-download profile preflight after
-  the image pull. Present success only as candidate-profile compatibility; full
-  host compatibility still requires cold start and representative requests.
+- Use the published support-matrix floors for configuration checks. On unified
+  memory, distinguish **exceeds total capacity** from **fits hardware but not
+  the current memory state**; use `MemAvailable`, which already includes
+  reclaimable cache, rather than `MemFree` alone. After startup, require
+  `examples/inspect_profile.py` to match `/v1/metadata` to the embedded YAML
+  from `/v1/manifest`. Evaluate every participating device separately; do not
+  add memory across devices or treat the tested-GPU inventory as a
+  compatibility allowlist for every profile or task.
+- For a new deployment, choose runtime, model variant, and Generator
+  latency/throughput selectors first, then use the documented pre-download
+  profile preflight after the image pull to select the exact image-specific
+  profile. Normally leave precision, offload, tags, and profile ID unset.
+  Present success only as candidate-profile compatibility; full host
+  compatibility still requires cold start and representative requests.
+- Recommend Super on H200- and B200-class discrete GPUs when needed. Default to
+  Nano for generation on H100, RTX PRO 6000 Blackwell, lower-throughput
+  discrete GPUs, and all unified-memory systems; a fitting Super profile on
+  those hosts is compatibility, not a practical-turnaround recommendation.
 - Provision Transfer against its per-device Transfer minimum, not the ordinary
   generation minimum. Distinguish profile compatibility from practical
   turnaround: recommend an RTX PRO 6000 Blackwell 96-GB, H100 80-GB, or
@@ -64,7 +75,10 @@ For guided customer workflows, load
   and include registry logout in evaluation cleanup; `--password-stdin` does
   not protect the stored credential by itself.
 - Explain commands that remove containers or data and obtain confirmation before
-  running destructive operations.
+  running destructive operations. Never clear host page cache, delete the NIM
+  model cache, stop unidentified processes, or reboot automatically. Present
+  page-cache reclamation only as an approved host-wide diagnostic and require
+  explicit operator confirmation plus before-and-after evidence.
 - Do not blindly retry a long-running synchronous request. Check service logs,
   health, and whether the original request is still active first. Treat the
   30-minute general Generator and 60-minute Transfer client values as ceilings,
