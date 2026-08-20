@@ -57,6 +57,12 @@ against the NIM contract rather than copying another backend's adapter.
   verified unified-memory targets. Inventory membership identifies an official
   validation target; it does not establish a passing result for every profile
   or task on every listed device and is not a compatibility allowlist.
+- Transfer remains profile-compatible wherever its separate per-device memory
+  floor is met, but its practical evaluation recommendation starts with an RTX
+  PRO 6000 Blackwell 96-GB, H100 80-GB, or higher-throughput compatible
+  discrete GPU. DGX Spark is not recommended for Transfer turnaround even when
+  a compatible profile fits. Keep this operational recommendation distinct
+  from support-matrix eligibility and do not turn it into an expected runtime.
 - The final public image, release version/date, catalog URL, and model-card URL
   remain release-owned until approved.
 - The current evaluation chart reference is

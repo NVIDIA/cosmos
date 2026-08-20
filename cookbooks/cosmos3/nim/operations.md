@@ -162,12 +162,15 @@ or video response only after inference and response serialization complete, so
 a connection can remain open without a response body while work is active. A
 quiet connection by itself does not prove that the request is hung.
 
-The cookbook clients set a 30-minute HTTP request timeout. The Generator backend
-also has a separately configurable queue-plus-execution timeout with a 30-minute
-default; see
+Most Generator cookbook clients set a 30-minute HTTP request timeout; the
+compute-intensive Transfer client uses 60 minutes. The Generator backend has a
+separately configurable queue-plus-execution timeout with a 30-minute default;
+see
 [`NIM_TRITON_REQUEST_TIMEOUT`](configuration.md#generator-configuration).
-Both values are timeout ceilings, not expected latency or a service-level
-objective.
+A longer client timeout does not extend the backend ceiling. For Transfer, set
+the backend to 60 minutes at container launch when the request needs the full
+client window. All of these values are timeout ceilings, not expected latency
+or a service-level objective.
 
 Before retrying a quiet request:
 

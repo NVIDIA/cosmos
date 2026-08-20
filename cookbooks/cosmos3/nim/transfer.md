@@ -36,11 +36,28 @@ The script includes five precomputed control cases with matching prompts,
 control media, geometry, and seeds. Run one case at a time so one command does
 not start several expensive generations.
 
+Transfer is particularly compute-intensive. For practical evaluation
+turnaround, use a high-throughput discrete GPU such as an NVIDIA RTX PRO 6000
+Blackwell with 96 GB, an H100 with 80 GB, or a higher-throughput discrete GPU
+that meets the selected profile's Transfer floor. DGX Spark can satisfy the
+memory floors for compatible profiles, but it is not recommended for Transfer
+because requests can take substantially longer. This operational recommendation
+does not change profile compatibility: continue to check total and currently
+free memory against the [Transfer headroom
+requirements](support-matrix.md#transfer-headroom).
+
 Transfer inference is synchronous. The connection can remain open without a
-response body while the request is running. The example client allows up to 30
+response body while the request is running. The example client allows up to 60
 minutes for the request; that timeout is a ceiling, not an expected completion
-time. Do not retry only because the connection is quiet. Check the active
-request using the [long-running request
+time. The Generator backend has a separate 30-minute default. To permit a
+Transfer request to use the full client ceiling, add
+`-e NIM_TRITON_REQUEST_TIMEOUT=3600000000` to the Generator Docker launch
+command and restart the container before inference. The value is in
+microseconds; changing the client does not change the backend setting. See
+[Generator configuration](configuration.md#generator-configuration).
+
+Do not retry only because the connection is quiet. Check the active request
+using the [long-running request
 guidance](operations.md#long-running-requests) first.
 
 Install the [client tooling](prerequisites.md#client-tooling). Then, from the

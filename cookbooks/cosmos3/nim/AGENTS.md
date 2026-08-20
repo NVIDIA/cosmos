@@ -54,8 +54,10 @@ For guided customer workflows, load
   the image pull. Present success only as candidate-profile compatibility; full
   host compatibility still requires cold start and representative requests.
 - Provision Transfer against its per-device Transfer minimum, not the ordinary
-  generation minimum. Never recommend `NIM_ALLOW_UNSAFE_TRANSFER=1` as a normal
-  setting.
+  generation minimum. Distinguish profile compatibility from practical
+  turnaround: recommend an RTX PRO 6000 Blackwell 96-GB, H100 80-GB, or
+  higher-throughput compatible discrete GPU for Transfer rather than DGX Spark.
+  Never recommend `NIM_ALLOW_UNSAFE_TRANSFER=1` as a normal setting.
 - Do not ask the customer to paste an NGC API key, access token, private media,
   or unredacted logs. Refer to secret environment-variable names only. Explain
   Docker's stored-credential behavior and optional external credential helper,
@@ -64,4 +66,7 @@ For guided customer workflows, load
 - Explain commands that remove containers or data and obtain confirmation before
   running destructive operations.
 - Do not blindly retry a long-running synchronous request. Check service logs,
-  health, and whether the original request is still active first.
+  health, and whether the original request is still active first. Treat the
+  30-minute general Generator and 60-minute Transfer client values as ceilings,
+  not expected latency, and remember that the backend default remains 30
+  minutes unless changed at container launch.

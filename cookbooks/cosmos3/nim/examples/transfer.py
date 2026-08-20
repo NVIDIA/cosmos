@@ -108,7 +108,7 @@ def main() -> None:
     )
     request = build_request(case)
 
-    response = requests.post(f"{NIM_URL}/v1/infer", json=request, timeout=1800)
+    response = requests.post(f"{NIM_URL}/v1/infer", json=request, timeout=3600)
     response.raise_for_status()
 
     OUTPUTS.mkdir(exist_ok=True)

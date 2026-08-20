@@ -82,6 +82,12 @@ discrete GPUs.
 | `NIM_VIDEO_SAVE_QUALITY` | `7` | Set VP9 output quality from 1 through 9; this affects encoding, not diffusion quality |
 | `NIM_TRITON_REQUEST_TIMEOUT` | 30 minutes (`1800000000` microseconds) | Set the queue-plus-execution timeout in microseconds |
 
+Client HTTP timeouts do not change this backend ceiling. The Transfer example
+uses a 60-minute client timeout; to allow the backend the same ceiling, add
+`-e NIM_TRITON_REQUEST_TIMEOUT=3600000000` to the Generator Docker launch
+command and restart the container. See the [Transfer hardware and timeout
+guidance](transfer.md#run-the-examples).
+
 ### Startup and execution
 
 | Name | Default | Use |

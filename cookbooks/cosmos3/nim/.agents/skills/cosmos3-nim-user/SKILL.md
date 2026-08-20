@@ -79,7 +79,10 @@ For hardware guidance:
 - evaluate every participating device's total and currently free memory against
   the per-device floor, including the documented Reasoner runtime reserve;
 - never add VRAM across devices;
-- use the Transfer minimum when Transfer must be served;
+- use the Transfer minimum when Transfer must be served, and distinguish
+  profile compatibility from the task's practical hardware recommendation:
+  prefer an RTX PRO 6000 Blackwell 96-GB, H100 80-GB, or higher-throughput
+  compatible discrete GPU for Transfer rather than DGX Spark;
 - use the tested-GPU inventory as the official validation scope, not as a
   compatibility allowlist for every profile or task;
 - use `uv run python examples/inspect_profile.py` to match the active profile
@@ -145,8 +148,10 @@ Collect the minimum sanitized evidence needed:
   removed.
 
 Before retrying a synchronous Generator or Transfer request, check whether it is
-still active and inspect service health and logs. Treat the documented 30-minute
-value as a client timeout ceiling, not expected latency or an SLO.
+still active and inspect service health and logs. Treat the documented
+30-minute general Generator and 60-minute Transfer client values as timeout
+ceilings, not expected latency or an SLO. The Generator backend retains a
+separate 30-minute default unless the operator changes it at container launch.
 
 Do not use unsafe overrides as fixes. If an approved diagnostic requires one,
 state its risk, limit it to that diagnostic, and restore the default afterward.
