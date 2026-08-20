@@ -227,10 +227,9 @@ Generator above, remove it before reusing host port `8000`:
 docker rm -f cosmos3-generator
 ```
 
-Then launch the Super BF16 Reasoner in target-only mode with video-token
-pruning disabled. This one-GPU configuration requires compute capability 8.0
-or newer, at least 135 GiB of total and currently usable VRAM after the
-Reasoner reserve, and 16 GiB of effective system memory; see the
+Then launch the Super FP8 Reasoner. This one-GPU configuration requires
+compute capability 8.9 or newer, at least 67 GiB of total and currently usable
+VRAM after the Reasoner reserve, and 16 GiB of effective system memory; see the
 [Reasoner configurations](support-matrix.md#reasoner-configurations):
 
 ```bash
@@ -244,16 +243,13 @@ docker run -d --name cosmos3-reasoner \
   -e NGC_API_KEY \
   -e NIM_MODEL_TYPE=reasoner \
   -e NIM_MODEL_VARIANT=super \
-  -e NIM_PRECISION=bf16 \
-  -e NIM_USE_DFLASH=0 \
-  -e NIM_VIDEO_PRUNING_RATE=0 \
+  -e NIM_PRECISION=fp8 \
   -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
   "$NIM_IMAGE"
 ```
 
-The command pins Super BF16 target-only and disables video-token pruning so the
-example configuration is reproducible. It starts the Reasoner in the
-background. Follow startup logs with
+The command pins Super FP8 and uses the DFlash and video-token pruning
+defaults. It starts the Reasoner in the background. Follow startup logs with
 `docker logs -f cosmos3-reasoner`; press Ctrl+C to stop following logs without
 stopping the container. Expose all GPUs
 required by the selected Reasoner configuration. To use another compatible
