@@ -40,21 +40,23 @@ against the NIM contract rather than copying another backend's adapter.
 
 ## Active release maintenance
 
-- Deployment currently uses a versioned Cosmos3 2.6 staging bugfix RC, not a
-  final release identity. Record source-derived evidence in maintainer files
-  only and require the exact image manifest or live behavior before presenting
-  claims as validated in the evaluation image. Before public release, `deployment.md`
-  owns the exact evaluation image reference; update it on every RC bump.
+- Deployment currently uses the versioned Cosmos3 1.0.0 experimental RC
+  `1.0.0-rc.experimental.20260819162707`, not a final release identity. Record
+  source-derived evidence in maintainer files only and require the exact image
+  manifest or live behavior before presenting claims as validated in the
+  evaluation image. Before public release, `deployment.md` owns the exact
+  evaluation image reference; update it on every RC bump.
 - Never replace an RC reference with `latest`.
 - The current support-matrix compute-capability, GPU-count, per-device VRAM,
   Transfer, and effective system-memory thresholds are approved for publication
   as release profile-selection floors. They establish a candidate profile, not
   full host compatibility, and remain subject to the exact image manifest.
-- The published tested-GPU inventory contains 22 of the SKUs in the current
-  NIMCraft NIM configuration; L4 is intentionally excluded from publication.
-  The published inventory identifies official validation targets; it does not
-  establish a passing result for every profile or task on every listed SKU and
-  is not a compatibility allowlist.
+- The published tested-GPU inventory contains the 22 discrete SKUs in the
+  current NIMCraft NIM configuration; L4 is intentionally excluded from
+  publication. It also includes Jetson AGX Thor T5000 and DGX Spark (GB10) as
+  verified unified-memory targets. Inventory membership identifies an official
+  validation target; it does not establish a passing result for every profile
+  or task on every listed device and is not a compatibility allowlist.
 - The final public image, release version/date, catalog URL, and model-card URL
   remain release-owned until approved.
 - The current evaluation chart reference is
@@ -72,6 +74,13 @@ confirmed:
 
 - Generator BF16 compute capability 8.0, updated Super VRAM/Transfer floors,
   and Reasoner Super BF16 TP2 at 73 GiB/device;
+- unified-memory selection subtracts the default 16-GiB host reserve from the
+  reported shared-memory total for static profile floors, uses resident model
+  and guardrails for Generator, and applies the same reserve to Reasoner
+  current-free-memory admission. The current implementation records the
+  Jetson AGX Thor T5000 as a 123-GiB unified-memory measurement target with an
+  approximately 6.8-GiB observed host working set, and identifies GB10/DGX
+  Spark for unified-memory Reasoner runtime defaults;
 - effective system-memory selection floors of 16 GiB for resident Generator and
   Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload;
 - current-free-VRAM startup selection before model materialization, the
@@ -85,7 +94,7 @@ confirmed:
 - quantized Generator linear-backend selection;
 - the NIM API adaptation for the 18-case Reasoner catalog, including byte-equal
   vLLM user-prompt strings, data-URL media, request-level 4-FPS video sampling,
-  an unpruned-video baseline, disabled NIM-native parsed reasoning, preserved
+  an unpruned-video baseline, disabled NIM-native thinking, preserved
   prompt-authored `<think>` text, standard JSON Schema output, and local
   structural validators; and
 - runtime-aware metadata, health responses, and wrong-runtime diagnostics.
@@ -95,6 +104,54 @@ artifacts can lag profile policy source and must not silently override current
 implementation or be presented as an approved image manifest.
 
 ## Current RC-validated contracts
+
+The exact evaluation image pinned in `deployment.md` has manifest digest
+`sha256:8fe7d7b2213ad999e9b0b8a5b75acc0c242509283fbed76d66fa04da6e1439f2`.
+Its embedded manifest reports release
+`1.0.0-rc.experimental.20260819162707`, with 115 Generator profiles and 7
+Reasoner profiles.
+
+On one NVIDIA B200 (compute capability 10.0, 183,359 MiB total and 182,625
+MiB free), the documented pre-download selector passed for both runtimes:
+
+- Nano Generator selected FP8, one GPU, `offload=none`, latency profile
+  `845653ddaf5445077909499d031b8e57a249052dced3c4644ef9dc2f71898c8c`, with
+  44-GiB VRAM and 16-GiB effective-system-memory floors.
+- Nano Reasoner selected FP8, one GPU, profile
+  `0ef8dad974a6e18226d70838ead8161670fbdd871ce4bc1efcd3f707a2bce612`, with
+  23.1-GiB VRAM and 16-GiB effective-system-memory floors.
+
+These preflight results establish candidate-profile compatibility only. The
+exact image was then launched on the same B200 as Super BF16 Reasoner
+target-only with video pruning disabled. It reached readiness and reported
+`model_type=reasoner`, `inference_endpoint=/v1/chat/completions`, and selected
+profile `a914e500cd31122f4d73669fa6a61d67e9d9cf81e37777c4a2560cc06226cc37`.
+The documented image-caption, video-caption, Responses, and 18-case catalog
+examples completed API and local format validation. The explicit native
+thinking experiment (`--thinking --thinking-token-budget 64`) returned its
+structured result in `message.content`; no populated separate reasoning field
+was used by the example.
+
+The exact-prompt catalog requests used the NIM Chat Completions API with data
+URL media, `media_io_kwargs` video sampling, explicit native-thinking controls,
+and NIM response-format schemas for structured cases. Thinking-enabled requests
+returned both thinking text and final output through `message.content` without a
+populated separate reasoning field. Semantic output remained mixed across
+backends: robot planning and grounding were close, while video completion,
+next-action identification, and trajectories differed from the recorded vLLM
+answers.
+
+This validates the documented Reasoner transport and format paths for this
+configuration, not Generator behavior, catalog-wide quality parity, or
+performance. No exact-RC end-to-end validation record is retained for the
+unified-memory Thor T5000 or DGX Spark targets; their inventory inclusion
+records hardware/profile-policy verification, not full runtime validation on
+either device.
+
+The following records were collected before the 1.0.0 RC bump and are retained
+as historical coverage only; they do not validate the current image.
+
+## Historical validation from the superseded 2.6.0 image
 
 The pre-download selector was run from the exact evaluation image pinned in
 `deployment.md` (manifest digest
@@ -235,7 +292,7 @@ refine entries when evidence changes:
   NVML startup behavior in the selected image;
 - default-on Nano/Super DFlash, draft override, KV-cache, and advanced
   configuration behavior in the selected image, including resolution of the
-  Super FP8 spatial-output correctness finding recorded above;
+  historical Super FP8 spatial-output correctness finding;
 - quantized Generator linear-backend behavior in the selected image;
 - public Helm chart URL to replace the staging reference, plus approved values,
   installation workflow, and monitoring integration;
@@ -243,8 +300,8 @@ refine entries when evidence changes:
   especially video captioning, assisted-task next action, interval/timestamp
   completeness, trajectory semantics, and robot-planning release/retreat;
   plus evaluation of default VidCom2 output quality on the video catalog;
-- native reasoning-parser separation of reasoning from non-empty final content,
-  plus approved reasoning-trace wording; and
+- approved native-thinking output and reasoning-trace wording for the current
+  image; and
 - approved acknowledgements and product license/model-card links for the exact
   release.
 

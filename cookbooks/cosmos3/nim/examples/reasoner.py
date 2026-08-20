@@ -197,20 +197,20 @@ def response_format(spec: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def case_reasoning(spec: dict[str, Any], override: bool | None) -> bool:
-    """Resolve a CLI native-reasoning override against the catalog default."""
+def case_thinking(spec: dict[str, Any], override: bool | None) -> bool:
+    """Resolve a CLI native-thinking override against the catalog default."""
     if override is not None:
         return override
-    reasoning = spec.get("reasoning", {})
-    default = bool(DEFAULTS.get("native_reasoning_enabled", False))
-    return bool(reasoning.get("enabled", default)) if isinstance(reasoning, dict) else default
+    thinking = spec.get("thinking", {})
+    default = bool(DEFAULTS.get("native_thinking_enabled", False))
+    return bool(thinking.get("enabled", default)) if isinstance(thinking, dict) else default
 
 
 def build_request(
     case: str,
     model: str,
     *,
-    include_reasoning: bool | None = None,
+    enable_thinking: bool | None = None,
     thinking_token_budget: int | None = None,
 ) -> dict[str, Any]:
     """Build one NIM Chat Completions request from the declarative catalog."""
@@ -238,19 +238,21 @@ def build_request(
         **spec.get("sampling", {}),
     }
 
-    extra_body: dict[str, Any] = dict(DEFAULTS["request_extensions"])
+    extra_body: dict[str, Any] = {
+        "chat_template_kwargs": {"enable_thinking": False},
+        **DEFAULTS["request_extensions"],
+    }
     extra_body.update(spec.get("request_extensions", {}))
     if media_type == "video":
         extra_body["media_io_kwargs"] = {
             "video": {"fps": float(DEFAULTS["video_fps"])}
         }
-    reasoning_enabled = case_reasoning(spec, include_reasoning)
-    if reasoning_enabled:
+    thinking_enabled = case_thinking(spec, enable_thinking)
+    if thinking_enabled:
         budget = thinking_token_budget or int(DEFAULTS["thinking_token_budget"])
         extra_body.update(
             {
                 "chat_template_kwargs": {"enable_thinking": True},
-                "include_reasoning": True,
                 "thinking_token_budget": budget,
             }
         )
@@ -548,7 +550,7 @@ def run_case(
     metadata: dict[str, Any],
     case: str,
     *,
-    reasoning_override: bool | None,
+    thinking_override: bool | None,
     thinking_token_budget: int | None,
 ) -> None:
     """Execute one catalog case and save machine- and human-readable artifacts."""
@@ -556,7 +558,7 @@ def run_case(
     request = build_request(
         case,
         model,
-        include_reasoning=reasoning_override,
+        enable_thinking=thinking_override,
         thinking_token_budget=thinking_token_budget,
     )
     response = client.chat.completions.create(**request)
@@ -579,7 +581,7 @@ def run_case(
         (output_dir / name).unlink(missing_ok=True)
 
     selected_profile_id = metadata.get("selectedModelProfileId")
-    reasoning_enabled = case_reasoning(spec, reasoning_override)
+    thinking_enabled = case_thinking(spec, thinking_override)
     request_metadata = {
         "case": case,
         "title": spec["title"],
@@ -590,7 +592,7 @@ def run_case(
         "validated_baseline": VALIDATED_BASELINE,
         "request": _request_summary(request),
         "qualitative_review": spec["review"],
-        "native_reasoning_enabled": reasoning_enabled,
+        "native_thinking_enabled": thinking_enabled,
     }
     _write_json(output_dir / "request.json", request_metadata)
     _write_json(output_dir / "response.json", response_dict(response))
@@ -633,13 +635,6 @@ def run_case(
         _write_json(output_dir / "output.json", structured)
         annotate_spatial_output(spec, structured, output_dir / "annotated.png")
 
-    reasoning = getattr(message, "reasoning", None)
-    if not isinstance(reasoning, str) or not reasoning.strip():
-        reasoning = getattr(message, "reasoning_content", None)
-    if isinstance(reasoning, str) and reasoning.strip():
-        (output_dir / "reasoning.txt").write_text(
-            reasoning.rstrip() + "\n", encoding="utf-8"
-        )
     _write_json(output_dir / "validation.json", validation)
     write_report(
         output_dir,
@@ -678,20 +673,20 @@ def build_parser() -> argparse.ArgumentParser:
         default="text",
         help="Output format for --list-cases or --describe.",
     )
-    reasoning = parser.add_mutually_exclusive_group()
-    reasoning.add_argument(
-        "--reasoning",
-        dest="reasoning",
+    thinking = parser.add_mutually_exclusive_group()
+    thinking.add_argument(
+        "--thinking",
+        dest="thinking",
         action="store_true",
-        help="Experimentally enable NIM-native parsed reasoning for every selected case.",
+        help="Experimentally enable NIM-native thinking for every selected case.",
     )
-    reasoning.add_argument(
-        "--no-reasoning",
-        dest="reasoning",
+    thinking.add_argument(
+        "--no-thinking",
+        dest="thinking",
         action="store_false",
-        help="Keep NIM-native parsed reasoning disabled for every selected case.",
+        help="Keep NIM-native thinking disabled for every selected case.",
     )
-    parser.set_defaults(reasoning=None)
+    parser.set_defaults(thinking=None)
     parser.add_argument(
         "--thinking-token-budget",
         type=int,
@@ -746,7 +741,7 @@ def main() -> None:
                     model,
                     metadata,
                     case,
-                    reasoning_override=args.reasoning,
+                    thinking_override=args.thinking,
                     thinking_token_budget=args.thinking_token_budget,
                 )
             except Exception as exc:

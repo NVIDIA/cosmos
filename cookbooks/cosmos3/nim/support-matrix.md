@@ -72,17 +72,62 @@ resident, so only rows with **Model offload = None** and **Guardrails =
 Resident** are eligible. Reasoner floors are also compared with the remaining
 shared-memory total.
 
+### Unified-memory thresholds
+
+Unified-memory systems use one DRAM pool for the host and the device. The
+**effective shared memory** in this table is the device-reported total minus
+the default 16-GiB host reserve. The last column is the minimum raw total that
+would leave enough effective shared memory for the profile; it is not an
+additional host-RAM requirement.
+
+| Runtime/profile | Effective shared-memory floor | Minimum reported shared memory | Unified-memory policy |
+| --- | ---: | ---: | --- |
+| Generator `nano` BF16; `nano-droid` BF16 | 58 GiB | 74 GiB | Resident model and guardrails |
+| Generator `nano` FP8 | 44 GiB | 60 GiB | Resident model and guardrails |
+| Generator Super family BF16 | 150 GiB | 166 GiB | Resident model and guardrails |
+| Generator Super family FP8 | 93 GiB | 109 GiB | Resident model and guardrails |
+| Reasoner `nano` BF16, FP8, or NVFP4 | 23.1 GiB/device | 39.1 GiB/device | No CPU/model offload |
+| Reasoner `super` BF16, TP1 | 135 GiB/device | 151 GiB/device | No CPU/model offload |
+| Reasoner `super` BF16, TP2 | 73 GiB/device | 89 GiB/device | No CPU/model offload |
+| Reasoner `super` FP8, TP1 | 67 GiB/device | 83 GiB/device | No CPU/model offload |
+| Reasoner `super` NVFP4, TP1 | 73 GiB/device | 89 GiB/device | No CPU/model offload |
+
+The effective floor is compared with the value returned by the running
+system, not with a product's decimal memory label. Current free shared memory
+is checked separately at startup. A profile must also meet its compute-capability,
+GPU-count, and exact-image manifest requirements.
+
 ## Tested GPU inventory
 
-The following GPUs are configured for official NIM testing. Product names are
-shortened for readability, grouped by architecture, and sorted by nominal GPU
-memory within each group.
+The following devices are included in the release hardware inventory. The
+discrete GPU rows are configured for official NIM testing; the unified-memory
+rows are verified hardware targets for the shared-memory profile policy.
+Product names are shortened for readability, grouped by architecture, and
+sorted by nominal memory within each group.
 
 Inventory membership does not mean that every runtime, model, precision, GPU
-count, offload mode, and task is tested or available on that SKU. Use the
+count, offload mode, and task is tested or available on that device. Use the
 configuration tables below to find a candidate, and confirm that the exact
-image manifest contains a matching profile. A GPU outside this inventory can
-still be compatible when it meets the compute-capability and memory floors.
+image manifest contains a matching profile. A device outside this inventory
+can still be compatible when it meets the compute-capability and memory floors.
+
+### Unified-memory systems
+
+These systems share host and device memory; the capacity shown here is not
+separate VRAM. The effective value is illustrative for the nominal capacity,
+so confirm the binary-GiB total reported by the running system before launch.
+
+| Device | Nominal shared memory | Illustrative effective shared memory after 16-GiB reserve |
+| --- | ---: | ---: |
+| Jetson AGX Thor T5000 | 123 GiB | 107 GiB |
+| DGX Spark (GB10) | 128 GB (about 119 GiB) | about 103 GiB |
+
+At these capacities, memory floors permit the resident Generator Nano BF16
+and FP8 rows and the resident Super FP8 rows. For Reasoner, the Nano rows and
+Super FP8 and NVFP4 TP1 rows meet the memory floor. Compute capability, GPU
+count, current free memory, and the exact image manifest still determine the
+selected profile. Super BF16 TP1 does not meet the unified-memory threshold on
+either nominal device capacity.
 
 ### Blackwell Ultra
 
@@ -131,7 +176,9 @@ still be compatible when it meets the compute-capability and memory floors.
 | A100 SXM4 40 GB | 40 GB HBM2e |
 | A100 SXM4 80 GB | 80 GB HBM2e |
 
-Nominal memory is shown only to order this inventory. Profile selection uses
+Nominal memory is shown only to order this inventory. The Thor and DGX
+Spark entries are verified unified-memory targets, not separate-VRAM GPUs.
+Profile selection uses
 the per-device binary-GiB floors below and the memory reported by the running
 system. For Grace Hopper, the table shows HBM GPU memory. In the GH200 480 GB
 entry, 480 GB identifies CPU memory and is not GPU VRAM.

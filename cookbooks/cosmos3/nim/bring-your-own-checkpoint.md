@@ -118,6 +118,10 @@ export DFLASH_CHECKPOINT="$HOME/models/cosmos3-dflash"
 -v "$DFLASH_CHECKPOINT:/byoc/cosmos3-dflash:ro"
 ```
 
+To train your own matching Cosmos3-Nano DFlash draft on a custom dataset, or
+after fine-tuning the Nano Reasoner target, follow the [Model Optimizer DFlash
+training recipe](https://github.com/NVIDIA/Model-Optimizer/blob/main/examples/speculative_decoding/recipes/train_dflash_cosmos3_nano.ipynb).
+
 `NIM_DFLASH_MODEL_PATH` must be an absolute in-container local path and does not
 accept `hf://`. If neither the selected image nor an independent mount supplies
 the required draft, set `NIM_USE_DFLASH=0`.

@@ -117,11 +117,10 @@ running `uv run python examples/...`. Do not add ad hoc dependencies. For
 Reasoner, use `examples/reasoner.py --list-cases` or the JSON `--describe`
 mode to select from the complete catalog without contacting an endpoint. Then
 follow `reasoning.md`, use the documented Super BF16 target-only baseline with
-video-token pruning and NIM-native parsed reasoning disabled, preserve the
-catalog's exact vLLM user-prompt text and explicit sampling controls, and
-confirm the selected profile before treating output as representative of that
-baseline. Literal `<think>` instructions in a parity prompt are visible user
-text, not the native reasoning control. Keep API/format validation separate
+video-token pruning, preserve the catalog's exact vLLM user-prompt text and
+explicit sampling controls, and confirm the selected profile before treating
+output as representative of that baseline. Literal `<think>` instructions in a
+parity prompt are visible response text. Keep API/format validation separate
 from the catalog's qualitative review criteria.
 
 ## 5. Troubleshoot safely

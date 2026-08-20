@@ -15,7 +15,7 @@ validated_baseline:
 defaults:
   max_tokens: 4096
   video_fps: 4.0
-  native_reasoning_enabled: false
+  native_thinking_enabled: false
   thinking_token_budget: 512
   sampling:
     temperature: 0.7

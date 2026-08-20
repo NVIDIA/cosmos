@@ -361,7 +361,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
 | Model not found | Client hard-coded the wrong served ID | Discover it through `/v1/models` |
-| HTTP 400 request error | Sampling, `include_reasoning`, `top_logprobs`, or extension placement is invalid | Check current ranges, use strict JSON types, and place NIM extensions in `extra_body` |
+| HTTP 400 request error | Sampling, thinking controls, `top_logprobs`, or extension placement is invalid | Check current ranges, use strict JSON types, and place NIM extensions in `extra_body` |
 | HTTP 422 media error | Media content/order/count/preprocessing failed | Put media before text, use data URLs, and check operator media limits |
 | Chat Completions route 404 | Client reached Generator or the selected image lacks the route | Confirm Reasoner through `/v1/metadata` and inspect live OpenAPI |
 | Responses route 404 | Route disabled, absent, or requested from Generator | Confirm Reasoner metadata, then use Chat Completions and inspect live OpenAPI/operator setting |
