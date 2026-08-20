@@ -44,6 +44,36 @@ def require_runtime(
     return metadata
 
 
+def require_generator_profile(
+    nim_url: str,
+    *,
+    allowed_variants: tuple[str, ...],
+) -> dict:
+    """Require a selected Generator profile compatible with an example."""
+    metadata = require_runtime(
+        nim_url,
+        expected_runtime="generator",
+        expected_endpoint="/v1/infer",
+    )
+
+    selected_profile_id = metadata.get("selectedModelProfileId")
+    if not isinstance(selected_profile_id, str) or not selected_profile_id:
+        raise RuntimeError(
+            "/v1/metadata did not report a non-empty selectedModelProfileId. "
+            "Confirm the selected profile before sending an inference request."
+        )
+
+    model_variant = metadata.get("model_variant")
+    if model_variant not in allowed_variants:
+        expected = ", ".join(repr(variant) for variant in allowed_variants)
+        raise RuntimeError(
+            f"The selected Generator profile uses model_variant={model_variant!r}; "
+            f"this example requires one of: {expected}. Start a compatible "
+            "Generator model or choose its matching example."
+        )
+    return metadata
+
+
 def compact_json_file(path: Path) -> str:
     """Load a JSON asset and return the compact string expected by Generator."""
     path = path.resolve()

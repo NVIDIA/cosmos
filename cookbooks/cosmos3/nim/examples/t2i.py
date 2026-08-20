@@ -3,11 +3,12 @@
 
 """Generate an image from a text prompt with the Generator runtime."""
 
+import argparse
 import os
 from pathlib import Path
 
 import requests
-from common import compact_json_file, decode_image
+from common import compact_json_file, decode_image, require_generator_profile
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
@@ -24,6 +25,12 @@ OUTPUT = Path(__file__).parent / "outputs" / "t2i_robot_draping.jpg"
 
 
 def main() -> None:
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    require_generator_profile(
+        NIM_URL,
+        allowed_variants=("nano", "super", "super-t2i"),
+    )
+
     request = {
         "model_mode": "text2image",
         "prompt": compact_json_file(PROMPT),

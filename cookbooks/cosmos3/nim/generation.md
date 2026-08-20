@@ -50,14 +50,19 @@ Choose an example based on the input and output you need:
 | I2V | Car traveling along a coastal road | `car_driving.jpg` | `b64_video` | `uv run python examples/i2v.py` |
 | V2V | Continue or transform a car-driving video | `car_driving_plain.mp4` | `b64_video` | `uv run python examples/v2v.py` |
 
-The scripts load prompts and media from the repository, build the Generator
-request, and save decoded output under `examples/outputs/`. The shorter prompts
-below emphasize the request shape; use the scripts for complete editable
-examples.
+The scripts parse their command line before doing endpoint or media work, so
+`--help` exits without inference and unexpected arguments are rejected. Before
+submitting a request, each script requires `/v1/metadata` to report the
+Generator runtime, `/v1/infer`, a selected profile ID, and a model variant
+compatible with that example. They then load prompts and media from the
+repository, build the Generator request, and save decoded output under
+`examples/outputs/`. The shorter prompts below emphasize the request shape; use
+the scripts for complete editable examples.
 
 A standard script can run against an active general-purpose `nano` or `super`
-variant when the selected image includes that task. Specialist
-four-step variants require their matching scripts and request contract.
+variant when the selected image includes that task. T2I and I2V also accept
+their matching full-step specialist variants. Specialist four-step variants
+require their exact matching scripts and request contract.
 
 ## Text-to-image
 

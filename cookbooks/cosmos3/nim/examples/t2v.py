@@ -3,11 +3,12 @@
 
 """Generate a video from a text prompt with the Generator runtime."""
 
+import argparse
 import os
 from pathlib import Path
 
 import requests
-from common import compact_json_file, decode_video
+from common import compact_json_file, decode_video, require_generator_profile
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
@@ -18,6 +19,12 @@ OUTPUT = Path(__file__).parent / "outputs" / "t2v_robot_kitchen.mp4"
 
 
 def main() -> None:
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    require_generator_profile(
+        NIM_URL,
+        allowed_variants=("nano", "super"),
+    )
+
     request = {
         "model_mode": "text2video",
         "prompt": compact_json_file(PROMPT),

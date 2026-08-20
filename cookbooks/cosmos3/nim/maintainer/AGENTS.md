@@ -72,7 +72,9 @@ maintainer instructions take precedence over the customer-assistant guidance in
 - Preserve the OpenMDW-1.1 SPDX notice and existing Markdown style.
 - Keep task scripts directly editable: show request construction, the API call,
   status handling, and primary output without hiding them behind a large helper
-  abstraction.
+  abstraction. Parse CLI arguments before endpoint or media work, reject
+  unknown arguments, and require runtime, endpoint, selected-profile, and
+  task-compatible model-variant metadata before inference.
 - Validate affected links, paths, JSON, Python syntax, documented commands, and
   `uv.lock`. Report static checks separately from live NIM validation.
 - Do not add CI workflows, repository automation, or unrelated tooling unless

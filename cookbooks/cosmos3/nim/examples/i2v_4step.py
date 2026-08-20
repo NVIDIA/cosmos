@@ -3,11 +3,17 @@
 
 """Generate an image-conditioned video with a super-i2v-4step profile."""
 
+import argparse
 import os
 from pathlib import Path
 
 import requests
-from common import compact_json_file, decode_video, media_to_data_url
+from common import (
+    compact_json_file,
+    decode_video,
+    media_to_data_url,
+    require_generator_profile,
+)
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +25,12 @@ OUTPUT = Path(__file__).parent / "outputs" / "i2v_car_driving_4step.mp4"
 
 
 def main() -> None:
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    require_generator_profile(
+        NIM_URL,
+        allowed_variants=("super-i2v-4step",),
+    )
+
     # Start the NIM with NIM_MODEL_VARIANT=super-i2v-4step. The profile owns
     # num_inference_steps, guidance_scale, and flow_shift, so this request
     # omits all three.

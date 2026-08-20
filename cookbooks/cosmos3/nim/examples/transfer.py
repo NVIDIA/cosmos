@@ -8,7 +8,12 @@ import os
 from pathlib import Path
 
 import requests
-from common import compact_json_file, decode_video, media_to_data_url
+from common import (
+    compact_json_file,
+    decode_video,
+    media_to_data_url,
+    require_generator_profile,
+)
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
@@ -97,10 +102,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--case", choices=CASES, default="precomputed_edge")
     case = parser.parse_args().case
-
-    response = requests.post(
-        f"{NIM_URL}/v1/infer", json=build_request(case), timeout=1800
+    require_generator_profile(
+        NIM_URL,
+        allowed_variants=("nano", "super"),
     )
+    request = build_request(case)
+
+    response = requests.post(f"{NIM_URL}/v1/infer", json=request, timeout=1800)
     response.raise_for_status()
 
     OUTPUTS.mkdir(exist_ok=True)

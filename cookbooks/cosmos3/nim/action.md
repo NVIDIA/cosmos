@@ -111,10 +111,16 @@ The executable cases include AV, UMI, and robot examples:
 | `bridge_inverse` | Bridge inverse dynamics using the pinned public fixture | `uv run python examples/action.py --case bridge_inverse` |
 | `av_policy` | General AV policy request | `uv run python examples/action.py --case av_policy` |
 
-The script writes `action_<case>.mp4` for the visual rollout and, for policy or
-inverse dynamics, `action_<case>.json` for the validated predicted trajectory.
-It validates input trajectories and response shape, metadata, domain, and
-finite numeric values. Use the
+The script rejects unknown command-line arguments before contacting the
+endpoint. Before loading case assets or submitting inference, it requires
+`/v1/metadata` to report the Generator runtime, `/v1/infer`, a selected profile
+ID, and a general-purpose `nano` or `super` variant. This variant check does not
+establish image-specific Action or domain availability; confirm those separately
+in the support matrix. The script writes `action_<case>.mp4` for the visual
+rollout and, for policy or inverse dynamics,
+`action_<case>.json` for the validated predicted trajectory. It validates input
+trajectories and response shape, metadata, domain, and finite numeric values.
+Use the
 [Cosmos3 Action Viewer](https://huggingface.co/spaces/nvidia/Cosmos3-Action-Viewer)
 to inspect supported action data interactively; it does not replace the
 checkpoint-specific transformations required for execution.

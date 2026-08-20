@@ -65,7 +65,13 @@ uv run python examples/transfer.py --case derived_edge
 
 Replace `derived_edge` with `derived_blur` to use a derived blur control.
 
-The decoded result is written to `examples/outputs/transfer_<case>.mp4`.
+The script rejects unknown command-line arguments before contacting the
+endpoint. Before loading case media or submitting inference, it requires
+`/v1/metadata` to report the Generator runtime, `/v1/infer`, a selected profile
+ID, and a general-purpose `nano` or `super` variant. This metadata check does
+not establish Transfer headroom; startup evaluates that requirement separately,
+and the service can still reject Transfer as unavailable. The decoded result is
+written to `examples/outputs/transfer_<case>.mp4`.
 
 ## Precomputed control
 

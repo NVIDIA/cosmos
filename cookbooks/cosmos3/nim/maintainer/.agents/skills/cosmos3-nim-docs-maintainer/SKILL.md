@@ -84,7 +84,9 @@ values to fill an unresolved release fact.
   prerequisite, distinguish `--password-stdin` from at-rest credential
   protection, and include registry logout in evaluation cleanup.
 - Keep request dictionaries, API calls, status handling, and primary outputs
-  visible in task scripts.
+  visible in task scripts. Parse CLI arguments before endpoint or media work,
+  reject unknown arguments, and require runtime, endpoint, selected-profile,
+  and task-compatible model-variant metadata before inference.
 - Do not present a timeout, one observed run, or complete client-command wall
   time as expected service latency. Require release-specific configuration and
   measurement evidence before publishing performance expectations.

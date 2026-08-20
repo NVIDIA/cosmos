@@ -3,11 +3,17 @@
 
 """Generate a video conditioned on an existing cookbook image."""
 
+import argparse
 import os
 from pathlib import Path
 
 import requests
-from common import compact_json_file, decode_video, media_to_data_url
+from common import (
+    compact_json_file,
+    decode_video,
+    media_to_data_url,
+    require_generator_profile,
+)
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +25,12 @@ OUTPUT = Path(__file__).parent / "outputs" / "i2v_car_driving.mp4"
 
 
 def main() -> None:
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    require_generator_profile(
+        NIM_URL,
+        allowed_variants=("nano", "super", "super-i2v"),
+    )
+
     request = {
         "model_mode": "image2video",
         "prompt": compact_json_file(PROMPT),

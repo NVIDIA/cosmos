@@ -113,8 +113,12 @@ new transport or translating another backend's request:
 | Custom checkpoint | Either | `bring-your-own-checkpoint.md` | Follow the runtime-specific launch flow |
 
 Initialize the pinned client environment through `prerequisites.md` before
-running `uv run python examples/...`. Do not add ad hoc dependencies. For
-Reasoner, use `examples/reasoner.py --list-cases` or the JSON `--describe`
+running `uv run python examples/...`. Do not add ad hoc dependencies. The
+Generator examples reject unknown CLI arguments before endpoint or media work,
+then require metadata to identify the Generator runtime, `/v1/infer`, a
+selected profile, and a model variant compatible with the example before they
+submit inference. Do not bypass this preflight. For Reasoner, use
+`examples/reasoner.py --list-cases` or the JSON `--describe`
 mode to select from the complete catalog without contacting an endpoint. Then
 follow `reasoning.md`, use the documented Super BF16 target-only baseline with
 video-token pruning, preserve the catalog's exact vLLM user-prompt text and

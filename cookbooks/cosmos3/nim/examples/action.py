@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 import requests
-from common import decode_video, media_to_data_url
+from common import decode_video, media_to_data_url, require_generator_profile
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
@@ -263,6 +263,10 @@ def main() -> None:
     )
     selected_case = parser.parse_args().case
     case = CASE_ALIASES.get(selected_case, selected_case)
+    require_generator_profile(
+        NIM_URL,
+        allowed_variants=("nano", "super"),
+    )
     request = build_request(case)
 
     response = requests.post(f"{NIM_URL}/v1/infer", json=request, timeout=1800)

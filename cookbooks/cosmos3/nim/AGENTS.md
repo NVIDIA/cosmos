@@ -33,7 +33,10 @@ For guided customer workflows, load
 
 - Set or confirm `NIM_URL`, check readiness, and inspect `/v1/metadata` before
   choosing a request. Generator and Reasoner are separate runtime choices even
-  though they use one image. For the Reasoner task catalog, use the documented
+  though they use one image. The committed Generator clients repeat the
+  runtime, endpoint, selected-profile, and compatible-variant checks before
+  inference and reject unknown CLI arguments before endpoint or media work; do
+  not bypass those checks. For the Reasoner task catalog, use the documented
   Super BF16 target-only baseline with video-token pruning, preserve the
   catalog's exact vLLM user-prompt text and explicit sampling controls, and
   verify the selected profile before running requests. Literal `<think>` text in
