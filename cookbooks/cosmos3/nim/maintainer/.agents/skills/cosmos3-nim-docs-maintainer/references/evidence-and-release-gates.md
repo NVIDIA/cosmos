@@ -148,6 +148,18 @@ profiles for both runtimes:
 
 These preflight results establish candidate-profile compatibility only.
 
+The exact image was also cold-started on one NVIDIA RTX PRO 6000 Blackwell
+Server Edition (compute capability 12.0, 97,887 MiB total and 97,252 MiB free)
+as the one-GPU Nano FP8 latency configuration. It reached readiness and
+reported `model_type=generator`, `inference_endpoint=/v1/infer`, and
+`model_variant=nano`. Paired AV policy requests used the same `av_0.jpg`, seed
+0, and inference controls; only explicit left-turn and right-turn task prompts
+differed. Both returned structurally valid `[60,9]` actions and 61-frame,
+832-by-480 rollouts. Manual review confirmed that the left prompt produced a
+left turn and the right prompt produced a right turn. This validates the two
+included language-conditioned Nano AV policy cases for one run each, not Super,
+BF16, other fixtures or seeds, safe-driving behavior, or performance.
+
 The exact image was also launched on one NVIDIA H200 as Super FP8 profile
 `c70e25d00f876b14b07441fc7920b8a7001487aecf3f258739bfbcc9a208e4a9`, with
 the bundled DFlash draft enabled and video pruning unset. All 18 catalog cases
@@ -200,8 +212,8 @@ refine entries when evidence changes:
   shared-memory, driver, Docker, and Container Toolkit requirements;
 - exact supported image formats, video containers/codecs, URL fetching, and
   VP9-in-MP4 playback observations;
-- exact released support for specialist Generator, Action, Transfer, and V2V
-  combinations;
+- exact released support for specialist Generator, Action combinations beyond
+  the validated Nano FP8 AV policy cases, Transfer, and V2V combinations;
 - Reasoner Responses create normalization plus storage/background/retrieve
   behavior, and guided-output enforcement in the selected image;
 - Reasoner public-URL, text-only, request-level video sampling, and

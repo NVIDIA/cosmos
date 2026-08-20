@@ -100,27 +100,34 @@ export NIM_URL=${NIM_URL:-http://localhost:8000}
 
 The executable cases include AV, UMI, and robot examples:
 
-| Case | Mode and scenario | Run |
+| Case | Conditioning and expected result | Run |
 | --- | --- | --- |
-| `av_forward` | AV forward dynamics, straight trajectory | `uv run python examples/action.py --case av_forward` |
-| `av_left` | AV forward dynamics, left trajectory | `uv run python examples/action.py --case av_left` |
-| `av_right` | AV forward dynamics, right trajectory | `uv run python examples/action.py --case av_right` |
-| `umi_forward` | First 16-action UMI forward-dynamics chunk | `uv run python examples/action.py --case umi_forward` |
-| `av_inverse_0` | AV inverse dynamics for `av_0.mp4` | `uv run python examples/action.py --case av_inverse_0` |
-| `av_inverse_1` | AV inverse dynamics for `av_1.mp4` | `uv run python examples/action.py --case av_inverse_1` |
-| `bridge_inverse` | Bridge inverse dynamics using the pinned public fixture | `uv run python examples/action.py --case bridge_inverse` |
-| `av_policy` | General AV policy request | `uv run python examples/action.py --case av_policy` |
+| `av_forward` | Supplied AV straight trajectory; rollout visualizes that trajectory | `uv run python examples/action.py --case av_forward` |
+| `av_left` | Supplied AV left trajectory; ego rollout turns left | `uv run python examples/action.py --case av_left` |
+| `av_right` | Supplied AV right trajectory; ego rollout turns right | `uv run python examples/action.py --case av_right` |
+| `umi_forward` | First 16-action UMI chunk; rollout visualizes that chunk | `uv run python examples/action.py --case umi_forward` |
+| `av_inverse_0` | Observed `av_0.mp4`; predicts its AV action trajectory | `uv run python examples/action.py --case av_inverse_0` |
+| `av_inverse_1` | Observed `av_1.mp4`; predicts its AV action trajectory | `uv run python examples/action.py --case av_inverse_1` |
+| `bridge_inverse` | Observed pinned robot video; predicts its Bridge action trajectory | `uv run python examples/action.py --case bridge_inverse` |
+| `av_policy_left` | `av_0.jpg` plus a left-turn goal; predicts a left-turn trajectory and rollout | `uv run python examples/action.py --case av_policy_left` |
+| `av_policy_right` | `av_0.jpg` plus a right-turn goal; predicts a right-turn trajectory and rollout | `uv run python examples/action.py --case av_policy_right` |
 
 The script rejects unknown command-line arguments before contacting the
 endpoint. Before loading case assets or submitting inference, it requires
-`/v1/metadata` to report the Generator runtime, `/v1/infer`, a selected profile
-ID, and a general-purpose `nano` or `super` variant. This variant check does not
-establish image-specific Action or domain availability; confirm those separately
-in the support matrix. The script writes `action_<case>.mp4` for the visual
-rollout and, for policy or inverse dynamics,
-`action_<case>.json` for the validated predicted trajectory. It validates input
-trajectories and response shape, metadata, domain, and finite numeric values.
-Use the
+`/v1/metadata` to report the Generator runtime, `/v1/infer`, and a selected
+profile ID. The AV policy cases require a general-purpose `nano` variant; the
+other cases accept a general-purpose `nano` or `super` variant. These variant
+checks do not establish image-specific Action or domain availability; confirm
+those separately in the support matrix. The `av_policy` and `policy` aliases
+select `av_policy_right`.
+
+The script writes `action_<case>.mp4` for the visual rollout and, for policy or
+inverse dynamics, `action_<case>.json` for the validated predicted trajectory.
+It validates input trajectories and response shape, metadata, domain, and
+finite numeric values. For the policy cases, it also prints the expected
+qualitative direction. These structural checks do not establish whether a
+rollout follows its task goal; review the saved video for directional
+compliance. Use the
 [Cosmos3 Action Viewer](https://huggingface.co/spaces/nvidia/Cosmos3-Action-Viewer)
 to inspect supported action data interactively; it does not replace the
 checkpoint-specific transformations required for execution.
@@ -156,7 +163,9 @@ request = {
 
 Every action row must have the same width. The number of rows must equal
 `action_chunk_size`; the width must equal `raw_action_dim`; and values must be
-finite JSON numbers. Forward dynamics does not accept `history_length`,
+finite JSON numbers. The generic role prompt does not select the maneuver in
+these cases: the supplied straight, left, or right action trajectory is the
+behavioral condition. Forward dynamics does not accept `history_length`,
 `use_state`, or `observation`. Its response contains a rollout video and no
 predicted action because the trajectory was an input.
 
@@ -173,7 +182,7 @@ Policy predicts an action chunk instead of receiving one:
 ```json
 {
   "model_mode": "policy",
-  "prompt": "You are an autonomous vehicle planning system.",
+  "prompt": "You are an autonomous vehicle planning system. Turn right onto the road and continue driving in the rightmost lane.",
   "input_reference": "data:image/jpeg;base64,<BASE64_IMAGE>",
   "action_params": {
     "domain_name": "av",
@@ -190,9 +199,25 @@ Policy predicts an action chunk instead of receiving one:
 }
 ```
 
-The `av_policy` case demonstrates the request contract. Confirm that the
-selected image supports the AV policy model and domain before running it.
-Policy must omit `action` and may also use:
+The `av_policy_left` and `av_policy_right` cases use the same `av_0.jpg`
+observation, seed, and inference controls. Only the language goal changes:
+
+| Case | Task goal | Expected qualitative rollout |
+| --- | --- | --- |
+| `av_policy_left` | Turn left onto the road and continue in the leftmost legal lane | The ego viewpoint turns left and proceeds along the roadway |
+| `av_policy_right` | Turn right onto the road and continue in the rightmost lane | The ego viewpoint turns right and proceeds along the roadway |
+
+Both cases return a predicted `[60,9]` action and a 61-frame rollout. The client
+validates the response structure but cannot infer directional correctness from
+the raw action values without checkpoint-specific coordinate transformations.
+Review the saved video and confirm that the ego starts from the conditioning
+scene, turns in the requested direction, and continues consistently after
+entering the road. Directional agreement in a synthetic rollout does not
+establish traffic-rule compliance, collision avoidance, or suitability for
+physical execution.
+
+Confirm that the selected image supports the Nano AV policy model and domain
+before running either case. Policy must omit `action` and may also use:
 
 - `history_length`: number of state-history steps;
 - `use_state`: whether to condition on supplied state; and

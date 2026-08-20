@@ -35,12 +35,32 @@ CANONICAL_CASES = (
     "av_inverse_0",
     "av_inverse_1",
     "bridge_inverse",
-    "av_policy",
+    "av_policy_left",
+    "av_policy_right",
 )
 CASE_ALIASES = {
     "forward_dynamics": "av_forward",
     "inverse_dynamics": "bridge_inverse",
-    "policy": "av_policy",
+    "policy": "av_policy_right",
+    "av_policy": "av_policy_right",
+}
+AV_POLICY_PROMPTS = {
+    "left": (
+        "You are an autonomous vehicle planning system. Turn left onto the road "
+        "and continue driving in the leftmost legal lane."
+    ),
+    "right": (
+        "You are an autonomous vehicle planning system. Turn right onto the road "
+        "and continue driving in the rightmost lane."
+    ),
+}
+AV_POLICY_EXPECTATIONS = {
+    "av_policy_left": (
+        "the ego vehicle turns left onto the roadway and continues in that direction"
+    ),
+    "av_policy_right": (
+        "the ego vehicle turns right onto the roadway and continues in that direction"
+    ),
 }
 
 
@@ -163,10 +183,14 @@ def bridge_inverse_request() -> dict:
     }
 
 
-def av_policy_request() -> dict:
+def av_policy_request(direction: str) -> dict:
+    try:
+        prompt = AV_POLICY_PROMPTS[direction]
+    except KeyError as exc:
+        raise ValueError(f"Unknown AV policy direction: {direction}") from exc
     return {
         "model_mode": "policy",
-        "prompt": "You are an autonomous vehicle planning system.",
+        "prompt": prompt,
         "input_reference": media_to_data_url(ACTION_ROOT / "images" / "av_0.jpg"),
         "action_params": {
             "domain_name": "av",
@@ -185,7 +209,7 @@ def av_policy_request() -> dict:
 
 
 def build_request(case: str) -> dict:
-    """Build one request, preserving the original three CLI names as aliases."""
+    """Build one request while preserving the legacy CLI names as aliases."""
     case = CASE_ALIASES.get(case, case)
     if case.startswith("av_") and case.removeprefix("av_") in {
         "forward",
@@ -199,8 +223,8 @@ def build_request(case: str) -> dict:
         return av_inverse_request(int(case.removeprefix("av_inverse_")))
     if case == "bridge_inverse":
         return bridge_inverse_request()
-    if case == "av_policy":
-        return av_policy_request()
+    if case.startswith("av_policy_"):
+        return av_policy_request(case.removeprefix("av_policy_"))
     raise ValueError(f"Unknown Action case: {case}")
 
 
@@ -263,11 +287,17 @@ def main() -> None:
     )
     selected_case = parser.parse_args().case
     case = CASE_ALIASES.get(selected_case, selected_case)
+    allowed_variants = (
+        ("nano",) if case.startswith("av_policy_") else ("nano", "super")
+    )
     require_generator_profile(
         NIM_URL,
-        allowed_variants=("nano", "super"),
+        allowed_variants=allowed_variants,
     )
     request = build_request(case)
+    expected_behavior = AV_POLICY_EXPECTATIONS.get(case)
+    if expected_behavior:
+        print(f"Expected qualitative behavior: {expected_behavior}.")
 
     response = requests.post(f"{NIM_URL}/v1/infer", json=request, timeout=1800)
     response.raise_for_status()
@@ -291,6 +321,12 @@ def main() -> None:
             json.dumps(action, indent=2) + "\n", encoding="utf-8"
         )
         print(f"Saved validated action to {action_path}")
+
+    if expected_behavior:
+        print(
+            "Structural response validation passed. Review the saved video for "
+            "directional task compliance."
+        )
 
 
 if __name__ == "__main__":
