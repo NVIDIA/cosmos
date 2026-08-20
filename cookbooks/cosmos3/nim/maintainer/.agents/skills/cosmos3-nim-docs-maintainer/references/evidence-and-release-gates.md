@@ -96,9 +96,9 @@ confirmed:
 - quantized Generator linear-backend selection;
 - the NIM API adaptation for the 18-case Reasoner catalog, including byte-equal
   vLLM user-prompt strings, data-URL media, request-level 4-FPS video sampling,
-  an unpruned-video baseline, disabled NIM-native thinking, preserved
-  prompt-authored `<think>` text, standard JSON Schema output, and local
-  structural validators; and
+  disabled NIM-native thinking, preserved prompt-authored `<think>` text,
+  explicit effective sampling controls, prompt-constrained JSON extraction,
+  opt-in NIM JSON Schema guidance, and local structural validators; and
 - runtime-aware metadata, health responses, and wrong-runtime diagnostics.
 
 Regenerate the source profile export before reconciling tables. Generated
@@ -111,10 +111,9 @@ The exact evaluation image pinned in `deployment.md` has manifest digest
 `sha256:c0a6b8a14c05bee46609a87798876dca62cea7f703d6ae552a26559d2298ad51`.
 Its embedded manifest reports release
 `1.0.0-rc.experimental.20260820180843`, with 115 Generator profiles and 7
-Reasoner profiles. Compared with the superseded RC manifest, only the release
-value changed; profile IDs, tags, and workspaces are unchanged. Direct option
-parsing in the image confirmed that unset video pruning resolves to disabled
-and that `NIM_MM_PROCESSOR_KWARGS` accepts a JSON object. The Reasoner
+Reasoner profiles. Direct option parsing in the image confirmed that unset
+video pruning resolves to disabled and that `NIM_MM_PROCESSOR_KWARGS` accepts
+a JSON object. The Reasoner
 preflight exported `pynvvc` as the operator-level video backend.
 
 On NVIDIA H100 NVL (compute capability 9.0, 95,830 MiB total and 95,322 MiB
@@ -129,175 +128,49 @@ profiles for both runtimes:
   `0ef8dad974a6e18226d70838ead8161670fbdd871ce4bc1efcd3f707a2bce612`, with
   23.1-GiB VRAM and 16-GiB effective-system-memory floors.
 
-These preflight results establish candidate-profile compatibility only. No
-cold-start, management-endpoint, or inference validation is retained for this
-exact RC.
+These preflight results establish candidate-profile compatibility only.
 
-## Historical validation from the superseded 20260819 RC
+The exact image was also launched on one NVIDIA H200 as Super FP8 profile
+`c70e25d00f876b14b07441fc7920b8a7001487aecf3f258739bfbcc9a208e4a9`, with
+the bundled DFlash draft enabled and video pruning unset. All 18 catalog cases
+completed API and local format validation on the prompt-constrained default
+path, and the opt-in guided-output grounding request also passed. One-time
+comparison with `maintainer/reasoner-semantic-fixtures.yaml` gave grounding IoU
+0.926 against the recorded vLLM box, above the 0.75 review threshold. Temporal
+localization returned one whole-video event instead of the fixture's minimum
+three events and therefore failed semantic-quality review despite passing local
+JSON and timestamp validation. The same Super FP8 profile was then run
+target-only with `NIM_USE_DFLASH=0`: 17 of 18 cases passed local format
+validation, while `describe_anything` returned `description` instead of the
+requested `caption` field.
 
-The superseded evaluation image had manifest digest
-`sha256:8fe7d7b2213ad999e9b0b8a5b75acc0c242509283fbed76d66fa04da6e1439f2`.
-Its embedded manifest reported release
-`1.0.0-rc.experimental.20260819162707`, with 115 Generator profiles and 7
-Reasoner profiles.
+One-run manual review against the catalog criteria rated direct vLLM Super at
+14 pass and 4 fail, NIM with DFlash at 13 pass, 2 partial, and 3 fail, and NIM
+target-only at 14 pass and 4 fail. All three missed video-caption completion and
+the driving Action-CoT pedestrian. vLLM and target-only segmented temporal
+localization while DFlash collapsed it into one event; only target-only passed
+the assisted-task next action, while only target-only failed
+`describe_anything` format. These sampled results validate request transport,
+extraction, and local format handling and identify review targets; they do not
+establish stable catalog-wide semantic quality or performance.
 
-On one NVIDIA B200 (compute capability 10.0, 183,359 MiB total and 182,625
-MiB free), the pre-download selector passed for both runtimes:
-
-- Nano Generator selected FP8, one GPU, `offload=none`, latency profile
-  `845653ddaf5445077909499d031b8e57a249052dced3c4644ef9dc2f71898c8c`, with
-  44-GiB VRAM and 16-GiB effective-system-memory floors.
-- Nano Reasoner selected FP8, one GPU, profile
-  `0ef8dad974a6e18226d70838ead8161670fbdd871ce4bc1efcd3f707a2bce612`, with
-  23.1-GiB VRAM and 16-GiB effective-system-memory floors.
-
-These preflight results establish candidate-profile compatibility only. The
-image was then launched on the same B200 as Super BF16 Reasoner target-only
-with video pruning disabled. It reached readiness and reported
-`model_type=reasoner`, `inference_endpoint=/v1/chat/completions`, and selected
-profile `a914e500cd31122f4d73669fa6a61d67e9d9cf81e37777c4a2560cc06226cc37`.
-The documented image-caption, video-caption, Responses, and 18-case catalog
-examples completed API and local format validation. The explicit native
-thinking experiment (`--thinking --thinking-token-budget 64`) returned its
-structured result in `message.content`; no populated separate reasoning field
-was used by the example.
-
-The exact-prompt catalog requests used the NIM Chat Completions API with data
-URL media, `media_io_kwargs` video sampling, explicit native-thinking controls,
-and NIM response-format schemas for structured cases. Thinking-enabled requests
-returned both thinking text and final output through `message.content` without a
-populated separate reasoning field. Semantic output remained mixed across
-backends: robot planning and grounding were close, while video completion,
-next-action identification, and trajectories differed from the recorded vLLM
-answers.
-
-This validates the documented Reasoner transport and format paths for the
-superseded configuration, not the current RC, Generator behavior, catalog-wide
-quality parity, or performance. No end-to-end validation record was retained
-for the unified-memory Thor T5000 or DGX Spark targets; their inventory
-inclusion records hardware/profile-policy verification, not full runtime
-validation on either device.
-
-The following records were collected before the 1.0.0 RC bump and are retained
-as historical coverage only; they do not validate the current image.
-
-## Historical validation from the superseded 2.6.0 image
-
-The pre-download selector was run from the evaluation image pinned at that
-time (manifest digest
-`sha256:40fc1382a557fe22e60e4ddaae5c4be6b187431786e610208b5b3d5261dc5ce2`)
-on one NVIDIA H100 PCIe (compute capability 9.0, 81,559 MiB
-total and 81,081 MiB free):
-
-- Nano Generator selected an FP8, one-GPU profile with `offload=none` at the
-  44-GiB VRAM and 16-GiB effective-system-memory floors, with Transfer
-  admission enabled.
-- Nano Reasoner selected an FP8, one-GPU profile at the 23.1-GiB VRAM and
-  16-GiB effective-system-memory floors.
-- `NGC_API_KEY` and checkpoint overrides were absent inside the container, and
-  `/opt/nim/.cache` was absent both before and after the two selector runs.
-
-The same image manifest contains 115 Generator profiles. Normalizing away
-profile IDs, performance scenario, and repeated GPU topology produces 37
-variant-specific hardware rows: six each for the five Super-family variants,
-six for Nano, and one for Nano-DROID. The public table collapses the five
-identical Super-family sets into six shared rows, so its 13 rows cover every
-active Generator profile without retaining a documentation-only row. Transfer
-minimums also match each applicable installed generation floor plus Transfer
-overhead.
-
-The pre-download selector was launched through Slurm/Pyxis because the
-documentation host could not access its Docker daemon. This validates the
-selector invocation, embedded manifest and Transfer-policy reconciliation, and
-no-model-download boundary inside the exact image, not the documented Docker
-wrapper or profile fallback cases.
-
-The exact image was also launched separately as Nano Reasoner with Docker on one
-H100 PCIe and reached readiness. Its `/v1/manifest` response contained the full
-YAML manifest in the JSON `manifest_file` string, and `/v1/metadata` identified
-one matching selected profile. The committed profile-inspection helper was
-validated against these live responses. This establishes the
-management-endpoint join and helper output for this Nano Reasoner configuration,
-not Generator, inference behavior, or performance.
-
-The exact image was launched separately on one NVIDIA B200 as Super FP8
-Reasoner with its bundled DFlash draft explicitly enabled. The committed
-`robot_planning` case used the shared `robot_planning.png` fixture, original
-Reasoner-notebook prompt, and seed 0. It completed with a five-subtask response
-covering movement to the flower, grasp, pickup, movement to the red bottle, and
-placement. This validates that one request and configuration, not a stable JSON
-format, other seeds, other tasks, general Reasoner quality, or performance.
-
-The same image and one-B200 Super FP8 profile were then run target-only with
-NIM-native parsed reasoning disabled and the default VidCom2 pruning rate of
-0.6. All 18 catalog
-cases completed API and format validation,
-including JSON parsing, timestamp/box/point invariants, and spatial artifact
-generation. Qualitative review passed 12 case-specific checklists. The video
-caption, first temporal-localization case, robotics next action, assisted-task
-next action, marked-subject description, and flower trajectory remained
-incomplete or semantically inaccurate. This validates the target-only catalog
-transport and format paths, not general task quality or performance.
-
-The target-only, native-reasoning-disabled FP8 profile was then rerun with
-`NIM_VIDEO_PRUNING_RATE=0`. All 18 cases again completed with
-`finish_reason=stop`, and all seven structured cases passed local format
-validation. Fourteen qualitative checklists passed. The video caption improved
-materially but stopped at preparation to place the white box rather than
-explicitly completing placement. Assisted-task next action, marked-subject
-description, and flower trajectory remained inaccurate. Disabling pruning
-restored the complete first temporal timeline and the expected smart-charger
-next action; this result motivated keeping pruning disabled in the catalog
-baseline.
-
-The exact image was then launched on one NVIDIA B200 as Super BF16 target-only,
-with NIM-native parsed reasoning and video pruning disabled. All 18 catalog
-cases completed with
-`finish_reason=stop`, and all seven structured cases passed format validation.
-The BF16 run corrected the flower-trajectory result seen with FP8; video caption,
-assisted-task next action, and marked-subject description remained incomplete.
-The `robot_planning` case explicitly sent `temperature=0`, `top_p=0.8`,
-`top_k=20`, `presence_penalty=0`, `repetition_penalty=1`, and `seed=0`. Its
-five-subtask response was byte-for-byte identical to the controlled raw-vLLM
-Super BF16 response, but both omitted an explicit flower release and arm
-retreat. This validates deterministic parity for that request, not sampled
-parity, complete task semantics, general model quality, or performance.
-
-The exact image was subsequently launched on one NVIDIA H200 as Super BF16
-without DFlash or video pruning. Before inference, all 18 catalog user prompts
-were checked byte for byte against the runtime strings in
-`cookbooks/cosmos3/reasoner/run_with_vllm.ipynb`. NIM-native parsed reasoning
-remained disabled; six prompts still contained their original literal `<think>`
-instructions. All 18 requests completed with `finish_reason=stop`, and all seven
-structured cases passed JSON and local semantic format validation. Four text
-cases returned visible `<think>` blocks in `message.content`; guided output kept
-the two structured trajectory responses as schema-conforming JSON.
-
-This exact-prompt run retained deterministic robot-planning parity, the physical
-plausibility answer `A`, a near-identical situation-understanding answer, a
-matching driving Action-CoT class, and a grounding box close to the recorded
-vLLM answer. It did not establish catalog-wide output parity: video captioning
-placed the white box back on the table instead of in the shipping box, and the
-assisted-task case proposed removing the old cartridge instead of obtaining the
-new one. The interval answer omitted one box carrier, and the timestamp range
-started earlier than the recorded vLLM answer. The vLLM notebook contains no
-embedded outputs and was not rerun concurrently, so comparisons other than the
-separately controlled robot-planning request use the recorded prompt-guide
-answers and are qualitative, not a backend equivalence test.
-
-Two live correctness findings remain internal release gates:
-
-- With native reasoning controls enabled, both DFlash and target-only returned
-  `finish_reason=stop` with `message.content=null` and placed the complete text
-  or structured answer in `message.reasoning`. This reproduced with 512- and
-  2048-token reasoning budgets, so the catalog keeps NIM-native parsed
-  reasoning disabled.
-- For a fixed-seed 2D grounding request, DFlash produced invalid coordinates.
-  In the follow-up control, DFlash passed 0/10 greedy requests at
-  `temperature=0` and 4/20 sampled seeds; target-only passed 10/10 and 20/20,
-  respectively. Failures included reversed corners, dropped digits,
-  out-of-range values, and malformed JSON. The public catalog therefore uses
-  the target-only baseline without describing this unresolved release finding.
+The tutorial image `vllm/vllm-openai:cosmos3` at digest
+`sha256:db0bb920b0b54e82ea96a98659bbd21921f87d0dcfc86feffdafa2db3f08be55`
+was run directly on the same H200. Super BF16 ran at TP1 rather than the
+tutorial's TP4 because only one GPU was allocated. Its grounding result passed
+the local validator and had IoU 0.931 against the fixture. The tutorial's video
+combination of server-level `num_frames=-1` and request-level
+`mm_processor_kwargs` at 4 FPS failed with HTTP 400 for both Super and Edge:
+the loader supplied 37 frames before the processor attempted to sample again.
+Using request-level `media_io_kwargs` at 4 FPS, as the NIM adaptation does,
+completed successfully. With the catalog's explicit effective sampling and
+thinking controls, all 18 Super cases passed API and local format validation.
+Super temporal localization returned seven ordered segments covering pickup,
+dispensing, placement, and retraction; Edge returned one whole-video segment
+and failed the three-event semantic floor. Edge grounding passed under the same
+explicit controls. This direct comparison validates the NIM-specific media
+adaptation and the one-run fixture thresholds, not stable quality or TP4 output
+parity.
 
 ## Open release gates
 
@@ -322,16 +195,15 @@ refine entries when evidence changes:
 - current-free-VRAM fallback, Reasoner utilization clamping, and discrete-GPU
   NVML startup behavior in the selected image;
 - default-on Nano/Super DFlash, draft override, KV-cache, and advanced
-  configuration behavior in the selected image, including resolution of the
-  historical Super FP8 spatial-output correctness finding;
+  configuration behavior in the selected image, including repeated-seed Super
+  FP8 spatial-output correctness;
 - quantized Generator linear-backend behavior in the selected image;
 - public Helm chart URL to replace the staging reference, plus approved values,
   installation workflow, and monitoring integration;
-- controlled, concurrent vLLM/NIM review of all exact-prompt catalog outputs,
-  especially video captioning, assisted-task next action, interval/timestamp
-  completeness, trajectory semantics, and robot-planning release/retreat;
-  plus evaluation of explicitly enabled VidCom2 output quality on the video
-  catalog;
+- repeated-seed vLLM/NIM review of the current catalog quality gaps, especially
+  temporal segmentation, video-caption completion, assisted-task next action,
+  trajectory semantics, and driving Action-CoT pedestrian identification; plus
+  evaluation of explicitly enabled VidCom2 output quality on the video catalog;
 - approved native-thinking output and reasoning-trace wording for the current
   image; and
 - approved acknowledgements and product license/model-card links for the exact

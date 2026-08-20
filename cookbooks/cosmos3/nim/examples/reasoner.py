@@ -212,6 +212,7 @@ def build_request(
     *,
     enable_thinking: bool | None = None,
     thinking_token_budget: int | None = None,
+    guided_output: bool = False,
 ) -> dict[str, Any]:
     """Build one NIM Chat Completions request from the declarative catalog."""
     case = resolve_case(case)
@@ -259,10 +260,27 @@ def build_request(
     if extra_body:
         request["extra_body"] = extra_body
 
-    structured = response_format(spec)
-    if structured is not None:
-        request["response_format"] = structured
+    if guided_output:
+        structured = response_format(spec)
+        if structured is not None:
+            request["response_format"] = structured
     return request
+
+
+def parse_structured_content(content: str) -> object:
+    """Extract the first JSON value from prompt-constrained model output."""
+    text = content.rsplit("</think>", maxsplit=1)[-1]
+    starts = sorted(
+        index for index in (text.find("["), text.find("{")) if index >= 0
+    )
+    decoder = json.JSONDecoder()
+    for start in starts:
+        try:
+            value, _ = decoder.raw_decode(text[start:])
+            return value
+        except json.JSONDecodeError:
+            continue
+    raise ValueError("Reasoner response did not contain a complete JSON value")
 
 
 def _timecode_seconds(value: object) -> float:
@@ -552,6 +570,7 @@ def run_case(
     *,
     thinking_override: bool | None,
     thinking_token_budget: int | None,
+    guided_output: bool,
 ) -> None:
     """Execute one catalog case and save machine- and human-readable artifacts."""
     spec = CASES[case]
@@ -560,6 +579,7 @@ def run_case(
         model,
         enable_thinking=thinking_override,
         thinking_token_budget=thinking_token_budget,
+        guided_output=guided_output,
     )
     response = client.chat.completions.create(**request)
     if not response.choices:
@@ -593,6 +613,7 @@ def run_case(
         "request": _request_summary(request),
         "qualitative_review": spec["review"],
         "native_thinking_enabled": thinking_enabled,
+        "guided_output_enabled": guided_output,
     }
     _write_json(output_dir / "request.json", request_metadata)
     _write_json(output_dir / "response.json", response_dict(response))
@@ -614,9 +635,9 @@ def run_case(
     structured: object | None = None
     if spec["output"]["kind"] == "json_schema":
         try:
-            structured = json.loads(content)
+            structured = parse_structured_content(content)
             validate_structured_output(case, structured)
-        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        except (TypeError, ValueError) as exc:
             validation["format_validation"].update(
                 {"status": "failed", "error": str(exc)}
             )
@@ -692,6 +713,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         help="Override the thinking-token budget for an experimental reasoning request.",
     )
+    parser.add_argument(
+        "--guided-output",
+        action="store_true",
+        help="Use NIM JSON Schema guidance for structured cases.",
+    )
     return parser
 
 
@@ -726,9 +752,8 @@ def main() -> None:
         model = client.models.list().data[0].id
         if "super" not in model.lower():
             print(
-                "Warning: this catalog's documented baseline is Super BF16 "
-                "target-only with video pruning disabled, but the endpoint "
-                f"serves {model!r}.",
+                "Warning: this catalog's vLLM reference uses Super, but the "
+                f"endpoint serves {model!r}.",
                 file=sys.stderr,
             )
         failures: list[tuple[str, str]] = []
@@ -743,6 +768,7 @@ def main() -> None:
                     case,
                     thinking_override=args.thinking,
                     thinking_token_budget=args.thinking_token_budget,
+                    guided_output=args.guided_output,
                 )
             except Exception as exc:
                 if requested != "all":

@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+version: 1
+visibility: maintainer-only
+source:
+  notebook: cookbooks/cosmos3/reasoner/run_with_vllm.ipynb
+  prompt_guide: cookbooks/cosmos3/reasoner/reasoner_prompt_guide.md
+  reference_variant: super
+contract: >-
+  Semantic review references for one recorded vLLM Super result. These are not
+  byte-exact golden outputs or customer-facing product claims.
+
+cases:
+  grounding_2d:
+    applicable_variants: [nano, super]
+    reference_output:
+      - bbox_2d: [214, 141, 497, 722]
+        label: load as a whole
+    acceptance:
+      minimum_iou: 0.75
+      require_nonempty: true
+      require_ordered_corners: true
+      require_load_label: true
+
+  temporal_localization:
+    applicable_variants: [nano, super]
+    reference_output:
+      - start: 0.1
+        end: 2.7
+        action: robot prepares beside the popcorn dispenser and reaches for the cup
+      - start: 2.7
+        end: 4.2
+        action: robot picks up and positions the cup
+      - start: 4.2
+        end: 14.8
+        action: robot dispenses popcorn into the cup
+      - start: 14.8
+        end: 17.9
+        action: robot places the filled cup on the table
+      - start: 17.9
+        end: 18.7
+        action: robot retracts both arms
+    acceptance:
+      minimum_events: 3
+      maximum_boundary_delta_seconds: 1.5
+      required_actions:
+        - cup pickup
+        - popcorn dispensing
+        - cup placement
+        - arm retraction
+      require_chronological_nonoverlap: true

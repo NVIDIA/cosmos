@@ -28,6 +28,7 @@ may include the minimum needed for a complete workflow and link to the owner.
 | `examples/` | Complete editable client requests, selected-profile inspection, primary response handling, media helpers, and generated outputs |
 | `pyproject.toml` and `uv.lock` | Reproducible Python client environment for all examples |
 | `maintainer/` | Documentation editing instructions, evidence and release gates, page ownership, and maintainer validation workflow |
+| `maintainer/reasoner-semantic-fixtures.yaml` | Maintainer-only vLLM semantic references and review thresholds; never customer-facing |
 
 ## Duplication rules
 

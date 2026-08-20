@@ -67,7 +67,9 @@ Classify each changed claim as:
   prose or a table.
 
 Never upgrade source evidence to a tested support claim. Never use historical
-values to fill an unresolved release fact.
+values to fill an unresolved release fact. Do not accumulate superseded run
+narratives in maintainer references; keep only historical rationale that still
+explains an active decision or gate and rely on Git history for the archive.
 
 ## 4. Edit runnable material
 
@@ -86,7 +88,9 @@ values to fill an unresolved release fact.
 - Keep request dictionaries, API calls, status handling, and primary outputs
   visible in task scripts. Parse CLI arguments before endpoint or media work,
   reject unknown arguments, and require runtime, endpoint, selected-profile,
-  and task-compatible model-variant metadata before inference.
+  and task-compatible model-variant metadata before inference. Keep semantic
+  reference fixtures under `maintainer/` and out of public pages and runner
+  output.
 - Do not present a timeout, one observed run, or complete client-command wall
   time as expected service latency. Require release-specific configuration and
   measurement evidence before publishing performance expectations.

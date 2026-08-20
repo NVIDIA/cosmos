@@ -69,8 +69,8 @@ qualitative review criteria for every Reasoner example. Its user-prompt strings
 exactly match the runtime strings in the nearby vLLM notebook. The Python runner
 keeps the NIM-specific API adaptation in one place: it sends local media as data
 URLs, uses `media_io_kwargs` for video sampling, discovers the served model,
-consumes the final answer from `message.content`, and uses JSON Schema rather
-than regular expressions for structured final answers.
+consumes the final answer from `message.content`, extracts prompt-requested JSON
+with the standard JSON decoder, and applies semantic format checks.
 
 List or inspect cases without a running endpoint:
 
@@ -104,9 +104,9 @@ The `--case` option belongs to this cookbook runner, not the NIM API. Every
 video case requests 4 FPS sampling. All catalog cases consume the response
 from `message.content`. Six vLLM prompt strings contain literal `<think>`
 formatting instructions. These tags are ordinary user-prompt text; text cases
-can therefore return visible tags in `message.content`, while the two
-structured trajectory cases remain constrained to their JSON schemas. The
-service does not require a separate reasoning field.
+can therefore return visible tags in `message.content`, while the runner
+extracts structured final answers after a closing `</think>` tag. The service
+does not require a separate reasoning field.
 
 Running `--case all` sends all 18 requests sequentially and can take substantial
 time and resources. Use it for deliberate catalog validation, not as a first
@@ -121,17 +121,15 @@ actionable message if `NIM_URL` reaches a Generator runtime.
 
 ### Super BF16 example baseline
 
-Use the [Reasoner launch](deployment.md#launch-reasoner), which selects Super
-BF16 and sets both controls at container startup:
+The retained catalog validation baseline uses Super BF16 with target-only
+decoding and video-token pruning disabled:
 
 ```text
 NIM_USE_DFLASH=0
 NIM_VIDEO_PRUNING_RATE=0
 ```
 
-This runs target-only decoding and disables video-token pruning. It is the
-documented baseline for the task catalog. The one-GPU Super BF16 configuration
-requires the hardware floor in the
+The one-GPU Super BF16 configuration requires the hardware floor in the
 [support matrix](support-matrix.md#reasoner-configurations).
 After readiness, verify the selected model and profile through `/v1/metadata`
 and `/v1/manifest` before running the examples.
@@ -140,19 +138,12 @@ Every catalog request explicitly sends `temperature=0.7`, `top_p=0.8`,
 `top_k=20`, `presence_penalty=0`, and `repetition_penalty=1` unless a case
 records an override. These values match the effective Super checkpoint and raw
 vLLM example defaults instead of relying on server-side default injection. The
-catalog preserves vLLM user-prompt text byte for byte, but media transport and
-structured-output enforcement remain NIM-specific.
+catalog preserves vLLM user-prompt text byte for byte while adapting media
+transport to the NIM API.
 
-The `robot_planning` case overrides temperature and adds a fixed seed for its
-controlled parity request: `temperature=0`, `top_p=0.8`, `top_k=20`,
-`presence_penalty=0`, `repetition_penalty=1`, and `seed=0`. Greedy decoding
-removes sampled numeric variation across the NIM and raw vLLM deployments. In a
-controlled comparison, both paths returned the same five-subtask answer. This
-establishes request and deterministic-output parity for that case, not that the
-answer satisfies every application-specific planning requirement.
+Cases that set `seed=0` in the vLLM notebook retain that seed while using the
+same explicit effective sampling values as the other non-reasoning cases.
 
-The catalog cases have completed API and format validation against the pinned
-evaluation image on the documented target-only, unpruned-video configuration.
 Task-level quality remains case-specific and must be reviewed against the
 qualitative criteria recorded with each case. The runner warns rather than
 fails when the endpoint serves another Reasoner variant so the catalog remains
@@ -419,12 +410,12 @@ use their native
 }
 ```
 
-The runnable task catalog uses JSON schemas for numeric and timecode temporal
-events, timestamp queries, marked-subject captions, 2D grounding, and 2D
-trajectory proposals. It parses `message.content` with the standard JSON parser
-and then validates semantic invariants that a schema alone does not establish,
-such as ordered timestamps, unique subject IDs, ordered box corners, non-empty
-labels, and coordinates in `[0,1000]`. Do not recover structured results with a
+The runnable task catalog follows the vLLM prompt-constrained path by default:
+it extracts the first complete JSON value from `message.content` with the
+standard JSON decoder and then validates semantic invariants such as ordered
+timestamps, unique subject IDs, ordered box corners, non-empty labels, and
+coordinates in `[0,1000]`. Add `--guided-output` to opt into the NIM-specific
+JSON Schema path for structured cases. Do not recover structured results with a
 regular expression over prose or Markdown fences.
 
 Validate the running NIM's schema in `/openapi.json`, especially when upgrading
@@ -445,8 +436,9 @@ endpoint; task names do not select separate server routes:
 | 2D grounding | Return normalized coordinates for named objects or regions |
 | Action trajectories | Return ordered normalized points or poses for a requested path |
 
-Use `response_format` rather than prompt-only formatting when machine parsing
-matters. For 2D grounding and trajectory points, the existing cookbook
+Use `response_format` when an application requires guided decoding rather than
+the catalog's prompt-constrained parity path. For 2D grounding and trajectory
+points, the existing cookbook
 convention independently normalizes each axis to `[0,1000]`, with the origin at
 the upper-left, X increasing rightward, and Y increasing downward. Convert a
 validated point to pixels with:

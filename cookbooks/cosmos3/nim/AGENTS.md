@@ -36,10 +36,12 @@ For guided customer workflows, load
   though they use one image. The committed Generator clients repeat the
   runtime, endpoint, selected-profile, and compatible-variant checks before
   inference and reject unknown CLI arguments before endpoint or media work; do
-  not bypass those checks. For the Reasoner task catalog, use the documented
-  Super BF16 target-only baseline with video-token pruning disabled, preserve
-  the catalog's exact vLLM user-prompt text and explicit sampling controls, and
-  verify the selected profile before running requests. Literal `<think>` text in
+  not bypass those checks. For the Reasoner task catalog, preserve the exact
+  vLLM user-prompt text and explicit effective sampling controls, keep the
+  NIM-specific media transport, and use prompt-constrained output plus the
+  committed post-response validators by default. Treat `--guided-output` as an
+  opt-in NIM API path, and verify the selected profile before running requests.
+  Literal `<think>` text in
   a parity prompt is response text. Use
   `examples/reasoner.py --list-cases` and `--describe <case> --format json` for
   endpoint-independent task discovery.

@@ -5,7 +5,7 @@ version: 1
 prompt_source:
   backend: vllm
   path: cookbooks/cosmos3/reasoner/run_with_vllm.ipynb
-  contract: Exact runtime user-prompt strings; NIM media transport and structured-output enforcement remain backend-specific.
+  contract: Exact runtime user-prompt strings; NIM media transport and post-response validation remain backend-specific.
 validated_baseline:
   model_variant: super
   precision: bf16
@@ -138,13 +138,7 @@ cases:
       asset: robot_planning.png
     prompt: The task is to put flower into the red bottle. Generate a plan consisting of subtasks for accomplish the task.
     sampling:
-      temperature: 0.0
-      top_p: 0.8
-      presence_penalty: 0.0
       seed: 0
-    request_extensions:
-      top_k: 20
-      repetition_penalty: 1.0
     output:
       kind: text
     review:

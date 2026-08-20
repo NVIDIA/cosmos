@@ -3,106 +3,70 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Cosmos3 Certified NIM maintainer instructions
 
-These instructions apply when maintaining the public documentation, Python
-examples, and supporting metadata one directory above this folder. Open
-`cookbooks/cosmos3/nim/maintainer` in the documentation editor so this file and
-the maintainer skill are discovered. The public documentation root is `..`.
-
-For substantive documentation work, load
-`.agents/skills/cosmos3-nim-docs-maintainer/SKILL.md` and its references. These
-maintainer instructions take precedence over the customer-assistant guidance in
-`../AGENTS.md` when editing the documentation.
+These instructions apply to the public documentation, examples, and metadata in
+`..`. Open this `maintainer` directory in the editor and load
+`.agents/skills/cosmos3-nim-docs-maintainer/SKILL.md` plus its references.
+These instructions take precedence over `../AGENTS.md` for documentation work.
 
 ## Evidence and scope
 
-- Prefer current Certified NIM implementation, request models, configuration,
-  profiles, and tests. Use behavior observed from the selected RC or released
-  image when available. Historical documentation is a coverage source, not an
-  authority for current names, defaults, commands, or support claims.
-- Distinguish source-derived, RC/release-validated, historical, and unresolved
-  claims in maintainer records. Keep that provenance internal: customer-facing
-  pages state documented product behavior directly and never say that guidance
-  is based on source code. Do not silently fill release-owned gaps from memory
-  or old releases.
-- Treat timeout ceilings, individual observations, and end-to-end client command
-  times as distinct from validated service latency. Publish expected
-  performance only with an approved release image, reference configuration, and
-  measurement method.
-- Keep private source paths, internal commit IDs, development profile IDs,
-  credentials, and realistic secret values out of public documentation.
-- Put each fact in its canonical page. Consult the skill's
-  `references/page-ownership.md` before adding or duplicating reference
-  material.
+- Prefer the current Certified NIM implementation and exact selected image.
+  Historical material is a coverage source, not authority for current behavior.
+- Distinguish source-derived, image-validated, and unresolved claims internally.
+  Public pages state product behavior directly and do not mention source-code
+  provenance.
+- Keep maintainer references current rather than chronological. Remove
+  superseded validation narratives when no active gate depends on them; Git
+  history is the archive.
+- Keep private paths, internal commits or profile IDs, credentials, and realistic
+  secrets out of public documentation.
+- Put each fact in its canonical page. Use
+  `.agents/skills/cosmos3-nim-docs-maintainer/references/page-ownership.md`.
+- Do not publish performance from individual runs, timeout ceilings, or complete
+  client-command times.
 
-## Runnable examples and dependencies
+## Runnable material
 
-- Establish the public documentation root (`..`) as the working directory
-  before path-sensitive commands. Keep the one-time pinned environment setup in
-  `prerequisites.md`; task pages link to that setup instead of repeating it. Run
-  pinned examples as
-  `uv run python examples/...`.
-- Use `python3` for direct host-side standard-library commands and `python` only
-  inside the uv project environment. Python Markdown fence labels remain
-  `python`.
-- Keep example dependencies in `pyproject.toml`, commit `uv.lock`, and update
-  dependency metadata, documentation, and examples together. Do not document
-  ad hoc `pip install` or `uv run --with` commands.
-- Declare required client tools, minimum versions, and installation instructions
-  before first use. Keep client tools separate from NIM host/container
-  requirements.
-- Every fenced command must use a usable value. State unresolved release values
-  as not yet available in prose or tables, not as runnable placeholders.
-- Document Docker's external credential-helper option without making it a
-  deployment prerequisite, and include evaluation logout. `--password-stdin`
-  protects command input but not Docker's stored credential.
-- Never use `latest` for the NIM image. Before public release, keep the exact
-  evaluation image reference in `deployment.md`.
-- Keep the approved staging Helm reference exact, but do not invent pull/install
-  commands, values, schema details, or a public URL. The public chart URL is TBD;
-  replace the staging reference when the approved public release artifact is
-  available and keep the Helm page explicit about that boundary.
-- Keep release notes user-facing and concise. Until the first public release,
-  document only the initial unified release and the current request and
-  configuration contract, not development migration history.
-- Keep acknowledgement status visible without inventing an inventory before the
-  image-specific notices are approved.
+- Run path-sensitive commands from `..`. Use the pinned environment from
+  `prerequisites.md`: `uv run python examples/...`; use `python3` only for
+  direct host-side standard-library commands.
+- Update `pyproject.toml`, `uv.lock`, examples, and documentation together when
+  dependencies change. Do not document ad hoc installs or `uv run --with`.
+- Keep commands copyable, declare tools before use, and never put unresolved
+  values or `latest` in runnable commands.
+- Preserve the documented credential-helper guidance and evaluation logout.
+  `--password-stdin` does not protect Docker's stored credential.
+- Keep task scripts directly editable. Parse arguments before endpoint or media
+  work, reject unknown arguments, and verify runtime, endpoint, selected
+  profile, and compatible model variant before inference.
 
 ## Editing and validation
 
-- For local RC checks on the maintainer cluster, run the public customer Docker
-  command rather than a wrapper. Set
-  `NIM_CACHE="$(realpath -m -- "$HOME/scratch/.cache/ngc_cache")"` and
-  `LOCAL_NIM_CACHE="$NIM_CACHE"`; skip the public `chmod` step, add
-  `--user "$(id -u):$(id -g)"`, and set `HOME=/opt/nim/.cache/.home` and
-  `XDG_CACHE_HOME=/opt/nim/.cache/.xdg-cache`. Under Slurm, use `--gpus all`.
-  Keep the documented image, selectors, ports, and remaining flags unchanged.
+- For cluster RC checks, run the public Docker command with only these local
+  adaptations: canonicalize `NIM_CACHE`, mount it at `/opt/nim/.cache`, run as
+  `--user "$(id -u):$(id -g)"`, set `HOME` and `XDG_CACHE_HOME` under that
+  cache, skip the public `chmod`, and use `--gpus all` under Slurm.
+- Keep Reasoner semantic fixtures under `maintainer/`; never expose them through
+  public pages or runner output.
 - Preserve the OpenMDW-1.1 SPDX notice and existing Markdown style.
-- Keep task scripts directly editable: show request construction, the API call,
-  status handling, and primary output without hiding them behind a large helper
-  abstraction. Parse CLI arguments before endpoint or media work, reject
-  unknown arguments, and require runtime, endpoint, selected-profile, and
-  task-compatible model-variant metadata before inference.
-- Validate affected links, paths, JSON, Python syntax, documented commands, and
+- Validate affected links, paths, JSON, Python, documented commands, and
   `uv.lock`. Report static checks separately from live NIM validation.
-- Do not add CI workflows, repository automation, or unrelated tooling unless
-  the user explicitly requests it.
+- Do not add CI, repository automation, or unrelated tooling unless requested.
 
 ## Keep editor guidance current
 
-Every documentation change must review this `AGENTS.md` and
-`.agents/skills/cosmos3-nim-docs-maintainer/` for affected instructions, page
-ownership, source references, validation steps, and release gates. Update the
-editor files in the same change whenever their guidance would otherwise become
-stale:
+Review this file, the maintainer skill, and both references for every public
+change. Update only the affected guidance:
 
-- page additions, removals, or responsibility changes update
+- page ownership changes update
   `.agents/skills/cosmos3-nim-docs-maintainer/references/page-ownership.md`;
-- command conventions or durable editing rules update this file and, when
-  procedural, `SKILL.md`;
-- source-contract and validation-workflow changes update `SKILL.md`;
-- RC/release status and resolved or new release gates update
+- durable command or editing rules update this file and, when procedural, the
+  maintainer `SKILL.md`;
+- source-contract or validation-workflow changes update the maintainer
+  `SKILL.md`;
+- current image evidence or release gates update
   `.agents/skills/cosmos3-nim-docs-maintainer/references/evidence-and-release-gates.md`;
-- customer workflow, task routing, or operational-safety changes update
-  `../AGENTS.md` and `../.agents/skills/cosmos3-nim-user/SKILL.md`; and
+- customer workflow or safety changes update `../AGENTS.md` and
+  `../.agents/skills/cosmos3-nim-user/SKILL.md`; and
 - dependency policy changes update this file, `../pyproject.toml`, `../uv.lock`,
-  and the relevant public guides together.
+  and the affected public guides.
