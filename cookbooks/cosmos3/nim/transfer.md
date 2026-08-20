@@ -222,7 +222,7 @@ Transfer rejects:
 | HTTP 422 says derived control needs `video` | Add top-level source video or provide a nested precomputed edge/blur video |
 | HTTP 422 says control video required | Add nested video for depth, segmentation, or WSM |
 | Unknown field | Remove fields that are not defined in the Transfer request object |
-| Control/output lengths are incompatible | Recheck frame cadence, chunk size, and conditional frame values |
+| Control/output lengths are incompatible | Recheck the output frame count, chunk size, and conditional frame values |
 | Transfer is disabled while T2V works | Selected configuration fits T2V but GPU headroom is below Transfer overhead; use a larger GPU or lower-VRAM configuration |
 
 For service-level failures, see [operations.md](operations.md#troubleshooting).

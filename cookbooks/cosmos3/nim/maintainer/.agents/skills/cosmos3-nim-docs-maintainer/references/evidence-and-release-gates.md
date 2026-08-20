@@ -41,7 +41,7 @@ against the NIM contract rather than copying another backend's adapter.
 ## Active release maintenance
 
 - Deployment currently uses the versioned Cosmos3 1.0.0 experimental RC
-  `1.0.0-rc.experimental.20260820180843`, not a final release identity. Record
+  `1.0.0-rc.experimental.20260820211500`, not a final release identity. Record
   source-derived evidence in maintainer files only and require the exact image
   manifest or live behavior before presenting claims as validated in the
   evaluation image. Before public release, `deployment.md` owns the exact
@@ -86,6 +86,9 @@ confirmed:
 - current-free-VRAM startup selection before model materialization, the
   container preflight invocation, equivalent-layout fallback, explicit-pin
   failure, and the Reasoner runtime reserve/utilization clamp;
+- exact arbitrary Generator video frame counts within the mode and resolution
+  bounds, generation at the next native `1 + 4k` count, trimming to the exact
+  requested output count, and rounded V2V latent-index validation;
 - Reasoner TP1 preference, TP2 availability fallback, guided-decoding
   enforcement, Responses create normalization, disabled-by-default video-token
   pruning with VidCom2 as the selected method when enabled, and operator-level
@@ -105,11 +108,26 @@ Regenerate the source profile export before reconciling tables. Generated
 artifacts can lag profile policy source and must not silently override current
 implementation or be presented as an approved image manifest.
 
-## Current RC-validated contracts
+## Current RC validation status
 
-The exact evaluation image pinned in `deployment.md` has manifest digest
+The supplied build-completion record establishes the exact evaluation image
+pinned in `deployment.md`. The source delta from the superseded RC adds exact
+arbitrary Generator video frame counts: it removes the public `1 + 4k` cadence
+restriction, generates non-native requests at the next native count, trims the
+decoded result to the requested count, and validates V2V latent indexes against
+the rounded internal count. An authenticated registry lookup confirmed that the
+tag resolves to multi-architecture manifest-list digest
+`sha256:a3e67b87dc28303936ae6ca03fba6ce83b0d185a1435117991eb6814db233b2a`.
+The embedded NIM manifest release and profile inventory, preflight behavior,
+cold start, management endpoints, and inference have not been validated in
+this documentation update. Do not carry the superseded RC observations below
+forward as current-image validation.
+
+## Historical validation from the superseded 20260820 180843 RC
+
+The superseded evaluation image had manifest digest
 `sha256:c0a6b8a14c05bee46609a87798876dca62cea7f703d6ae552a26559d2298ad51`.
-Its embedded manifest reports release
+Its embedded manifest reported release
 `1.0.0-rc.experimental.20260820180843`, with 115 Generator profiles and 7
 Reasoner profiles. Direct option parsing in the image confirmed that unset
 video pruning resolves to disabled and that `NIM_MM_PROCESSOR_KWARGS` accepts

@@ -308,15 +308,14 @@ those values.
 
 ## Choose resolution, frames, and FPS
 
-### Frame cadence and limits
+### Frame counts and limits
 
-T2I requires exactly one output frame. Video generation requires at least 25
-frames. The video VAE has temporal compression factor 4 and a causal first
-frame, so video pixel-frame counts follow:
-
-```text
-num_frames = 1 + 4k
-```
+T2I requires exactly one output frame. Video generation accepts any integer
+frame count from 25 through the resolution-tier maximum. The video VAE's native
+pixel-frame counts follow `1 + 4k` because it has temporal compression factor 4
+and a causal first frame. For a non-native count, the service generates at the
+next native count and trims the decoded result before encoding, so the response
+contains exactly the requested `num_frames`.
 
 Video output limits are:
 
@@ -326,9 +325,12 @@ Video output limits are:
 | `480` | 297 |
 | `720` | 197 |
 
-The largest V2V `condition_frame_indexes_vision` value must fit the output
-latent-frame range. For `num_frames=93`, there are 24 latent frames and
-the largest valid conditioning index is 23.
+The largest V2V `condition_frame_indexes_vision` value must fit the internal
+output latent-frame range. The service calculates that range from the next
+native `1 + 4k` count. For example, `num_frames=26` uses 29 frames internally,
+so it has 8 latent frames and the largest valid conditioning index is 7. The
+response is still trimmed to exactly 26 pixel frames. For the native
+`num_frames=93`, there are 24 latent frames and the largest valid index is 23.
 
 ### Resolution keys
 
@@ -424,7 +426,7 @@ ffmpeg -i examples/outputs/t2v_robot_kitchen.mp4 -c:v libx264 -crf 18 \
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
 | HTTP 422, extra field | The request includes a field that is not part of the selected task | Remove unsupported fields using the [API reference](api-reference.md); unknown fields are rejected |
-| HTTP 422, frame cadence | A video request has fewer than 25 frames, is not on the `4k+1` cadence, or exceeds its tier ceiling | Pick a valid video count and recheck the tier |
+| HTTP 422, frame count | `num_frames` is not an integer, is fewer than 25 for video, or exceeds its tier ceiling | Pick an integer within the resolution-tier range |
 | HTTP 422, missing or invalid mode | `model_mode` is absent or conflicts with fields in the request | Set the explicit mode and include only its fields |
 | HTTP 422, reference mismatch | `input_reference` is missing, forbidden, or does not match `model_mode` | Omit it for text modes; provide the required image/video for conditioned modes |
 | URL media fails | URL inputs are disabled, unreachable from the container, or rejected by the decoder | Use a data URL and verify `NIM_ALLOW_URL_INPUT` |
