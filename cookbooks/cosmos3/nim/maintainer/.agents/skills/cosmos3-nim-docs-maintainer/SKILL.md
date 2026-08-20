@@ -141,9 +141,11 @@ Also:
 - run CLI `--help` or import smoke tests when runner behavior changes; and
 - when the exact image and hardware are available, distinguish the documented
   pre-download profile preflight from cold-start and inference validation; a
-  preflight pass establishes only candidate-profile compatibility; and
+  preflight pass establishes only candidate-profile compatibility;
 - run live requests only when the exact image and required hardware are
-  available, recording the image reference and active runtime.
+  available, recording the image reference and active runtime; and
+- for cluster RC checks, run the public customer Docker command with only the
+  local UID, canonical cache, and Slurm adaptations specified in `AGENTS.md`.
 
 Before finishing, reread the complete diff for consistency between public docs,
 examples, dependency metadata, `AGENTS.md`, and this skill. Report static and

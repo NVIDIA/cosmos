@@ -69,6 +69,13 @@ maintainer instructions take precedence over the customer-assistant guidance in
 
 ## Editing and validation
 
+- For local RC checks on the maintainer cluster, run the public customer Docker
+  command rather than a wrapper. Set
+  `NIM_CACHE="$(realpath -m -- "$HOME/scratch/.cache/ngc_cache")"` and
+  `LOCAL_NIM_CACHE="$NIM_CACHE"`; skip the public `chmod` step, add
+  `--user "$(id -u):$(id -g)"`, and set `HOME=/opt/nim/.cache/.home` and
+  `XDG_CACHE_HOME=/opt/nim/.cache/.xdg-cache`. Under Slurm, use `--gpus all`.
+  Keep the documented image, selectors, ports, and remaining flags unchanged.
 - Preserve the OpenMDW-1.1 SPDX notice and existing Markdown style.
 - Keep task scripts directly editable: show request construction, the API call,
   status handling, and primary output without hiding them behind a large helper
