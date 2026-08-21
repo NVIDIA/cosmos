@@ -39,8 +39,9 @@ speculative decoding. Generator does not support DFlash.
 
 ### Practical model recommendation
 
-Profile compatibility is not a performance recommendation. Choose the model
-family first, then let preflight select an exact image-specific profile:
+Profile compatibility is a hard hardware requirement, not a performance
+recommendation. Choose the model family first, then let preflight select an
+exact image-specific profile:
 
 - On H200- and B200-class discrete GPUs, use Super when the workload needs it.
   Start with `NIM_MODEL_TYPE=generator` or `reasoner`, set
@@ -73,6 +74,11 @@ system RAM rather than a GPU SKU allowlist:
 | Reasoner | FP8 | 8.9 |
 | Reasoner | NVFP4 | 10.0 |
 
+Meeting a minimum compute capability does not mean that every GPU at or above
+it can run a profile. The memory floors, GPU count, and the exact image
+manifest apply as well; see [Tested GPU inventory](#tested-gpu-inventory) for
+the devices verified in this release.
+
 Active Generator profiles use BF16 or FP8; there is no active Generator NVFP4
 row.
 
@@ -89,31 +95,31 @@ is measured after a runtime reserve: 2 GiB by default on a discrete GPU or the
 configured host reserve on an integrated GPU.
 
 For an integrated GPU with unified host/device memory, automatic selection
-subtracts a 16-GiB host reserve from the reported shared-memory total before
-applying these floors. Generator selection keeps the model and both guardrails
-resident, so only rows with **Model offload = None** and **Guardrails =
-Resident** are eligible. Reasoner floors are also compared with the remaining
-shared-memory total.
+applies these floors to the effective shared memory defined in [Unified-memory
+thresholds](#unified-memory-thresholds). Generator selection keeps the model
+and both guardrails resident, so only rows with **Model offload = None** and
+**Guardrails = Resident** are eligible. Reasoner floors use the same effective
+total.
 
 ### Unified-memory thresholds
 
 Unified-memory systems use one DRAM pool for the host and the device. The
 **effective shared memory** in this table is the device-reported total minus
-the default 16-GiB host reserve. The last column is the minimum raw total that
-would leave enough effective shared memory for the profile; it is not an
-additional host-RAM requirement.
+the default 16-GiB host reserve. Change that reserve with
+`NIM_UNIFIED_MEMORY_HOST_RESERVE_GIB` only from validated host measurements;
+see [Advanced profile controls](configuration.md#advanced-profile-controls).
 
-| Runtime/profile | Effective shared-memory floor | Minimum reported shared memory | Unified-memory policy |
-| --- | ---: | ---: | --- |
-| Generator `nano` BF16; `nano-droid` BF16 | 58 GiB | 74 GiB | Resident model and guardrails |
-| Generator `nano` FP8 | 44 GiB | 60 GiB | Resident model and guardrails |
-| Generator Super family BF16 | 150 GiB | 166 GiB | Resident model and guardrails |
-| Generator Super family FP8 | 93 GiB | 109 GiB | Resident model and guardrails |
-| Reasoner `nano` BF16, FP8, or NVFP4 | 23.1 GiB/device | 39.1 GiB/device | No CPU/model offload |
-| Reasoner `super` BF16, TP1 | 135 GiB/device | 151 GiB/device | No CPU/model offload |
-| Reasoner `super` BF16, TP2 | 73 GiB/device | 89 GiB/device | No CPU/model offload |
-| Reasoner `super` FP8, TP1 | 67 GiB/device | 83 GiB/device | No CPU/model offload |
-| Reasoner `super` NVFP4, TP1 | 73 GiB/device | 89 GiB/device | No CPU/model offload |
+| Runtime/profile | Effective shared-memory floor | Unified-memory policy |
+| --- | ---: | --- |
+| Generator `nano` BF16; `nano-droid` BF16 | 58 GiB | Resident model and guardrails |
+| Generator `nano` FP8 | 44 GiB | Resident model and guardrails |
+| Generator Super family BF16 | 150 GiB | Resident model and guardrails |
+| Generator Super family FP8 | 93 GiB | Resident model and guardrails |
+| Reasoner `nano` BF16, FP8, or NVFP4 | 23.1 GiB/device | No CPU/model offload |
+| Reasoner `super` BF16, TP1 | 135 GiB/device | No CPU/model offload |
+| Reasoner `super` BF16, TP2 | 73 GiB/device | No CPU/model offload |
+| Reasoner `super` FP8, TP1 | 67 GiB/device | No CPU/model offload |
+| Reasoner `super` NVFP4, TP1 | 73 GiB/device | No CPU/model offload |
 
 The effective floor is compared with the value returned by the running
 system, not with a product's decimal memory label. Current free shared memory
@@ -137,13 +143,13 @@ can still be compatible when it meets the compute-capability and memory floors.
 ### Unified-memory systems
 
 These systems share host and device memory; the capacity shown here is not
-separate VRAM. The effective value is illustrative for the nominal capacity,
-so confirm the binary-GiB total reported by the running system before launch.
+separate VRAM. Subtract the host reserve from the binary-GiB total reported by
+the running system before comparing it with the effective floors above.
 
-| Device | Nominal shared memory | Illustrative effective shared memory after 16-GiB reserve |
-| --- | ---: | ---: |
-| Jetson AGX Thor T5000 | 123 GiB | 107 GiB |
-| DGX Spark (GB10) | 128 GB (about 119 GiB) | about 103 GiB |
+| Device | Nominal shared memory |
+| --- | ---: |
+| Jetson AGX Thor T5000 | 123 GiB |
+| DGX Spark (GB10) | 128 GB (about 119 GiB) |
 
 At these capacities, memory floors permit the resident Generator Nano BF16
 and FP8 rows and the resident Super FP8 rows. For Reasoner, the Nano rows and
@@ -152,11 +158,11 @@ compatibility, not a recommendation to use Super on these systems; prefer Nano
 for practical turnaround. Compute capability, GPU count, current free memory,
 and the exact image manifest still determine the selected profile.
 
-Reasoner Super BF16 TP1 requires a 135-GiB effective pool and a minimum
-151-GiB reported pool after accounting for the host reserve. It therefore
-exceeds the total capacity of both listed unified-memory systems; reclaimable
-cache cannot make that profile fit. This differs from a profile that fits the
-effective total but is temporarily blocked by the current memory state.
+Reasoner Super BF16 TP1 requires a 135-GiB effective pool after the host
+reserve. It therefore exceeds the total capacity of both listed unified-memory
+systems; reclaimable cache cannot make that profile fit. This differs from a
+profile that fits the effective total but is temporarily blocked by the current
+memory state.
 
 ### Blackwell Ultra
 
