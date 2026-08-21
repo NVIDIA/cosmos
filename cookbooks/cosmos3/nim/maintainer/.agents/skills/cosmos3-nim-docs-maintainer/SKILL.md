@@ -67,9 +67,15 @@ Classify each changed claim as:
   prose or a table.
 
 Never upgrade source evidence to a tested support claim. Never use historical
-values to fill an unresolved release fact. Do not accumulate superseded run
-narratives in maintainer references; keep only historical rationale that still
-explains an active decision or gate and rely on Git history for the archive.
+values to fill an unresolved release fact. Record the exact source commit hash
+for the current RC in `references/evidence-and-release-gates.md`; commit hashes
+are permitted only in maintainer records, not customer-facing pages or examples.
+Before replacing that baseline on the next RC bump, compare the recorded old
+revision with the new revision and inspect the complete range for
+contract-relevant changes. Do not infer the RC delta from only the new commit's
+own patch. Do not accumulate superseded run narratives in maintainer references;
+keep only historical rationale that still explains an active decision or gate
+and rely on Git history for the archive.
 
 ## 4. Edit runnable material
 
@@ -97,7 +103,10 @@ explains an active decision or gate and rely on Git history for the archive.
 - When dependencies change, update `pyproject.toml`, regenerate `uv.lock`, and
   update all affected commands and prerequisite text in the same change.
 
-For a pre-release image bump, update `NIM_IMAGE` in `deployment.md`. Do not use
+For a pre-release image bump, record the supplied source commit, compare it with
+the previous recorded RC source commit, and reconcile affected contracts before
+updating `NIM_IMAGE` in `deployment.md`. If either revision is unavailable,
+record that comparison gap instead of inferring a complete delta. Do not use
 `latest`. Keep the exact approved staging Helm reference in `helm.md`, but keep
 pull/install guidance conceptual until the public chart URL, schema, and
 workflow are approved. Replace the staging reference when that public release
