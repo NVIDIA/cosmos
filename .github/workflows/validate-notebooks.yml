@@ -1,0 +1,41 @@
+name: Validate notebooks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.ipynb"
+      - ".github/workflows/validate-notebooks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-notebook-json:
+    name: Validate notebook JSON
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Parse tracked notebooks
+        shell: bash
+        run: |
+          invalid=0
+          count=0
+
+          while IFS= read -r -d '' notebook; do
+            count=$((count + 1))
+            if ! python -m json.tool "$notebook" >/dev/null; then
+              echo "::error file=$notebook::Notebook is not valid JSON"
+              invalid=1
+            fi
+          done < <(git ls-files -z -- '*.ipynb')
+
+          echo "Validated $count tracked notebooks."
+          exit "$invalid"
