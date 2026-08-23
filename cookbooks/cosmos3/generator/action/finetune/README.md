@@ -194,7 +194,15 @@ Relocate inputs via env vars, or run a short smoke test:
 
 ```shell
 export ROBOCASA_ROOT=/scratch/robocasa_v30
-export EXTRA_TAIL_OVERRIDES="job.wandb_mode=disabled trainer.max_iter=10 checkpoint.save_iter=10 dataloader_train.max_samples_per_batch=8"
+# The TOML pins HSDP 8x2 = 16 ranks (4 nodes x 4 GPUs). On a single 8-GPU node, drop the
+# replicate degree to 1 as well, or torchrun starts 8 processes for a 16-rank layout.
+export EXTRA_TAIL_OVERRIDES=" \
+  job.wandb_mode=disabled \
+  trainer.max_iter=10 \
+  checkpoint.save_iter=10 \
+  model.config.parallelism.data_parallel_replicate_degree=1 \
+  dataloader_train.max_samples_per_batch=8 \
+"
 bash launch_sft_action_policy_robocasa_nano.sh
 ```
 
@@ -204,19 +212,60 @@ Checkpoints are saved every 1000 iters.
 
 RoboCasa is scored by rolling the policy out in simulation, not by held-out loss. The evaluator
 lives in cosmos-framework at `cosmos_framework/simulation/robocasa/closed_loop_eval.py`, alongside
-the LIBERO one; see its module docstring for the full invocation.
+the LIBERO one.
 
 It drives the simulator against a policy server
 (`cosmos_framework.scripts.action_policy_server_robocasa`) over HTTP, so it needs **two Python
 environments**: robosuite/robocasa and cosmos-framework have conflicting numpy/mujoco pins and
 cannot share a venv. The server runs in the cosmos-framework venv; the evaluator runs in a
-separate venv built per the [RoboCasa install guide](https://robocasa.ai).
+separate venv built per the [RoboCasa install guide](https://robocasa.ai). Both processes run
+together — start the server first and leave it up:
+
+```shell
+# --- process 1, cosmos-framework venv -------------------------------------------------
+# Serve the DCP checkpoint directly; no safetensors export is needed for evaluation.
+RUN_DIR=outputs/train/<project>/<group>/<name>
+CKPT=$RUN_DIR/checkpoints/$(cat "$RUN_DIR/checkpoints/latest_checkpoint.txt")
+
+python -m cosmos_framework.scripts.action_policy_server_robocasa \
+    --checkpoint-path "$CKPT/model" --config-file "$RUN_DIR/config.yaml" \
+    --port 8912 --num-steps 10 --guidance 3.0 --fps 20
+
+# --- process 2, robosuite/robocasa venv -----------------------------------------------
+# cosmos-framework is NOT installed in this venv (that is the point of splitting them), but
+# the evaluator only imports pure-python modules from it, so a checkout on PYTHONPATH is
+# enough. --dataset-dir is the ORIGINAL RoboCasa export, not the converted copy: the
+# simulator reads scene XML from it.
+MUJOCO_GL=egl PYTHONPATH=/path/to/cosmos-framework \
+python -m cosmos_framework.simulation.robocasa.closed_loop_eval \
+    --server-url http://127.0.0.1:8912 \
+    --dataset-dir /path/to/robocasa/datasets/v1.0/target/atomic/<task>/<date>/lerobot \
+    --output-dir eval_out --num-test-episodes 20 \
+    --action-horizon 32 --camera-set left_wrist \
+    --use-state --use-base-action --base-encoding raw \
+    --seed 0 --image-size 256 --cam-size 256
+```
 
 The evaluation contract must match the training recipe — a mismatch does not raise, it just
 degrades the policy. For this recipe: `--action-horizon 32` (equals `chunk_length`),
 `--camera-set left_wrist`, `--use-state`, and `--use-base-action --base-encoding raw` for the
-15-D contract. Point `--dataset-dir` at the original RoboCasa export rather than the converted
-copy, since the simulator reads scene XML from it.
+15-D contract.
+
+The server derives that same 15-D width from the checkpoint's experiment config, so the two
+sides agree without being configured twice; `GET /info` reports the width in effect. Pass
+`--raw-action-dim` only to override it, e.g. when serving a checkpoint whose config is not
+available.
+
+`smoke_test_robocasa_eval.sh` runs this exact pair end to end on one task for a couple of
+rollouts. Use it to check the handshake before launching a full evaluation:
+
+```shell
+RUN_DIR=outputs/train/<project>/<group>/<name> \
+FRAMEWORK_ROOT=/path/to/cosmos-framework \
+SIM_PYTHON=/path/to/robocasa-venv/bin/python \
+DATASET_DIR=/path/to/robocasa/datasets/v1.0/target/atomic/<task>/<date>/lerobot \
+    bash smoke_test_robocasa_eval.sh
+```
 
 The policy server instantiates the text-safety guardrail, which downloads the gated
 [`nvidia/Cosmos-Guardrail1`](https://huggingface.co/nvidia/Cosmos-Guardrail1) repo (~7 GB). Accept
