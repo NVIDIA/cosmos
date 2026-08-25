@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Isla 3D - Estilo Royale</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87ceeb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 1px solid #555;
+            pointer-events: none;
+        }
+        h1 { margin: 0 0 5px 0; font-size: 20px; color: #4cd137; }
+        p { margin: 0; font-size: 14px; color: #f5f6fa; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h1>Exploración de Isla 3D</h1>
+        <p>Moverse: <b>W, A, S, D</b></p>
+    </div>
+
+    <!-- Cargar Three.js desde CDN oficial -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- 1. CONFIGURACIÓN BÁSICA DE LA ESCENA ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb);
+        scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // --- 2. ILUMINACIÓN ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfff8e7, 0.9);
+        sunLight.position.set(50, 100, 50);
+        sunLight.castShadow = true;
+        scene.add(sunLight);
+
+        // --- 3. ENTORNO (Océano e Isla) ---
+        const oceanGeometry = new THREE.PlaneGeometry(1000, 1000);
+        const oceanMaterial = new THREE.MeshStandardMaterial({ color: 0x1e90ff, roughness: 0.1 });
+        const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+        ocean.rotation.x = -Math.PI / 2;
+        ocean.position.y = -0.5;
+        scene.add(ocean);
+
+        const islandRadius = 70;
+        const islandGeometry = new THREE.CylinderGeometry(islandRadius, islandRadius - 10, 5, 32);
+        const islandMaterial = new THREE.MeshStandardMaterial({ color: 0x3b7a57, roughness: 0.9 });
+        const island = new THREE.Mesh(islandGeometry, islandMaterial);
+        island.position.y = -2.5;
+        island.receiveShadow = true;
+        scene.add(island);
+
+        // Lago
+        const lakeGeo = new THREE.CircleGeometry(12, 16);
+        const lakeMat = new THREE.MeshStandardMaterial({ color: 0x00bfff, roughness: 0.2 });
+        const lake = new THREE.Mesh(lakeGeo, lakeMat);
+        lake.rotation.x = -Math.PI / 2;
+        lake.position.set(20, -0.1, -15);
+        scene.add(lake);
+
+        // --- 4. VEGETAÇÃO E ROCHAS ---
+        const trees = [];
+        const rocks = [];
+
+        function createTree(x, z) {
+            const treeGroup = new THREE.Group();
+            
+            const trunkGeo = new THREE.CylinderGeometry(0.8, 1.2, 6, 6);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = 3;
+            trunk.castShadow = true;
+            treeGroup.add(trunk);
+
+            const leavesGeo = new THREE.SphereGeometry(3.5, 8, 8);
+            const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57 });
+            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+            leaves.position.y = 6.5;
+            leaves.castShadow = true;
+            treeGroup.add(leaves);
+
+            treeGroup.position.set(x, 0, z);
+            scene.add(treeGroup);
+            trees.push(treeGroup);
+        }
+
+        function createRock(x, z) {
+            const rockGeo = new THREE.DodecahedronGeometry(Math.random() * 2 + 1);
+            const rockMat = new THREE.MeshStandardMaterial({ color: 0x7f8c8d, roughness: 0.8 });
+            const rock = new THREE.Mesh(rockGeo, rockMat);
+            rock.position.set(x, 0.5, z);
+            rock.castShadow = true;
+            rock.receiveShadow = true;
+            scene.add(rock);
+            rocks.push(rock);
+        }
+
+        for (let i = 0; i < 40; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            let dist = Math.random() * (islandRadius - 15);
+            let x = Math.cos(angle) * dist;
+            let z = Math.sin(angle) * dist;
+
+            if (Math.hypot(x - 20, z - (-15)) > 15) {
+                if (Math.random() > 0.3) {
+                    createTree(x, z);
+                } else {
+                    createRock(x, z);
+                }
+            }
+        }
+
+        // --- 5. ANIMALES ---
+        const animals = [];
+        function createAnimal(x, z) {
+            const animalGroup = new THREE.Group();
+            const bodyGeo = new THREE.BoxGeometry(1.2, 1, 2);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdcbf9e });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.5;
+            body.castShadow = true;
+            animalGroup.add(body);
+
+            animalGroup.position.set(x, 0, z);
+            scene.add(animalGroup);
+
+            animals.push({
+                mesh: animalGroup,
+                angle: Math.random() * Math.PI * 2,
+                speed: 0.04
+            });
+        }
+
+        for (let i = 0; i < 6; i++) {
+            createAnimal((Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40);
+        }
+
+        // --- 6. JUGADOR ---
+        const playerGeo = new THREE.CapsuleGeometry(0.8, 1.5, 4, 8);
+        const playerMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c });
+        const player = new THREE.Mesh(playerGeo, playerMat);
+        player.position.set(0, 1, 30);
+        player.castShadow = true;
+        scene.add(player);
+
+        let keys = {};
+        window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+        // --- 7. BUCLE PRINCIPAL ---
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            let delta = clock.getDelta();
+            let moveSpeed = 8 * delta;
+            let pX = player.position.x;
+            let pZ = player.position.z;
+
+            if (keys['w'] || keys['arrowup']) pZ -= moveSpeed;
+            if (keys['s'] || keys['arrowdown']) pZ += moveSpeed;
+            if (keys['a'] || keys['arrowleft']) pX -= moveSpeed;
+            if (keys['d'] || keys['arrowright']) pX += moveSpeed;
+
+            if (Math.hypot(pX, pZ) < islandRadius - 5) {
+                player.position.x = pX;
+                player.position.z = pZ;
+            }
+
+            camera.position.x = player.position.x;
+            camera.position.y = player.position.y + 12;
+            camera.position.z = player.position.z + 15;
+            camera.lookAt(player.position.x, player.position.y, player.position.z);
+
+            animals.forEach(animal => {
+                animal.mesh.position.x += Math.cos(animal.angle) * animal.speed;
+                animal.mesh.position.z += Math.sin(animal.angle) * animal.speed;
+
+                if (Math.hypot(animal.mesh.position.x, animal.mesh.position.z) > 45) {
+                    animal.angle += Math.PI;
+                }
+                if (Math.random() < 0.02) {
+                    animal.angle += (Math.random() - 0.5) * 1;
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
