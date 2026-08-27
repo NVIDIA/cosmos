@@ -71,27 +71,36 @@ def load_transfer_spec(control: str) -> dict:
 def make_preview(src: Path, crf: int = 28) -> Path:
     preview = src.with_name(f"{src.stem}_preview.mp4")
     if not preview.exists() or preview.stat().st_mtime < src.stat().st_mtime:
-        subprocess.run(
-            [
-                _ffmpeg_exe(),
-                "-y",
-                "-loglevel",
-                "error",
-                "-i",
-                str(src),
-                "-c:v",
-                "libx264",
-                "-crf",
-                str(crf),
-                "-preset",
-                "veryfast",
-                "-an",
-                "-pix_fmt",
-                "yuv420p",
-                str(preview),
-            ],
-            check=True,
-        )
+        # Encode beside the target (keeping the .mp4 suffix so ffmpeg infers
+        # the container), then swap atomically so an interrupted cell never
+        # leaves a half-written video behind under the final name.
+        partial = src.with_name(f"{src.stem}_preview.partial.mp4")
+        try:
+            subprocess.run(
+                [
+                    _ffmpeg_exe(),
+                    "-y",
+                    "-loglevel",
+                    "error",
+                    "-i",
+                    str(src),
+                    "-c:v",
+                    "libx264",
+                    "-crf",
+                    str(crf),
+                    "-preset",
+                    "veryfast",
+                    "-an",
+                    "-pix_fmt",
+                    "yuv420p",
+                    str(partial),
+                ],
+                check=True,
+            )
+        except BaseException:
+            partial.unlink(missing_ok=True)
+            raise
+        os.replace(partial, preview)
     return preview
 
 
