@@ -25,8 +25,9 @@ Environment setup is centralized in the shared
 
 Video transfer generates a target clip from a `prompt.json` caption and one or more
 spatial control signals. The Framework path uses `model_mode` `video2video` in a local JSON spec.
-TensorRT-LLM uses `POST /v1/videos/generations`: source media is multipart
-`input_reference`, while hints are carried under `extra_params`.
+TensorRT-LLM uses `POST /v1/videos/sync`. A raw source used to derive edge or
+blur is multipart `input_reference`; precomputed controls are carried directly
+under their `extra_params` hint and do not need an `input_reference`.
 The vLLM-Omni path uses `POST /v1/videos/sync` and passes one or more hint keys (`edge`, `blur`,
 `depth`, `seg`, or `wsm`) inside `extra_params`. Cosmos Framework accepts pre-computed
 control videos (`control_path`) or derives active controls from a raw source video
@@ -199,9 +200,11 @@ reuses the previews from [`preview_helpers.py`](./preview_helpers.py), writing o
 
 Set up and launch Nano or Super as described in the shared
 [TensorRT-LLM setup](../../README.md#tensorrt-llm-generator). TensorRT-LLM
-accepts source media as multipart `input_reference`. JSON cannot carry bytes,
-so a precomputed control is base64 encoded inside its hint object; the server
-decodes it at the HTTP boundary before validating and dispatching the request.
+accepts a raw source video as multipart `input_reference` when edge or blur will
+be computed on the server. The checked-in assets are already precomputed
+controls, so this example base64-encodes the control inside its hint and does
+not send an `input_reference`. The server decodes inline media at the HTTP
+boundary before validating and dispatching the request.
 
 ```python
 import base64
@@ -229,36 +232,39 @@ extra_params = {
     "max_frames": 121,
 }
 
-with control_path.open("rb") as source_file:
-    response = requests.post(
-        "http://localhost:8000/v1/videos/generations",
-        data={
-            "prompt": prompt,
-            "negative_prompt": negative,
-            "size": "1280x720",
-            "num_frames": "121",
-            "fps": "30",
-            "num_inference_steps": "35",
-            "guidance_scale": "3.0",
-            "max_sequence_length": "4096",
-            "seed": "2026",
-            "extra_params": json.dumps(extra_params),
-        },
-        files={"input_reference": (control_path.name, source_file, "video/mp4")},
-        headers={"Accept": "video/mp4, video/x-msvideo"},
-    )
+response = requests.post(
+    "http://localhost:8000/v1/videos/sync",
+    json={
+        "prompt": prompt,
+        "negative_prompt": negative,
+        "size": "1280x720",
+        "num_frames": 121,
+        "fps": 30,
+        "num_inference_steps": 35,
+        "guidance_scale": 3.0,
+        "max_sequence_length": 4096,
+        "seed": 2026,
+        "format": "auto",
+        "response_format": "file",
+        "extra_params": extra_params,
+    },
+    headers={"Accept": "video/mp4, video/x-msvideo"},
+)
 response.raise_for_status()
 suffix = ".avi" if "avi" in response.headers.get("content-type", "") else ".mp4"
 Path(f"/tmp/cosmos3_transfer_depth_trtllm{suffix}").write_bytes(response.content)
 ```
 
-Only edge and blur can be generated from the uploaded source (`"edge": true`
-or `"blur": true`); depth, segmentation, and WSM require precomputed control
-media. Use `use_guardrails`, not vLLM-Omni's `guardrails`, and send encoded
-control bytes rather than a server-local `control_path`. When neither output
-dimension is specified, TensorRT-LLM chooses the nearest supported bucket from
-the source/control aspect ratio. The checked-in examples explicitly request
-1280×720 and their native frame count/fps; WSM uses 101 frames at 10 fps.
+Only edge and blur can be generated from a raw uploaded source (`"edge": true`
+or `"blur": true`); depth, segmentation, and WSM always require precomputed
+control media. Precomputed edge and blur are also accepted. Use
+`use_guardrails`, not vLLM-Omni's `guardrails`, and send encoded control bytes
+rather than a server-local `control_path`. When neither output dimension is
+specified, TensorRT-LLM chooses the nearest supported bucket from the source or
+first precomputed control's aspect ratio. The checked-in examples explicitly
+request 1280×720 and their native frame count/fps; WSM uses 101 frames at 10
+fps. `/v1/videos/generations` remains only as a deprecated alias of the
+canonical blocking `/v1/videos/sync` route.
 
 ### TensorRT-LLM notebook walkthrough
 

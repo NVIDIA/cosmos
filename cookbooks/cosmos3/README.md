@@ -174,7 +174,9 @@ Action examples, including the published four-step T2I and I2V students.
 Initial Cosmos3 support was added in TensorRT-LLM PR
 [#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824), synchronized audio
 in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
-video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155).
+video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155),
+Transfer in [#16394](https://github.com/NVIDIA/TensorRT-LLM/pull/16394), and
+Action in [#17325](https://github.com/NVIDIA/TensorRT-LLM/pull/17325).
 Use a TensorRT-LLM checkout or package that includes those changes.
 
 Install TensorRT-LLM following its upstream documentation.
@@ -264,8 +266,10 @@ trtllm-serve nvidia/Cosmos3-Super-Image2Video-4Step \
 Action uses the Nano launch above. For DROID policy inference, replace the model
 with `nvidia/Cosmos3-Nano-Policy-DROID` and keep the one-GPU Nano config.
 
-The server exposes `/health`, `/v1/videos/generations`, `/v1/videos`, and
-`/v1/images/generations`. The audiovisual notebook uses the validated video
+The server exposes `/health`, the blocking `/v1/videos/sync`, the asynchronous
+`/v1/videos`, and `/v1/images/generations`. The older
+`/v1/videos/generations` spelling is a deprecated alias of `/v1/videos/sync`.
+The audiovisual notebook uses the validated video
 generation endpoint for text-to-image, text-to-video, image-to-video,
 video-to-video, and synchronized audio. Cosmos3 text-to-image is sent as a
 one-frame video request, matching the TensorRT-LLM Cosmos3 pipeline; the notebook
@@ -280,12 +284,14 @@ Cosmos3 controls through `extra_params`, so use a TensorRT-LLM build that includ
 the Cosmos3 VisualGen API schema. The notebook sets request-level
 `max_sequence_length=4096` for longer structured JSON prompts.
 
-Transfer uses the synchronous `/v1/videos/generations` route. Upload the source
-video as multipart `input_reference`; send `edge`, `blur`, `depth`, `seg`, or
-`wsm` under `extra_params`. Precomputed controls are base64-encoded media in the
-JSON request and are decoded to bytes at the HTTP boundary. TensorRT-LLM uses
-`use_guardrails` for its per-request safety switch; `guardrails`,
-`control_path`, and other vLLM-Omni-only names are not interchangeable.
+Transfer uses the synchronous `/v1/videos/sync` route. For server-derived edge
+or blur, upload the raw source video as multipart `input_reference` and set the
+corresponding `extra_params` hint to `true`. For a precomputed edge, blur,
+depth, segmentation, or WSM control, base64-encode the control inside its hint;
+no `input_reference` is needed. The server decodes inline media to bytes at the
+HTTP boundary. TensorRT-LLM uses `use_guardrails` for its per-request safety
+switch; `guardrails`, `control_path`, and other vLLM-Omni-only names are not
+interchangeable.
 
 Action requests use the same synchronous route and upload an image or video as
 `input_reference`. Because an action trajectory cannot be represented in MP4 or

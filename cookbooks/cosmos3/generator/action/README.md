@@ -191,10 +191,11 @@ actions = json.loads((action_root / "assets/actions/av_traj_forward.json").read_
 
 with image_path.open("rb") as image_file:
     response = requests.post(
-        "http://localhost:8000/v1/videos/generations",
+        "http://localhost:8000/v1/videos/sync",
         data={
             "prompt": "You are an autonomous vehicle planning system.",
             "format": "safetensors",
+            "response_format": "file",
             "seed": "0",
             "extra_params": json.dumps(
                 {
@@ -222,8 +223,10 @@ Action modes therefore use a tensor output: `format=auto` selects
 `safetensors`, and explicit `mp4`/`avi` is rejected rather than dropping the
 trajectory.
 
-The quickstart uses the blocking `POST /v1/videos/generations` route. The
-asynchronous `POST /v1/videos` route returns HTTP 202; poll
+The quickstart uses the blocking `POST /v1/videos/sync` route with
+`response_format=file`, which returns the tensor payload bytes directly. The
+older `/v1/videos/generations` spelling is a deprecated alias. The asynchronous
+`POST /v1/videos` route returns HTTP 202; poll
 `GET /v1/videos/{id}` and download the same tensor payload from
 `GET /v1/videos/{id}/content`.
 
