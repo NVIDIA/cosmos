@@ -19,6 +19,10 @@ For guided customer workflows, load
   participating GPU and effective host/container RAM before choosing a profile
   family. Detect DGX Spark/GB10 and Jetson AGX Thor as unified memory; report
   `MemFree`, `MemAvailable`, and reclaimable-cache components for those hosts.
+  On discrete-GPU hosts, use the support matrix's practical host RAM minima;
+  the 16-GiB admission tag on non-offloading profiles is intentionally not the
+  practical requirement. Do not add a separate host RAM requirement to a
+  unified-memory system.
 - Treat the public pages and examples in this directory as the authority. Do not
   invent a fixed value where the guide requires host or workload validation, or
   use another NIM's commands, fields, or support claims.

@@ -87,10 +87,14 @@ For hardware guidance:
   unfamiliar device, use the exact-image preflight's unified-memory report
   rather than inferring from a marketing memory label;
 - evaluate every participating device's total and currently free memory against
-  the per-device floor, including the documented Reasoner runtime reserve;
+  the per-device floor, including the documented Reasoner runtime reserve; on a
+  discrete-GPU host also require the practical host RAM minimum for the selected
+  non-offloading model/precision row rather than treating the 16-GiB profile
+  admission tag as sufficient;
 - on unified memory, use `MemAvailable` for current state because it includes
-  reclaimable cache; report `MemFree` and the cache components separately and
-  never add cache to `MemAvailable`;
+  reclaimable cache; report `MemFree` and the cache components separately,
+  never add cache to `MemAvailable`, and do not add the discrete-host practical
+  RAM requirement to the single shared pool;
 - never add VRAM across devices;
 - use the Transfer minimum when Transfer must be served, and distinguish
   profile compatibility from the task's practical hardware recommendation:

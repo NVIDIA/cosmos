@@ -7,8 +7,8 @@ Use this page to prepare and verify a host before pulling or launching the
 Cosmos3 Certified NIM. Profile-specific GPU, precision, and VRAM compatibility
 belongs to the [support matrix](support-matrix.md).
 
-> **Published release floors:** GPU compute capability, GPU count, per-device
-> VRAM, Transfer headroom, and configuration-specific system-memory floors are
+> **Published requirements:** GPU compute capability, GPU count, per-device
+> VRAM, Transfer headroom, and configuration-specific practical host RAM are
 > published in the [Support matrix](support-matrix.md). Full host compatibility
 > still requires a cold start; where this guide does not publish a fixed
 > minimum, size and validate the host for the selected image and workload.
@@ -31,7 +31,7 @@ Plan for:
 | CPU architecture | The release image provides `amd64` and `arm64` variants; use the variant selected by the container runtime |
 | GPU compute capability | Generator: BF16 `>=8.0`, FP8 `>=8.9`; Reasoner: BF16 `>=8.0`, FP8 `>=8.9`, NVFP4 `>=10.0` |
 | GPU count and per-device VRAM | See the [Generator](support-matrix.md#generator-configurations) and [Reasoner](support-matrix.md#reasoner-configurations) tables |
-| Host RAM | Profile-selection floors are 16 GiB for resident/Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload; provision additional memory for the host and workload |
+| Host RAM | On a discrete-GPU host, non-offloading profiles require 40 GiB for Generator Nano, 78 GiB for Generator Super FP8, 112 GiB for Generator Super BF16, 24 GiB for Reasoner Nano BF16, 18 GiB for Reasoner Nano FP8 or NVFP4, 36 GiB for Reasoner Super NVFP4, 46 GiB for Reasoner Super FP8, or 76 GiB for Reasoner Super BF16; see the [Generator](support-matrix.md#generator-configurations) and [Reasoner](support-matrix.md#reasoner-configurations) tables |
 | Free disk | Provision for the image, selected model artifacts, materialization, and outputs; no single workload-independent floor is documented |
 | Container shared memory | The Docker reference launch allocates 16 GiB; validate the requirement for the selected media workload and concurrency |
 
@@ -109,17 +109,24 @@ cache or deleting the persistent NIM model cache is not part of the normal
 deployment workflow; see [Unified-memory
 diagnostics](operations.md#unified-memory-diagnostics).
 
-Lower-VRAM profiles can keep model weights in system memory. Resident Generator
-and Reasoner profiles carry a 16-GiB selection floor, Nano model/layer-offload
-profiles carry 64 GiB, and Super model/layer-offload profiles carry 150 GiB. The
-NIM checks a container memory limit before host physical memory, so a lower
-Docker or Kubernetes limit can make an otherwise capable host incompatible.
-These profile-selection floors do not resolve the release-wide host-RAM
-requirement for the container, runtime, materialized artifacts, and workload.
-They are sufficient to choose a candidate profile before model artifacts are
-downloaded. After pulling the image, run the documented
-[pre-download profile preflight](deployment.md#run-the-pre-download-profile-preflight)
-before cold start.
+Lower-VRAM profiles can keep model weights in system memory. Non-offloading
+Generator and Reasoner profiles deliberately carry only a 16-GiB system-memory
+admission floor so the NIM does not block an attempted startup. On a
+discrete-GPU host, passing that check does not replace the empirical practical
+RAM requirements in the [Generator](support-matrix.md#generator-configurations)
+and [Reasoner](support-matrix.md#reasoner-configurations) tables. Nano
+model/layer-offload
+profiles carry a 64-GiB profile floor, and Super model/layer-offload profiles
+carry 150 GiB; separate empirical practical minima are not established for
+those offload rows. The NIM checks a container memory limit before host physical
+memory, so a lower Docker or Kubernetes limit can make an otherwise capable
+host incompatible.
+
+Unified-memory systems do not add a separate host RAM requirement: continue to
+size the single shared pool with the unified-memory table and current-state
+procedure above. After pulling the image, run the documented [pre-download
+profile preflight](deployment.md#run-the-pre-download-profile-preflight) before
+cold start.
 
 ## Software requirements
 

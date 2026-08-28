@@ -25,6 +25,9 @@ These instructions take precedence over `../AGENTS.md` for documentation work.
   do not copy them into customer-facing pages or examples.
 - Put each fact in its canonical page. Use
   `.agents/skills/cosmos3-nim-docs-maintainer/references/page-ownership.md`.
+- Keep the 16-GiB non-offload system-memory admission tag distinct from the
+  empirical practical host RAM requirements on discrete-GPU systems. Do not
+  add those separate host RAM values to unified-memory guidance.
 - Do not publish performance from individual runs, timeout ceilings, or complete
   client-command times.
 

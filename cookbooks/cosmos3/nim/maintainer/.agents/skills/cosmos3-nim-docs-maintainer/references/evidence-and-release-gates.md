@@ -53,9 +53,18 @@ against the NIM contract rather than copying another backend's adapter.
   range was reviewed for contract changes. Retain the current revision as the
   comparison baseline for the next image.
 - The current support-matrix compute-capability, GPU-count, per-device VRAM,
-  Transfer, and effective system-memory thresholds are approved for publication
-  as release profile-selection floors. They establish a candidate profile, not
-  full host compatibility, and remain subject to the exact image manifest.
+  and Transfer thresholds are approved release profile-selection floors. The
+  practical host RAM minima for non-offloading profiles are empirical
+  discrete-host requirements rather than embedded admission tags. Both classes
+  establish only a candidate configuration and remain subject to cold start and
+  representative requests.
+- Approved empirical practical host RAM minima for discrete-GPU non-offloading
+  profiles are: Generator Nano and Nano-DROID 40 GiB, Generator Super FP8 78
+  GiB, Generator Super BF16 112 GiB, Reasoner Nano BF16 24 GiB, Reasoner Nano
+  FP8 and NVFP4 18 GiB, Reasoner Super NVFP4 36 GiB, Reasoner Super FP8 46 GiB,
+  and Reasoner Super BF16 76 GiB.
+  These values do not add a separate host RAM requirement on unified-memory
+  systems.
 - The published tested-GPU inventory contains the 22 discrete SKUs in the
   current NIMCraft NIM configuration; L4 is intentionally excluded from
   publication. It also includes Jetson AGX Thor T5000 and DGX Spark (GB10) as
@@ -100,8 +109,10 @@ confirmed:
   123-GiB unified-memory measurement target with an approximately 6.8-GiB
   observed host working set, and identifies GB10/DGX Spark for unified-memory
   Reasoner runtime defaults;
-- effective system-memory selection floors of 16 GiB for resident Generator and
-  Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload;
+- effective system-memory admission floors of 16 GiB for non-offloading
+  Generator and Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for
+  Super offload. The 16-GiB tag deliberately permits an attempted startup and
+  is not the practical host RAM requirement;
 - current-free-VRAM startup selection before model materialization, the
   container preflight invocation, equivalent-layout fallback, explicit-pin
   failure, the Reasoner runtime reserve, and the explicit unified-memory
@@ -167,7 +178,7 @@ for this validation.
 Review this list on every substantive documentation update and remove, add, or
 refine entries when evidence changes:
 
-- general CPU architecture, host RAM beyond profile-selection floors, disk,
+- practical host RAM for Generator offload profiles and general CPU, disk,
   shared-memory, driver, Docker, and Container Toolkit requirements;
 - exact supported image formats, video containers/codecs, URL fetching, and
   VP9-in-MP4 playback observations;

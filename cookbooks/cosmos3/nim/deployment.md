@@ -259,7 +259,11 @@ docker run -d --name cosmos3-generator \
 
 The command starts the container in the background. Follow startup logs with
 `docker logs -f cosmos3-generator`; press Ctrl+C to stop following logs without
-stopping the container.
+stopping the container. On a discrete-GPU host, provision at least 40 GiB of
+host RAM if automatic selection chooses a non-offloading Nano profile; the
+16-GiB profile admission check is intentionally lower than that practical
+requirement. Use the separate RAM floor in the support matrix if selection
+chooses an offload profile.
 
 Replace the model and performance objective with values supported by the image.
 Expose the GPU count required by the selected configuration instead of keeping
@@ -306,8 +310,8 @@ stopping the container.
 
 This example launches the Super FP8 Reasoner on a compatible discrete GPU. The
 one-GPU configuration requires compute capability 8.9 or newer, at least 67
-GiB of total and currently usable VRAM after the Reasoner reserve, and 16 GiB
-of effective system memory; see the [Reasoner
+GiB of total and currently usable VRAM after the Reasoner reserve, and 46 GiB
+of practical host RAM; see the [Reasoner
 configurations](support-matrix.md#reasoner-configurations):
 
 ```bash
@@ -394,14 +398,21 @@ See [Configuration](configuration.md#advanced-profile-controls) for details.
 | `-e NIM_GPU_MEMORY_UTILIZATION=...` | Set the required Reasoner memory share on DGX Spark or Jetson AGX Thor |
 | `-v ...:/opt/nim/.cache` | Persist model artifacts |
 
-GPU counts, compute-capability gates, VRAM floors, and system-memory floors are
+GPU counts, compute-capability gates, VRAM floors, and practical host RAM are
 summarized in the [configuration matrix](support-matrix.md). Each participating
 GPU must have enough current free memory at startup, not only enough total
-capacity. Resident Generator and Reasoner profiles require 16 GiB of effective
-system memory, Nano offload profiles require 64 GiB, and Super offload profiles
-require 150 GiB. Docker or Kubernetes memory limits count as the available
-system memory. Confirm that the selected row and its tags are present in the
-target image before deployment.
+capacity. On discrete-GPU hosts, non-offloading profiles require 40 GiB for
+Generator Nano, 78 GiB for Generator Super FP8, 112 GiB for Generator Super
+BF16, 24 GiB for Reasoner Nano BF16, 18 GiB for Reasoner Nano FP8 or NVFP4,
+36 GiB for Reasoner Super NVFP4, 46 GiB for Reasoner Super FP8, or 76 GiB for
+Reasoner Super BF16. Their embedded profile
+tags check only 16 GiB so an attempted startup is not blocked; passing that
+admission check does not satisfy the practical requirement. Nano offload
+profiles retain a 64-GiB profile floor, and Super offload profiles retain 150
+GiB. Docker or Kubernetes memory limits count as available system memory.
+Unified-memory systems continue to use the shared-pool table and do not add a
+separate host RAM requirement. Confirm that the selected row and its tags are
+present in the target image before deployment.
 
 ## Next steps
 

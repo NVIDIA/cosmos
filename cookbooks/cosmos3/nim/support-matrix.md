@@ -6,12 +6,14 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 Use this page to match a model to precision, GPU compute capability, GPU count,
 per-device VRAM, and system-memory requirements.
 
-> **Published release floors:** The tables below define the release
-> profile-selection floors for GPU compute capability, GPU count, per-device
-> VRAM, effective system memory, and Transfer headroom. Confirm that a matching
-> configuration exists in `/v1/manifest` for the exact image you run. Meeting a
-> floor establishes a candidate profile, not full host compatibility; see
-> [Prerequisites](prerequisites.md#hardware-requirements).
+> **Published requirements:** The tables below define GPU compute capability,
+> GPU count, per-device VRAM, Transfer headroom, practical host RAM for
+> non-offloading discrete-GPU deployments, and system-memory profile floors for
+> offload. Confirm that a matching configuration exists in
+> `/v1/manifest` for the exact image you run. The NIM's system-memory admission
+> tag can be lower than the practical RAM requirement, so a selected profile is
+> still only a candidate until cold start and representative requests succeed;
+> see [Prerequisites](prerequisites.md#hardware-requirements).
 
 ## Choose a model
 
@@ -224,21 +226,21 @@ The **Super family** in this table means `super`, `super-t2i`,
 `super-t2i-4step`, `super-i2v`, and `super-i2v-4step`. Transfer thresholds apply
 only to the general-purpose `nano` and `super` variants.
 
-| Variant group | Precision | Model offload | Guardrails during diffusion | GPUs | Generation minimum VRAM/device | Minimum effective system RAM | Transfer minimum VRAM/device |
+| Variant group | Precision | Model offload | Guardrails during diffusion | GPUs | Generation minimum VRAM/device | Host RAM guidance | Transfer minimum VRAM/device |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `nano` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 16 GiB | 64 GiB |
-| `nano` | BF16 | Layer | Offloaded | 1 | 31 GiB | 64 GiB | 35 GiB |
-| `nano` | FP8 | None | Resident | 1, 2, 4, 8 | 44 GiB | 16 GiB | 50 GiB |
-| `nano` | FP8 | Model | Resident | 1 | 38 GiB | 64 GiB | 44 GiB |
-| `nano` | FP8 | Layer | Resident | 1 | 32 GiB | 64 GiB | 38 GiB |
-| `nano` | FP8 | Layer | Offloaded | 1 | 31 GiB | 64 GiB | 35 GiB |
-| `nano-droid` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 16 GiB | N/A |
-| Super family | BF16 | None | Resident | 1, 2, 4, 8 | 150 GiB | 16 GiB | Base `super`: 160 GiB |
-| Super family | BF16 | Model | Resident | 1 | 93 GiB | 150 GiB | Base `super`: 99 GiB |
-| Super family | BF16 | Layer | Resident | 1 | 42 GiB | 150 GiB | Base `super`: 50 GiB |
-| Super family | FP8 | None | Resident | 1, 2, 4, 8 | 93 GiB | 16 GiB | Base `super`: 103 GiB |
-| Super family | FP8 | Model | Resident | 1 | 64 GiB | 150 GiB | Base `super`: 76 GiB |
-| Super family | FP8 | Layer | Resident | 1 | 38 GiB | 150 GiB | Base `super`: 50 GiB |
+| `nano` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 40 GiB | 64 GiB |
+| `nano` | BF16 | Layer | Offloaded | 1 | 31 GiB | 64 GiB profile floor | 35 GiB |
+| `nano` | FP8 | None | Resident | 1, 2, 4, 8 | 44 GiB | 40 GiB | 50 GiB |
+| `nano` | FP8 | Model | Resident | 1 | 38 GiB | 64 GiB profile floor | 44 GiB |
+| `nano` | FP8 | Layer | Resident | 1 | 32 GiB | 64 GiB profile floor | 38 GiB |
+| `nano` | FP8 | Layer | Offloaded | 1 | 31 GiB | 64 GiB profile floor | 35 GiB |
+| `nano-droid` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 40 GiB | N/A |
+| Super family | BF16 | None | Resident | 1, 2, 4, 8 | 150 GiB | 112 GiB | Base `super`: 160 GiB |
+| Super family | BF16 | Model | Resident | 1 | 93 GiB | 150 GiB profile floor | Base `super`: 99 GiB |
+| Super family | BF16 | Layer | Resident | 1 | 42 GiB | 150 GiB profile floor | Base `super`: 50 GiB |
+| Super family | FP8 | None | Resident | 1, 2, 4, 8 | 93 GiB | 78 GiB | Base `super`: 103 GiB |
+| Super family | FP8 | Model | Resident | 1 | 64 GiB | 150 GiB profile floor | Base `super`: 76 GiB |
+| Super family | FP8 | Layer | Resident | 1 | 38 GiB | 150 GiB profile floor | Base `super`: 50 GiB |
 
 The 31-GiB Nano layer-offload configurations are intended to support ordinary
 generation on 32-GB client GPUs such as the GeForce RTX 5090. This is not
@@ -246,14 +248,21 @@ a GPU SKU allowlist: the device must expose at least 31 binary GiB to the
 runtime and meet the precision's compute-capability requirement. The RTX 5090
 does not meet the 35-GiB Transfer minimum for these configurations.
 
-The NIM applies a system-memory floor to every profile and filters incompatible
-profiles before final selection. Generator startup also requires the current
-free memory on each participating GPU to meet the generation floor in the
-table. Resident Generator profiles use a 16-GiB selection floor, Nano offload
-profiles use 64 GiB, and all Super offload profiles use 150 GiB. These profile floors do not define a general host-RAM
-minimum; provision additional CPU and host memory for the container, runtime,
-and workload. The NIM checks a container memory limit before host physical
-memory.
+The practical host RAM values for non-offloading profiles are empirical
+requirements for a discrete-GPU NIM deployment. To avoid blocking an attempted
+startup, the embedded profile tags check only a 16-GiB system-memory admission
+floor for these Generator profiles. Passing that admission check does not
+replace the 40-, 78-, or 112-GiB practical requirement in the table. Nano
+offload profiles retain a 64-GiB profile floor, and Super offload profiles
+retain a 150-GiB profile floor; separate empirical practical minima have not
+been established for those offload rows. The NIM checks a container memory
+limit before host physical memory.
+
+These host RAM values do not change unified-memory guidance. DGX Spark and
+Jetson AGX Thor use one host/device pool; evaluate them with [Unified-memory
+thresholds](#unified-memory-thresholds), current `MemAvailable`, and the
+required Reasoner memory-utilization setting rather than adding a separate host
+RAM requirement.
 
 Leave offload and guardrail residency on automatic selection unless a specific
 configuration has been validated for the deployment.
@@ -262,15 +271,21 @@ configuration has been validated for the deployment.
 
 Reasoner does not use Generator latency/throughput or model-offload selectors:
 
-| Model | Precision | GPUs | Tensor parallelism | Minimum VRAM/device | Minimum effective system RAM | Minimum compute capability |
+| Model | Precision | GPUs | Tensor parallelism | Minimum VRAM/device | Practical host RAM minimum | Minimum compute capability |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `nano` | BF16 | 1 | 1 | 23.1 GiB | 16 GiB | 8.0 |
-| `nano` | FP8 | 1 | 1 | 23.1 GiB | 16 GiB | 8.9 |
-| `nano` | NVFP4 | 1 | 1 | 23.1 GiB | 16 GiB | 10.0 |
-| `super` | BF16 | 1 | 1 | 135 GiB | 16 GiB | 8.0 |
-| `super` | BF16 | 2 | 2 | 73 GiB | 16 GiB | 8.0 |
-| `super` | FP8 | 1 | 1 | 67 GiB | 16 GiB | 8.9 |
-| `super` | NVFP4 | 1 | 1 | 73 GiB | 16 GiB | 10.0 |
+| `nano` | BF16 | 1 | 1 | 23.1 GiB | 24 GiB | 8.0 |
+| `nano` | FP8 | 1 | 1 | 23.1 GiB | 18 GiB | 8.9 |
+| `nano` | NVFP4 | 1 | 1 | 23.1 GiB | 18 GiB | 10.0 |
+| `super` | BF16 | 1 | 1 | 135 GiB | 76 GiB | 8.0 |
+| `super` | BF16 | 2 | 2 | 73 GiB | 76 GiB | 8.0 |
+| `super` | FP8 | 1 | 1 | 67 GiB | 46 GiB | 8.9 |
+| `super` | NVFP4 | 1 | 1 | 73 GiB | 36 GiB | 10.0 |
+
+The Reasoner values are empirical practical host RAM requirements on a
+discrete-GPU host. The embedded profile tags deliberately check only 16 GiB of
+system memory so an operator can attempt startup; that admission floor is not
+the practical requirement for a running NIM. Unified-memory systems continue
+to use the shared-pool guidance above without a separate host RAM requirement.
 
 When both Super BF16 layouts fit, profile ranking prefers the one-GPU TP1
 layout. If TP1 does not have enough current free memory but TP2 fits on both
