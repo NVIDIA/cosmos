@@ -72,6 +72,11 @@ automatic selection. Leave the unified-memory host reserve at its default unless
 host measurements establish a safe system-specific value; it does not affect
 discrete GPUs.
 
+On DGX Spark and Jetson AGX Thor the GPU and the host share one memory pool, and
+`NIM_GPU_MEMORY_UTILIZATION` is not reduced automatically. Set it explicitly:
+`0.80` for image workloads and `0.70` for video. The default `0.93` leaves the
+host with too little memory and video requests fail.
+
 ## Generator configuration
 
 ### Input and output
@@ -178,7 +183,7 @@ correctness, latency, and throughput on the exact image before production use.
 | `NIM_MAX_MODEL_LEN` | `-1` (auto) | Let the runtime choose a context length bounded by the model |
 | `NIM_MAX_NUM_BATCHED_TOKENS` | `8192` | Set the scheduler token budget |
 | `NIM_MAX_NUM_SEQS` | `256` | Set maximum scheduled sequences |
-| `NIM_GPU_MEMORY_UTILIZATION` | Up to `0.93` | Set the Reasoner GPU-memory target in `(0,1]`; when unset, startup reduces `0.93` as needed to fit current free memory and the runtime reserve |
+| `NIM_GPU_MEMORY_UTILIZATION` | `0.93` | Set the Reasoner GPU-memory target in `(0,1]`; startup warns when the target exceeds current free memory but does not reduce it. On unified memory devices  (DGX Spark and Thor) represents share of total memory that NIM tries to occupy. We recommend setting to `0.7` - `0.8`, depending on type of the workload and memory available. |
 
 ### Caching and multimodal processing
 

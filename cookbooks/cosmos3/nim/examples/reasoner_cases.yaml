@@ -47,6 +47,8 @@ cases:
       type: video
       asset: video_caption.mp4
     prompt: Describe the video in detail.
+    sampling:
+      seed: 0
     output:
       kind: text
     review:
@@ -59,6 +61,8 @@ cases:
       type: video
       asset: temporal_localization_1.mp4
     prompt: "List all action segments in the video. For each detected event, you must determine:\n\nProvide the result in json format with 'seconds' for time depiction for each event. Use keywords 'start', 'end' and 'caption' in the json output. Please list multiple events if applicable.\n\n```json\n[\n{\n  \"start\": t_start,\n  \"end\": t_end,\n  \"caption\": EVENT1\n},\n{\n  \"start\": t_start,\n  \"end\": t_end,\n  \"caption\": EVENT2\n},\n...\n]\n``` "
+    sampling:
+      seed: 0
     output:
       kind: json_schema
       schema: temporal_events_seconds
@@ -73,6 +77,8 @@ cases:
       type: video
       asset: temporal_localization_2.mp4
     prompt: Describe the notable events in the provided video. Provide the result in json format with 'mm:ss.ff' format for time depiction for each event.Use keywords 'start', 'end' and 'caption' in the json output.
+    sampling:
+      seed: 0
     output:
       kind: json_schema
       schema: temporal_events_timecodes
@@ -88,6 +94,8 @@ cases:
       asset: temporal_localization_2.mp4
     prompt: |-
       When is "A man in a white sweater walks out of a room carrying a box, closes the door behind him, walks on the floor, and turns left at the end near the wall." depicted in the video? Please provide the result in json format with 'mm:ss.ff' format for time depiction for the event. Use keywords 'start', 'end' in the json output.
+    sampling:
+      seed: 0
     output:
       kind: json_schema
       schema: timestamp_range
@@ -101,6 +109,8 @@ cases:
       type: video
       asset: temporal_localization_2.mp4
     prompt: What happened between 00:05.64 and 00:17.49?
+    sampling:
+      seed: 0
     output:
       kind: text
     review:
@@ -113,6 +123,8 @@ cases:
       type: video
       asset: robotics_next_action.mp4
     prompt: "What can be the next immediate action? Answer the question using the following format: <think> Your reasoning. </think> Write your final answer immediately after the </think> tag."
+    sampling:
+      seed: 0
     output:
       kind: text
     review:
@@ -125,6 +137,8 @@ cases:
       type: video
       asset: drive_scene_next_action.mp4
     prompt: You are an autonomous vehicle planning system. The video depicts the observation from the vehicle's camera. You need to observe the critical objects in the environment and reason your next action and the driving trajectory ahead.
+    sampling:
+      seed: 0
     output:
       kind: text
     review:
@@ -159,6 +173,8 @@ cases:
                   Your reasoning.
                   </think>
                   Write your final answer immediately after the </think> tag.
+    sampling:
+      seed: 0
     output:
       kind: text
     review:
@@ -179,6 +195,8 @@ cases:
                   </think>
 
                   Write your final answer immediately after the </think> tag.
+    sampling:
+      seed: 0
     output:
       kind: text
     review:
@@ -231,6 +249,7 @@ cases:
 
       Write your final answer immediately after the </think> tag.
     sampling:
+      seed: 0
       temperature: 0.6
       top_p: 0.95
       presence_penalty: 0.0
@@ -254,6 +273,7 @@ cases:
       asset: robot_planning.png
     prompt: "You are given the task \"Put flower into the red bottle\". Specify the 2D trajectory your end effector should follow in pixel space. Return the trajectory coordinates in JSON format like this: {\"point_2d\": [x, y], \"label\": \"gripper trajectory\"}. \nAnswer the question using the following format:\n\n<think> Your reasoning. </think>\nWrite your final answer immediately after the </think> tag.\n"
     sampling:
+      seed: 0
       temperature: 0.6
       top_p: 0.95
       presence_penalty: 0.0
@@ -283,6 +303,7 @@ cases:
       </think>
       Write your final answer immediately after the </think> tag.
     sampling:
+      seed: 0
       temperature: 0.6
       top_p: 0.95
       presence_penalty: 0.0
@@ -305,6 +326,8 @@ cases:
       Your answer should be based on the events in the video and ignore the quality of the simulation engine. The rising wall is part of the experiment setup and should not be judged for plausibility.
       (A) Possible
       (B) Impossible
+    sampling:
+      seed: 0
     output:
       kind: text
     review:
@@ -317,6 +340,8 @@ cases:
       type: video
       asset: situation_understanding.mp4
     prompt: What is the person doing with the skillet? What will the person likely do next in this situation?
+    sampling:
+      seed: 0
     output:
       kind: text
     review:

@@ -412,10 +412,10 @@ use their native
 
 The runnable task catalog follows the vLLM prompt-constrained path by default:
 it extracts the first complete JSON value from `message.content` with the
-standard JSON decoder and then validates semantic invariants such as ordered
-timestamps, unique subject IDs, ordered box corners, non-empty labels, and
-coordinates in `[0,1000]`. Add `--guided-output` to opt into the NIM-specific
-JSON Schema path for structured cases. Do not recover structured results with a
+standard JSON decoder and records whether that succeeded. It does not check the
+shape or the field formats of the result; review the output against the case's
+qualitative criteria. Add `--guided-output` to opt into the NIM-specific JSON
+Schema path for structured cases. Do not recover structured results with a
 regular expression over prose or Markdown fences.
 
 Validate the running NIM's schema in `/openapi.json`, especially when upgrading

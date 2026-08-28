@@ -39,9 +39,8 @@ For guided customer workflows, load
   inference and reject unknown CLI arguments before endpoint or media work; do
   not bypass those checks. For the Reasoner task catalog, preserve the exact
   vLLM user-prompt text and explicit effective sampling controls, keep the
-  NIM-specific media transport, and use prompt-constrained output plus the
-  committed post-response validators by default. Treat `--guided-output` as an
-  opt-in NIM API path, and verify the selected profile before running requests.
+  NIM-specific media transport, and use prompt-constrained output by default.
+  Treat `--guided-output` as an opt-in NIM API path, and verify the selected profile before running requests.
   Literal `<think>` text in
   a parity prompt is response text. Use
   `examples/reasoner.py --list-cases` and `--describe <case> --format json` for

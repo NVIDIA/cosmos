@@ -399,6 +399,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | Responses route 404 | Route disabled, absent, or requested from Generator | Confirm Reasoner metadata, then use Chat Completions and inspect live OpenAPI/operator setting |
 | Retrieval/cancel does not work | Response storage/background support is not enabled | Use `store=false` create flow or validate storage configuration for the selected image |
 | Structured output is prose or invalid JSON | The request uses the wrong schema shape or the backend did not return a constrained result | Use Chat Completions `response_format` or Responses `text.format`, inspect live OpenAPI and logs, and preserve the response for diagnosis |
+| Host OOM or near-zero `MemAvailable` on unified memory | NIM tried to use too much of shared memory and it wasn't available  | Set `NIM_GPU_MEMORY_UTILIZATION=0.70` or even lower |
 | KV-cache/context OOM | Context, media tokens, batching, or concurrency is too large | Reduce media FPS/token budget/concurrency before raising memory utilization |
 | DFlash startup is rejected | DFlash was enabled for Generator, the selected Nano/Super draft is missing, or an independent path/configuration is invalid | Use the matching bundled draft or a valid absolute local `NIM_DFLASH_MODEL_PATH`; otherwise set `NIM_USE_DFLASH=0` for target-only Reasoner operation |
 | Reasoner checkpoint source fails | Local layout, `hf://` URI, revision, token, or inferred profile properties are invalid | Validate `NIM_MODEL_PATH`, `HF_TOKEN`, cache/network access, and matching selectors |

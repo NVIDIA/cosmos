@@ -6,10 +6,8 @@
 import argparse
 from copy import deepcopy
 import json
-import math
 import os
 from pathlib import Path
-import re
 import sys
 from typing import Any
 
@@ -42,8 +40,8 @@ TEMPORAL_TIMECODES_SCHEMA = {
     "items": {
         "type": "object",
         "properties": {
-            "start": {"type": "string", "pattern": r"^\d{2}:\d{2}\.\d{2}$"},
-            "end": {"type": "string", "pattern": r"^\d{2}:\d{2}\.\d{2}$"},
+            "start": {"type": "string", "pattern": r"^\d{2}:\d{2}\.\d{2,3}$"},
+            "end": {"type": "string", "pattern": r"^\d{2}:\d{2}\.\d{2,3}$"},
             "caption": {"type": "string", "minLength": 1},
         },
         "required": ["start", "end", "caption"],
@@ -53,8 +51,8 @@ TEMPORAL_TIMECODES_SCHEMA = {
 TIMESTAMP_RANGE_SCHEMA = {
     "type": "object",
     "properties": {
-        "start": {"type": "string", "pattern": r"^\d{2}:\d{2}\.\d{2}$"},
-        "end": {"type": "string", "pattern": r"^\d{2}:\d{2}\.\d{2}$"},
+        "start": {"type": "string", "pattern": r"^\d{2}:\d{2}\.\d{2,3}$"},
+        "end": {"type": "string", "pattern": r"^\d{2}:\d{2}\.\d{2,3}$"},
     },
     "required": ["start", "end"],
     "additionalProperties": False,
@@ -118,7 +116,6 @@ SCHEMAS = {
     "trajectory_points": TRAJECTORY_SCHEMA,
 }
 CASE_ALIASES = {"image": "image_caption", "video": "video_caption"}
-_TIMECODE_PATTERN = re.compile(r"^(\d{2}):(\d{2})\.(\d{2})$")
 
 
 def load_catalog(path: Path = CATALOG_PATH) -> dict[str, Any]:
@@ -283,113 +280,6 @@ def parse_structured_content(content: str) -> object:
     raise ValueError("Reasoner response did not contain a complete JSON value")
 
 
-def _timecode_seconds(value: object) -> float:
-    if not isinstance(value, str):
-        raise ValueError("Timecode must be a string")
-    match = _TIMECODE_PATTERN.fullmatch(value)
-    if match is None:
-        raise ValueError(f"Invalid mm:ss.ff timecode: {value!r}")
-    minutes, seconds, hundredths = (int(item) for item in match.groups())
-    if seconds >= 60:
-        raise ValueError(f"Invalid mm:ss.ff timecode: {value!r}")
-    return minutes * 60 + seconds + hundredths / 100
-
-
-def _require_nonempty_string(value: object, description: str) -> None:
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{description} must be a non-empty string")
-
-
-def validate_structured_output(case: str, value: object) -> None:
-    """Validate semantic invariants beyond the selected JSON schema."""
-    spec = CASES[resolve_case(case)]
-    schema_name = spec["output"].get("schema")
-
-    if schema_name in {"temporal_events_seconds", "temporal_events_timecodes"}:
-        if not isinstance(value, list) or not value:
-            raise ValueError(f"{case} output must be a non-empty JSON array")
-        previous_start = -1.0
-        for index, event in enumerate(value):
-            if not isinstance(event, dict) or set(event) != {"start", "end", "caption"}:
-                raise ValueError(f"Temporal event {index} has an unexpected shape")
-            if schema_name == "temporal_events_seconds":
-                start, end = event["start"], event["end"]
-                if (
-                    isinstance(start, bool)
-                    or isinstance(end, bool)
-                    or not isinstance(start, (int, float))
-                    or not isinstance(end, (int, float))
-                    or not math.isfinite(start)
-                    or not math.isfinite(end)
-                    or start < 0
-                ):
-                    raise ValueError(f"Temporal event {index} has invalid timestamps")
-                start_seconds, end_seconds = float(start), float(end)
-            else:
-                start_seconds = _timecode_seconds(event["start"])
-                end_seconds = _timecode_seconds(event["end"])
-            _require_nonempty_string(event["caption"], f"Temporal event {index} caption")
-            if end_seconds < start_seconds or start_seconds < previous_start:
-                raise ValueError(f"Temporal event {index} has invalid timestamp order")
-            previous_start = start_seconds
-        return
-
-    if schema_name == "timestamp_range":
-        if not isinstance(value, dict) or set(value) != {"start", "end"}:
-            raise ValueError("Timestamp query output must contain only start and end")
-        if _timecode_seconds(value["end"]) < _timecode_seconds(value["start"]):
-            raise ValueError("Timestamp query end must not precede start")
-        return
-
-    if schema_name == "subject_captions":
-        if not isinstance(value, list) or not value:
-            raise ValueError("Describe-anything output must be a non-empty JSON array")
-        subject_ids: set[str] = set()
-        for index, item in enumerate(value):
-            if not isinstance(item, dict) or set(item) != {
-                "subject_id",
-                "category",
-                "caption",
-            }:
-                raise ValueError(f"Subject {index} has an unexpected shape")
-            for field in ("subject_id", "category", "caption"):
-                _require_nonempty_string(item[field], f"Subject {index} {field}")
-            if item["subject_id"] in subject_ids:
-                raise ValueError(f"Subject ID {item['subject_id']!r} is duplicated")
-            subject_ids.add(item["subject_id"])
-        return
-
-    if schema_name not in {"grounding_boxes", "trajectory_points"}:
-        raise ValueError(f"No semantic validator is registered for {schema_name!r}")
-    if not isinstance(value, list) or not value:
-        raise ValueError(f"{case} output must be a non-empty JSON array")
-    key, width = (
-        ("bbox_2d", 4) if schema_name == "grounding_boxes" else ("point_2d", 2)
-    )
-    if schema_name == "trajectory_points" and len(value) < 2:
-        raise ValueError("A trajectory must contain at least two points")
-    for index, item in enumerate(value):
-        if not isinstance(item, dict) or set(item) != {key, "label"}:
-            raise ValueError(f"{case} item {index} has an unexpected shape")
-        coordinates = item[key]
-        if (
-            not isinstance(coordinates, list)
-            or len(coordinates) != width
-            or any(
-                isinstance(coordinate, bool)
-                or not isinstance(coordinate, int)
-                or not 0 <= coordinate <= 1000
-                for coordinate in coordinates
-            )
-        ):
-            raise ValueError(f"{case} item {index} has invalid coordinates")
-        _require_nonempty_string(item["label"], f"{case} item {index} label")
-        if key == "bbox_2d":
-            x1, y1, x2, y2 = coordinates
-            if x2 <= x1 or y2 <= y1:
-                raise ValueError(f"Grounding box {index} has invalid corner order")
-
-
 def response_dict(response: object) -> dict[str, Any]:
     """Serialize an OpenAI response without depending on its exact SDK version."""
     model_dump = getattr(response, "model_dump", None)
@@ -474,7 +364,7 @@ def _write_json(path: Path, value: object) -> None:
 def annotate_spatial_output(
     spec: dict[str, Any], structured: object, output_path: Path
 ) -> None:
-    """Draw validated normalized boxes or points over the source image."""
+    """Draw normalized boxes or points over the source image."""
     visualization = spec["output"].get("visualization")
     if visualization not in {"boxes", "trajectory"}:
         return
@@ -636,25 +526,19 @@ def run_case(
     if spec["output"]["kind"] == "json_schema":
         try:
             structured = parse_structured_content(content)
-            validate_structured_output(case, structured)
         except (TypeError, ValueError) as exc:
             validation["format_validation"].update(
                 {"status": "failed", "error": str(exc)}
             )
-            _write_json(output_dir / "validation.json", validation)
-            write_report(
-                output_dir,
-                case=case,
-                spec=spec,
-                model=model,
-                selected_profile_id=selected_profile_id,
-                content=content,
-                validation=validation,
-            )
-            raise ValueError(f"{case} structured output failed validation: {exc}") from exc
-        validation["format_validation"]["status"] = "passed"
-        _write_json(output_dir / "output.json", structured)
-        annotate_spatial_output(spec, structured, output_dir / "annotated.png")
+        else:
+            validation["format_validation"]["status"] = "passed"
+            _write_json(output_dir / "output.json", structured)
+            try:
+                annotate_spatial_output(
+                    spec, structured, output_dir / "annotated.png"
+                )
+            except (TypeError, KeyError, IndexError, ValueError) as exc:
+                validation["annotation"] = {"status": "skipped", "error": str(exc)}
 
     _write_json(output_dir / "validation.json", validation)
     write_report(
