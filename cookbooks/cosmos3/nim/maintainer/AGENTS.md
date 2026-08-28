@@ -35,7 +35,9 @@ These instructions take precedence over `../AGENTS.md` for documentation work.
 - Update `pyproject.toml`, `uv.lock`, examples, and documentation together when
   dependencies change. Do not document ad hoc installs or `uv run --with`.
 - Keep commands copyable, declare tools before use, and never put unresolved
-  values or `latest` in runnable commands.
+  values or `latest` in runnable commands. Preserve the workload-specific
+  `NIM_GPU_MEMORY_UTILIZATION` setting in the first Reasoner preflight and
+  launch commands for DGX Spark/GB10 and Jetson AGX Thor.
 - Preserve the documented credential-helper guidance and evaluation logout.
   `--password-stdin` does not protect Docker's stored credential.
 - Keep task scripts directly editable. Parse arguments before endpoint or media

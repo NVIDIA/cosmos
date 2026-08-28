@@ -131,6 +131,31 @@ docker pull "$NIM_IMAGE"
 
 Do not replace the versioned tag with `latest` or another unvalidated image.
 
+### Set the Reasoner memory share on unified-memory systems
+
+Before the first Reasoner preflight or launch on DGX Spark/GB10 or Jetson AGX
+Thor, set a workload-specific share of the unified host/device memory pool. For
+an image-only Reasoner workload, use:
+
+```bash
+export NIM_GPU_MEMORY_UTILIZATION=0.80
+```
+
+For any Reasoner workload that includes video, or a mix of images and video,
+use:
+
+```bash
+export NIM_GPU_MEMORY_UTILIZATION=0.70
+```
+
+The default `0.93` is not reduced automatically and can leave too little memory
+for the host and media processing. Pass the exported value with
+`-e NIM_GPU_MEMORY_UTILIZATION` in every Reasoner preflight and service-launch
+command on these systems, starting with the first command. Do not set this
+Reasoner-only variable for Generator or as a routine override on a discrete
+GPU. See [Reasoner context and scheduling](configuration.md#context-and-scheduling)
+for the variable contract.
+
 ## Run the pre-download profile preflight
 
 After the image is present locally, run profile selection without starting the
@@ -157,9 +182,31 @@ Use the runtime, model, precision, performance, offload, profile-selection
 environment, GPU exposure, and container memory limit intended for the real
 deployment. Expose every GPU that deployment will use. For Reasoner, set
 `NIM_MODEL_TYPE=reasoner`, select `nano` or `super`, and omit
-`NIM_PERF_PROFILE`. Do not pass `NGC_API_KEY`, `NIM_MODEL_PATH`, or
-`NIM_DFLASH_MODEL_PATH` to this bundled-profile check. Checkpoint-source
-validation is a separate BYOC step, and an `hf://` source can download files.
+`NIM_PERF_PROFILE`.
+
+On DGX Spark or Jetson AGX Thor, use the value exported in [Set the Reasoner
+memory share on unified-memory systems](#set-the-reasoner-memory-share-on-unified-memory-systems)
+in the first preflight command. This complete example checks Nano Reasoner:
+
+```bash
+docker run --rm \
+  --gpus '"device=0"' \
+  -e NIM_MODEL_TYPE=reasoner \
+  -e NIM_MODEL_VARIANT=nano \
+  -e NIM_GPU_MEMORY_UTILIZATION="$NIM_GPU_MEMORY_UTILIZATION" \
+  --entrypoint /bin/bash \
+  "$NIM_IMAGE" \
+  -lc '
+    set -e
+    output=/tmp/cosmos3-preflight.env
+    /opt/nim/.venv/bin/python -m profile_selection.startup --output "$output"
+    printf "Profile preflight passed.\n"
+  '
+```
+
+Do not pass `NGC_API_KEY`, `NIM_MODEL_PATH`, or `NIM_DFLASH_MODEL_PATH` to this
+bundled-profile check. Checkpoint-source validation is a separate BYOC step,
+and an `hf://` source can download files.
 
 A successful preflight proves that the image manifest contains a candidate
 profile and that the selectors, effective system-memory floor, GPU compute
@@ -227,10 +274,40 @@ Generator above, remove it before reusing host port `8000`:
 docker rm -f cosmos3-generator
 ```
 
-Then launch the Super FP8 Reasoner. This one-GPU configuration requires
-compute capability 8.9 or newer, at least 67 GiB of total and currently usable
-VRAM after the Reasoner reserve, and 16 GiB of effective system memory; see the
-[Reasoner configurations](support-matrix.md#reasoner-configurations):
+### DGX Spark and Jetson AGX Thor
+
+Use Nano and pass the unified-memory share exported before preflight. This
+command is ready for an image-only workload when the exported value is `0.80`,
+or a video or mixed-media workload when it is `0.70`:
+
+```bash
+docker run -d --name cosmos3-reasoner \
+  --gpus '"device=0"' \
+  --shm-size 16g \
+  --ulimit memlock=-1 \
+  --ulimit stack=67108864 \
+  --ulimit nofile=65536:65536 \
+  -p 8000:8000 \
+  -e NGC_API_KEY \
+  -e NIM_MODEL_TYPE=reasoner \
+  -e NIM_MODEL_VARIANT=nano \
+  -e NIM_GPU_MEMORY_UTILIZATION="$NIM_GPU_MEMORY_UTILIZATION" \
+  -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
+  "$NIM_IMAGE"
+```
+
+Do not omit `-e NIM_GPU_MEMORY_UTILIZATION` and rely on the `0.93` default on
+these unified-memory systems. Follow startup logs with
+`docker logs -f cosmos3-reasoner`; press Ctrl+C to stop following logs without
+stopping the container.
+
+### Discrete GPU example
+
+This example launches the Super FP8 Reasoner on a compatible discrete GPU. The
+one-GPU configuration requires compute capability 8.9 or newer, at least 67
+GiB of total and currently usable VRAM after the Reasoner reserve, and 16 GiB
+of effective system memory; see the [Reasoner
+configurations](support-matrix.md#reasoner-configurations):
 
 ```bash
 docker run -d --name cosmos3-reasoner \
@@ -251,10 +328,9 @@ docker run -d --name cosmos3-reasoner \
 The command pins Super FP8 and uses the DFlash and video-token pruning
 defaults. It starts the Reasoner in the background. Follow startup logs with
 `docker logs -f cosmos3-reasoner`; press Ctrl+C to stop following logs without
-stopping the container. Expose all GPUs
-required by the selected Reasoner configuration. To use another compatible
-Reasoner configuration, change the model and precision selectors together and
-revalidate representative requests.
+stopping the container. Expose all GPUs required by the selected Reasoner
+configuration. To use another compatible Reasoner configuration, change the
+model and precision selectors together and revalidate representative requests.
 
 Both runtimes listen on container HTTP port `8000`; the Docker mapping chooses
 the host port. To run both containers concurrently, publish one on another
@@ -314,6 +390,7 @@ See [Configuration](configuration.md#advanced-profile-controls) for details.
 | `--ulimit` | Raise memory-lock, stack, and open-file limits |
 | `-p HOST:8000` | Publish the selected host port |
 | `-e NGC_API_KEY` | Pass the exported NGC credential |
+| `-e NIM_GPU_MEMORY_UTILIZATION=...` | Set the required Reasoner memory share on DGX Spark or Jetson AGX Thor |
 | `-v ...:/opt/nim/.cache` | Persist model artifacts |
 
 GPU counts, compute-capability gates, VRAM floors, and system-memory floors are

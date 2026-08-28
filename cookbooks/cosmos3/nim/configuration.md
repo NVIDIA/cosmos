@@ -72,11 +72,6 @@ automatic selection. Leave the unified-memory host reserve at its default unless
 host measurements establish a safe system-specific value; it does not affect
 discrete GPUs.
 
-On DGX Spark and Jetson AGX Thor the GPU and the host share one memory pool, and
-`NIM_GPU_MEMORY_UTILIZATION` is not reduced automatically. Set it explicitly:
-`0.80` for image workloads and `0.70` for video. The default `0.93` leaves the
-host with too little memory and video requests fail.
-
 ## Generator configuration
 
 ### Input and output
@@ -151,8 +146,9 @@ the external key separate from `NGC_API_KEY`.
 
 ## Reasoner configuration
 
-These are advanced workload controls. Change one at a time and validate memory,
-latency, quality, and correctness.
+Most of these are advanced workload controls. The unified-memory utilization
+setting is required for Reasoner on DGX Spark and Jetson AGX Thor. Change other
+controls one at a time and validate memory, latency, quality, and correctness.
 
 ### Speculative decoding
 
@@ -183,7 +179,14 @@ correctness, latency, and throughput on the exact image before production use.
 | `NIM_MAX_MODEL_LEN` | `-1` (auto) | Let the runtime choose a context length bounded by the model |
 | `NIM_MAX_NUM_BATCHED_TOKENS` | `8192` | Set the scheduler token budget |
 | `NIM_MAX_NUM_SEQS` | `256` | Set maximum scheduled sequences |
-| `NIM_GPU_MEMORY_UTILIZATION` | `0.93` | Set the Reasoner GPU-memory target in `(0,1]`; startup warns when the target exceeds current free memory but does not reduce it. On unified memory devices  (DGX Spark and Thor) represents share of total memory that NIM tries to occupy. We recommend setting to `0.7` - `0.8`, depending on type of the workload and memory available. |
+| `NIM_GPU_MEMORY_UTILIZATION` | `0.93` | Set the Reasoner GPU-memory target in `(0,1]`; startup warns when the target exceeds current free memory but does not reduce it. On DGX Spark/GB10 and Jetson AGX Thor, set `0.80` for image-only workloads or `0.70` for video or mixed-media workloads, and pass it from the first preflight through service launch. |
+
+On DGX Spark and Jetson AGX Thor, this target is a share of the unified
+host/device memory pool. Do not rely on the `0.93` default: it can leave too
+little memory for the host and media processing. The complete deployment flow
+sets and passes the value before the first applicable Docker command; see
+[Set the Reasoner memory share on unified-memory
+systems](deployment.md#set-the-reasoner-memory-share-on-unified-memory-systems).
 
 ### Caching and multimodal processing
 

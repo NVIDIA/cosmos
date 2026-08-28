@@ -56,9 +56,14 @@ For guided customer workflows, load
 - For a new deployment, choose runtime, model variant, and Generator
   latency/throughput selectors first, then use the documented pre-download
   profile preflight after the image pull to select the exact image-specific
-  profile. Normally leave precision, offload, tags, and profile ID unset.
-  Present success only as candidate-profile compatibility; full host
-  compatibility still requires cold start and representative requests.
+  profile. Normally leave precision, offload, tags, and profile ID unset. For a
+  Reasoner on DGX Spark/GB10 or Jetson AGX Thor, include
+  `NIM_GPU_MEMORY_UTILIZATION=0.80` for image-only workloads or `0.70` for video
+  or mixed-media workloads in the first preflight command shown and in the
+  service launch; never present a generic command first and retrofit the
+  setting afterward. Present preflight success only as candidate-profile
+  compatibility; full host compatibility still requires cold start and
+  representative requests.
 - Recommend Super on H200- and B200-class discrete GPUs when needed. Default to
   Nano for generation on H100, RTX PRO 6000 Blackwell, lower-throughput
   discrete GPUs, and all unified-memory systems; a fitting Super profile on

@@ -109,7 +109,8 @@ confirmed:
   Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload;
 - current-free-VRAM startup selection before model materialization, the
   container preflight invocation, equivalent-layout fallback, explicit-pin
-  failure, and the Reasoner runtime reserve/utilization clamp;
+  failure, the Reasoner runtime reserve, and the explicit unified-memory
+  utilization target, which is not reduced automatically;
 - exact arbitrary Generator video frame counts within the mode and resolution
   bounds, generation at the next native `1 + 4k` count, trimming to the exact
   requested output count, and rounded V2V latent-index validation;
@@ -245,8 +246,8 @@ refine entries when evidence changes:
 - approved startup, latency, and throughput measurements for each published
   reference configuration;
 - prompt-upsampling integration behavior in the selected image;
-- current-free-VRAM fallback, Reasoner utilization clamping, and discrete-GPU
-  NVML startup behavior in the selected image;
+- current-free-VRAM fallback, Reasoner utilization handling on discrete GPUs,
+  and discrete-GPU NVML startup behavior in the selected image;
 - default-on Nano/Super DFlash, draft override, KV-cache, and advanced
   configuration behavior in the selected image, including repeated-seed Super
   FP8 spatial-output correctness;

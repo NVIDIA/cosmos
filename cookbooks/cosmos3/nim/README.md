@@ -121,10 +121,13 @@ uv run python examples/reasoner.py --case image_caption
 1. Verify the GPU host against [Prerequisites](prerequisites.md).
 2. Choose a compatible model and hardware configuration from the
    [Support matrix](support-matrix.md).
-3. Follow [Deployment](deployment.md) to authenticate, pull the image, run the
-   pre-download profile preflight, prepare the cache, and launch either
-   Generator or Reasoner.
-4. Return to [Use an existing NIM endpoint](#use-an-existing-nim-endpoint) to
+3. For a Reasoner on DGX Spark or Jetson AGX Thor, choose the documented
+   [unified-memory share](deployment.md#set-the-reasoner-memory-share-on-unified-memory-systems)
+   before the first preflight command.
+4. Follow [Deployment](deployment.md) to authenticate, pull the image, set any
+   required unified-memory share, run the pre-download profile preflight,
+   prepare the cache, and launch either Generator or Reasoner.
+5. Return to [Use an existing NIM endpoint](#use-an-existing-nim-endpoint) to
    verify the service and run the first request.
 
 Specialist models accept only their documented task. Use

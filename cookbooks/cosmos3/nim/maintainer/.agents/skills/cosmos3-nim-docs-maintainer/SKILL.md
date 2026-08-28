@@ -86,7 +86,10 @@ and rely on Git history for the archive.
 - Use `uv run python examples/...` for project examples and `python3` only for
   direct host-side standard-library snippets.
 - Keep commands copyable: no unresolved values, unsupported metavariables, or
-  fake credentials in runnable fences.
+  fake credentials in runnable fences. For Reasoner on DGX Spark/GB10 or Jetson
+  AGX Thor, preserve the explicit workload-specific
+  `NIM_GPU_MEMORY_UTILIZATION` setting in the first preflight command and every
+  service-launch command; do not defer it to troubleshooting.
 - Keep NGC credentials out of shell history and source control.
 - Document the external Docker credential-helper option without making it a
   prerequisite, distinguish `--password-stdin` from at-rest credential

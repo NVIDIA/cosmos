@@ -64,12 +64,17 @@ Guide the customer through the canonical pages in this order:
 
 Use only the exact image and commands in `deployment.md`; never substitute
 `latest`. After the image pull, run the documented pre-download profile
-preflight with the intended selectors and GPUs. Treat success as evidence for a
-candidate profile only, not full host compatibility; cold start and
-representative requests remain required. One service container starts one
-runtime. The preflight container is temporary and `--rm` removes only that
-container. Preserve a failed service container long enough to inspect its logs,
-and ask before removing containers or cached data.
+preflight with the intended selectors and GPUs. For a Reasoner on DGX Spark/GB10
+or Jetson AGX Thor, every preflight and launch command shown to the customer,
+starting with the first one, must include
+`-e NIM_GPU_MEMORY_UTILIZATION=0.80` for an image-only workload or
+`-e NIM_GPU_MEMORY_UTILIZATION=0.70` for video or mixed-media workloads. Do not
+show a generic Reasoner command first and add the setting later. Treat preflight
+success as evidence for a candidate profile only, not full host compatibility;
+cold start and representative requests remain required. One service container
+starts one runtime. The preflight container is temporary and `--rm` removes
+only that container. Preserve a failed service container long enough to inspect
+its logs, and ask before removing containers or cached data.
 Before NGC login, explain the documented Docker credential-storage behavior and
 external-helper option without presenting a helper as a prerequisite;
 `--password-stdin` protects shell input, not Docker's stored credential. Include
@@ -121,23 +126,28 @@ For hardware guidance:
    present `MemFree`, `MemAvailable`, `Cached`, `SReclaimable`, `Shmem`, and the
    approximate reclaimable cache. Explain that `MemAvailable` already includes
    reclaimable memory.
-2. Compare the requested profile family's floor with effective total capacity
+2. If the customer needs Reasoner, classify the workload before presenting any
+   Docker command. Use `NIM_GPU_MEMORY_UTILIZATION=0.80` for image-only or
+   `0.70` for video or mixed media. Include the value explicitly in the first
+   preflight command and every later Reasoner launch command; the `0.93` default
+   is not reduced automatically on the unified pool.
+3. Compare the requested profile family's floor with effective total capacity
    after the host reserve. If the floor exceeds effective total, report
    **exceeds total capacity**; cache reclamation cannot change that result. For
    example, Reasoner Super BF16 TP1 requires 135 GiB effective memory and cannot
    fit the DGX Spark shared pool.
-3. If the floor fits effective total but preflight rejects current free memory,
+4. If the floor fits effective total but preflight rejects current free memory,
    report **fits hardware but not the current memory state**. Identify active
    workloads and rerun preflight after the operator stops only those workloads.
-4. Recommend model-level selectors, not an image-specific profile ID. On
+5. Recommend model-level selectors, not an image-specific profile ID. On
    H200/B200-class hardware, a Generator Super request begins with
    `NIM_MODEL_TYPE=generator`, `NIM_MODEL_VARIANT=super`, and
    `NIM_PERF_PROFILE=latency`. On DGX Spark, Thor, H100, or RTX PRO 6000
    Blackwell, recommend `NIM_MODEL_VARIANT=nano` for practical generation
    turnaround unless the customer has an explicit Super requirement.
-5. Run preflight with those selectors and the intended GPU visibility. Present
+6. Run preflight with those selectors and the intended GPU visibility. Present
    a pass only as candidate-profile compatibility.
-6. After startup, check readiness and `/v1/metadata`, then run
+7. After startup, check readiness and `/v1/metadata`, then run
    `uv run python examples/inspect_profile.py`; report the model selector and
    the actual profile selected from that image.
 

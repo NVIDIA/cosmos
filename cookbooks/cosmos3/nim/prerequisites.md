@@ -101,9 +101,13 @@ A memory-related preflight failure has two materially different causes:
   `MemAvailable`, and the cache components, stop identified competing
   workloads, and rerun preflight.
 
-Preflight applies the runtime-specific current-memory and reserve rules.
-Clearing page cache or deleting the persistent NIM model cache is not part of
-the normal deployment workflow; see [Unified-memory
+Preflight applies the runtime-specific current-memory and reserve rules. Before
+the first Reasoner preflight on DGX Spark or Jetson AGX Thor, choose and pass
+the required workload-specific
+[`NIM_GPU_MEMORY_UTILIZATION`](deployment.md#set-the-reasoner-memory-share-on-unified-memory-systems)
+for the unified pool; keep the same value through service launch. Clearing page
+cache or deleting the persistent NIM model cache is not part of the normal
+deployment workflow; see [Unified-memory
 diagnostics](operations.md#unified-memory-diagnostics).
 
 Lower-VRAM profiles can keep model weights in system memory. Resident Generator
