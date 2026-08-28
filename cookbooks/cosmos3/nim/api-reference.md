@@ -25,7 +25,7 @@ Reasoner completion APIs, and a Reasoner profile does not serve `/v1/infer`.
 
 Reasoner Chat Completions supports media, parsed-reasoning controls, developer
 instructions, and OpenAI tool calls as described in
-[Reasoning](reasoning.md#reasoning-instructions-and-tool-calls).
+[Reasoning](reasoning.md#final-answers-instructions-and-tool-calls).
 `/v1/metadata` reports the active `model_type` and primary
 `inference_endpoint`; check those fields before treating `/v1/models` as
 Reasoner model discovery.
@@ -137,8 +137,8 @@ branch on the fields actually present rather than assuming every non-T2I
 request has `b64_video`. See [Nano-DROID policy](action.md#nano-droid-policy).
 
 The Generator emits JPEG for T2I and a VP9 video track in an MP4 container for
-video modes. The final output codec inventory will be published in the
-[Support matrix](support-matrix.md#media-and-codecs).
+video modes. See the documented media boundaries in the [Support
+matrix](support-matrix.md#media-and-codecs).
 
 ## Errors and live schema
 
@@ -160,4 +160,4 @@ python3 -m json.tool openapi.json >/dev/null
 The local deployment guide publishes either selected runtime on this same host
 port. Remove the active example container, launch the other runtime, and repeat the
 capture. Treat the running NIM's schema as authoritative for available routes
-and constraints in the pre-release version.
+and constraints in the deployed image.

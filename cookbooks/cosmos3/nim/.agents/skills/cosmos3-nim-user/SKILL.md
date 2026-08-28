@@ -104,8 +104,10 @@ For hardware guidance:
   Super row on those systems as compatibility, not a performance
   recommendation;
 - choose runtime, model variant, and Generator latency/throughput selectors
-  first, normally leaving precision, offload, tags, and profile ID unset; let
-  preflight choose the exact image-specific profile;
+  first, normally leaving precision, offload, tags, and profile ID unset;
+  Generator then prefers FP8 when compatible, while Reasoner prefers BF16 on
+  compute capability 8.0 through 8.8, FP8 on 8.9 through 9.x, and NVFP4 on 10.0
+  or newer; let preflight choose the exact image-specific profile;
 - after cold start, require `examples/inspect_profile.py` to match the selected
   profile from `/v1/metadata` to the YAML embedded in `/v1/manifest`, and use
   the support matrix for documented requirements;
@@ -115,9 +117,10 @@ For hardware guidance:
   back only to an equivalent lower-memory layout; an explicit profile pin never
   falls back;
 - use the published floors to choose a candidate without claiming that they
-  resolve unavailable general CPU, RAM, disk, shared-memory, driver, Docker, or
+  define fixed general CPU, RAM, disk, shared-memory, driver, Docker, or
   Container Toolkit requirements; and
-- leave requirements described as not yet available unresolved.
+- leave requirements without a documented fixed minimum unresolved and require
+  cold-start validation rather than inventing a value.
 
 ### Unified-memory decision procedure
 

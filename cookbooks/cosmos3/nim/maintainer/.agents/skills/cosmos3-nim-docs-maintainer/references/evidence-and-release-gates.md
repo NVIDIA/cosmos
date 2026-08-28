@@ -19,8 +19,9 @@ Use sources in this order when they disagree:
    NIM request fields or support claims.
 
 Customer-facing docs must not expose private checkout paths, internal commit
-IDs, or unreleased profile IDs. Exact source commit hashes may be retained in
-this maintainer reference as internal provenance for RC-to-RC comparisons.
+IDs, or private image-specific profile IDs. Exact source commit hashes may be
+retained in this maintainer reference as internal provenance for image-to-image
+comparisons.
 Record evidence status in prose whenever it affects whether a claim is merely
 source-compatible or actually release-tested.
 
@@ -42,18 +43,15 @@ against the NIM contract rather than copying another backend's adapter.
 
 ## Active release maintenance
 
-- Deployment currently uses the versioned Cosmos3 1.0.0 experimental RC
-  `1.0.0-rc.experimental.20260821144604`, not a final release identity. Record
-  source-derived evidence in maintainer files only and require the exact image
-  manifest or live behavior before presenting claims as validated in the
-  evaluation image. Before public release, `deployment.md` owns the exact
-  evaluation image reference; update it on every RC bump.
-- The current RC source revision is
-  `4b505c903687efa80ffff65dd5d66753227ab8d4`. Retain each current revision as
-  the comparison baseline for the next RC. The superseded 20260820 211500 RC
-  source revision was not recorded, so a complete RC-to-RC source delta is not
-  available for this bump.
-- Never replace an RC reference with `latest`.
+- Deployment uses the exact Cosmos3 image
+  `nvcr.io/nvstaging/nim/cosmos3:2.0.0-8bd2d17cdc1091ba`.
+  `deployment.md` owns this reference; update it for each approved image and
+  never replace it with `latest`.
+- The source revision corresponding to this image is
+  `8b4798a08154b854475b1b239ff8b33d55240666`. The previous recorded baseline,
+  `4b505c903687efa80ffff65dd5d66753227ab8d4`, is its ancestor, and the complete
+  range was reviewed for contract changes. Retain the current revision as the
+  comparison baseline for the next image.
 - The current support-matrix compute-capability, GPU-count, per-device VRAM,
   Transfer, and effective system-memory thresholds are approved for publication
   as release profile-selection floors. They establish a candidate profile, not
@@ -76,13 +74,8 @@ against the NIM contract rather than copying another backend's adapter.
   discrete GPU. DGX Spark is not recommended for Transfer turnaround even when
   a compatible profile fits. Keep this operational recommendation distinct
   from support-matrix eligibility and do not turn it into an expected runtime.
-- The final public image, release version/date, catalog URL, and model-card URL
-  remain release-owned until approved.
-- The current evaluation chart reference is
-  `nvstaging/nim/nim-wfm:1.3.0`. The public chart URL is TBD and must replace
-  the staging reference when approved. Keep the public Helm page explicit about
-  this boundary and omit pull/install commands and values until the public URL,
-  schema, and workflow are approved.
+- Cosmos3 Helm deployment guidance is not included. Keep `helm.md` limited to
+  that status and do not adapt another NIM's chart or values.
 
 ## Current source-derived contracts
 
@@ -92,7 +85,9 @@ provenance, and direct users to runtime interfaces where availability must be
 confirmed:
 
 - Generator BF16 compute capability 8.0, updated Super VRAM/Transfer floors,
-  and Reasoner Super BF16 TP2 at 73 GiB/device;
+  Reasoner Super BF16 TP2 at 73 GiB/device, and architecture-derived Reasoner
+  precision preference: BF16 for compute capability 8.0 through 8.8, FP8 for
+  8.9 through 9.x, and NVFP4 for 10.0 or newer;
 - unified-memory selection subtracts the default 16-GiB host reserve from the
   reported shared-memory total for static profile floors, uses resident model
   and guardrails for Generator, and applies the same reserve to Reasoner
@@ -116,8 +111,9 @@ confirmed:
   requested output count, and rounded V2V latent-index validation;
 - Reasoner TP1 preference, TP2 availability fallback, guided-decoding
   enforcement, Responses create normalization, disabled-by-default video-token
-  pruning with VidCom2 as the selected method when enabled, and operator-level
-  media I/O and multimodal processor JSON options;
+  pruning with VidCom2 as the selected method when enabled, operator-level
+  media I/O and multimodal processor JSON options, default-disabled multimodal
+  input chunking, and the resulting minimum 16,384 batched-token budget;
 - default-on Nano and Super DFlash drafts, independent local draft overrides,
   hardware-derived BF16 KV-cache selection, and advanced DFlash JSON
   configuration;
@@ -126,112 +122,51 @@ confirmed:
   vLLM user-prompt strings, data-URL media, request-level 4-FPS video sampling,
   disabled NIM-native thinking, preserved prompt-authored `<think>` text,
   explicit effective sampling controls, prompt-constrained JSON extraction,
-  opt-in NIM JSON Schema guidance, and local structural validators; and
+  parse-status recording without structural validation, opt-in NIM JSON Schema
+  guidance, and best-effort spatial annotation; and
 - runtime-aware metadata, health responses, and wrong-runtime diagnostics.
 
 Regenerate the source profile export before reconciling tables. Generated
 artifacts can lag profile policy source and must not silently override current
 implementation or be presented as an approved image manifest.
 
-## Current RC validation status
+## Current image validation status
 
-The supplied image reference and source revision recorded above identify the
-exact evaluation build pinned in `deployment.md`. Because the previous RC
-source revision was not retained, this update does not claim a complete
-RC-to-RC source comparison or add a public contract claim. An authenticated
-registry lookup confirmed that the tag resolves to multi-architecture
-manifest-list digest
-`sha256:536a78530f73e30f5123318f22305d4cde62ed120ebdae315ef1b64e8d1d834c`.
-The embedded NIM manifest release and profile inventory, preflight behavior,
-cold start, management endpoints, and inference have not been validated in
-this documentation update. Do not carry the superseded RC observations below
-forward as current-image validation.
+The exact image resolves to OCI manifest-list digest
+`sha256:9fea8c0c0df52914e43d7c7e663fc9c7c7ca902fdeacb8b7e7b45f0ecfc9c2ee`,
+with `amd64` manifest digest
+`sha256:dad096ce3552363e7ebf2f1805f8b0da099679af396a6581e6b2f2dfea7a9950`
+and `arm64` manifest digest
+`sha256:3a4af0a82426c9b6b31703357ca5433e07c324f9d1275c7ca402668df35767dc`.
+Its labels and embedded manifest report version and release `2.0.0`. The
+manifest contains 115 Generator and 7 Reasoner profiles. Regenerating all 122
+profiles from the recorded source revision produced the same normalized tag
+inventory as the embedded manifest. All 19,937 embedded artifact references
+use the public `ngc://nim/nvidia/cosmos3` model location; none uses an
+`nvstaging` artifact URI.
 
-## Historical validation from the superseded 20260820 180843 RC
+On one NVIDIA H100 PCIe GPU with compute capability 9.0, 81,559 MiB total, and
+81,081 MiB free, exact-image pre-download profile selection passed for Nano
+Generator FP8 latency and Nano Reasoner FP8. These checks establish candidate
+profile compatibility only. Direct image checks confirmed the Reasoner
+precision preferences for `sm_80`, `sm_89`, `sm_90`, `sm_100`, and `sm_120`.
+Option parsing confirmed that `NIM_DISABLE_CHUNKED_MM_INPUT` defaults to `true`,
+the resulting effective `NIM_MAX_NUM_BATCHED_TOKENS` is `16384`, and
+`NIM_GPU_MEMORY_UTILIZATION` defaults to `0.93`.
 
-The superseded evaluation image had manifest digest
-`sha256:c0a6b8a14c05bee46609a87798876dca62cea7f703d6ae552a26559d2298ad51`.
-Its embedded manifest reported release
-`1.0.0-rc.experimental.20260820180843`, with 115 Generator profiles and 7
-Reasoner profiles. Direct option parsing in the image confirmed that unset
-video pruning resolves to disabled and that `NIM_MM_PROCESSOR_KWARGS` accepts
-a JSON object. The Reasoner
-preflight exported `pynvvc` as the operator-level video backend.
+The image contains nonempty `/opt/nim/LICENSE`, `/opt/nim/MODEL_LICENSE`, and
+`/opt/nim/NOTICE` files plus nine files under `/opt/nim/licenses`. The NIM terms
+reference the NVIDIA Software License and Product-Specific Terms for NVIDIA AI
+Products; the model terms identify OpenMDW-1.1. Checksums pass for the
+package-modification source bundle under `/usr/share/cosmos3/oss-source`. Cold
+start, management endpoints including `/v1/license`, and inference were not run
+for this validation.
 
-On NVIDIA H100 NVL (compute capability 9.0, 95,830 MiB total and 95,322 MiB
-free per visible device), the pre-download selector passed with one-GPU
-profiles for both runtimes:
-
-- Nano Generator selected FP8, `offload=none`, latency profile
-  `845653ddaf5445077909499d031b8e57a249052dced3c4644ef9dc2f71898c8c`, with
-  44-GiB VRAM and 16-GiB effective-system-memory floors; Transfer admission
-  passed.
-- Nano Reasoner selected FP8 profile
-  `0ef8dad974a6e18226d70838ead8161670fbdd871ce4bc1efcd3f707a2bce612`, with
-  23.1-GiB VRAM and 16-GiB effective-system-memory floors.
-
-These preflight results establish candidate-profile compatibility only.
-
-The exact image was also cold-started on one NVIDIA RTX PRO 6000 Blackwell
-Server Edition (compute capability 12.0, 97,887 MiB total and 97,252 MiB free)
-as the one-GPU Nano FP8 latency configuration. It reached readiness and
-reported `model_type=generator`, `inference_endpoint=/v1/infer`, and
-`model_variant=nano`. Paired AV policy requests used the same `av_0.jpg`, seed
-0, and inference controls; only explicit left-turn and right-turn task prompts
-differed. Both returned structurally valid `[60,9]` actions and 61-frame,
-832-by-480 rollouts. Manual review confirmed that the left prompt produced a
-left turn and the right prompt produced a right turn. This validates the two
-included language-conditioned Nano AV policy cases for one run each, not Super,
-BF16, other fixtures or seeds, safe-driving behavior, or performance.
-
-The exact image was also launched on one NVIDIA H200 as Super FP8 profile
-`c70e25d00f876b14b07441fc7920b8a7001487aecf3f258739bfbcc9a208e4a9`, with
-the bundled DFlash draft enabled and video pruning unset. All 18 catalog cases
-completed API and local format validation on the prompt-constrained default
-path, and the opt-in guided-output grounding request also passed. One-time
-comparison with `maintainer/reasoner-semantic-fixtures.yaml` gave grounding IoU
-0.926 against the recorded vLLM box, above the 0.75 review threshold. Temporal
-localization returned one whole-video event instead of the fixture's minimum
-three events and therefore failed semantic-quality review despite passing local
-JSON and timestamp validation. The same Super FP8 profile was then run
-target-only with `NIM_USE_DFLASH=0`: 17 of 18 cases passed local format
-validation, while `describe_anything` returned `description` instead of the
-requested `caption` field.
-
-One-run manual review against the catalog criteria rated direct vLLM Super at
-14 pass and 4 fail, NIM with DFlash at 13 pass, 2 partial, and 3 fail, and NIM
-target-only at 14 pass and 4 fail. All three missed video-caption completion and
-the driving Action-CoT pedestrian. vLLM and target-only segmented temporal
-localization while DFlash collapsed it into one event; only target-only passed
-the assisted-task next action, while only target-only failed
-`describe_anything` format. These sampled results validate request transport,
-extraction, and local format handling and identify review targets; they do not
-establish stable catalog-wide semantic quality or performance.
-
-The tutorial image `vllm/vllm-openai:cosmos3` at digest
-`sha256:db0bb920b0b54e82ea96a98659bbd21921f87d0dcfc86feffdafa2db3f08be55`
-was run directly on the same H200. Super BF16 ran at TP1 rather than the
-tutorial's TP4 because only one GPU was allocated. Its grounding result passed
-the local validator and had IoU 0.931 against the fixture. The tutorial's video
-combination of server-level `num_frames=-1` and request-level
-`mm_processor_kwargs` at 4 FPS failed with HTTP 400 for both Super and Edge:
-the loader supplied 37 frames before the processor attempted to sample again.
-Using request-level `media_io_kwargs` at 4 FPS, as the NIM adaptation does,
-completed successfully. With the catalog's explicit effective sampling and
-thinking controls, all 18 Super cases passed API and local format validation.
-Super temporal localization returned seven ordered segments covering pickup,
-dispensing, placement, and retraction; Edge returned one whole-video segment
-and failed the three-event semantic floor. Edge grounding passed under the same
-explicit controls. This direct comparison validates the NIM-specific media
-adaptation and the one-run fixture thresholds, not stable quality or TP4 output
-parity.
-
-## Open release gates
+## Open validation and documentation gaps
 
 Review this list on every substantive documentation update and remove, add, or
 refine entries when evidence changes:
 
-- final public image identity and release URLs;
 - general CPU architecture, host RAM beyond profile-selection floors, disk,
   shared-memory, driver, Docker, and Container Toolkit requirements;
 - exact supported image formats, video containers/codecs, URL fetching, and
@@ -252,16 +187,15 @@ refine entries when evidence changes:
   configuration behavior in the selected image, including repeated-seed Super
   FP8 spatial-output correctness;
 - quantized Generator linear-backend behavior in the selected image;
-- public Helm chart URL to replace the staging reference, plus approved values,
-  installation workflow, and monitoring integration;
+- Cosmos3 Helm chart, approved values, installation workflow, and monitoring
+  integration;
 - repeated-seed vLLM/NIM review of the current catalog quality gaps, especially
   temporal segmentation, video-caption completion, assisted-task next action,
   trajectory semantics, and driving Action-CoT pedestrian identification; plus
   evaluation of explicitly enabled VidCom2 output quality on the video catalog;
 - approved native-thinking output and reasoning-trace wording for the current
   image; and
-- approved acknowledgements and product license/model-card links for the exact
-  release.
+- external product and model-card links associated with the exact image.
 
 Keep unresolved values visible in prose or tables. Do not place them in
 runnable fences or fill them from an older NIM release.
@@ -299,9 +233,9 @@ Before publication:
 
 - reconcile affected claims with current source and approved release evidence;
 - verify canonical ownership and deliberate duplicates;
-- update the evaluation image in deployment;
-- inspect all unresolved release statements and confirm none implies a usable
-  value;
+- update the exact image in deployment;
+- inspect all unresolved requirements and confirm none implies an unsupported
+  fixed value;
 - validate links, JSON, examples, dependencies, paths, and ignored outputs;
 - search for obsolete fields, legacy images/endpoints, realistic secrets,
   private paths, and unsupported backend syntax;

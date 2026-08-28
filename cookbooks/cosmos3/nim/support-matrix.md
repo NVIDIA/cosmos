@@ -27,8 +27,8 @@ visible host.
 | Generator | `super-t2i-4step` | Four-step T2I only | Prefer FP8 when compatible; otherwise fall back |
 | Generator | `super-i2v` | Full-step I2V only | Prefer FP8 when compatible; otherwise fall back |
 | Generator | `super-i2v-4step` | Four-step I2V only | Prefer FP8 when compatible; otherwise fall back |
-| Reasoner | `nano` | Image/video reasoning | Prefer FP8 when compatible; BF16 and explicit NVFP4 rows also exist |
-| Reasoner | `super` | Image/video reasoning | Prefer FP8 when compatible; BF16 and explicit NVFP4 rows also exist |
+| Reasoner | `nano` | Image/video reasoning | Prefer BF16 on compute capability 8.0 through 8.8, FP8 on 8.9 through 9.x, and NVFP4 on 10.0 or newer when compatible |
+| Reasoner | `super` | Image/video reasoning | Prefer BF16 on compute capability 8.0 through 8.8, FP8 on 8.9 through 9.x, and NVFP4 on 10.0 or newer when compatible |
 
 A Generator specialist rejects requests for other tasks. Confirm that
 the selected image includes the model before deployment.
@@ -251,8 +251,9 @@ profiles before final selection. Generator startup also requires the current
 free memory on each participating GPU to meet the generation floor in the
 table. Resident Generator profiles use a 16-GiB selection floor, Nano offload
 profiles use 64 GiB, and all Super offload profiles use 150 GiB. These profile floors do not define a general host-RAM
-minimum; the release-wide CPU and RAM requirements remain unresolved. The
-NIM checks a container memory limit before host physical memory.
+minimum; provision additional CPU and host memory for the container, runtime,
+and workload. The NIM checks a container memory limit before host physical
+memory.
 
 Leave offload and guardrail residency on automatic selection unless a specific
 configuration has been validated for the deployment.
@@ -289,11 +290,14 @@ Users normally set:
 The NIM first finds statically compatible profiles for those choices, visible
 GPU totals, and effective system memory. It then uses one current-free-memory
 snapshot without changing the requested model, precision, or Generator
-performance objective. Automatic selection prefers FP8 when available and a
-resident Generator profile when it fits. If the preferred layout is currently
-too large, it can fall back across equivalent layouts, preferring Generator
-layer offload before model offload and allowing a fitting Reasoner TP layout.
-If none fits, startup fails. An explicit `NIM_MODEL_PROFILE` never falls back.
+performance objective. Generator prefers FP8 when compatible. Reasoner prefers
+BF16 on compute capability 8.0 through 8.8, FP8 on 8.9 through 9.x, and NVFP4
+on 10.0 or newer, using another compatible precision when the preferred row is
+unavailable. Selection prefers a resident Generator profile when it fits. If
+the preferred layout is currently too large, it can fall back across equivalent
+layouts, preferring Generator layer offload before model offload and allowing a
+fitting Reasoner TP layout. If none fits, startup fails. An explicit
+`NIM_MODEL_PROFILE` never falls back.
 
 Exact profile IDs and low-level manifest tags are advanced image-specific
 controls. Do not copy them between images or hosts. Free unrelated GPU memory
@@ -313,12 +317,12 @@ out-of-memory failure and does not make the deployment supported.
 
 ## Media and codecs
 
-| Direction | Media | Pre-release formats/codecs and limits |
+| Direction | Media | Documented formats/codecs and limits |
 | --- | --- | --- |
-| Input | Images | Final inventory not yet available; use the included fixtures |
-| Input | Videos | Final inventory not yet available; use the included fixtures |
-| Output | Generator image | JPEG in the pre-release version |
-| Output | Generator video | VP9 in MP4 in the pre-release version |
+| Input | Images | Use the included JPEG, PNG, and WebP fixtures; verify other formats against the deployed image |
+| Input | Videos | Use the included MP4 fixtures; verify other containers and codecs against the deployed image |
+| Output | Generator image | JPEG |
+| Output | Generator video | VP9 in MP4 |
 
 The request schemas accept base64 and MIME-aware data URLs. HTTP(S) input is
 available only when enabled and reachable from the container. Schema acceptance

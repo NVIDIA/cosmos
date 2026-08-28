@@ -11,12 +11,11 @@ contains two runtimes, but each container runs only one:
 - **Reasoner** serves OpenAI-compatible image/video understanding through Chat
   Completions and, when enabled, the Responses API.
 
-> **Pre-release documentation:** Deployment commands pin the current evaluation
-> image. The [Support matrix](support-matrix.md) publishes the approved release
-> profile-selection floors; confirm an available row in the running image's
-> manifest. The public image, general system requirements, and release URLs are
-> not yet available. Do not treat other evaluation behavior as a public support
-> commitment.
+> Deployment commands pin the current release image. The [Support
+> matrix](support-matrix.md) publishes the release profile-selection floors;
+> confirm an available row in the running image's manifest. A matching profile
+> establishes a candidate configuration, while cold start and representative
+> requests establish host and workload compatibility.
 
 ## Choose what to run
 
@@ -26,8 +25,9 @@ visible GPUs.
 
 1. Choose **Generator** or **Reasoner**.
 2. Choose the model variant.
-3. Optionally pin a precision. Automatic selection prefers FP8 when a
-   compatible FP8 profile is available.
+3. Optionally pin a precision. Generator prefers FP8 when compatible;
+   Reasoner prefers BF16 on compute capability 8.0 through 8.8, FP8 on 8.9
+   through 9.x, and NVFP4 on 10.0 or newer when the matching profile fits.
 4. For Generator, choose **latency** or **throughput**.
 5. Start the container. The NIM selects a compatible profile for the model,
    precision preference, performance objective, and host.
@@ -58,9 +58,11 @@ deployment automation.
 Reasoner provides `nano` and `super`, also selected with
 `NIM_MODEL_VARIANT`. Reasoner does not use `NIM_PERF_PROFILE`.
 
-If `NIM_PRECISION` is omitted, selection prefers FP8 when the chosen model,
-available configurations, and host support it, then falls back to another
-compatible precision. Pin precision only when the workload requires it.
+If `NIM_PRECISION` is omitted, Generator prefers FP8 when compatible.
+Reasoner derives its preference from GPU compute capability: BF16 for 8.0
+through 8.8, FP8 for 8.9 through 9.x, and NVFP4 for 10.0 or newer. Selection
+uses another compatible precision when the preferred row is unavailable. Pin
+precision only when the workload requires it.
 
 Exact profile IDs, low-level tags, and offload overrides are advanced controls.
 See [Deploy the NIM](deployment.md#advanced-profile-controls).
@@ -160,7 +162,7 @@ and validation workflow.
 - [Deployment](deployment.md)
 - [Configuration](configuration.md)
 - [Support matrix](support-matrix.md)
-- [Deploy with Helm](helm.md)
+- [Helm deployment status](helm.md)
 - [Bring your own checkpoint](bring-your-own-checkpoint.md)
 
 ### Use the APIs
@@ -186,6 +188,6 @@ content-policy and face-privacy protections; see
 
 This cookbook is licensed under the repository
 [LICENSE](../../../LICENSE). The running NIM exposes bundled product license
-information at `/v1/license`. The public NGC model card and product terms will
-be linked when the NIM is released. See
-[Acknowledgements](acknowledgements.md) for third-party notice status.
+information at `/v1/license`. The image also contains product terms, notices,
+component licenses, and the included package-modification source described
+under [Acknowledgements](acknowledgements.md).

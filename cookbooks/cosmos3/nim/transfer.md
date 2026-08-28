@@ -181,8 +181,8 @@ Current defaults by family:
 All current transfer families default to 50 denoising steps and flow shift
 10.0. The comparison script explicitly uses a 121-frame chunk for edge, blur,
 depth, and segmentation, and a 101-frame chunk for the 101-frame WSM case.
-Explicit request values override defaults when valid. Use these defaults for
-the current pre-release version and recheck them when moving to a later image.
+Explicit request values override defaults when valid. These defaults apply to
+the pinned release image; recheck them when moving to another image.
 
 ## Advanced multiple controls
 
@@ -190,10 +190,11 @@ The request schema can enable more than one control in the same `transfer`
 object. Current default selection deliberately uses the general edge-family
 defaults for mixed requests rather than combining defaults from each control.
 
-Validated multi-control combinations are not yet available. Use one control per
-request during pre-release evaluation. Controls in a multi-control smoke
-test must be spatially and temporally aligned; do not combine unrelated
-single-control fixtures and interpret the result as a quality comparison.
+This guide does not validate a multi-control combination. Use one control per
+request unless the exact combination has been validated for the deployment.
+Controls in a multi-control smoke test must be spatially and temporally aligned;
+do not combine unrelated single-control fixtures and interpret the result as a
+quality comparison.
 
 ## Transfer VRAM admission
 
@@ -213,9 +214,9 @@ override as a normal production setting. See
 
 Control videos and video `input_reference` values accept raw base64, a video
 data URL, or an allowed HTTP(S) URL, with a 100,000,000-character encoded
-ceiling. Prefer data URLs and the included MP4 fixtures during pre-release
-evaluation; the final container, codec, and remote-fetch inventory is not yet
-available.
+ceiling. Prefer data URLs and the included MP4 fixtures; verify any other
+container, codec, or remote-fetch path against the deployed image before
+relying on it.
 
 The response uses the Generator video shape: `b64_video` plus
 `action: null`. The inactive image field is omitted. The public script decodes

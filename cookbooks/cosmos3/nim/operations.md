@@ -9,7 +9,7 @@ failures. See [deployment.md](deployment.md) for launch configuration and
 [configuration.md](configuration.md) for environment variables.
 
 > Endpoint availability and operational limits can vary with the selected
-> pre-release image. Inspect the running service before configuring automation.
+> image and runtime. Inspect the running service before configuring automation.
 
 ## Health and startup
 
@@ -361,7 +361,6 @@ Task-specific validation belongs to [Generation](generation.md),
 | Kubernetes Pod stays Pending | GPU request, scheduling constraints, or quota cannot be satisfied | Inspect Pod events and match the GPU count to an available configuration in the [support matrix](support-matrix.md) |
 | Kubernetes volume mount fails | PVC, access mode, ownership, or storage class is incompatible | Inspect Pod and PVC events; verify that the cache mount is writable |
 | Kubernetes startup probe fails | Cold startup exceeds the probe budget or startup has failed | Increase the startup budget and inspect container logs, cache, and NGC access |
-| Helm values are rejected or ignored | Values do not match the pinned evaluation chart version | Use the exact staging reference in [Deploy with Helm](helm.md) and only values approved for that version |
 
 ### Generator and media
 
@@ -400,7 +399,7 @@ Task-specific validation belongs to [Generation](generation.md),
 | Retrieval/cancel does not work | Response storage/background support is not enabled | Use `store=false` create flow or validate storage configuration for the selected image |
 | Structured output is prose or invalid JSON | The request uses the wrong schema shape or the backend did not return a constrained result | Use Chat Completions `response_format` or Responses `text.format`, inspect live OpenAPI and logs, and preserve the response for diagnosis |
 | Host OOM or near-zero `MemAvailable` on unified memory | Reasoner used the `0.93` default or a target too large for the shared host/device pool | Restart with `NIM_GPU_MEMORY_UTILIZATION=0.80` for image-only or `0.70` for video or mixed media; lower it further only from host measurements |
-| KV-cache/context OOM | Context, media tokens, batching, or concurrency is too large | Reduce media FPS/token budget/concurrency before raising memory utilization |
+| KV-cache/context OOM | Context, media tokens, batching, or concurrency is too large | Reduce media FPS and concurrency; the default unchunked multimodal path enforces a 16,384 batched-token minimum, so enable multimodal chunking with `NIM_DISABLE_CHUNKED_MM_INPUT=0` only after validation before lowering that budget |
 | DFlash startup is rejected | DFlash was enabled for Generator, the selected Nano/Super draft is missing, or an independent path/configuration is invalid | Use the matching bundled draft or a valid absolute local `NIM_DFLASH_MODEL_PATH`; otherwise set `NIM_USE_DFLASH=0` for target-only Reasoner operation |
 | Reasoner checkpoint source fails | Local layout, `hf://` URI, revision, token, or inferred profile properties are invalid | Validate `NIM_MODEL_PATH`, `HF_TOKEN`, cache/network access, and matching selectors |
 

@@ -23,7 +23,7 @@ complete Docker commands.
 | --- | --- | --- |
 | `NIM_MODEL_TYPE` | `generator` | Select `generator` or `reasoner` |
 | `NIM_MODEL_VARIANT` | `nano` preference | Select `nano` or `super` for either runtime; Generator also accepts `nano-droid`, `super-t2i`, `super-t2i-4step`, `super-i2v`, and `super-i2v-4step` |
-| `NIM_PRECISION` | FP8 preference | Optionally pin a precision available in the selected image; omit it to prefer FP8 when compatible and fall back automatically |
+| `NIM_PRECISION` | Generator: FP8 preference; Reasoner: GPU-derived preference | Optionally pin a precision available in the selected image; when omitted, Reasoner prefers BF16 on compute capability 8.0 through 8.8, FP8 on 8.9 through 9.x, and NVFP4 on 10.0 or newer when compatible |
 | `NIM_PERF_PROFILE` | `latency` | Generator only: choose `latency` or `throughput` |
 
 `NIM_MODEL_VARIANT` selects the checkpoint contract for either runtime.
@@ -177,7 +177,7 @@ correctness, latency, and throughput on the exact image before production use.
 | Name | Default | Use |
 | --- | --- | --- |
 | `NIM_MAX_MODEL_LEN` | `-1` (auto) | Let the runtime choose a context length bounded by the model |
-| `NIM_MAX_NUM_BATCHED_TOKENS` | `8192` | Set the scheduler token budget |
+| `NIM_MAX_NUM_BATCHED_TOKENS` | `16384` effective with the default unchunked multimodal input; otherwise `8192` | Set the scheduler token budget; unchunked multimodal input enforces a minimum of `16384` |
 | `NIM_MAX_NUM_SEQS` | `256` | Set maximum scheduled sequences |
 | `NIM_GPU_MEMORY_UTILIZATION` | `0.93` | Set the Reasoner GPU-memory target in `(0,1]`; startup warns when the target exceeds current free memory but does not reduce it. On DGX Spark/GB10 and Jetson AGX Thor, set `0.80` for image-only workloads or `0.70` for video or mixed-media workloads, and pass it from the first preflight through service launch. |
 
@@ -194,7 +194,7 @@ systems](deployment.md#set-the-reasoner-memory-share-on-unified-memory-systems).
 | --- | --- | --- |
 | `NIM_ENABLE_KV_CACHE_REUSE` | `true` | Enable prefix/KV-cache reuse |
 | `NIM_ENABLE_CHUNKED_PREFILL` | `true` | Enable chunked prefill |
-| `NIM_DISABLE_CHUNKED_MM_INPUT` | `false` | Disable multimodal-input chunking |
+| `NIM_DISABLE_CHUNKED_MM_INPUT` | `true` | Require one complete multimodal item to fit in a scheduler iteration; this raises `NIM_MAX_NUM_BATCHED_TOKENS` to at least `16384` |
 | `NIM_DISABLE_MM_PREPROCESSOR_CACHE` | `false` | Disable the multimodal preprocessor cache |
 | `NIM_MAX_IMAGES_PER_PROMPT` | Unset | Optionally set a nonnegative image limit; when unset, do not override the runtime limit |
 | `NIM_MAX_VIDEOS_PER_PROMPT` | Unset | Optionally set a nonnegative video limit; when unset, do not override the runtime limit |
@@ -206,9 +206,13 @@ systems](deployment.md#set-the-reasoner-memory-share-on-unified-memory-systems).
 Prefer request-level `media_io_kwargs` for one workload rather than changing the
 operator-wide media object. Leave `NIM_MM_PROCESSOR_KWARGS` unset unless the
 selected runtime has been validated with the complete processor-options object.
-Both operator-level options require JSON objects. Leave Reasoner GPU-memory
-headroom at its default unless system measurements establish another safe
-reserve; reducing it increases startup and runtime OOM risk.
+Both operator-level options require JSON objects. Disabling multimodal-input
+chunking is the default and can increase peak GPU memory use because one
+complete item must fit in a scheduler iteration; set
+`NIM_DISABLE_CHUNKED_MM_INPUT=0` only after validating memory, latency, and
+throughput. Leave Reasoner GPU-memory headroom at its default unless system
+measurements establish another safe reserve; reducing it increases startup and
+runtime OOM risk.
 
 ### API behavior
 

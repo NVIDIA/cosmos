@@ -10,9 +10,8 @@ belongs to the [support matrix](support-matrix.md).
 > **Published release floors:** GPU compute capability, GPU count, per-device
 > VRAM, Transfer headroom, and configuration-specific system-memory floors are
 > published in the [Support matrix](support-matrix.md). Full host compatibility
-> cannot be established before cold start: general CPU architecture, host RAM,
-> disk, shared-memory, driver, Docker, and Container Toolkit requirements are
-> not yet available.
+> still requires a cold start; where this guide does not publish a fixed
+> minimum, size and validate the host for the selected image and workload.
 
 ## Hardware requirements
 
@@ -29,12 +28,12 @@ Plan for:
 
 | Requirement | Current requirement |
 | --- | --- |
-| CPU architecture | Not yet available |
+| CPU architecture | The release image provides `amd64` and `arm64` variants; use the variant selected by the container runtime |
 | GPU compute capability | Generator: BF16 `>=8.0`, FP8 `>=8.9`; Reasoner: BF16 `>=8.0`, FP8 `>=8.9`, NVFP4 `>=10.0` |
 | GPU count and per-device VRAM | See the [Generator](support-matrix.md#generator-configurations) and [Reasoner](support-matrix.md#reasoner-configurations) tables |
-| Host RAM | General minimum not yet available; profile-selection floors are 16 GiB for resident/Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload |
-| Free disk | Not yet available |
-| Container shared memory | Not yet available |
+| Host RAM | Profile-selection floors are 16 GiB for resident/Reasoner profiles, 64 GiB for Nano offload, and 150 GiB for Super offload; provision additional memory for the host and workload |
+| Free disk | Provision for the image, selected model artifacts, materialization, and outputs; no single workload-independent floor is documented |
+| Container shared memory | The Docker reference launch allocates 16 GiB; validate the requirement for the selected media workload and concurrency |
 
 Do not add together memory from multiple GPUs to satisfy a per-device floor.
 If the deployment must serve Transfer, provision each GPU against the
@@ -136,10 +135,10 @@ The host requires:
 
 | Software | Required version |
 | --- | --- |
-| Linux and `glibc` | Not yet available |
-| NVIDIA driver | Not yet available |
-| Docker Engine | Not yet available |
-| NVIDIA Container Toolkit | Not yet available |
+| Linux and `glibc` | Use a Linux host supported by the selected NVIDIA driver and container stack |
+| NVIDIA driver | Use a driver compatible with the CUDA user-space libraries in the release image |
+| Docker Engine | Use a maintained Docker Engine release supported by NVIDIA Container Toolkit |
+| NVIDIA Container Toolkit | Use a maintained release configured for the host driver and Docker Engine |
 
 The CUDA user-space libraries required by the NIM are provided inside the
 container. Follow the driver and Container Toolkit installation instructions

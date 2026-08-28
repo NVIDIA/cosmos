@@ -63,13 +63,14 @@ Classify each changed claim as:
 - **RC/release-validated:** observed from the exact image, manifest, OpenAPI, or
   approved release artifact.
 - **Historical:** retained only for rationale or coverage.
-- **Unresolved:** release-owned and clearly identified as not yet available in
-  prose or a table.
+- **Unresolved:** no approved fixed value or validation is available; keep the
+  limitation explicit without inventing a value.
 
 Never upgrade source evidence to a tested support claim. Never use historical
 values to fill an unresolved release fact. Record the exact source commit hash
-for the current RC in `references/evidence-and-release-gates.md`; commit hashes
-are permitted only in maintainer records, not customer-facing pages or examples.
+for the selected image in `references/evidence-and-release-gates.md`; commit
+hashes are permitted only in maintainer records, not customer-facing pages or
+examples.
 Before replacing that baseline on the next RC bump, compare the recorded old
 revision with the new revision and inspect the complete range for
 contract-relevant changes. Do not infer the RC delta from only the new commit's
@@ -106,16 +107,15 @@ and rely on Git history for the archive.
 - When dependencies change, update `pyproject.toml`, regenerate `uv.lock`, and
   update all affected commands and prerequisite text in the same change.
 
-For a pre-release image bump, record the supplied source commit, compare it with
-the previous recorded RC source commit, and reconcile affected contracts before
+For an image bump, record the supplied source commit, compare it with the
+previous recorded source commit, and reconcile affected contracts before
 updating `NIM_IMAGE` in `deployment.md`. If either revision is unavailable,
 record that comparison gap instead of inferring a complete delta. Do not use
-`latest`. Keep the exact approved staging Helm reference in `helm.md`, but keep
-pull/install guidance conceptual until the public chart URL, schema, and
-workflow are approved. Replace the staging reference when that public release
-artifact is available. Keep acknowledgement inventory visibly unavailable until
-approved notices exist, and keep release notes limited to the initial unified
-release rather than migrations between unreleased development contracts.
+`latest`. Until Cosmos3 Helm guidance is supplied, keep `helm.md` limited to
+that status and direct users to Docker deployment. Reconcile acknowledgements
+with license, notice, and source material in the exact image. Keep release notes
+limited to the initial unified release until a later published release requires
+versioned history.
 
 ## 5. Synchronize editor guidance
 

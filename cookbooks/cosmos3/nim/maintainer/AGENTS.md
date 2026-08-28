@@ -18,9 +18,10 @@ These instructions take precedence over `../AGENTS.md` for documentation work.
 - Keep maintainer references current rather than chronological. Remove
   superseded validation narratives when no active gate depends on them; Git
   history is the archive.
-- Keep private paths, unreleased profile IDs, credentials, and realistic secrets
-  out of customer-facing documentation. Exact source commit hashes may be
-  stored in `maintainer/` as internal evidence for RC-to-RC source comparisons;
+- Keep private paths, private image-specific profile IDs, credentials, and
+  realistic secrets out of customer-facing documentation. Exact source commit
+  hashes may be stored in `maintainer/` as internal evidence for image-to-image
+  source comparisons;
   do not copy them into customer-facing pages or examples.
 - Put each fact in its canonical page. Use
   `.agents/skills/cosmos3-nim-docs-maintainer/references/page-ownership.md`.

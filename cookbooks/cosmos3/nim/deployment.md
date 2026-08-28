@@ -4,11 +4,10 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Deploy the Cosmos3 Certified NIM
 
 Use this page to authenticate to NGC, choose a model, launch Generator or
-Reasoner, and verify the selected service. The commands pin the current 1.0.0
-experimental release-candidate image. It is not a public release. Use the
-[Support matrix](support-matrix.md) to choose a compatible evaluation
-configuration. For an active container, `/v1/manifest` is the authority for
-available profiles.
+Reasoner, and verify the selected service. The commands pin the current 2.0.0
+release image. Use the [Support matrix](support-matrix.md) to choose a
+compatible configuration. For an active container, `/v1/manifest` is the
+authority for available profiles.
 
 ## How selection works
 
@@ -16,7 +15,8 @@ Users normally select a runtime and model, not a profile ID:
 
 1. Choose Generator or Reasoner.
 2. Choose a model variant.
-3. Optionally pin precision; otherwise FP8 is preferred when compatible.
+3. Optionally pin precision. Generator prefers FP8 when compatible; Reasoner
+   derives its preference from GPU compute capability.
 4. For Generator, choose latency or throughput.
 5. The NIM selects the best compatible profile for those choices and the
    visible GPUs.
@@ -69,17 +69,18 @@ to run the selected Reasoner target model without DFlash; see
 
 ### Precision selection
 
-Omit `NIM_PRECISION` for normal automatic selection. FP8 is preferred when the
-chosen model, available configurations, and GPU support it; otherwise selection
-falls back to another compatible precision. Set `NIM_PRECISION=bf16`, `fp8`, or
-another available value only when the workload requires an explicit precision.
-Nano-DROID currently has BF16 profiles only.
+Omit `NIM_PRECISION` for normal automatic selection. Generator prefers FP8
+when compatible. Reasoner prefers BF16 on compute capability 8.0 through 8.8,
+FP8 on 8.9 through 9.x, and NVFP4 on 10.0 or newer; selection uses another
+compatible precision when the preferred row is unavailable. Set
+`NIM_PRECISION=bf16`, `fp8`, or another available value only when the workload
+requires an explicit precision. Nano-DROID currently has BF16 profiles only.
 
 ## Before you deploy
 
 Verify the host against [Prerequisites](prerequisites.md) and choose a
-compatible configuration from the [Support matrix](support-matrix.md). For
-Kubernetes availability and requirements, see [Deploy with Helm](helm.md).
+compatible configuration from the [Support matrix](support-matrix.md). For the
+current availability of Helm guidance, see [Helm deployment](helm.md).
 
 ## Authenticate to NGC
 
@@ -122,10 +123,10 @@ and command logs, but it does not encrypt the credential Docker stores after
 login. A credential helper protects that saved credential; without one, use the
 evaluation logout step when you finish.
 
-Pin and pull the current release-candidate image:
+Pin and pull the current release image:
 
 ```bash
-export NIM_IMAGE='nvcr.io/nvstaging/nim/cosmos3:1.0.0-rc.experimental.20260821144604-7adf9347973cc73e'
+export NIM_IMAGE='nvcr.io/nvstaging/nim/cosmos3:2.0.0-8bd2d17cdc1091ba'
 docker pull "$NIM_IMAGE"
 ```
 

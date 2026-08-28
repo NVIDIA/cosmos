@@ -69,8 +69,8 @@ qualitative review criteria for every Reasoner example. Its user-prompt strings
 exactly match the runtime strings in the nearby vLLM notebook. The Python runner
 keeps the NIM-specific API adaptation in one place: it sends local media as data
 URLs, uses `media_io_kwargs` for video sampling, discovers the served model,
-consumes the final answer from `message.content`, extracts prompt-requested JSON
-with the standard JSON decoder, and applies semantic format checks.
+consumes the final answer from `message.content`, and records whether
+prompt-requested JSON can be extracted with the standard JSON decoder.
 
 List or inspect cases without a running endpoint:
 
@@ -159,20 +159,20 @@ For each run, the script prints the final answer and writes an ignored
   and request with the embedded media payload omitted;
 - `response.json`: the raw OpenAI client response;
 - `output.txt`: final `message.content`;
-- `output.json`: parsed output, written only after JSON and semantic format
-  checks pass for a structured case;
-- `validation.json`: separate API, format, and qualitative-review status;
-- `annotated.png`: validated normalized boxes or trajectories overlaid on image
-  cases that have spatial output; and
+- `output.json`: parsed output, written when JSON extraction succeeds for a
+  structured case;
+- `validation.json`: separate API, JSON-extraction, annotation, and
+  qualitative-review status;
+- `annotated.png`: best-effort normalized boxes or trajectories overlaid on
+  image cases when the parsed shape supports annotation; and
 - `report.md`: a human-readable prompt, answer, validation summary, and review
   checklist.
 
-Format validation establishes properties such as JSON shape, timestamp order,
-non-empty labels, ordered box corners, and coordinates in `[0,1000]`. It does
-not establish that a caption is accurate, a plan completes its task, or a
-trajectory reaches, picks up, and transports an object. Those criteria remain
-`not_performed` in `validation.json` until a human or application-specific
-review performs them.
+Format validation records whether the response contains a complete JSON value.
+It does not check JSON shape, field formats, timestamp order, coordinate bounds,
+or task semantics. Review structured output against the case's qualitative
+criteria; those criteria remain `not_performed` in `validation.json` until a
+human or application-specific review performs them.
 
 The Responses example uses the image-caption case so API transport differences
 do not multiply the task matrix.
@@ -262,9 +262,10 @@ Run the complete example:
 uv run python examples/reasoner.py --case video_caption
 ```
 
-Data URLs are the portable baseline. During pre-release evaluation, do not rely
-on public HTTP(S) media fetching or formats beyond the included fixtures. A
-`file://` URL on the client does not identify a file inside the NIM container.
+Data URLs are the portable baseline. Verify public HTTP(S) media fetching and
+formats beyond the included fixtures against the deployed image before relying
+on them. A `file://` URL on the client does not identify a file inside the NIM
+container.
 
 ## Use the Responses API
 
@@ -284,7 +285,7 @@ returned as a message item and exposed by the OpenAI client through
 
 Persisted retrieval, cancellation, background responses, and
 `previous_response_id` require response storage, which is disabled by default.
-Use Chat Completions for video requests in this pre-release version.
+Use Chat Completions for the documented video-request workflow.
 
 ## Final answers, instructions, and tool calls
 
@@ -348,8 +349,9 @@ additional request fields against the active `/openapi.json`.
 
 ### Text-only requests
 
-Text-only Reasoner requests are not part of the pre-release evaluation scope.
-Use image or video input with the Reasoner examples.
+This guide documents image- and video-conditioned Reasoner requests. Use image
+or video input with the committed examples, and validate any text-only workflow
+against the deployed service before depending on it.
 
 ## Structured output
 

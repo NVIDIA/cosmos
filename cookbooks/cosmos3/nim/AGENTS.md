@@ -20,8 +20,8 @@ For guided customer workflows, load
   family. Detect DGX Spark/GB10 and Jetson AGX Thor as unified memory; report
   `MemFree`, `MemAvailable`, and reclaimable-cache components for those hosts.
 - Treat the public pages and examples in this directory as the authority. Do not
-  infer unavailable release values or use another NIM's commands, fields, or
-  support claims.
+  invent a fixed value where the guide requires host or workload validation, or
+  use another NIM's commands, fields, or support claims.
 - Default to read-only assistance. Do not edit the cookbook, alter examples, or
   run Git operations unless the customer explicitly asks.
 - Use the documented pinned client environment. Do not propose ad hoc package
@@ -56,8 +56,11 @@ For guided customer workflows, load
 - For a new deployment, choose runtime, model variant, and Generator
   latency/throughput selectors first, then use the documented pre-download
   profile preflight after the image pull to select the exact image-specific
-  profile. Normally leave precision, offload, tags, and profile ID unset. For a
-  Reasoner on DGX Spark/GB10 or Jetson AGX Thor, include
+  profile. Normally leave precision, offload, tags, and profile ID unset.
+  Generator then prefers FP8 when compatible; Reasoner derives its preference
+  from compute capability (BF16 on 8.0 through 8.8, FP8 on 8.9 through 9.x,
+  and NVFP4 on 10.0 or newer). For a Reasoner on DGX Spark/GB10 or Jetson AGX
+  Thor, include
   `NIM_GPU_MEMORY_UTILIZATION=0.80` for image-only workloads or `0.70` for video
   or mixed-media workloads in the first preflight command shown and in the
   service launch; never present a generic command first and retrofit the

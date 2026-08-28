@@ -219,8 +219,8 @@ prompt, and saves `examples/outputs/i2v_car_driving.mp4`.
 
 `input_reference` is required and interpreted as an image because
 `model_mode=image2video`. The encoded-image ceiling is 20,000,000 characters.
-For pre-release evaluation, use JPEG, PNG, or WebP input; the final format
-inventory is not yet available.
+Use JPEG, PNG, or WebP input as covered by the cookbook fixtures. Verify any
+other image format against the deployed image before depending on it.
 
 ## Choose a video-conditioned workflow
 
@@ -269,9 +269,9 @@ output latent length. `condition_video_keep` selects frames from the beginning
 or end of the input and defaults to `first`.
 
 The decoded-video ceiling is 75 MB. Data URLs expand binary media by roughly
-one third, so large videos can make the JSON request substantially larger. For
-pre-release evaluation, use the MP4 fixtures included with the examples; the
-final container, codec, and remote-fetch inventory is not yet available.
+one third, so large videos can make the JSON request substantially larger. Use
+the MP4 fixtures included with the examples, and verify any other container,
+codec, or remote-fetch path against the deployed image before depending on it.
 
 ## Specialist T2I and I2V variants
 
@@ -370,8 +370,9 @@ Generator image and video inputs recognize:
 
 Prefer data URLs for portable local-file examples. Remote inputs require
 container network access and introduce download, timeout, and content-change
-risks. The final image-format, video-container, codec, and remote-fetch
-inventory will be published in the [support matrix](support-matrix.md).
+risks. The documented image formats and video codec are summarized in the
+[support matrix](support-matrix.md#media-and-codecs); verify other media paths
+against the deployed image.
 
 ## Reproducibility
 
