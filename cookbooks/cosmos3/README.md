@@ -220,8 +220,10 @@ explicitly disable guardrails before starting the server:
 
 ```bash
 pip install cosmos_guardrail==0.3.0
-# If needed by your OpenCV stack:
-# pip uninstall opencv-python
+# On headless servers without libGL.so.1, replace the OpenCV wheel pulled in by
+# cosmos_guardrail with the matching headless build:
+pip uninstall -y opencv-python
+pip install opencv-python-headless==5.0.0.93
 ```
 
 Set the TensorRT-LLM source root for the shared VisualGen config YAMLs:
