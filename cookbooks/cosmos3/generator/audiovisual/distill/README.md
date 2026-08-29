@@ -6,6 +6,13 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 This cookbook demonstrates short DMD2 distillation smoke runs for the released
 Cosmos3-Super Text2Image and Image2Video models with Cosmos Framework.
 
+The published four-step checkpoints are task-specific distilled students for
+Cosmos3-Super Text2Image and Image2Video. They are separate from the multi-task
+`Cosmos3-Nano` and `Cosmos3-Super` base checkpoints; this cookbook does not
+provide a four-step distilled base multi-task checkpoint. Fixed-step sampling
+support should therefore not be interpreted as meaning every Cosmos3 checkpoint
+is distilled.
+
 > This is a functional training recipe, not a production reproduction recipe.
 > It uses a small public dataset and six optimizer iterations to validate model
 > loading, loss and gradient computation, checkpoint resume, student-only
