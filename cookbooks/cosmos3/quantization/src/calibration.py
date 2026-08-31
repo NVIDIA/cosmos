@@ -20,11 +20,18 @@ import json
 import re
 from pathlib import Path
 
-import torch
-from datasets import load_dataset
-from diffusers import FlowMatchEulerDiscreteScheduler, UniPCMultistepScheduler
 import modelopt.torch.quantization as mtq
-
+import torch
+from cosmos_framework.data.generator.sequence_packing import SequencePlan
+from cosmos_framework.model.generator.diffusion.samplers.fixed_step import (
+    FixedStepSampler,
+)
+from cosmos_framework.model.generator.utils.data_and_condition import (
+    GenerationDataClean,
+)
+from datasets import load_dataset
+from modelopt.torch.utils.vlm_dataset_utils import get_vlm_dataset_dataloader
+from PIL import Image
 
 QUANT_CONFIGS = {"fp8": mtq.FP8_DEFAULT_CFG}
 
@@ -35,12 +42,12 @@ QUANT_CONFIGS = {"fp8": mtq.FP8_DEFAULT_CFG}
 _BASE_SKIP_TOKENS = (
     "language_model|time_embedder|vae2llm|llm2vae|embed_tokens|"
     "norm_q|norm_k|input_layernorm|post_attention_layernorm|"
-    "norm_moe_gen|rotary_emb"
+    "norm_moe_gen|rotary_emb|action2llm|llm2action|sound2llm|llm2sound"
 )
 _BASE_SKIP_TOKENS_NO_LM = (
     "time_embedder|vae2llm|llm2vae|embed_tokens|"
     "norm_q|norm_k|input_layernorm|post_attention_layernorm|"
-    "norm_moe_gen|rotary_emb"
+    "norm_moe_gen|rotary_emb|action2llm|llm2action|sound2llm|llm2sound"
 )
 
 # Video latent channel count (Cosmos3/Wan VAE).
@@ -87,8 +94,8 @@ def build_filter(
 
 
 @torch.no_grad()
-def prepare_calibration_prompts(tokenizer, num_samples: int, max_seq_len: int = 512):
-    """Tokenize prompts with the same chat template as the production pipeline.
+def prepare_calibration_prompts(num_samples: int):
+    """Load calibration captions for framework-owned tokenization.
 
     Streams ``WenhaoWang/VideoUFO`` and materializes only the first ``num_samples``
     prompts (the large, video-backed dataset is never downloaded in full). Only the
@@ -99,26 +106,7 @@ def prepare_calibration_prompts(tokenizer, num_samples: int, max_seq_len: int = 
     ).select_columns("Detailed_Caption")
     raw_prompts = [row["Detailed_Caption"] for row in itertools.islice(dataset, num_samples)]
 
-    batches = []
-    for prompt in raw_prompts:
-        conversations = [{"role": "user", "content": prompt}]
-        text = tokenizer.apply_chat_template(
-            conversations, tokenize=False, add_generation_prompt=True,
-        )
-        token_ids = tokenizer.encode(text, add_special_tokens=False)
-        token_ids = token_ids[:max_seq_len]
-        token_ids.append(tokenizer.eos_token_id)
-        token_ids.append(tokenizer.convert_tokens_to_ids("<|vision_start|>"))
-
-        seq_len = len(token_ids)
-        pad_len = max_seq_len - seq_len
-        attention_mask = [1] * seq_len + [0] * pad_len
-        token_ids = token_ids + [tokenizer.pad_token_id or 0] * pad_len
-
-        cond_ids = torch.tensor([token_ids], dtype=torch.long, device="cuda")
-        cond_mask = torch.tensor([attention_mask], dtype=torch.float, device="cuda")
-        batches.append((cond_ids, cond_mask))
-    return batches
+    return raw_prompts
 
 
 def load_i2v_images_from_dir(image_dir, num_samples):
@@ -140,20 +128,22 @@ def load_i2v_images_from_dataset(dataset_name, num_samples, subsets=None):
     Uses the RAW images (VAE-encoded here as clean first frames), not the
     vision-processor pixel_values a reasoner dataloader would yield.
     """
-    from PIL import Image
-    from modelopt.torch.utils.vlm_dataset_utils import (
-        SUPPORTED_VLM_DATASET_CONFIG,
-        _get_vlm_dataset,
-        _extract_image_ref_from_example,
-        _maybe_load_image,
-    )
 
-    repo_id = SUPPORTED_VLM_DATASET_CONFIG.get(dataset_name, {}).get("config", {}).get("path")
+    def keep_raw_images(*, images, **_kwargs):
+        return {"images": images}
+
     print(f"[calib/i2v] loading conditioning images from VLM dataset {dataset_name} (subsets={subsets or 'default'})")
-    ds = _get_vlm_dataset(dataset_name, num_samples=num_samples * 4, require_image=True, subsets=subsets)
+    dataloader = get_vlm_dataset_dataloader(
+        dataset_name=dataset_name,
+        processor=keep_raw_images,
+        batch_size=1,
+        num_samples=num_samples * 4,
+        require_image=True,
+        subsets=subsets,
+    )
     images = []
-    for ex in ds:
-        img = _maybe_load_image(_extract_image_ref_from_example(ex), repo_id=repo_id, image_root=None)
+    for batch in dataloader:
+        img = batch["images"][0]
         if isinstance(img, Image.Image):
             images.append(img)
             if len(images) >= num_samples:
@@ -215,9 +205,67 @@ def resolve_distilled_sigmas(input_dir: Path) -> list[float] | None:
     return [float(s) for s in sigmas] if sigmas else None
 
 
+def _pack_framework_denoiser_input(
+    mdl,
+    *,
+    hidden: torch.Tensor,
+    timestep: torch.Tensor,
+    text_indexes: list[int],
+    frame_rate: float,
+    i2v: bool,
+):
+    """Build the framework-owned packed input for one cookbook denoiser call."""
+    if hidden.shape[0] != 1:
+        raise ValueError(f"Calibration only supports batch size 1, got {hidden.shape[0]}.")
+
+    # ``GenerationDataClean.x0_tokens_vision`` stores one batched latent per
+    # vision item: [B, C, T, H, W].  Do not strip the batch dimension here.
+    # The sequence packer uses it to distinguish samples from latent channels.
+    latent = hidden
+    clean_data = GenerationDataClean(
+        batch_size=1,
+        is_image_batch=latent.shape[2] == 1,
+        x0_tokens_vision=[latent],
+        fps_vision=torch.tensor([frame_rate], dtype=torch.float32),
+    )
+    packed_sequence = mdl._pack_input_sequence(
+        [SequencePlan(has_text=True, has_vision=True, condition_frame_indexes_vision=[0] if i2v else [])],
+        [text_indexes],
+        clean_data,
+        timestep.detach().reshape(1).float().cpu(),
+        include_end_of_generation_token=mdl._derive_include_end_of_generation_token(),
+    )
+    if hidden.is_cuda:
+        packed_sequence.to_cuda()
+    else:
+        packed_sequence.prepare_sequence_pack_metadata()
+    return packed_sequence
+
+
+def _run_framework_denoiser(
+    mdl,
+    *,
+    hidden: torch.Tensor,
+    timestep: torch.Tensor,
+    text_indexes: list[int],
+    frame_rate: float,
+    i2v: bool,
+) -> torch.Tensor:
+    """Run a framework model through its canonical packing and denoise APIs."""
+    packed_sequence = _pack_framework_denoiser_input(
+        mdl,
+        hidden=hidden,
+        timestep=timestep,
+        text_indexes=text_indexes,
+        frame_rate=frame_rate,
+        i2v=i2v,
+    )
+    prediction = mdl.denoise(data_batch_packed=packed_sequence)["preds_vision"]
+    return torch.stack(prediction)
+
+
 def make_forward_loop(
     *,
-    tokenizer,
     vae,
     scheduler,
     prompts,
@@ -239,113 +287,82 @@ def make_forward_loop(
 ):
     """Build a ``forward_loop(mdl)`` that simulates real denoising for calibration.
 
-    The scheduler *class* selects the sampling regime:
-
-    * ``FlowMatchEulerDiscreteScheduler`` (distilled students) -> fixed explicit
-      sigmas + a stochastic (SDE) step; guidance is cond-only (guidance_scale=1.0).
-    * ``UniPCMultistepScheduler`` (everyone else) -> flow_shift / sigma_max /
-      karras / flow_sigmas knobs, with classifier-free guidance.
+    The framework sampler selects the sampling regime: its fixed-step sampler
+    drives distilled students, while its UniPC sampler drives the base models.
+    The cookbook still owns prompt selection, initial noise, CFG, and I2V clean
+    frame conditioning.
 
     ``i2v=True`` calibrates the image-to-video regime: frame 0 of the latent is a
     clean VAE-encoded conditioning latent (from ``cond_latents``, round-robin), the
-    rest is noise, a ``noisy_frame_mask`` (frame 0 = 0) is fed to the transformer so
-    the clean frame gets no timestep embedding, and the clean frame is re-injected
-    after every scheduler step — mirroring ``_prepare_latents_i2v`` in serving.
+    rest is noise, and the framework sequence plan marks frame 0 as clean. The
+    closure restores that frame before every denoiser invocation.
     """
-    vae_scale_factor_temporal = getattr(getattr(vae, "config", None), "scale_factor_temporal", 4)
-    vae_scale_factor_spatial = getattr(getattr(vae, "config", None), "scale_factor_spatial", 16)
+    vae_scale_factor_temporal = getattr(
+        vae, "temporal_compression_factor", getattr(getattr(vae, "config", None), "scale_factor_temporal", 4)
+    )
+    vae_scale_factor_spatial = getattr(
+        vae, "spatial_compression_factor", getattr(getattr(vae, "config", None), "scale_factor_spatial", 16)
+    )
 
     T = (num_frames - 1) // vae_scale_factor_temporal + 1
     H = height // vae_scale_factor_spatial
     W = width // vae_scale_factor_spatial
-    video_shape = (T, H, W)
-
-    neg_conversations = [{"role": "user", "content": negative_prompt}]
-    neg_text = tokenizer.apply_chat_template(
-        neg_conversations, tokenize=False, add_generation_prompt=True,
-    )
-    neg_ids_raw = tokenizer.encode(neg_text, add_special_tokens=False)
-    neg_ids_raw.append(tokenizer.eos_token_id)
-    neg_ids_raw.append(tokenizer.convert_tokens_to_ids("<|vision_start|>"))
-    max_seq_len = prompts[0][0].shape[1]
-    pad_len = max_seq_len - len(neg_ids_raw)
-    neg_mask = [1] * len(neg_ids_raw) + [0] * pad_len
-    neg_ids_raw = neg_ids_raw + [tokenizer.pad_token_id or 0] * pad_len
-    uncond_ids = torch.tensor([neg_ids_raw], dtype=torch.long, device="cuda")
-    uncond_mask = torch.tensor([neg_mask], dtype=torch.float, device="cuda")
-
-    _is_flow_match = isinstance(scheduler, FlowMatchEulerDiscreteScheduler)
-    if _is_flow_match:
-        _scheduler = FlowMatchEulerDiscreteScheduler.from_config(dict(scheduler.config))
-        _fixed_sigmas = explicit_sigmas or (
-            (dict(scheduler.config).get("fixed_step_sampler_config") or {}).get("t_list")
-        )
-        _stochastic = bool(dict(scheduler.config).get("stochastic_sampling"))
-        print(f"[calib] scheduler: FlowMatchEulerDiscreteScheduler sigmas={_fixed_sigmas} stochastic={_stochastic}")
+    _is_fixed_step = hasattr(scheduler, "t_list")
+    if _is_fixed_step:
+        if explicit_sigmas is not None and list(scheduler.t_list[:-1]) != list(explicit_sigmas):
+            scheduler = FixedStepSampler(
+                t_list=list(explicit_sigmas),
+                sample_type=scheduler.sample_type,
+                num_train_timesteps=scheduler.num_train_timesteps,
+            )
+        print(f"[calib] scheduler: framework fixed-step sigmas={scheduler.t_list}")
     else:
-        _scheduler_cfg = dict(scheduler.config)
-        _scheduler_cfg["flow_shift"] = flow_shift
-        if sigma_max is not None:
-            _scheduler_cfg["sigma_max"] = sigma_max
-        if use_karras_sigmas is not None:
-            _scheduler_cfg["use_karras_sigmas"] = use_karras_sigmas
-        if use_flow_sigmas is not None:
-            _scheduler_cfg["use_flow_sigmas"] = use_flow_sigmas
-        _scheduler = UniPCMultistepScheduler.from_config(_scheduler_cfg)
-        _fixed_sigmas = None
         print(
-            f"[calib] scheduler: flow_shift={_scheduler_cfg.get('flow_shift')} "
-            f"sigma_max={_scheduler_cfg.get('sigma_max')} "
-            f"use_karras_sigmas={_scheduler_cfg.get('use_karras_sigmas')} "
-            f"use_flow_sigmas={_scheduler_cfg.get('use_flow_sigmas')}"
+            f"[calib] scheduler: framework UniPC shift={flow_shift} "
+            f"(sigma_max={sigma_max}, karras={use_karras_sigmas}, flow_sigmas={use_flow_sigmas})"
         )
 
     # Classifier-free guidance mirrors the pipeline: on iff guidance_scale != 1.0.
     # Distilled (DMD2) runs guidance 1.0 -> cond-only; calibrating the uncond branch
     # would sample activations the served model never produces.
     do_cfg = guidance_scale != 1.0
-    _step_gen = torch.Generator(device="cuda").manual_seed(seed)
     if not do_cfg:
         print("[calib] guidance_scale == 1.0 -> CFG disabled (cond-only calibration)")
-    _init_noise_sigma = float(getattr(_scheduler, "init_noise_sigma", 1.0))
 
-    noisy_frame_mask = None
     condition_mask = None
     if i2v:
         if not cond_latents:
             raise ValueError("i2v=True requires cond_latents (VAE-encoded conditioning frames).")
         condition_mask = torch.zeros(1, 1, T, 1, 1, dtype=torch.bfloat16, device="cuda")
         condition_mask[:, :, 0, :, :] = 1.0
-        noisy_frame_mask = 1.0 - condition_mask  # [1,1,T,1,1], frame 0 = 0 (clean)
 
-    def _run(mdl, hidden, ts, txt_ids, txt_mask):
-        return mdl(
-            hidden_states=hidden,
+    def _run(mdl, hidden, ts, text_indexes):
+        return _run_framework_denoiser(
+            mdl,
+            hidden=hidden,
             timestep=ts,
-            text_ids=txt_ids,
-            text_mask=txt_mask,
-            video_shape=video_shape,
-            fps=frame_rate,
-            noisy_frame_mask=noisy_frame_mask,
+            text_indexes=text_indexes,
+            frame_rate=frame_rate,
+            i2v=i2v,
         )
 
     def forward_loop(mdl):
         n_prompts = len(prompts)
         _mode = "i2v (clean frame-0 conditioning)" if i2v else "t2v/t2i"
         print(f"[calib] {_mode} diffusion calibration — {n_prompts} prompts x {num_inference_steps} steps")
+        data_batch = {mdl.input_caption_key: prompts}
+        has_negative_prompt = bool(negative_prompt)
+        if has_negative_prompt:
+            data_batch["neg_" + mdl.input_caption_key] = [negative_prompt] * n_prompts
+        cond_text_tokens, uncond_text_tokens = mdl._get_inference_text_tokens(data_batch, has_negative_prompt)
         torch.manual_seed(seed)
-        for prompt_idx, (cond_ids, cond_mask) in enumerate(prompts):
+        for prompt_idx, (cond_text_indexes, uncond_text_indexes) in enumerate(
+            zip(cond_text_tokens, uncond_text_tokens, strict=True)
+        ):
             print(f"[calib] prompt {prompt_idx + 1}/{n_prompts}")
-            if _is_flow_match and _fixed_sigmas:
-                _scheduler.set_timesteps(sigmas=list(_fixed_sigmas), device="cuda")
-            else:
-                _scheduler.set_timesteps(num_inference_steps, device="cuda")
-            timesteps_list = list(_scheduler.timesteps)
-            N = len(timesteps_list)
-
             noise = torch.randn(
                 1, NUM_CHANNELS, T, H, W, dtype=torch.bfloat16, device="cuda",
-            ) * _init_noise_sigma
+            )
             image_latent = None
             if i2v:
                 cond_latent = cond_latents[prompt_idx % len(cond_latents)].to(
@@ -356,21 +373,40 @@ def make_forward_loop(
             else:
                 latents = noise
 
-            for step_idx, t in enumerate(timesteps_list):
-                if step_idx % 10 == 0:
-                    print(f"[calib] prompt {prompt_idx + 1}/{n_prompts} step {step_idx + 1}/{N}")
-                timestep = t.unsqueeze(0)
-                noise_pred_cond = _run(mdl, latents, timestep, cond_ids, cond_mask)
+            def velocity_fn(
+                latent,
+                timestep,
+                *,
+                image_latent=image_latent,
+                cond_text_indexes=cond_text_indexes,
+                uncond_text_indexes=uncond_text_indexes,
+            ):
+                if image_latent is not None:
+                    latent[:, 0:1] = image_latent[0]
+                hidden = latent.unsqueeze(0)
+                noise_pred_cond = _run(mdl, hidden, timestep, cond_text_indexes)
                 if do_cfg:
-                    noise_pred_uncond = _run(mdl, latents, timestep, uncond_ids, uncond_mask)
+                    noise_pred_uncond = _run(mdl, hidden, timestep, uncond_text_indexes)
                     noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_cond - noise_pred_uncond)
                 else:
                     noise_pred = noise_pred_cond
-                if _is_flow_match:
-                    latents = _scheduler.step(noise_pred, t, latents, generator=_step_gen).prev_sample
-                else:
-                    latents = _scheduler.step(noise_pred, t, latents).prev_sample
-                if i2v:
-                    latents[:, :, 0:1] = image_latent  # keep the conditioning frame clean
+                return noise_pred[0]
+
+            if _is_fixed_step:
+                scheduler(
+                    velocity_fn,
+                    latents[0],
+                    seed=seed,
+                    condition_reference=image_latent[0] if image_latent is not None else None,
+                    condition_mask=condition_mask[0] if condition_mask is not None else None,
+                )
+            else:
+                scheduler(
+                    velocity_fn,
+                    latents[0],
+                    num_steps=num_inference_steps,
+                    shift=flow_shift,
+                    seed=seed,
+                )
 
     return forward_loop

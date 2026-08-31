@@ -127,14 +127,13 @@ def quantize_fp8_checkpoint(
     i2v = profile == "i2v"
 
     model, transformer_dir = load_transformer(model_name_or_path)
-    tokenizer = model.vlm_tokenizer
     scheduler = model.fixed_step_sampler or model.sampler
     vae = model.tokenizer_vision_gen if i2v else _StubVAE()
 
     num_gen_layers = _calib.count_gen_layers(model)
     print(f"[init] gen_layers={num_gen_layers} profile={profile} sampler={sampler.label!r}")
 
-    prompts = _calib.prepare_calibration_prompts(tokenizer, num_samples=num_samples)
+    prompts = _calib.prepare_calibration_prompts(num_samples=num_samples)
 
     cond_latents = None
     if i2v:
@@ -149,7 +148,6 @@ def quantize_fp8_checkpoint(
         )
 
     forward_loop = _calib.make_forward_loop(
-        tokenizer=tokenizer,
         vae=vae,
         scheduler=scheduler,
         prompts=prompts,
