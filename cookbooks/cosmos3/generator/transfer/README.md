@@ -271,7 +271,7 @@ canonical blocking `/v1/videos/sync` route.
 [`run_video_transfer_with_trt_llm.ipynb`](./run_video_transfer_with_trt_llm.ipynb)
 runs edge, blur, depth, segmentation, and WSM against an already-running Nano
 or Super server. It reuses the checked-in media and captions, shows the complete
-mode matrix, validates the multipart/base64 request contract, and previews the
+mode matrix, validates the JSON/base64 control request contract, and previews the
 synchronous encoded-video responses.
 
 ## Run with vLLM-Omni
@@ -400,7 +400,7 @@ Key fields:
   then the same five on Super, driven by the same specs.
 - [`run_video_transfer_with_trt_llm.ipynb`](./run_video_transfer_with_trt_llm.ipynb) —
   five single-control transfers through TensorRT-LLM's synchronous VisualGen API,
-  using multipart source uploads and base64 precomputed controls where required.
+  using base64-encoded precomputed controls in JSON `extra_params`.
 - [`run_video_transfer_with_vllm_omni.ipynb`](./run_video_transfer_with_vllm_omni.ipynb) —
   full tutorial against an already-running vLLM-Omni server: endpoint checks, repo-local
   control paths, five single-control transfer requests, and compact previews. The API
