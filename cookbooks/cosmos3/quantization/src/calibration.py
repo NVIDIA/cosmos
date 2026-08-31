@@ -17,6 +17,7 @@ from __future__ import annotations
 import copy
 import itertools
 import json
+import math
 import re
 from pathlib import Path
 
@@ -52,6 +53,165 @@ _BASE_SKIP_TOKENS_NO_LM = (
 
 # Video latent channel count (Cosmos3/Wan VAE).
 NUM_CHANNELS = 48
+
+
+def apply_legacy_timestep_embedding(model) -> None:
+    """Rebuild timestep frequencies with the historical bf16 construction.
+
+    This deliberately does not cast the framework's fp32 frequency buffer: the
+    historical code performed ``arange`` and ``exp`` in bf16, which produces
+    different values from rounding a completed fp32 result.  The buffer remains
+    fp32 so the framework's autocast boundary is unchanged.
+    """
+    embedder = model.net.time_embedder
+    half = embedder.frequency_embedding_size // 2
+    legacy_frequencies = torch.exp(
+        -math.log(10000)
+        * torch.arange(
+            start=0,
+            end=half,
+            dtype=torch.bfloat16,
+            device=embedder._timestep_frequencies.device,
+        )
+        / half
+    )
+    embedder._timestep_frequencies.copy_(
+        legacy_frequencies.to(dtype=embedder._timestep_frequencies.dtype)
+    )
+    print("[calib] legacy-equivalence timestep frequencies enabled")
+
+
+def apply_legacy_qk_norm(model) -> None:
+    """Use historical ``F.rms_norm`` arithmetic for per-head Q/K norms.
+
+    This diagnostic must be installed before compilation.  The framework Qwen
+    RMSNorm module has matching parameters but different bf16 rounding from the
+    functional kernel used by the historical Cosmos3 transformer.
+    """
+    import torch.nn.functional as F
+
+    class LegacyQKNorm(torch.nn.Module):
+        def __init__(self, weight, eps) -> None:
+            super().__init__()
+            self.weight = weight
+            self.variance_epsilon = eps
+
+        def forward(self, hidden_states):
+            return F.rms_norm(
+                hidden_states,
+                (hidden_states.shape[-1],),
+                self.weight,
+                self.variance_epsilon,
+            )
+
+    replaced = 0
+    for layer in model.net.language_model.model.layers:
+        for name in ("q_norm", "k_norm", "q_norm_moe_gen", "k_norm_moe_gen"):
+            norm = getattr(layer.self_attn, name)
+            if hasattr(norm, "weight"):
+                setattr(
+                    layer.self_attn,
+                    name,
+                    LegacyQKNorm(norm.weight, norm.variance_epsilon),
+                )
+                replaced += 1
+    print(f"[calib] legacy-equivalence Q/K RMSNorm enabled ({replaced} modules)")
+
+
+def apply_legacy_rotary_embedding(model) -> None:
+    """Reproduce legacy's bf16 model cast followed by fp32 rotary restoration."""
+    rotary = model.net.language_model.model.rotary_emb
+    rotary.inv_freq.copy_(rotary.inv_freq.to(torch.bfloat16).to(rotary.inv_freq.dtype))
+    print("[calib] legacy-equivalence rotary frequencies enabled")
+
+
+def apply_legacy_attention(model, *, text_width: int = 512) -> None:
+    """Reproduce historical single-sample T2V layer attention.
+
+    Historical calibration padded text to ``text_width`` rows and used PyTorch
+    SDPA for both causal and generation attention.  Framework packing correctly
+    omits those rows and uses its fused attention frontend by default.  This
+    opt-in adapter restores the former behavior only for the cookbook's
+    single-sample, two-way T2V calibration path.
+    """
+    import torch.nn.functional as F
+    from cosmos_framework.data.generator.sequence_packing.runtime import (
+        from_mode_splits,
+        get_causal_seq_padded,
+        get_full_only_seq_padded,
+        get_gen_seq,
+        get_num_real_tokens,
+        get_und_seq,
+    )
+
+    def legacy_dispatch(query_pack, key_pack, value_pack, attention_mask, **kwargs):
+        if (
+            attention_mask.is_three_way
+            or attention_mask.control_stream_token_ranges is not None
+            or attention_mask.flex_block_mask is not None
+            or kwargs.get("memory_value") is not None
+            or query_pack["sample_offsets"].shape[0] != 2
+        ):
+            raise ValueError(
+                "legacy calibration behavior supports only single-sample, "
+                "two-way T2V attention without control streams or KV memory"
+            )
+
+        def heads_first(tensor: torch.Tensor) -> torch.Tensor:
+            return tensor.transpose(0, 1).unsqueeze(0)
+
+        def flatten_heads(tensor: torch.Tensor) -> torch.Tensor:
+            return tensor.squeeze(0).transpose(0, 1).flatten(-2, -1)
+
+        causal_q, _, _ = get_causal_seq_padded(query_pack)
+        causal_k, _, _ = get_causal_seq_padded(key_pack)
+        causal_v, _, _ = get_causal_seq_padded(value_pack)
+        causal_output = F.scaled_dot_product_attention(
+            heads_first(causal_q),
+            heads_first(causal_k),
+            heads_first(causal_v),
+            is_causal=True,
+            enable_gqa=True,
+        )
+
+        num_und, num_gen = get_num_real_tokens(query_pack)
+        padding_rows = text_width - num_und
+        if padding_rows < 0:
+            raise ValueError(
+                f"legacy text width {text_width} is smaller than {num_und} real tokens"
+            )
+        normalized_key_pack = kwargs.get("packed_key_states_normalized")
+        generation_key_pack = (
+            normalized_key_pack if normalized_key_pack is not None else key_pack
+        )
+        key_und = get_und_seq(generation_key_pack)[:num_und]
+        key_gen = get_gen_seq(generation_key_pack)[:num_gen]
+        value_und = get_und_seq(value_pack)[:num_und]
+        value_gen = get_gen_seq(value_pack)[:num_gen]
+        full_q, _, _ = get_full_only_seq_padded(query_pack)
+        zero_k = key_und.new_zeros((padding_rows, *key_und.shape[1:]))
+        zero_v = value_und.new_zeros((padding_rows, *value_und.shape[1:]))
+        generation_output = F.scaled_dot_product_attention(
+            heads_first(full_q),
+            heads_first(torch.cat((key_und, zero_k, key_gen))),
+            heads_first(torch.cat((value_und, zero_v, value_gen))),
+            enable_gqa=True,
+        )
+        return (
+            from_mode_splits(
+                flatten_heads(causal_output),
+                flatten_heads(generation_output),
+                query_pack,
+            ),
+            None,
+        )
+
+    for layer in model.net.language_model.model.layers:
+        layer.self_attn.dispatch_attention_fn = legacy_dispatch
+    print(
+        "[calib] legacy-equivalence attention enabled "
+        f"({len(model.net.language_model.model.layers)} layers, text_width={text_width})"
+    )
 
 
 def build_quant_config(algo: str = "max") -> dict:
@@ -284,13 +444,15 @@ def make_forward_loop(
     i2v: bool = False,
     cond_latents: list | None = None,
     explicit_sigmas: list[float] | None = None,
+    use_legacy_scheduler: bool = False,
 ):
     """Build a ``forward_loop(mdl)`` that simulates real denoising for calibration.
 
-    The framework sampler selects the sampling regime: its fixed-step sampler
-    drives distilled students, while its UniPC sampler drives the base models.
-    The cookbook still owns prompt selection, initial noise, CFG, and I2V clean
-    frame conditioning.
+    The framework sampler selects the normal sampling regime.  The opt-in
+    ``use_legacy_scheduler`` mode is an equivalence diagnostic which instead
+    drives the framework model with the checkpoint's historical Diffusers
+    scheduler.  The cookbook owns prompt selection, initial noise, CFG, and
+    I2V clean frame conditioning in either case.
 
     ``i2v=True`` calibrates the image-to-video regime: frame 0 of the latent is a
     clean VAE-encoded conditioning latent (from ``cond_latents``, round-robin), the
@@ -308,7 +470,28 @@ def make_forward_loop(
     H = height // vae_scale_factor_spatial
     W = width // vae_scale_factor_spatial
     _is_fixed_step = hasattr(scheduler, "t_list")
-    if _is_fixed_step:
+    if use_legacy_scheduler:
+        from diffusers import FlowMatchEulerDiscreteScheduler
+
+        _is_legacy_flow_match = isinstance(scheduler, FlowMatchEulerDiscreteScheduler)
+        if _is_legacy_flow_match:
+            _scheduler = FlowMatchEulerDiscreteScheduler.from_config(dict(scheduler.config))
+            _fixed_sigmas = explicit_sigmas or (
+                (dict(scheduler.config).get("fixed_step_sampler_config") or {}).get("t_list")
+            )
+        else:
+            _scheduler_config = dict(scheduler.config)
+            _scheduler_config["flow_shift"] = flow_shift
+            if sigma_max is not None:
+                _scheduler_config["sigma_max"] = sigma_max
+            if use_karras_sigmas is not None:
+                _scheduler_config["use_karras_sigmas"] = use_karras_sigmas
+            if use_flow_sigmas is not None:
+                _scheduler_config["use_flow_sigmas"] = use_flow_sigmas
+            _scheduler = scheduler.__class__.from_config(_scheduler_config)
+            _fixed_sigmas = None
+        print(f"[calib] legacy-equivalence scheduler: {type(_scheduler).__name__}")
+    elif _is_fixed_step:
         if explicit_sigmas is not None and list(scheduler.t_list[:-1]) != list(explicit_sigmas):
             scheduler = FixedStepSampler(
                 t_list=list(explicit_sigmas),
@@ -363,6 +546,8 @@ def make_forward_loop(
             noise = torch.randn(
                 1, NUM_CHANNELS, T, H, W, dtype=torch.bfloat16, device="cuda",
             )
+            if use_legacy_scheduler:
+                noise = noise * float(getattr(_scheduler, "init_noise_sigma", 1.0))
             image_latent = None
             if i2v:
                 cond_latent = cond_latents[prompt_idx % len(cond_latents)].to(
@@ -392,7 +577,27 @@ def make_forward_loop(
                     noise_pred = noise_pred_cond
                 return noise_pred[0]
 
-            if _is_fixed_step:
+            if use_legacy_scheduler:
+                if _is_legacy_flow_match and _fixed_sigmas:
+                    _scheduler.set_timesteps(sigmas=list(_fixed_sigmas), device="cuda")
+                else:
+                    _scheduler.set_timesteps(num_inference_steps, device="cuda")
+                image_latent_legacy = image_latent
+                for timestep in _scheduler.timesteps:
+                    noise_pred_cond = _run(
+                        mdl, latents, timestep.unsqueeze(0), cond_text_indexes
+                    )[0]
+                    if do_cfg:
+                        noise_pred_uncond = _run(
+                            mdl, latents, timestep.unsqueeze(0), uncond_text_indexes
+                        )[0]
+                        noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_cond - noise_pred_uncond)
+                    else:
+                        noise_pred = noise_pred_cond
+                    latents = _scheduler.step(noise_pred, timestep, latents).prev_sample
+                    if image_latent_legacy is not None:
+                        latents[:, :, 0:1] = image_latent_legacy
+            elif _is_fixed_step:
                 scheduler(
                     velocity_fn,
                     latents[0],

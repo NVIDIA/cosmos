@@ -42,6 +42,15 @@ quantize_fp8_checkpoint(
 )
 ```
 
+`calibration_behavior="framework"` is the default for new checkpoints. For a
+legacy T2V calibration-equivalence run, use
+`calibration_behavior="legacy"`; it restores the historical scheduler, numeric
+arithmetic, padded-text attention context, and SDPA attention. This compatibility
+route is single-sample T2V only and is slower than the framework default. It
+targets legacy-equivalent calibration rather than promising bit-perfect output
+for every prompt; the remaining known discrepancy is a small unconditional
+language-attention residual.
+
 A base model and its distilled student are the *same* network and **differ only by the
 `Sampler`** (scheduler class + steps + guidance). That is the whole idea behind the
 Text-to-Image and Image-to-Video notebooks: the same call, twice, with a different sampler.

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import torch
 import modelopt.torch.quantization as mtq
@@ -19,6 +20,7 @@ import modelopt.torch.quantization as mtq
 from . import calibration as _calib
 from . import export as _export
 from .checkpoint_io import (
+    load_legacy_scheduler,
     load_transformer,
     load_sharded_safetensors,
     resolve_checkpoint_path,
@@ -109,6 +111,7 @@ def quantize_fp8_checkpoint(
     i2v_cond_dir: str | Path | None = None,
     i2v_cond_dataset: str | None = None,
     keep_model: bool = False,
+    calibration_behavior: Literal["framework", "legacy"] = "framework",
 ):
     """Quantize a diffusers-layout Cosmos3 checkpoint to FP8 and write a drop-in dir.
 
@@ -118,16 +121,30 @@ def quantize_fp8_checkpoint(
 
     ``profile`` is one of ``"t2v"``, ``"t2i"``, ``"i2v"``. ``i2v`` requires either
     ``i2v_cond_dir`` (a local image dir) or ``i2v_cond_dataset`` (a ModelOpt VLM
-    dataset name). Returns the assembled ``output_dir`` (and, if ``keep_model``, the
-    calibrated model for inspection).
+    dataset name). ``calibration_behavior="framework"`` is the default recipe for
+    new checkpoints. ``"legacy"`` is an opt-in, single-sample T2V compatibility
+    recipe that restores the historical scheduler, numeric bridges, and attention
+    behavior to pursue legacy-equivalent FP8 calibration. Returns the assembled
+    ``output_dir`` (and, if ``keep_model``, the calibrated model for inspection).
     """
     input_dir, output_dir = resolve_checkpoint_path(model_name_or_path), Path(output_dir)
     if profile not in ("t2v", "t2i", "i2v"):
         raise ValueError(f"profile must be t2v/t2i/i2v, got {profile!r}")
+    if calibration_behavior == "legacy" and profile != "t2v":  # TODO: support other profiles
+        raise ValueError("calibration_behavior='legacy' currently supports only profile='t2v'")
     i2v = profile == "i2v"
+    legacy_behavior = calibration_behavior == "legacy"
 
     model, transformer_dir = load_transformer(model_name_or_path)
-    scheduler = model.fixed_step_sampler or model.sampler
+    if legacy_behavior:
+        print("[init] calibration_behavior=legacy (historical T2V compatibility)")
+        _calib.apply_legacy_timestep_embedding(model)
+        _calib.apply_legacy_qk_norm(model)
+        _calib.apply_legacy_rotary_embedding(model)
+        _calib.apply_legacy_attention(model)
+        scheduler = load_legacy_scheduler(input_dir)
+    else:
+        scheduler = model.fixed_step_sampler or model.sampler
     vae = model.tokenizer_vision_gen if i2v else _StubVAE()
 
     num_gen_layers = _calib.count_gen_layers(model)
@@ -166,6 +183,7 @@ def quantize_fp8_checkpoint(
         i2v=i2v,
         cond_latents=cond_latents,
         explicit_sigmas=sampler.explicit_sigmas or _calib.resolve_distilled_sigmas(input_dir),
+        use_legacy_scheduler=legacy_behavior,
     )
 
     quant_cfg = _calib.build_quant_config(quant_algo)
@@ -212,6 +230,7 @@ __all__ = [
     "quantize_fp8_checkpoint",
     "diffusers_input_scales",
     "load_transformer",
+    "load_legacy_scheduler",
     "load_sharded_safetensors",
     "resolve_checkpoint_path",
     "save_sharded_safetensors",

@@ -109,7 +109,30 @@ def load_transformer(model_name_or_path: str):
         cp_size=1,
         cfgp_size=1,
         use_cuda_graphs=False,
+        use_torch_compile=False,
         guardrails=False,
     ).build_setup(world_size=1, local_world_size=1)
     inference = OmniInference.create(setup_args)
     return inference.model, transformer_dir
+
+
+def load_legacy_scheduler(input_dir: str | Path):
+    """Load the checkpoint's Diffusers scheduler for equivalence experiments.
+
+    The normal cookbook path uses the scheduler supplied by ``OmniInference``.
+    This opt-in helper exists solely to compare its sampling trajectory with the
+    historical cookbook, whose scheduler was a Diffusers component in the
+    checkpoint layout.
+    """
+    from diffusers import FlowMatchEulerDiscreteScheduler, UniPCMultistepScheduler
+
+    scheduler_dir = Path(input_dir) / "scheduler"
+    with open(scheduler_dir / "scheduler_config.json") as f:
+        config = json.load(f)
+    scheduler_cls = {
+        "FlowMatchEulerDiscreteScheduler": FlowMatchEulerDiscreteScheduler,
+        "UniPCMultistepScheduler": UniPCMultistepScheduler,
+    }.get(config.get("_class_name"), UniPCMultistepScheduler)
+    scheduler = scheduler_cls.from_pretrained(str(scheduler_dir))
+    print(f"[calib] legacy-equivalence scheduler: {type(scheduler).__name__}")
+    return scheduler
