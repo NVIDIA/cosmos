@@ -265,9 +265,6 @@ trtllm-serve nvidia/Cosmos3-Super-Image2Video-4Step \
   --port "$COSMOS3_TRTLLM_PORT"
 ```
 
-Action uses the Nano launch above. For DROID policy inference, replace the model
-with `nvidia/Cosmos3-Nano-Policy-DROID` and keep the one-GPU Nano config.
-
 The server exposes `/health`, the blocking `/v1/videos/sync`, the asynchronous
 `/v1/videos`, and `/v1/images/generations`. The older
 `/v1/videos/generations` spelling is a deprecated alias of `/v1/videos/sync`.

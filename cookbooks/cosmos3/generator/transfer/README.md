@@ -43,7 +43,7 @@ for the negative caption.
 | Blur | `assets/blur/` | `control_blur.mp4` + `prompt.json` | 121 frames @ 30 FPS |
 | Depth | `assets/depth/` | `control_depth.mp4` + `prompt.json` | 121 frames @ 30 FPS |
 | Segmentation | `assets/seg/` | `control_seg.mp4` + `prompt.json` | 121 frames @ 30 FPS |
-| World scenario (WSM) | `assets/wsm/` | `control_wsm.mp4` + `prompt.json` | 101 frames @ 10 FPS |
+| World scenario (WSM) | `assets/wsm/` | `control_wsm.mp4` + `prompt.json` | 100 frames @ 10 FPS |
 | Multi-control | `assets/multi_control/` | `vision_path` + multiple hints (Framework example) | 121 frames @ 30 FPS |
 
 Transfer inference is selected automatically when any hint key is present in the
@@ -262,7 +262,7 @@ control media. Precomputed edge and blur are also accepted. Use
 rather than a server-local `control_path`. When neither output dimension is
 specified, TensorRT-LLM chooses the nearest supported bucket from the source or
 first precomputed control's aspect ratio. The checked-in examples explicitly
-request 1280×720 and their native frame count/fps; WSM uses 101 frames at 10
+request 1280×720 and their native frame count/fps; WSM uses 100 frames at 10
 fps. `/v1/videos/generations` remains only as a deprecated alias of the
 canonical blocking `/v1/videos/sync` route.
 

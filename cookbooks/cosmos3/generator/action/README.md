@@ -217,9 +217,9 @@ print(payload["video"].shape, payload["action"].shape, payload["frame_rate"].ite
 
 The `av` domain preset supplies its 60-step, 9D, 480p/10 fps recipe; other
 recognized domains similarly fill omitted action width, chunk, resolution, and
-frame rate. Policy and inverse dynamics predict their action tensors, while
-forward dynamics carries the conditioned action alongside the rollout. All
-Action modes therefore use a tensor output: `format=auto` selects
+frame rate. Inverse dynamics predicts its action tensor, while forward dynamics
+carries the conditioned action alongside the rollout. Both supported modes use
+a tensor output: `format=auto` selects
 `safetensors`, and explicit `mp4`/`avi` is rejected rather than dropping the
 trajectory.
 
@@ -236,11 +236,8 @@ older `/v1/videos/generations` spelling is a deprecated alias. The asynchronous
   dynamics from the checked-in AV image and 60×9 action trajectory.
 - [`run_id_with_trt_llm.ipynb`](./run_id_with_trt_llm.ipynb) — inverse
   dynamics from the checked-in AV observation clip.
-- [`run_policy_with_trt_llm.ipynb`](./run_policy_with_trt_llm.ipynb) — DROID
-  policy inference with a concatenated three-camera first frame and
-  `nvidia/Cosmos3-Nano-Policy-DROID`.
 
-Each notebook decodes TensorRT-LLM's `safetensors` response, writes the rollout
+Both notebooks decode TensorRT-LLM's `safetensors` response, write the rollout
 video, and inspects the named `action` tensor. This response contract is not the
 top-level action JSON used by vLLM-Omni.
 
