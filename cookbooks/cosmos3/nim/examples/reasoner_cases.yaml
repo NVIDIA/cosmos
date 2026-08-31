@@ -1,0 +1,348 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+version: 1
+prompt_source:
+  backend: vllm
+  path: cookbooks/cosmos3/reasoner/run_with_vllm.ipynb
+  contract: Exact runtime user-prompt strings; NIM media transport and post-response validation remain backend-specific.
+validated_baseline:
+  model_variant: super
+  precision: bf16
+  dflash: false
+  video_pruning_rate: 0.0
+  note: All exact-prompt catalog API and format paths have been observed on this target-only, unpruned-video baseline; task quality and general vLLM output parity still require case-specific review.
+defaults:
+  max_tokens: 4096
+  video_fps: 4.0
+  native_thinking_enabled: false
+  thinking_token_budget: 512
+  sampling:
+    temperature: 0.7
+    top_p: 0.8
+    presence_penalty: 0.0
+  request_extensions:
+    top_k: 20
+    repetition_penalty: 1.0
+
+cases:
+  image_caption:
+    title: Detailed image caption
+    category: captioning
+    media:
+      type: image
+      asset: robot_153.jpg
+    prompt: Caption the image in detail.
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Describes the visible robot, workspace, and surrounding objects.
+
+  video_caption:
+    title: Detailed video caption
+    category: captioning
+    media:
+      type: video
+      asset: video_caption.mp4
+    prompt: Describe the video in detail.
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Describes the robot picking up and packing the white box.
+
+  temporal_localization:
+    title: Temporal action segments in seconds
+    category: temporal_localization
+    media:
+      type: video
+      asset: temporal_localization_1.mp4
+    prompt: "List all action segments in the video. For each detected event, you must determine:\n\nProvide the result in json format with 'seconds' for time depiction for each event. Use keywords 'start', 'end' and 'caption' in the json output. Please list multiple events if applicable.\n\n```json\n[\n{\n  \"start\": t_start,\n  \"end\": t_end,\n  \"caption\": EVENT1\n},\n{\n  \"start\": t_start,\n  \"end\": t_end,\n  \"caption\": EVENT2\n},\n...\n]\n``` "
+    sampling:
+      seed: 0
+    output:
+      kind: json_schema
+      schema: temporal_events_seconds
+    review:
+      - Covers the cup pickup, popcorn dispensing, placement, and arm retraction.
+      - Event intervals correspond to the visible sequence.
+
+  event_timeline:
+    title: Event timeline using timecodes
+    category: temporal_localization
+    media:
+      type: video
+      asset: temporal_localization_2.mp4
+    prompt: Describe the notable events in the provided video. Provide the result in json format with 'mm:ss.ff' format for time depiction for each event.Use keywords 'start', 'end' and 'caption' in the json output.
+    sampling:
+      seed: 0
+    output:
+      kind: json_schema
+      schema: temporal_events_timecodes
+    review:
+      - Covers the people leaving the room and carrying boxes down the hallway.
+      - Event intervals correspond to the visible sequence.
+
+  timestamp_query:
+    title: Locate one event in time
+    category: temporal_localization
+    media:
+      type: video
+      asset: temporal_localization_2.mp4
+    prompt: |-
+      When is "A man in a white sweater walks out of a room carrying a box, closes the door behind him, walks on the floor, and turns left at the end near the wall." depicted in the video? Please provide the result in json format with 'mm:ss.ff' format for time depiction for the event. Use keywords 'start', 'end' in the json output.
+    sampling:
+      seed: 0
+    output:
+      kind: json_schema
+      schema: timestamp_range
+    review:
+      - The interval contains the complete requested action.
+
+  interval_question:
+    title: Describe a specified time interval
+    category: temporal_localization
+    media:
+      type: video
+      asset: temporal_localization_2.mp4
+    prompt: What happened between 00:05.64 and 00:17.49?
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Describes people emerging from the room with boxes and entering the hallway.
+
+  robotics_next_action:
+    title: Predict a robot's next immediate action
+    category: embodied_reasoning
+    media:
+      type: video
+      asset: robotics_next_action.mp4
+    prompt: "What can be the next immediate action? Answer the question using the following format: <think> Your reasoning. </think> Write your final answer immediately after the </think> tag."
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Predicts that the robot will place the charger or box into the cardboard box.
+
+  drive_scene_next_action:
+    title: Plan the next driving action
+    category: embodied_reasoning
+    media:
+      type: video
+      asset: drive_scene_next_action.mp4
+    prompt: You are an autonomous vehicle planning system. The video depicts the observation from the vehicle's camera. You need to observe the critical objects in the environment and reason your next action and the driving trajectory ahead.
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Identifies navigation-critical agents and proposes a safe immediate action.
+
+  robot_planning:
+    title: Plan a flower placement task
+    category: embodied_reasoning
+    media:
+      type: image
+      asset: robot_planning.png
+    prompt: The task is to put flower into the red bottle. Generate a plan consisting of subtasks for accomplish the task.
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Includes movement to the flower, grasp or pickup, movement to the bottle, and placement.
+
+  assisted_task_next_action:
+    title: Predict the next assisted-task action
+    category: embodied_reasoning
+    media:
+      type: video
+      asset: assisted_task_next_action.mp4
+    prompt: |-
+      This is the overall task that the agent is trying to complete: "The student exchanges the black ink cartridge of the printer."
+                  In the video, the agent is trying to follow the instruction (a single step out of many to complete the overall task): "place old ink_cartridge."
+                  What should be the next action of the agent?
+                  Answer the question using the following format:
+                  <think>
+                  Your reasoning.
+                  </think>
+                  Write your final answer immediately after the </think> tag.
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Proposes obtaining or installing the replacement black ink cartridge.
+
+  common_sense_reasoning:
+    title: Assess countertop support
+    category: common_sense
+    media:
+      type: video
+      asset: common_sense_reasoning.mp4
+    prompt: |-
+      Can the countertop support the weight of the juicers?
+                  Answer the question using the following format:
+
+                  <think>
+                  Your reasoning.
+                  </think>
+
+                  Write your final answer immediately after the </think> tag.
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Answers the support question and cites visible evidence rather than an unrelated event.
+
+  grounding_2d:
+    title: Ground the load with a 2D box
+    category: spatial_reasoning
+    media:
+      type: image
+      asset: grounding_2d.png
+    prompt: Locate the accurate bounding box of the load as a whole. Return a json.
+    sampling:
+      seed: 0
+    output:
+      kind: json_schema
+      schema: grounding_boxes
+      visualization: boxes
+    review:
+      - The box encloses the complete load rather than one component or the full image.
+
+  describe_anything:
+    title: Describe marked image subjects
+    category: spatial_reasoning
+    media:
+      type: image
+      asset: describe_anything.png
+    prompt: 'Please caption the notable attributes in the provided image. List and describe all marked subjects in the image with their categories and detailed captions using a json with keyword "subject_id", "category" and "caption".'
+    sampling:
+      seed: 0
+    output:
+      kind: json_schema
+      schema: subject_captions
+    review:
+      - Covers every visibly marked subject with the matching ID and category.
+
+  trajectory_2d:
+    title: Move a bowl with a 2D gripper trajectory
+    category: action_cot
+    media:
+      type: image
+      asset: action_cot_trajectory.png
+    prompt: |
+      You are given the task "Move the pink bowl to the right". Specify the 2D trajectory your end effector should follow in pixel space. Return the trajectory coordinates in JSON format like this: {"point_2d": [x, y], "label": "gripper trajectory"}.
+      Answer the question using the following format:
+
+      <think>
+      Your reasoning.
+      </think>
+
+      Write your final answer immediately after the </think> tag.
+    sampling:
+      seed: 0
+      temperature: 0.6
+      top_p: 0.95
+      presence_penalty: 0.0
+    request_extensions:
+      top_k: 20
+      repetition_penalty: 1.0
+    output:
+      kind: json_schema
+      schema: trajectory_points
+      visualization: trajectory
+    review:
+      - Approaches and reaches the pink bowl.
+      - Includes pickup or grasp and transports the bowl to the right.
+      - Includes placement or release before retraction.
+
+  flower_trajectory_2d:
+    title: Place a flower with a 2D gripper trajectory
+    category: action_cot
+    media:
+      type: image
+      asset: robot_planning.png
+    prompt: "You are given the task \"Put flower into the red bottle\". Specify the 2D trajectory your end effector should follow in pixel space. Return the trajectory coordinates in JSON format like this: {\"point_2d\": [x, y], \"label\": \"gripper trajectory\"}. \nAnswer the question using the following format:\n\n<think> Your reasoning. </think>\nWrite your final answer immediately after the </think> tag.\n"
+    sampling:
+      seed: 0
+      temperature: 0.6
+      top_p: 0.95
+      presence_penalty: 0.0
+    request_extensions:
+      top_k: 20
+      repetition_penalty: 1.0
+    output:
+      kind: json_schema
+      schema: trajectory_points
+      visualization: trajectory
+    review:
+      - Approaches and reaches the flower.
+      - Includes pickup or grasp and transports the flower to the red bottle.
+      - Includes placement into the bottle before retraction.
+
+  driving_scene_action_cot:
+    title: Identify critical objects for safe navigation
+    category: action_cot
+    media:
+      type: video
+      asset: action_cot_driving_scene.mp4
+    prompt: |-
+      The video depicts the observation from the vehicle's camera. You need to think step by step and identify the objects in the scene that are critical for safe navigation.
+      Answer the question using the following format:
+      <think>
+      Your reasoning.
+      </think>
+      Write your final answer immediately after the </think> tag.
+    sampling:
+      seed: 0
+      temperature: 0.6
+      top_p: 0.95
+      presence_penalty: 0.0
+    request_extensions:
+      top_k: 20
+      repetition_penalty: 1.0
+    output:
+      kind: text
+    review:
+      - Identifies the pedestrian as critical and recommends yielding or another safe response.
+
+  physical_plausibility:
+    title: Assess physical plausibility
+    category: physical_reasoning
+    media:
+      type: video
+      asset: physical_plausibility.mp4
+    prompt: |-
+      Is this video physically plausible/possible according to your understanding of e.g. object permanence, shape constancy (objects maintain shape over time), continuous trajectories of objects? Assume it is the normal laws of physics.
+      Your answer should be based on the events in the video and ignore the quality of the simulation engine. The rising wall is part of the experiment setup and should not be judged for plausibility.
+      (A) Possible
+      (B) Impossible
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Selects one of the requested alternatives based on the visible event.
+
+  situation_understanding:
+    title: Understand a cooking situation
+    category: situation_understanding
+    media:
+      type: video
+      asset: situation_understanding.mp4
+    prompt: What is the person doing with the skillet? What will the person likely do next in this situation?
+    sampling:
+      seed: 0
+    output:
+      kind: text
+    review:
+      - Describes the skillet action and a plausible immediate cooking step.
