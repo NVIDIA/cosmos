@@ -359,11 +359,12 @@ and video requests.
 ## Transformers
 
 Local Python inference for the Cosmos3 Reasoner. This backend uses the
-Transformers Cosmos3 integration and loads only the Reasoner tower from the
-unified Cosmos3 checkpoint.
+Transformers Cosmos3 integration and loads only the Reasoner tower.
 
-Cosmos3 support first appears in the Transformers `v5.11.0` release tag. Create
-a venv and install Transformers `5.11.0` or newer:
+**Nano / Super** load the Reasoner tower from the unified
+`nvidia/Cosmos3-Nano` or `nvidia/Cosmos3-Super` checkpoint with
+`Cosmos3OmniForConditionalGeneration`. Support first appears in Transformers
+`v5.11.0`. Create a venv and install Transformers `5.11.0` or newer:
 
 ```bash
 uv venv --python 3.13 --seed --managed-python
@@ -383,10 +384,20 @@ uv pip install --torch-backend=auto \
 that matches your NVIDIA driver. Pin a backend such as `cu128` or `cu130` if
 your environment needs an explicit CUDA wheel.
 
-Use `Cosmos3OmniForConditionalGeneration` with `AutoProcessor` and either
-`nvidia/Cosmos3-Nano` or `nvidia/Cosmos3-Super`. See the
+**Cosmos3-Edge** uses a separate Transformers integration
+(`AutoModelForImageTextToText` / `Cosmos3EdgeForConditionalGeneration`) with
+`nvidia/Cosmos3-Edge`. Do not load Edge with `Cosmos3OmniForConditionalGeneration`.
+Edge support is on Transformers `main` and is not yet in a stable PyPI release;
+install from GitHub instead of the
+`transformers>=5.11.0` pin above:
+
+```bash
+uv pip install "transformers @ git+https://github.com/huggingface/transformers.git"
+```
+
+See the
 [Reasoner Transformers quickstart](reasoner/README.md#run-with-transformers)
-for a runnable image example and video input notes.
+for runnable Nano, Super, and Edge image examples and video input notes.
 
 ## vLLM
 
