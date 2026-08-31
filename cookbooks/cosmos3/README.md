@@ -9,6 +9,7 @@ backend you want to run and follow that one section.
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
 | [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio generation) | Generator (Audiovisual) |
+| [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action/transfer) | Generator (Audiovisual, Action, **Transfer**) |
@@ -259,6 +260,79 @@ video-only AVI encoder and cannot preserve generated audio. Requests send
 Cosmos3 controls through `extra_params`, so use a TensorRT-LLM build that includes
 the Cosmos3 VisualGen API schema. The notebook sets request-level
 `max_sequence_length=4096` for longer structured JSON prompts.
+
+## TensorRT-LLM Reasoner
+
+OpenAI-compatible **reasoning** server for image and video understanding. Run
+TensorRT-LLM in the prebuilt
+[`nvcr.io/nvidia/tensorrt-llm/release:1.3.0rc22`](https://catalog.ngc.nvidia.com/orgs/nvidia/tensorrt-llm/containers/release)
+container, or follow the
+[TensorRT-LLM Generator source-build instructions](#tensorrt-llm-generator) to
+install TensorRT-LLM from source.
+Authenticate with Hugging Face before loading gated checkpoints.
+
+Install headless OpenCV in the environment that runs the server. Cosmos3
+Reasoner uses it to process vision inputs:
+
+```bash
+python -m pip install opencv-python-headless
+```
+
+### Start the server
+
+Run one of these commands inside the release container or activated local
+environment.
+
+**Cosmos3-Nano** (single GPU, port 8001):
+
+```bash
+CUDA_VISIBLE_DEVICES=0 \
+trtllm-serve nvidia/Cosmos3-Nano \
+  --host 0.0.0.0 \
+  --port 8001 \
+  --max_num_tokens 32768
+```
+
+**Cosmos3-Super** (four GPUs, port 8001):
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
+trtllm-serve nvidia/Cosmos3-Super \
+  --host 0.0.0.0 \
+  --port 8001 \
+  --tensor_parallel_size 4 \
+  --max_num_tokens 32768
+```
+
+The server exposes `/health` and the OpenAI-compatible API at
+`http://localhost:8001/v1`.
+
+For every video request, pass the desired frame count explicitly under
+`media_io_kwargs`. The following `extra_body` fragment uses `26`, the concrete
+4 FPS frame count for the cookbook's `video_caption.mp4` example:
+
+```json
+{
+  "media_io_kwargs": {
+    "video": {"num_frames": 26, "fps": -1}
+  },
+  "mm_processor_kwargs": {
+    "do_sample_frames": false
+  }
+}
+```
+
+Replace `26` with the count computed for the input video and desired sampling
+rate. Keep the count in `media_io_kwargs`: setting it only in
+`mm_processor_kwargs` is too late because the shared decoder has already
+processed the video. Setting `fps` to `-1` disables a second decoder-side frame
+limit, and `do_sample_frames: false` keeps the model processor from resampling
+the decoded frames.
+
+See the
+[Reasoner TensorRT-LLM notebook](reasoner/run_with_tensorrt_llm.ipynb) for image
+and video requests. The notebook computes the concrete 4 FPS frame count for
+each input before sending the request.
 
 ## Transformers
 
