@@ -2,24 +2,24 @@
 # SPDX-License-Identifier: OpenMDW-1.1
 """Checkpoint I/O for the Cosmos3 FP8 quantization cookbook.
 
-Loads the pieces the calibration + export stages need from a diffusers-layout
-Cosmos3 checkpoint (``transformer/``, ``vae/``, ``scheduler/`` and — for the
-unified nano/super checkpoints — a bundled Qwen3-VL tokenizer at the root), and
-writes the quantized transformer back out as sharded safetensors.
-
-The transformer is the cookbook's own :class:`~src.cosmos3_vfm.Cosmos3VFMTransformer`;
-nothing here depends on any external pipeline package.
+Loads a diffusers-layout Cosmos3 checkpoint through the supported
+:class:`~cosmos_framework.inference.inference.OmniInference` path and provides
+the sharded-safetensors helpers that export uses to overlay FP8 weights onto
+the original bf16 transformer layout.
 """
 
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+from tempfile import gettempdir
 
 import torch
+from cosmos_framework.inference.args import OmniSetupOverrides
+from cosmos_framework.inference.inference import OmniInference
+from huggingface_hub import snapshot_download
 from safetensors.torch import load_file, save_file
-
-from .cosmos3_vfm import Cosmos3VFMTransformer
 
 
 def load_sharded_safetensors(checkpoint_dir: str | Path) -> dict[str, torch.Tensor]:
@@ -52,6 +52,7 @@ def save_sharded_safetensors(
     NB: emit exactly ONE weight index and no consolidated ``model.safetensors`` — the
     loader errors if two index files are present and drops files absent from the index.
     """
+
     def _nbytes(t: torch.Tensor) -> int:
         return t.numel() * t.element_size()
 
@@ -84,91 +85,31 @@ def save_sharded_safetensors(
     return n
 
 
-def detect_variant(input_dir: Path, transformer_dir: Path) -> str:
-    """Infer the model size (``8b``/``32b``) from the dir name or the transformer config."""
-    lower = str(input_dir).lower()
-    if "super" in lower:
-        return "32b"
-    if "nano" in lower:
-        return "8b"
-    cfg_path = transformer_dir / "config.json"
-    try:
-        cfg = json.loads(cfg_path.read_text())
-    except FileNotFoundError as e:
-        raise ValueError(
-            f"Cannot determine model variant from input_dir={input_dir!r} "
-            f"(no 'nano'/'super' substring) and {cfg_path} is missing."
-        ) from e
-    n_layers = int(cfg.get("num_hidden_layers", 0))
-    if n_layers == 36:
-        return "8b"
-    if n_layers >= 60:
-        return "32b"
-    raise ValueError(
-        f"Cannot determine model variant: {cfg_path} has num_hidden_layers={n_layers} "
-        "(expected 36 for 8B or >=60 for 32B)."
-    )
+def resolve_checkpoint_path(model_name_or_path: str) -> Path:
+    if os.path.exists(model_name_or_path):
+        return Path(model_name_or_path)
+    else:
+        return Path(snapshot_download(model_name_or_path))
 
 
-def load_transformer(input_dir: Path, variant: str | None = None):
-    """Load the Cosmos3 DiT (bf16, on CUDA, eval) from ``input_dir/transformer``."""
+def load_transformer(model_name_or_path: str):
+    """Load the Cosmos3 model through the supported ``OmniInference`` path."""
+    input_dir = resolve_checkpoint_path(model_name_or_path)
     transformer_dir = input_dir / "transformer"
     if not transformer_dir.is_dir():
-        raise FileNotFoundError(f"Expected {transformer_dir} (a diffusers-layout transformer/).")
-    variant = variant or detect_variant(input_dir, transformer_dir)
-    print(f"[load] transformer from {transformer_dir} (variant={variant})")
-    model = Cosmos3VFMTransformer(variant=variant)
-    model.load_weights(load_sharded_safetensors(transformer_dir))
-    model.to(torch.bfloat16)
-    model.post_load_weights()
-    model.to("cuda").eval()
-    return model, transformer_dir
+        raise FileNotFoundError(
+            f"Expected {transformer_dir} (a diffusers-layout transformer/)."
+        )
 
-
-def load_tokenizer(input_dir: Path, tokenizer_id: str | Path | None = None):
-    """Load the Qwen3-VL tokenizer.
-
-    Defaults to the tokenizer bundled at the checkpoint root (``local_files_only``)
-    so the cookbook never contacts the HF hub — the shared hub cache lock files are
-    often unwritable on root-squash NFS. Pass ``tokenizer_id`` to override.
-    """
-    from transformers import AutoTokenizer
-
-    src = str(tokenizer_id) if tokenizer_id is not None else str(input_dir)
-    local = tokenizer_id is None or Path(src).exists()
-    print(f"[load] tokenizer: {src} (local_files_only={local})")
-    return AutoTokenizer.from_pretrained(src, local_files_only=local)
-
-
-def load_scheduler(input_dir: Path):
-    """Load the checkpoint's scheduler, picking the class from ``scheduler_config.json``.
-
-    Base video/image models ship a ``UniPCMultistepScheduler``; the distilled few-step
-    students ship a ``FlowMatchEulerDiscreteScheduler`` (fixed sigmas + stochastic SDE
-    step). The class is what makes a base model and its distilled student "differ only
-    by scheduler" — the calibration loop branches on it.
-    """
-    from diffusers import FlowMatchEulerDiscreteScheduler, UniPCMultistepScheduler
-
-    scheduler_dir = input_dir / "scheduler"
-    if not scheduler_dir.is_dir():
-        raise FileNotFoundError(f"Expected {scheduler_dir} (a diffusers scheduler/).")
-    cfg = json.load(open(scheduler_dir / "scheduler_config.json"))
-    cls = {
-        "UniPCMultistepScheduler": UniPCMultistepScheduler,
-        "FlowMatchEulerDiscreteScheduler": FlowMatchEulerDiscreteScheduler,
-    }.get(cfg.get("_class_name"), UniPCMultistepScheduler)
-    scheduler = cls.from_pretrained(str(scheduler_dir))
-    print(f"[load] scheduler class: {type(scheduler).__name__}")
-    return scheduler
-
-
-def load_vae(input_dir: Path):
-    """Load the checkpoint's VAE (bf16, CUDA) — only needed for i2v conditioning."""
-    from diffusers import AutoencoderKLWan
-
-    vae_dir = input_dir / "vae"
-    if not vae_dir.is_dir():
-        raise FileNotFoundError(f"Expected {vae_dir} (a diffusers vae/).")
-    print(f"[load] vae from {vae_dir}")
-    return AutoencoderKLWan.from_pretrained(str(vae_dir), torch_dtype=torch.bfloat16).to("cuda")
+    setup_args = OmniSetupOverrides(
+        checkpoint_path=str(input_dir),
+        output_dir=Path(gettempdir()) / "cosmos3-quantization-load",
+        dp_replicate_size=1,
+        dp_shard_size=1,
+        cp_size=1,
+        cfgp_size=1,
+        use_cuda_graphs=False,
+        guardrails=False,
+    ).build_setup(world_size=1, local_world_size=1)
+    inference = OmniInference.create(setup_args)
+    return inference.model, transformer_dir

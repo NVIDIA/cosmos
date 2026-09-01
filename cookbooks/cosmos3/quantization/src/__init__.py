@@ -2,11 +2,6 @@
 # SPDX-License-Identifier: OpenMDW-1.1
 """Cosmos3 FP8 quantization cookbook — self-contained ``src/`` package.
 
-The model (:class:`Cosmos3VFMTransformer`) plus the ModelOpt static-scale FP8
-recipe that produced the shipped Cosmos3 FP8 checkpoints: calibration
-(:mod:`.calibration`), export (:mod:`.export`) and a one-call orchestrator
-(:func:`quantize_fp8_checkpoint`).
-
 The design centers on the :class:`Sampler`: a base model and its distilled student
 share the same model, shape and conditioning and **differ only by their sampler**
 (scheduler class + steps + guidance), so quantizing the pair is the same call twice
@@ -21,15 +16,12 @@ from pathlib import Path
 import torch
 import modelopt.torch.quantization as mtq
 
-from .cosmos3_vfm import Cosmos3VFMTransformer, compute_mrope_position_ids_text
 from . import calibration as _calib
 from . import export as _export
 from .checkpoint_io import (
     load_transformer,
-    load_tokenizer,
-    load_scheduler,
-    load_vae,
     load_sharded_safetensors,
+    resolve_checkpoint_path,
     save_sharded_safetensors,
 )
 
@@ -103,7 +95,7 @@ class _StubVAE:
 
 def quantize_fp8_checkpoint(
     *,
-    input_dir: str | Path,
+    model_name_or_path: str | Path,
     output_dir: str | Path,
     sampler: Sampler,
     shape: Shape,
@@ -116,8 +108,6 @@ def quantize_fp8_checkpoint(
     quantize_language_model: bool = True,
     i2v_cond_dir: str | Path | None = None,
     i2v_cond_dataset: str | None = None,
-    tokenizer_id: str | Path | None = None,
-    variant: str | None = None,
     keep_model: bool = False,
 ):
     """Quantize a diffusers-layout Cosmos3 checkpoint to FP8 and write a drop-in dir.
@@ -131,15 +121,15 @@ def quantize_fp8_checkpoint(
     dataset name). Returns the assembled ``output_dir`` (and, if ``keep_model``, the
     calibrated model for inspection).
     """
-    input_dir, output_dir = Path(input_dir), Path(output_dir)
+    input_dir, output_dir = resolve_checkpoint_path(model_name_or_path), Path(output_dir)
     if profile not in ("t2v", "t2i", "i2v"):
         raise ValueError(f"profile must be t2v/t2i/i2v, got {profile!r}")
     i2v = profile == "i2v"
 
-    model, transformer_dir = load_transformer(input_dir, variant=variant)
-    tokenizer = load_tokenizer(input_dir, tokenizer_id=tokenizer_id)
-    scheduler = load_scheduler(input_dir)
-    vae = load_vae(input_dir) if i2v else _StubVAE()
+    model, transformer_dir = load_transformer(model_name_or_path)
+    tokenizer = model.vlm_tokenizer
+    scheduler = model.fixed_step_sampler or model.sampler
+    vae = model.tokenizer_vision_gen if i2v else _StubVAE()
 
     num_gen_layers = _calib.count_gen_layers(model)
     print(f"[init] gen_layers={num_gen_layers} profile={profile} sampler={sampler.label!r}")
@@ -212,8 +202,6 @@ def diffusers_input_scales(model) -> dict[str, torch.Tensor]:
 
 
 __all__ = [
-    "Cosmos3VFMTransformer",
-    "compute_mrope_position_ids_text",
     "Sampler",
     "Shape",
     "SHAPE_VIDEO",
@@ -226,9 +214,7 @@ __all__ = [
     "quantize_fp8_checkpoint",
     "diffusers_input_scales",
     "load_transformer",
-    "load_tokenizer",
-    "load_scheduler",
-    "load_vae",
     "load_sharded_safetensors",
+    "resolve_checkpoint_path",
     "save_sharded_safetensors",
 ]

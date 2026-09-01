@@ -6,15 +6,15 @@ inference on NVIDIA GPUs with FP8 tensor cores, while preserving generation qual
 The output is a drop-in diffusers checkpoint (FP8 weights + per-tensor `weight_scale` /
 `input_scale` sidecars + `hf_quant_config.json`) that loads on vLLM-Omni.
 
-Everything needed is **self-contained in this folder** — the Cosmos3 model and the full
-FP8 recipe live in [`src/`](./src); the notebooks are thin walkthroughs on top of it.
-No other quantization pipeline is required.
+Everything needed for the FP8 recipe lives in [`src/`](./src); the cookbook loads
+Cosmos3 through the `cosmos-framework` inference API, and the notebooks are
+thin walkthroughs on top of it. No other quantization pipeline is required.
 
 ## What's in this folder
 
 | Path | Role |
 | --- | --- |
-| [`src/`](./src) | The Cosmos3 model + the complete FP8 recipe (load, calibrate, export). |
+| [`src/`](./src) | The complete FP8 recipe (framework load, calibrate, export). |
 | [`notebooks/`](./notebooks) | Three customer-facing walkthroughs (one per model family). |
 
 ### The `src/` package
@@ -23,8 +23,7 @@ No other quantization pipeline is required.
 
 | Module | Contents |
 | --- | --- |
-| `src/cosmos3_vfm.py` | The Cosmos3 DiT model (self-contained PyTorch). |
-| `src/checkpoint_io.py` | Load / save sharded safetensors; load the transformer, tokenizer, scheduler, VAE. |
+| `src/checkpoint_io.py` | Load through `OmniInference`; save sharded safetensors. |
 | `src/calibration.py` | Calibration prompts, image conditioning, the skip filter, and the denoising `forward_loop` ModelOpt calibrates against. |
 | `src/export.py` | Materialize the FP8 weights + scales into a vLLM-Omni diffusers checkpoint. |
 | `src/__init__.py` | The public API: `Sampler` / `Shape` presets and `quantize_fp8_checkpoint(...)`. |
@@ -36,7 +35,7 @@ import src
 from src import quantize_fp8_checkpoint, SHAPE_VIDEO, SAMPLER_VIDEO_BASE
 
 quantize_fp8_checkpoint(
-    input_dir="/path/to/Cosmos3-Nano",   # a diffusers-layout bf16 checkpoint
+    model_name_or_path="nvidia/Cosmos3-Nano",  # Hugging Face repo ID or local checkpoint
     output_dir="/path/to/nano-fp8",       # the FP8 drop-in written here
     profile="t2v", sampler=SAMPLER_VIDEO_BASE, shape=SHAPE_VIDEO,
     num_samples=8,
@@ -63,6 +62,7 @@ source "$COSMOS3_QUANTIZE_VENV/bin/activate"
 uv pip install --torch-backend=cu130 \
   "diffusers @ git+https://github.com/huggingface/diffusers.git" \
   "nvidia-modelopt[torch]" \
+  cosmos-framework \
   accelerate datasets huggingface_hub imageio imageio-ffmpeg \
   ipykernel jupyter-client nbconvert \
   numpy pillow safetensors torch torchvision transformers
