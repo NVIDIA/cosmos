@@ -1,13 +1,13 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: OpenMDW-1.1
-"""Export a calibrated Cosmos3 DiT as a vllm-omni-loadable FP8 diffusers checkpoint.
+"""Export a framework model as a vllm-omni-loadable FP8 Diffusers checkpoint.
 
-The calibrated model (this cookbook's :class:`~src.cosmos3_vfm.Cosmos3VFMTransformer`)
-is read directly: its FP8 weights + per-tensor scales are materialized, reverse-
-remapped to the diffusers key layout, and overlaid onto the full bf16 diffusers base
-so the projections / audio-action towers / lm_head / LM final norm are preserved.
-Then a drop-in checkpoint dir is assembled (transformer/ new, everything else
-symlinked back) with a ModelOpt FP8 ``quantization_config`` + a fresh root index.
+The calibrated :class:`~cosmos_framework.model.generator.omni_mot_model.OmniMoTModel`
+owns its quantized denoiser under ``model.net``. Its FP8 weights and scales are mapped
+back to the source Diffusers keys, then overlaid onto the full bf16 transformer. This
+preserves non-quantized projections, modality towers, and the language-model head.
+The resulting drop-in checkpoint has a new ``transformer/`` and links the remaining
+components back to the quantization source directory.
 
 FP8 only — the NIM pipeline's NVFP4 exporter and mixed-precision recipes are out of
 scope for the cookbook.
@@ -17,17 +17,14 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import shutil
 from pathlib import Path
 
-import torch
 import modelopt
+import torch
+from cosmos_framework.inference.model import _diffusers_to_net_key
 from modelopt.torch.export.diffusers_utils import hide_quantizers_from_state_dict
-from modelopt.torch.export.unified_export_hf import (
-    _fuse_qkv_linears_diffusion,
-    _process_quantized_modules,
-)
+from modelopt.torch.export.unified_export_hf import _process_quantized_modules
 
 from .checkpoint_io import load_sharded_safetensors, save_sharded_safetensors
 from .safetensors_index import build_root_index
@@ -62,86 +59,50 @@ def collapse_input_amax_to_scalar(mdl) -> int:
     return cnt
 
 
-def reverse_remap_state_dict(state_dict: dict) -> dict:
-    """Remap cosmos3_vfm internal keys -> diffusers/HF Cosmos3 checkpoint format.
+def _build_net_to_diffusers_key_map(bf16_state_dict: dict[str, torch.Tensor]) -> dict[str, str]:
+    """Invert the framework's Diffusers-load map for this source transformer.
 
-    Produces a top-level (no ``model.`` prefix) layout structurally identical to the
-    BF16 NGC ``transformer/`` shards, so the loader takes the same diffusers-style
-    code path for both BF16 and quantized checkpoints. ``time_embedder`` is rewritten
-    from the ``nn.Sequential`` indices ``time_embedder.mlp.{0,2}.*`` back to diffusers
-    ``linear_{1,2}.*``.
+    The source checkpoint is the authority for its Diffusers key set. Inverting the
+    framework map against that set keeps FP8 export aligned with framework loading,
+    including future changes to the MoT network's internal module names.
     """
-    remapped: dict = {}
-
-    for key, value in state_dict.items():
-        if key.startswith("time_embedder.mlp.0."):
-            remapped["time_embedder.linear_1." + key[len("time_embedder.mlp.0."):]] = value
+    net_to_diffusers: dict[str, str] = {}
+    for diffusers_key in bf16_state_dict:
+        net_key = _diffusers_to_net_key(diffusers_key, "transformer/weights.safetensors")
+        if net_key is None:
             continue
-        if key.startswith("time_embedder.mlp.2."):
-            remapped["time_embedder.linear_2." + key[len("time_embedder.mlp.2."):]] = value
-            continue
+        previous = net_to_diffusers.setdefault(net_key, diffusers_key)
+        if previous != diffusers_key:
+            raise KeyError(
+                "Multiple Diffusers keys map to one framework network key: "
+                f"{previous!r} and {diffusers_key!r} -> {net_key!r}."
+            )
+    return net_to_diffusers
 
-        if key.startswith(("vae2llm.", "llm2vae.", "time_embedder.")):
-            remapped[key] = value
-            continue
 
-        if key.startswith("norm_moe_gen."):
-            remapped[key] = value
-            continue
+def remap_framework_state_dict(
+    state_dict: dict[str, torch.Tensor], bf16_state_dict: dict[str, torch.Tensor]
+) -> dict[str, torch.Tensor]:
+    """Map ModelOpt-exported ``OmniMoTModel.net`` tensors to Diffusers keys."""
+    net_to_diffusers = _build_net_to_diffusers_key_map(bf16_state_dict)
+    remapped: dict[str, torch.Tensor] = {}
 
-        if key.startswith("language_model.embed_tokens.") or key.startswith("language_model.norm."):
-            remapped[key[len("language_model."):]] = value
+    for net_key, value in state_dict.items():
+        diffusers_key = net_to_diffusers.get(net_key)
+        if diffusers_key is None:
+            for suffix in _SCALE_SUFFIXES:
+                if not net_key.endswith(suffix):
+                    continue
+                weight_key = net_key[: -len(suffix)] + ".weight"
+                weight_diffusers_key = net_to_diffusers.get(weight_key)
+                if weight_diffusers_key is not None:
+                    diffusers_key = weight_diffusers_key[: -len(".weight")] + suffix
+                break
+        if diffusers_key is None:
             continue
-
-        m = re.match(r"^language_model\.layers\.(\d+)\.(.+)$", key)
-        if m:
-            i, rest = m.group(1), m.group(2)
-            base = f"layers.{i}."
-            attn_map = {
-                "self_attn.to_q.":     "self_attn.to_q.",
-                "self_attn.to_k.":     "self_attn.to_k.",
-                "self_attn.to_v.":     "self_attn.to_v.",
-                "self_attn.to_out.0.": "self_attn.to_out.",
-                "self_attn.norm_q.":   "self_attn.norm_q.",
-                "self_attn.norm_k.":   "self_attn.norm_k.",
-            }
-            matched = False
-            for src, dst in attn_map.items():
-                if rest.startswith(src):
-                    remapped[base + dst + rest[len(src):]] = value
-                    matched = True
-                    break
-            if not matched:
-                remapped[base + rest] = value
-            continue
-
-        m = re.match(r"^gen_layers\.(\d+)\.(.+)$", key)
-        if m:
-            i, rest = m.group(1), m.group(2)
-            base = f"layers.{i}."
-            attn_map = {
-                "cross_attention.to_q.":     "self_attn.add_q_proj.",
-                "cross_attention.to_k.":     "self_attn.add_k_proj.",
-                "cross_attention.to_v.":     "self_attn.add_v_proj.",
-                "cross_attention.to_out.0.": "self_attn.to_add_out.",
-                "cross_attention.norm_q.":   "self_attn.norm_added_q.",
-                "cross_attention.norm_k.":   "self_attn.norm_added_k.",
-            }
-            matched = False
-            for src, dst in attn_map.items():
-                if rest.startswith(src):
-                    remapped[base + dst + rest[len(src):]] = value
-                    matched = True
-                    break
-            if not matched:
-                if rest.startswith("input_layernorm."):
-                    remapped[base + "input_layernorm_moe_gen." + rest[len("input_layernorm."):]] = value
-                elif rest.startswith("post_attention_layernorm."):
-                    remapped[base + "post_attention_layernorm_moe_gen." + rest[len("post_attention_layernorm."):]] = value
-                elif rest.startswith("mlp."):
-                    remapped[base + "mlp_moe_gen." + rest[len("mlp."):]] = value
-            continue
-
+        if diffusers_key in remapped:
+            raise KeyError(f"Multiple framework tensors map to Diffusers key {diffusers_key!r}.")
+        remapped[diffusers_key] = value
     return remapped
 
 
@@ -218,6 +179,8 @@ class Fp8DiffusersExporter:
             # Remaining bf16 tensors (norms, embed_tokens, renamed projections) are
             # identical to / superseded by the base — keep base.
 
+        if n_weight == 0:
+            raise ValueError("No FP8 framework network weights matched the source Diffusers transformer.")
         missing = [f"{m}.weight_scale" for m in quantized_modules if f"{m}.weight_scale" not in merged]
         if missing:
             raise ValueError(f"{len(missing)} quantized modules missing weight_scale, e.g. {missing[:3]}")
@@ -228,31 +191,23 @@ class Fp8DiffusersExporter:
         return merged
 
     def export(self, mdl, transformer_export_dir: Path, src_transformer_dir: Path, dtype=torch.bfloat16) -> None:
+        net = mdl.net
         transformer_export_dir.mkdir(parents=True, exist_ok=True)
 
-        n_collapsed = collapse_input_amax_to_scalar(mdl)
+        n_collapsed = collapse_input_amax_to_scalar(net)
         if n_collapsed > 0:
             print(f"[export] collapsed per-channel input amax to scalar on {n_collapsed} quantizers")
 
-        def dummy_forward():
-            B, C, T, H, W = 1, 48, 5, 8, 8
-            mdl(
-                hidden_states=torch.randn(B, C, T, H, W, dtype=dtype, device="cuda"),
-                timestep=torch.tensor([0.5], device="cuda"),
-                text_ids=torch.ones(B, 16, dtype=torch.long, device="cuda"),
-                text_mask=torch.ones(B, 16, dtype=torch.float, device="cuda"),
-                video_shape=(T, H, W),
-            )
-
-        _fuse_qkv_linears_diffusion(mdl, dummy_forward)
-        _process_quantized_modules(mdl, dtype)
-
-        with hide_quantizers_from_state_dict(mdl):
-            internal_state_dict = {k: v.detach().contiguous().cpu() for k, v in mdl.state_dict().items()}
-        quantized = reverse_remap_state_dict(internal_state_dict)
+        # TODO: removed _fuse_qkv_linear_diffusion and dummy_forward due to
+        # no-op for fp8. Add back when nvfp4 is supported.
+        _process_quantized_modules(net, dtype)
 
         print(f"[export] loading bf16 base from {src_transformer_dir}")
         bf16 = load_sharded_safetensors(src_transformer_dir)
+
+        with hide_quantizers_from_state_dict(net):
+            net_state_dict = {k: v.detach().contiguous().cpu() for k, v in net.state_dict().items()}
+        quantized = remap_framework_state_dict(net_state_dict, bf16)
         merged = self.overlay(bf16, quantized)
         n_shards = save_sharded_safetensors(merged, transformer_export_dir)
         print(f"[export] wrote {len(merged)} tensors across {n_shards} shard(s)")
