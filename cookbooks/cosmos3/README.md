@@ -177,7 +177,8 @@ in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
 video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155),
 Transfer in [#16394](https://github.com/NVIDIA/TensorRT-LLM/pull/16394), and
 Action in [#17325](https://github.com/NVIDIA/TensorRT-LLM/pull/17325).
-Use a TensorRT-LLM checkout or package that includes those changes.
+These changes are merged on TensorRT-LLM `main`; use a current checkout or a
+package that includes them.
 
 Install TensorRT-LLM following its upstream documentation.
 
@@ -188,7 +189,7 @@ Cosmos3 VisualGen change before it is available in your installed package or
 release image.
 
 ```bash
-apt-get update && apt-get -y install ffmpeg git git-lfs
+apt-get update && apt-get -y install git git-lfs
 git lfs install
 
 git clone https://github.com/NVIDIA/TensorRT-LLM.git
@@ -207,6 +208,7 @@ docker run --rm -it \
   nvcr.io/nvidia/tensorrt-llm/devel:<tag>
 
 # Inside the container:
+apt-get update && apt-get -y install ffmpeg
 python3 scripts/build_wheel.py --use_ccache --skip_building_wheel --linking_install_binary
 pip install -e .
 ```
@@ -229,7 +231,7 @@ pip install opencv-python-headless==5.0.0.93
 Set the TensorRT-LLM source root for the shared VisualGen config YAMLs:
 
 ```bash
-export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD/TensorRT-LLM}"
+export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD}"
 export COSMOS3_TRTLLM_PORT="${COSMOS3_TRTLLM_PORT:-8000}"
 ```
 
@@ -268,12 +270,11 @@ trtllm-serve nvidia/Cosmos3-Super-Image2Video-4Step \
 The server exposes `/health`, the blocking `/v1/videos/sync`, the asynchronous
 `/v1/videos`, and `/v1/images/generations`. The older
 `/v1/videos/generations` spelling is a deprecated alias of `/v1/videos/sync`.
-The audiovisual notebook uses the validated video
-generation endpoint for text-to-image, text-to-video, image-to-video,
-video-to-video, and synchronized audio. Cosmos3 text-to-image is sent as a
-one-frame video request, matching the TensorRT-LLM Cosmos3 pipeline; the notebook
-sends it as `num_frames=1`, `seconds=1`, and `fps=8` to satisfy the video request
-schema while preserving a single generated frame. Image-to-video and
+The audiovisual notebook uses `/v1/videos/sync` for text-to-image, text-to-video,
+image-to-video, video-to-video, and synchronized audio. Cosmos3 text-to-image is
+sent as a one-frame video request, matching the TensorRT-LLM Cosmos3 pipeline;
+the notebook sends it as `num_frames=1`, `seconds=1`, and `fps=8` to satisfy the
+video request schema while preserving a single generated frame. Image-to-video and
 video-to-video upload their reference media as multipart `input_reference`;
 TensorRT-LLM classifies the reference by content. Synchronized audio is enabled
 with `enable_audio: true` in `extra_params` and is muxed into the output video.

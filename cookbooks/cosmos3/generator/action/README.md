@@ -238,7 +238,7 @@ older `/v1/videos/generations` spelling is a deprecated alias. The asynchronous
   dynamics from the checked-in AV observation clip.
 
 Both notebooks decode TensorRT-LLM's `safetensors` response, write the rollout
-video, and inspects the named `action` tensor. This response contract is not the
+video, and inspect the named `action` tensor. This response contract is not the
 top-level action JSON used by vLLM-Omni.
 
 ## Run with vLLM-Omni

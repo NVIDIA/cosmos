@@ -272,7 +272,7 @@ prompt = json.load(open("assets/prompts/text2video/robot_kitchen.json"))
 negative = json.load(open("assets/negative_prompts/text2video/neg_prompt.json"))
 
 response = requests.post(
-    "http://localhost:8000/v1/videos/generations",
+    "http://localhost:8000/v1/videos/sync",
     json={
         "prompt": json.dumps(prompt, ensure_ascii=True, separators=(",", ":")),
         "negative_prompt": json.dumps(negative, ensure_ascii=True, separators=(",", ":")),
@@ -319,7 +319,7 @@ v2v_negative = json.load(open("assets/negative_prompts/image2video/neg_prompt.js
 
 with source_video.open("rb") as video_file:
     response = requests.post(
-        "http://localhost:8000/v1/videos/generations",
+        "http://localhost:8000/v1/videos/sync",
         data={
             "prompt": json.dumps(v2v_prompt, ensure_ascii=True, separators=(",", ":")),
             "negative_prompt": json.dumps(v2v_negative, ensure_ascii=True, separators=(",", ":")),
