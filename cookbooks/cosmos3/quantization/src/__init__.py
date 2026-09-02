@@ -122,7 +122,7 @@ def quantize_fp8_checkpoint(
     ``profile`` is one of ``"t2v"``, ``"t2i"``, ``"i2v"``. ``i2v`` requires either
     ``i2v_cond_dir`` (a local image dir) or ``i2v_cond_dataset`` (a ModelOpt VLM
     dataset name). ``calibration_behavior="framework"`` is the default recipe for
-    new checkpoints. ``"legacy"`` is an opt-in, single-sample T2V compatibility
+    new checkpoints. ``"legacy"`` is an opt-in, single-sample compatibility
     recipe that restores the historical scheduler, numeric bridges, and attention
     behavior to pursue legacy-equivalent FP8 calibration. Returns the assembled
     ``output_dir`` (and, if ``keep_model``, the calibrated model for inspection).
@@ -130,14 +130,12 @@ def quantize_fp8_checkpoint(
     input_dir, output_dir = resolve_checkpoint_path(model_name_or_path), Path(output_dir)
     if profile not in ("t2v", "t2i", "i2v"):
         raise ValueError(f"profile must be t2v/t2i/i2v, got {profile!r}")
-    if calibration_behavior == "legacy" and profile != "t2v":  # TODO: support other profiles
-        raise ValueError("calibration_behavior='legacy' currently supports only profile='t2v'")
     i2v = profile == "i2v"
     legacy_behavior = calibration_behavior == "legacy"
 
     model, transformer_dir = load_transformer(model_name_or_path)
     if legacy_behavior:
-        print("[init] calibration_behavior=legacy (historical T2V compatibility)")
+        print("[init] calibration_behavior=legacy (historical compatibility)")
         _calib.apply_legacy_timestep_embedding(model)
         _calib.apply_legacy_qk_norm(model)
         _calib.apply_legacy_rotary_embedding(model)

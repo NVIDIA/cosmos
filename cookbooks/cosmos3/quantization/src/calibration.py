@@ -126,13 +126,13 @@ def apply_legacy_rotary_embedding(model) -> None:
 
 
 def apply_legacy_attention(model, *, text_width: int = 512) -> None:
-    """Reproduce historical single-sample T2V layer attention.
+    """Reproduce historical single-sample generation-layer attention.
 
     Historical calibration padded text to ``text_width`` rows and used PyTorch
     SDPA for both causal and generation attention.  Framework packing correctly
     omits those rows and uses its fused attention frontend by default.  This
     opt-in adapter restores the former behavior only for the cookbook's
-    single-sample, two-way T2V calibration path.
+    single-sample, two-way calibration path.
     """
     import torch.nn.functional as F
     from cosmos_framework.data.generator.sequence_packing.runtime import (
@@ -154,7 +154,7 @@ def apply_legacy_attention(model, *, text_width: int = 512) -> None:
         ):
             raise ValueError(
                 "legacy calibration behavior supports only single-sample, "
-                "two-way T2V attention without control streams or KV memory"
+                "two-way attention without control streams or KV memory"
             )
 
         def heads_first(tensor: torch.Tensor) -> torch.Tensor:
