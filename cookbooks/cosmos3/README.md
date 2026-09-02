@@ -8,7 +8,7 @@ backend you want to run and follow that one section.
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
-| [TensorRT-LLM Generator](#tensorrt-llm-generator) | Offline static-FP8 image/video generation and OpenAI-compatible VisualGen serving | Generator (Audiovisual) |
+| [TensorRT-LLM Generator](#tensorrt-llm-generator) | Offline FP8 image/video generation and OpenAI-compatible VisualGen serving | Generator (Audiovisual) |
 | [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
@@ -168,7 +168,7 @@ uv pip install --torch-backend=cu130 \
 
 ## TensorRT-LLM Generator
 
-TensorRT-LLM supports offline static-FP8 generation and an OpenAI-compatible
+TensorRT-LLM supports offline FP8 checkpoint generation and an OpenAI-compatible
 **VisualGen** server for Generator audiovisual text-to-image, text-to-video,
 image-to-video, video-to-video, and synchronized audio examples.
 Initial Cosmos3 support was added in TensorRT-LLM PR
@@ -223,7 +223,7 @@ pip install cosmos_guardrail==0.3.0
 # pip uninstall opencv-python
 ```
 
-### Static FP8 (offline, single GPU)
+### Cosmos3 Nano and Super FP8 checkpoints (offline, single GPU)
 
 Cosmos3 Nano and Super publish ModelOpt-calibrated checkpoints on the `fp8`
 revision of their Hugging Face repositories. These revisions contain the FP8
@@ -239,9 +239,9 @@ hf download nvidia/Cosmos3-Super \
   --local-dir checkpoints/Cosmos3-Super-FP8
 ```
 
-Static FP8 supports one GPU only. Use the BF16 checkpoints for tensor, Ulysses,
-context, or CFG parallelism, or for parallel VAE. The
-[static-FP8 notebook](generator/audiovisual/run_static_fp8_with_trt_llm.ipynb)
+These FP8 checkpoints support one GPU only. Use the BF16 checkpoints for tensor,
+Ulysses, context, or CFG parallelism, or for parallel VAE. The
+[FP8 checkpoint notebook](generator/audiovisual/run_fp8_with_trt_llm.ipynb)
 runs Nano and Super through the offline TensorRT-LLM entry point for
 text-to-image, text-to-video, image-to-video, and video-to-video generation and
 then validates every PNG and MP4 artifact.
