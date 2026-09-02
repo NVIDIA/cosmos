@@ -317,13 +317,20 @@ def load_i2v_images_from_dataset(dataset_name, num_samples, subsets=None):
 def vae_encode_cond_images(vae, images, height, width, num_frames):
     """VAE-encode PIL conditioning images into clean first-frame latents for i2v.
 
-    Each image is resized to (height, width), normalized to [-1, 1], repeated across
-    ``num_frames``, VAE-encoded, and normalized by the VAE's latents_mean/std (or
-    scaling_factor). Returns a list of ``[1, C, T_lat, H, W]`` bf16 latents (CPU).
+    Each image is resized to (height, width), normalized to [-1, 1], and repeated
+    across ``num_frames`` before encoding. The framework's
+    ``Wan2pt2VAEInterface.encode`` already returns normalized latents; Diffusers
+    VAEs return a latent distribution, which still needs their configured
+    normalization. Returns ``[1, C, T_lat, H, W]`` bf16 latents on CPU.
     """
     import numpy as np
 
-    has_mean_std = hasattr(vae.config, "latents_mean") and hasattr(vae.config, "latents_std")
+    config = getattr(vae, "config", None)
+    has_mean_std = (
+        config is not None
+        and hasattr(config, "latents_mean")
+        and hasattr(config, "latents_std")
+    )
     latents = []
     for img in images:
         img = img.convert("RGB").resize((width, height))
@@ -332,13 +339,20 @@ def vae_encode_cond_images(vae, images, height, width, num_frames):
         video = px.unsqueeze(2).expand(-1, -1, num_frames, -1, -1).contiguous()
         video = video.to(device="cuda", dtype=vae.dtype)
         with torch.no_grad():
-            lat = vae.encode(video).latent_dist.mode()
-        if has_mean_std:
-            m = torch.tensor(vae.config.latents_mean).view(1, -1, 1, 1, 1).to(lat.device, lat.dtype)
-            s = torch.tensor(vae.config.latents_std).view(1, -1, 1, 1, 1).to(lat.device, lat.dtype)
-            lat = (lat - m) / s
+            encoded = vae.encode(video)
+        if torch.is_tensor(encoded):
+            # Framework tokenizer interfaces return normalized latents directly.
+            lat = encoded
         else:
-            lat = lat * getattr(vae.config, "scaling_factor", 1.0)
+            lat = encoded.latent_dist.mode()
+            if has_mean_std:
+                m = torch.tensor(config.latents_mean).view(1, -1, 1, 1, 1)
+                s = torch.tensor(config.latents_std).view(1, -1, 1, 1, 1)
+                m = m.to(lat.device, lat.dtype)
+                s = s.to(lat.device, lat.dtype)
+                lat = (lat - m) / s
+            else:
+                lat = lat * getattr(config, "scaling_factor", 1.0)
         latents.append(lat.to(torch.bfloat16).cpu())
     return latents
 
