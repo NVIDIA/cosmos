@@ -11,8 +11,9 @@ contains two runtimes, but each container runs only one:
 - **Reasoner** serves OpenAI-compatible image/video understanding through Chat
   Completions and, when enabled, the Responses API.
 
-> Deployment commands pin the current release image. The [Support
-> matrix](support-matrix.md) publishes the release profile-selection floors;
+> Deployment commands pin the current release image,
+> `nvcr.io/nim/nvidia/cosmos3:2.0.0`. The [Support matrix](support-matrix.md)
+> publishes the release profile-selection floors;
 > confirm an available row in the running image's manifest. A matching profile
 > establishes a candidate configuration, while cold start and representative
 > requests establish host and workload compatibility.
