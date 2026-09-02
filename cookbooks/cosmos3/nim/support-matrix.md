@@ -115,8 +115,8 @@ see [Advanced profile controls](configuration.md#advanced-profile-controls).
 | --- | ---: | --- |
 | Generator `nano` BF16; `nano-droid` BF16 | 58 GiB | Resident model and guardrails |
 | Generator `nano` FP8 | 44 GiB | Resident model and guardrails |
-| Generator Super family BF16 | 150 GiB | Resident model and guardrails |
-| Generator Super family FP8 | 93 GiB | Resident model and guardrails |
+| Generator `super` BF16 | 150 GiB | Resident model and guardrails |
+| Generator `super` FP8 | 93 GiB | Resident model and guardrails |
 | Reasoner `nano` BF16, FP8, or NVFP4 | 23.1 GiB/device | No CPU/model offload |
 | Reasoner `super` BF16, TP1 | 135 GiB/device | No CPU/model offload |
 | Reasoner `super` BF16, TP2 | 73 GiB/device | No CPU/model offload |
@@ -222,25 +222,24 @@ entry, 480 GB identifies CPU memory and is not GPU VRAM.
 
 ## Generator configurations
 
-The **Super family** in this table means `super`, `super-t2i`,
+The `super` rows in this table also apply to `super-t2i`,
 `super-t2i-4step`, `super-i2v`, and `super-i2v-4step`. Transfer thresholds apply
 only to the general-purpose `nano` and `super` variants.
 
 | Variant group | Precision | Model offload | Guardrails during diffusion | GPUs | Generation minimum VRAM/device | Host RAM guidance | Transfer minimum VRAM/device |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
 | `nano` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 40 GiB | 64 GiB |
-| `nano` | BF16 | Layer | Offloaded | 1 | 31 GiB | 64 GiB profile floor | 35 GiB |
+| `nano` | BF16 | Layer | Offloaded | 1 | 31 GiB | 64 GiB | 35 GiB |
 | `nano` | FP8 | None | Resident | 1, 2, 4, 8 | 44 GiB | 40 GiB | 50 GiB |
-| `nano` | FP8 | Model | Resident | 1 | 38 GiB | 64 GiB profile floor | 44 GiB |
-| `nano` | FP8 | Layer | Resident | 1 | 32 GiB | 64 GiB profile floor | 38 GiB |
-| `nano` | FP8 | Layer | Offloaded | 1 | 31 GiB | 64 GiB profile floor | 35 GiB |
-| `nano-droid` | BF16 | None | Resident | 1, 2, 4, 8 | 58 GiB | 40 GiB | N/A |
-| Super family | BF16 | None | Resident | 1, 2, 4, 8 | 150 GiB | 112 GiB | Base `super`: 160 GiB |
-| Super family | BF16 | Model | Resident | 1 | 93 GiB | 150 GiB profile floor | Base `super`: 99 GiB |
-| Super family | BF16 | Layer | Resident | 1 | 42 GiB | 150 GiB profile floor | Base `super`: 50 GiB |
-| Super family | FP8 | None | Resident | 1, 2, 4, 8 | 93 GiB | 78 GiB | Base `super`: 103 GiB |
-| Super family | FP8 | Model | Resident | 1 | 64 GiB | 150 GiB profile floor | Base `super`: 76 GiB |
-| Super family | FP8 | Layer | Resident | 1 | 38 GiB | 150 GiB profile floor | Base `super`: 50 GiB |
+| `nano` | FP8 | Model | Resident | 1 | 38 GiB | 64 GiB | 44 GiB |
+| `nano` | FP8 | Layer | Resident | 1 | 32 GiB | 64 GiB | 38 GiB |
+| `nano` | FP8 | Layer | Offloaded | 1 | 31 GiB | 64 GiB | 35 GiB |
+| `super` | BF16 | None | Resident | 1, 2, 4, 8 | 150 GiB | 112 GiB | 160 GiB |
+| `super` | BF16 | Model | Resident | 1 | 93 GiB | 150 GiB | 99 GiB |
+| `super` | BF16 | Layer | Resident | 1 | 42 GiB | 150 GiB | 50 GiB |
+| `super` | FP8 | None | Resident | 1, 2, 4, 8 | 93 GiB | 78 GiB | 103 GiB |
+| `super` | FP8 | Model | Resident | 1 | 64 GiB | 150 GiB | 76 GiB |
+| `super` | FP8 | Layer | Resident | 1 | 38 GiB | 150 GiB | 50 GiB |
 
 The 31-GiB Nano layer-offload configurations are intended to support ordinary
 generation on 32-GB client GPUs such as the GeForce RTX 5090. This is not
