@@ -374,6 +374,16 @@ Super, FP8 dynamic quantization, CFG parallelism, Ulysses, and parallel VAE)
 live in the
 [shared environment setup guide](../../README.md#tensorrt-llm-generator).
 
+### Static FP8 notebook
+
+[`run_static_fp8_with_trt_llm.ipynb`](./run_static_fp8_with_trt_llm.ipynb)
+runs local, ModelOpt-calibrated Cosmos3 Nano and Super FP8 checkpoints directly
+through TensorRT-LLM's offline Cosmos3 entry point. It contains the complete
+single-GPU commands for text-to-image, text-to-video, image-to-video, and
+video-to-video generation, followed by PNG and MP4 validation. The checkpoint
+metadata supplies the calibrated weight and activation scales; no runtime
+quantization flag is required.
+
 ## Run with NIM
 
 ### Quickstart
