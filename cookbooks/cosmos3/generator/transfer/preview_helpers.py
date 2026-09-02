@@ -97,10 +97,10 @@ def make_preview(src: Path, crf: int = 28) -> Path:
                 ],
                 check=True,
             )
+            os.replace(partial, preview)
         except BaseException:
             partial.unlink(missing_ok=True)
             raise
-        os.replace(partial, preview)
     return preview
 
 
