@@ -214,7 +214,8 @@ For Python-only changes, the upstream guide also documents
 installing the checkout in editable mode.
 
 Then install the Cosmos3 guardrail package in the same environment unless you
-explicitly disable guardrails before starting the server:
+explicitly disable guardrails before running offline inference or starting the
+server:
 
 ```bash
 pip install cosmos_guardrail==0.3.0
