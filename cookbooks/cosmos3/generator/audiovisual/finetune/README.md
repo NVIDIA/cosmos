@@ -34,6 +34,38 @@ Paths are fixed at the top of each script (under this git-ignored folder) — ed
 
 These recipes default to 8 GPUs. On a 4-GPU node (e.g. GB200×4), set `--nproc_per_node=4` on the `torchrun` line in the launch script.
 
+## LoRA fine-tuning
+
+LoRA freezes the backbone and trains small low-rank adapters on the generation-pathway attention projections, so optimizer state is adapter-sized rather than backbone-sized — that is what lets the 32B Super tier fit a node budget a full fine-tune of that size would not.
+
+Enabling it is a **TOML-level switch**: no code change and no separate LoRA experiment to register. `[job].experiment` stays whatever registered experiment you started from (`vision_sft_nano`, `vision_sft_edge`, …); change `[job].name` so the run gets its own output directory.
+
+**[`launch_sft_vision_super.sh`](launch_sft_vision_super.sh) is already a LoRA recipe** — read it and its TOML, [`toml/sft_config/vision_sft_super.toml`](toml/sft_config/vision_sft_super.toml), alongside this section for a known-good set of values. To convert another recipe, copy its TOML and touch these four places:
+
+| TOML section | Change | Why |
+| --- | --- | --- |
+| `[model]` | `lora_enabled = true`, plus `lora_rank` / `lora_alpha` / `lora_target_modules` | injects the adapters before FSDP wraps the network |
+| `[optimizer]` | `keys_to_select = ["lora_"]`, and raise `lr` | trains the adapters only; they start at zero and are a tiny fraction of the parameters, so they tolerate — and want — a larger LR than a full fine-tune |
+| `[checkpoint]` | add `"lora_"` to `keys_to_skip_loading` | the base checkpoint has no adapter tensors; let them initialize fresh instead of failing the load |
+| `[model.ema]` / `[model.compile]` | disable both | EMA over a frozen backbone is wasted memory, and LoRA injection subclasses `nn.Linear`, so leave `torch.compile` off |
+
+The `[model]` block ends up looking like the following — the numbers are the Super recipe's, shown as an example to start from rather than a required setting:
+
+```toml
+lora_enabled        = true
+lora_rank           = 16     # e.g. — larger rank buys capacity at the cost of more trainable params
+lora_alpha          = 32     # e.g. — commonly around 2x rank
+lora_target_modules = "q_proj_moe_gen,k_proj_moe_gen,v_proj_moe_gen,o_proj_moe_gen"
+```
+
+`lora_target_modules` matches a bare name against exact child-module names, and any target containing a `.` against the full module path. The four MoE-gen projections above are the generation pathway and exist in every MoT block on all tiers (dense-FFN Edge included), so that line carries over unchanged — and because `_moe_gen` is part of the leaf name itself, they can't collide with the understanding tower.
+
+Extending beyond attention needs more care: the gen-path FFN is `mlp_moe_gen`, but its children are named exactly like the understanding tower's (`mlp.up_proj`, …), so a bare `up_proj` would adapt both. Write those targets path-qualified instead — `mlp_moe_gen.up_proj`, and so on — and check the module tree first, since the FFN's children differ between the dense and MoE tiers.
+
+For the LR, take the recipe's full-FT value as the starting point and go up — for example, the Super LoRA recipe runs `5e-4` where the full fine-tunes use `1e-4`.
+
+Finally, copy the matching launch shell and point `--sft-toml` at the new TOML. Everything else in the recipe (data, VAE, checkpoint conversion), the outputs, and the [Hugging Face export](#export-to-hugging-face-safetensors) are unchanged.
+
 ## Outputs
 
 Training writes to `outputs/train/<project>/<group>/<name>/`:
