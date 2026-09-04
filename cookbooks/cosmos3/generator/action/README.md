@@ -21,13 +21,15 @@ The rest of this doc shows how to run these modes on selected embodiments direct
 - [Run with vLLM-Omni](#run-with-vllm-omni)
   - [Quickstart](#quickstart-2)
   - [Notebook walkthrough](#vllm-omni-notebook-walkthrough)
+- [Run with TensorRT-Edge-LLM](#run-with-tensorrt-edge-llm)
 - [Post-Train for Cosmos3-Nano-Policy-DROID](#post-train-for-cosmos3-nano-policy-droid)
 
 ## Overview
 
-All examples are shown across three different inference backends — native
-PyTorch (Cosmos Framework), Diffusers, and vLLM-Omni. Every backend uses the sample
-assets under [`assets/`](./assets) and covers three tasks:
+All examples are shown across inference backends — native PyTorch (Cosmos
+Framework), Diffusers, vLLM-Omni, and TensorRT-Edge-LLM (Edge policy only).
+Every backend uses the sample assets under [`assets/`](./assets) where
+applicable and covers the tasks listed above.
 
 Environment setup for all backends is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide; each backend below
@@ -207,6 +209,29 @@ write outputs under `outputs/cosmos3_action_vllm/`:
   predicting ego-motion trajectories from input AV videos.
 - [`run_policy_with_vllm_omni.ipynb`](./run_policy_with_vllm_omni.ipynb) — policy
   inference for DROID through the async video API.
+
+## Run with TensorRT-Edge-LLM
+
+### Quickstart
+
+On-device TensorRT path for **Cosmos3-Edge-Policy-DROID**. Set up the shared
+[TensorRT-Edge-LLM](../../README.md#tensorrt-edge-llm) environment (upstream
+install; C++ runtime with `-DBUILD_EXPERIMENTAL_MODELS=ON`). Then follow
+[`run_policy_with_trt_edge_llm.ipynb`](./run_policy_with_trt_edge_llm.ipynb):
+export → `cosmos3_policy_build` → `cosmos3_policy_inference`.
+
+This is separate from workstation [vLLM-Omni](#run-with-vllm-omni) policy
+serving. Multimodal reasoning on the same Edge-LLM runtime is documented in
+[`../../reasoner/run_with_trt_edge_llm.ipynb`](../../reasoner/run_with_trt_edge_llm.ipynb).
+
+### Notebook walkthrough
+
+[`run_policy_with_trt_edge_llm.ipynb`](./run_policy_with_trt_edge_llm.ipynb)
+builds the same 640×540 DROID `concat_view` as the vLLM-Omni / SGLang policy
+notebooks (from `assets/droid_lerobot_example`), runs
+`cosmos3_policy_inference`, and writes `action.json`
+(`[batch, chunk, action_dimension]`). Optional `--steps` / `--seed` match the
+upstream VLA guide.
 
 ## Post-Train for Cosmos3-Nano-Policy-DROID
 

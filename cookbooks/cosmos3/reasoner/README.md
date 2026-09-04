@@ -360,3 +360,24 @@ and walks through image and video examples covering detailed captioning,
 temporal localization, embodied reasoning, common-sense reasoning, 2D
 grounding, describe-anything, action CoT trajectories, driving scenes,
 physical plausibility, and situation understanding.
+
+## Run with TensorRT-Edge-LLM
+
+### Quickstart
+
+Set up the environment with the shared
+[TensorRT-Edge-LLM setup](../README.md#tensorrt-edge-llm) (upstream install,
+`EDGELLM_ROOT`, ONNX/engine workspace). This path targets **Cosmos3-Edge** on
+Jetson Thor/Orin, DRIVE, DGX Spark, or an x86 developer build. It is separate
+from the datacenter [TensorRT-LLM](#run-with-tensorrt-llm) server.
+
+[`run_with_trt_edge_llm.ipynb`](./run_with_trt_edge_llm.ipynb) exports
+`nvidia/Cosmos3-Edge`, builds the LLM and visual engines, writes an image
+reasoning `input.json` for `assets/robot_153.jpg`, and runs `llm_inference`.
+
+### Notebook walkthrough
+
+[`run_with_trt_edge_llm.ipynb`](./run_with_trt_edge_llm.ipynb) is a
+command-driven walkthrough (export → engine build → image caption). For
+**Cosmos3-Edge-Policy-DROID** on the same runtime, see
+[`../generator/action/run_policy_with_trt_edge_llm.ipynb`](../generator/action/run_policy_with_trt_edge_llm.ipynb).

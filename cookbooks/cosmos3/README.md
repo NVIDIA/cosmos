@@ -10,6 +10,7 @@ backend you want to run and follow that one section.
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
 | [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio generation) | Generator (Audiovisual) |
 | [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
+| [TensorRT-Edge-LLM](#tensorrt-edge-llm) | On-device TensorRT runtime for Cosmos3-Edge reasoning and DROID policy | Reasoner (Edge), Generator (Action / Policy) |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action/transfer) | Generator (Audiovisual, Action, **Transfer**) |
@@ -308,6 +309,42 @@ The server exposes `/health` and the OpenAI-compatible API at
 `http://localhost:8001/v1`. See the
 [Reasoner TensorRT-LLM notebook](reasoner/run_with_tensorrt_llm.ipynb) for image
 and video requests.
+
+## TensorRT-Edge-LLM
+
+On-device **TensorRT** path for **Cosmos3-Edge** multimodal reasoning and
+**Cosmos3-Edge-Policy-DROID** policy generation. This is a different stack from
+[TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) / [Generator](#tensorrt-llm-generator):
+export ONNX on an x86 host, build TensorRT engines on the target (Jetson
+Thor/Orin, DRIVE, DGX Spark, or an x86 developer build), then run the C++
+inference binaries.
+
+Use [TensorRT-Edge-LLM](https://github.com/NVIDIA/TensorRT-Edge-LLM) **v0.10.0 or
+newer**. Complete the upstream
+[Installation](https://nvidia.github.io/TensorRT-Edge-LLM/user_guide/getting_started/installation.html)
+guide first (Python export package on the host; C++ runtime on the device).
+
+Policy examples also require building the C++ runtime with
+`-DBUILD_EXPERIMENTAL_MODELS=ON`.
+
+Set a workspace and the Edge checkpoints:
+
+```bash
+export EDGELLM_ROOT="${EDGELLM_ROOT:-$PWD/TensorRT-Edge-LLM}"
+export POLICY_CHECKPOINT=nvidia/Cosmos3-Edge-Policy-DROID
+export REASONING_CHECKPOINT=nvidia/Cosmos3-Edge
+export ONNX_DIR="${ONNX_DIR:-$HOME/tensorrt-edgellm-workspace/Cosmos3-Edge/onnx}"
+export ENGINE_DIR="${ENGINE_DIR:-$HOME/tensorrt-edgellm-workspace/Cosmos3-Edge/engines}"
+```
+
+Runnable cookbooks:
+
+- Reasoner: [`reasoner/run_with_trt_edge_llm.ipynb`](reasoner/run_with_trt_edge_llm.ipynb)
+- Policy: [`generator/action/run_policy_with_trt_edge_llm.ipynb`](generator/action/run_policy_with_trt_edge_llm.ipynb)
+
+Upstream reference:
+[Cosmos3-Edge VLA guide](https://nvidia.github.io/TensorRT-Edge-LLM/user_guide/examples/vla/cosmos3.html)
+(export → build → run for reasoning and policy).
 
 ## Transformers
 

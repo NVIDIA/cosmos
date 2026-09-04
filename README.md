@@ -32,6 +32,7 @@
     - [Reasoner with Transformers](#reasoner-with-transformers)
     - [Reasoner with vLLM](#reasoner-with-vllm)
     - [Reasoner with TensorRT-LLM](#reasoner-with-tensorrt-llm)
+    - [Reasoner with TensorRT-Edge-LLM](#reasoner-with-tensorrt-edge-llm)
     - [Reasoner with NIM](#reasoner-with-nim)
   - [Troubleshooting](#troubleshooting)
     - [Which CUDA version should I use?](#which-cuda-version-should-i-use)
@@ -70,7 +71,7 @@ Cosmos 3 exposes two runtime surfaces:
 - **World understanding:** Analyze videos and images for captions, temporal events, next actions, spatial grounding, physical plausibility, and causal outcomes.
 - **World generation:** Produce images, videos, synchronized sound, and action-conditioned rollouts from text, image, video, or action inputs.
 - **Action modeling:** Predict policy actions, inverse dynamics, and forward dynamics for robotics, camera motion, egocentric motion, and autonomous-driving settings.
-- **Research and production paths:** Use Diffusers and Transformers for Python-first development, vLLM-Omni, vLLM, TensorRT-LLM, or SGLang for OpenAI-compatible serving, and NIM containers for turnkey Reasoner serving or Generator deployment for text-to-video and image-to-video generation.
+- **Research and production paths:** Use Diffusers and Transformers for Python-first development, vLLM-Omni, vLLM, TensorRT-LLM, or SGLang for OpenAI-compatible serving, TensorRT-Edge-LLM for on-device Cosmos3-Edge reasoning and policy, and NIM containers for turnkey Reasoner serving or Generator deployment for text-to-video and image-to-video generation.
 - **Post-training recipes:** Adapt vision, action, and reasoner workflows with Cosmos Framework training recipes and task-specific evaluation [Coming Soon].
 
 ### Model Architecture
@@ -1006,6 +1007,28 @@ contains the complete image and video request walkthrough.
 
 </details>
 
+#### Reasoner with TensorRT-Edge-LLM
+
+<details>
+<summary>Use TensorRT-Edge-LLM for on-device Cosmos3-Edge reasoning.</summary>
+
+TensorRT-Edge-LLM is the on-device TensorRT path for **Cosmos3-Edge** (export ONNX
+→ build engines → C++ `llm_inference`). It is separate from the datacenter
+[TensorRT-LLM](#reasoner-with-tensorrt-llm) OpenAI-compatible server.
+
+Use [TensorRT-Edge-LLM](https://github.com/NVIDIA/TensorRT-Edge-LLM) **v0.10.0+**,
+complete the upstream
+[Installation](https://nvidia.github.io/TensorRT-Edge-LLM/user_guide/getting_started/installation.html),
+then follow the shared
+[TensorRT-Edge-LLM setup](cookbooks/cosmos3/README.md#tensorrt-edge-llm) and the
+[Reasoner notebook](cookbooks/cosmos3/reasoner/run_with_trt_edge_llm.ipynb).
+
+For **Cosmos3-Edge-Policy-DROID** on the same runtime, see
+[`run_policy_with_trt_edge_llm.ipynb`](cookbooks/cosmos3/generator/action/run_policy_with_trt_edge_llm.ipynb)
+(build with `-DBUILD_EXPERIMENTAL_MODELS=ON`).
+
+</details>
+
 #### Reasoner with NIM
 
 <details>
@@ -1147,6 +1170,7 @@ The Cosmos Framework requires `uv >= 0.11.3` (enforced via its `pyproject.toml`)
 | Generator turnkey deployment | NIM | Prebuilt NGC container for T2V/I2V video generation only; uses `/v1/infer` and returns JSON `b64_video` |
 | Reasoner research or model development | Transformers | Python-first path for prompts, processors, and model behavior |
 | Reasoner production inference | vLLM / TensorRT-LLM | OpenAI-compatible endpoints for text outputs from image and video inputs |
+| Reasoner / policy on device (Edge) | TensorRT-Edge-LLM | On-device TensorRT path for Cosmos3-Edge reasoning and Cosmos3-Edge-Policy-DROID (Jetson Thor/Orin, DRIVE, DGX Spark, or x86 developer build) |
 | Reasoner turnkey deployment | NIM | Prebuilt, optimized OpenAI-compatible container — no vLLM/CUDA setup |
 | Runnable setup, training, or evaluation | Cosmos Framework | Full workflow docs for setup, inference, omni-model training, and evaluation |
 
@@ -1173,6 +1197,8 @@ We are building examples that show Cosmos 3 Super/Nano/Edge capabilities end to 
 | Reasoner with Cosmos Framework | Reasoner | Text and image reasoning: detailed captioning, robot task planning, 2D grounding, describe-anything, and action-trajectory prompts, through the `cosmos_framework.scripts.inference` entrypoint. | [Notebook](cookbooks/cosmos3/reasoner/run_with_cosmos_framework.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_cosmos_framework.ipynb) |
 | Reasoner with vLLM | Reasoner | Image and video reasoning: captioning, temporal localization, embodied reasoning, common-sense reasoning, 2D grounding, describe-anything, action CoT, driving scenes, physical-plausibility, and situation understanding, against an OpenAI-compatible vLLM server (Cosmos3-Super on 4 GPUs by default; switch to Nano per the cookbook README). | [Notebook](cookbooks/cosmos3/reasoner/run_with_vllm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_vllm.ipynb) |
 | Reasoner with TensorRT-LLM | Reasoner | Image and video reasoning through an OpenAI-compatible TensorRT-LLM server, with one-GPU Cosmos3-Nano and four-GPU Cosmos3-Super launch options. | [Notebook](cookbooks/cosmos3/reasoner/run_with_tensorrt_llm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_tensorrt_llm.ipynb) |
+| Reasoner with TensorRT-Edge-LLM | Reasoner | Cosmos3-Edge multimodal reasoning: export ONNX, build TensorRT engines, and run `llm_inference` on Jetson Thor/Orin, DRIVE, DGX Spark, or an x86 developer build. | [Notebook](cookbooks/cosmos3/reasoner/run_with_trt_edge_llm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_trt_edge_llm.ipynb) |
+| Policy with TensorRT-Edge-LLM | Generator | Cosmos3-Edge-Policy-DROID: export, build experimental policy engines (`-DBUILD_EXPERIMENTAL_MODELS=ON`), and run `cosmos3_policy_inference`. | [Notebook](cookbooks/cosmos3/generator/action/run_policy_with_trt_edge_llm.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/generator/action/run_policy_with_trt_edge_llm.ipynb) |
 | Reasoner with NIM | Reasoner | The same image and video reasoning examples as the vLLM notebook, run against the prebuilt, OpenAI-compatible [Cosmos 3 Reasoner NIM](https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/cosmos3-reasoner) container; local media is sent as base64 data URIs. | [Notebook](cookbooks/cosmos3/reasoner/run_with_nim.ipynb) | [![Render with nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/nvidia/cosmos/blob/main/cookbooks/cosmos3/reasoner/run_with_nim.ipynb) |
 
 ### Inference Benchmarks
