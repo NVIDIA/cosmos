@@ -13,6 +13,7 @@ backend you want to run and follow that one section.
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action/transfer) | Generator (Audiovisual, Action, **Transfer**) |
+| [Cosmos3 Certified NIM](#cosmos3-certified-nim) | Prebuilt NGC container serving either the Generator (image/video/action/transfer) or the Reasoner from one image | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Reasoner NIM](#reasoner-nim) | Prebuilt OpenAI-compatible reasoning server (image/video understanding); no venv | Reasoner |
 | [Generator NIM](#generator-nim) | Prebuilt NGC container serving the Cosmos3 Generator for Text-to-Video and Image-to-Video inference | Generator (Audiovisual) |
 
@@ -654,8 +655,54 @@ export NGC_API_KEY=<your_key>
 echo "$NGC_API_KEY" | docker login nvcr.io --username '$oauthtoken' --password-stdin
 ```
 
-Both NIMs expose readiness at `GET /v1/health/ready` after model download,
-engine initialization, and warmup complete.
+Each NIM below exposes readiness at `GET /v1/health/ready` after model
+download, engine initialization, and warmup complete.
+
+### Cosmos3 Certified NIM
+
+A single prebuilt container that serves **either** runtime — one runtime per
+container, chosen at launch with `NIM_MODEL_TYPE`:
+
+- **Generator** (`POST /v1/infer`) — text-to-image, text-to-video,
+  image-to-video, video-to-video, Action (forward dynamics, inverse dynamics,
+  policy), and Transfer. Each request sets an explicit top-level `model_mode`.
+- **Reasoner** — OpenAI-compatible image and video understanding through Chat
+  Completions and the Responses API.
+
+Start the Nano Generator runtime:
+
+```bash
+export NGC_API_KEY=<your_key>
+export LOCAL_NIM_CACHE="${LOCAL_NIM_CACHE:-$HOME/.cache/nim}"
+mkdir -p "$LOCAL_NIM_CACHE"
+
+docker run -d --name cosmos3-generator \
+  --gpus '"device=0"' \
+  --shm-size 16g \
+  --ulimit memlock=-1 \
+  --ulimit stack=67108864 \
+  --ulimit nofile=65536:65536 \
+  -p 8000:8000 \
+  -e NGC_API_KEY \
+  -e NIM_MODEL_TYPE=generator \
+  -e NIM_MODEL_VARIANT=nano \
+  -e NIM_PERF_PROFILE=latency \
+  -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
+  nvcr.io/nim/nvidia/cosmos3:2.0.0
+```
+
+Set `NIM_MODEL_TYPE=reasoner` for the Reasoner runtime. `NIM_MODEL_VARIANT`
+selects the checkpoint: `nano` or `super` for either runtime, plus
+`nano-droid`, `super-t2i`, `super-t2i-4step`, `super-i2v`, and
+`super-i2v-4step` for the Generator. On DGX Spark/GB10 and Jetson AGX Thor, the
+Reasoner also needs `NIM_GPU_MEMORY_UTILIZATION` set explicitly.
+
+The [Cosmos3 Certified NIM cookbook](nim/README.md) is the full guide —
+[deployment](nim/deployment.md), [support matrix](nim/support-matrix.md),
+[configuration](nim/configuration.md), and [API reference](nim/api-reference.md),
+with worked examples for [generation](nim/generation.md),
+[action](nim/action.md), [transfer](nim/transfer.md), and
+[reasoning](nim/reasoning.md).
 
 ### Reasoner NIM
 
