@@ -33,6 +33,7 @@
     - [Reasoner with vLLM](#reasoner-with-vllm)
     - [Reasoner with TensorRT-LLM](#reasoner-with-tensorrt-llm)
     - [Reasoner with NIM](#reasoner-with-nim)
+  - [Applications](#applications)
   - [Troubleshooting](#troubleshooting)
     - [Which CUDA version should I use?](#which-cuda-version-should-i-use)
     - [Which base container should I use?](#which-base-container-should-i-use)
@@ -1111,6 +1112,18 @@ References:
 
 </details>
 
+### Applications
+
+Community and external applications built on Cosmos 3 live under [`cookbooks/cosmos3/applications/`](cookbooks/cosmos3/applications/). These are domain-specific recipes contributed by the community, partners, and NVIDIA DevRel — each is a self-contained directory with a README, runnable notebook, and sample outputs.
+
+| Domain | Tower | Applications directory |
+|--------|-------|-----------------------|
+| Understanding, VLM, reasoning, grounding | Reasoner | [`applications/reasoner/`](cookbooks/cosmos3/applications/reasoner/) |
+| T2I, T2V, I2V, audio generation | Generator | [`applications/generator/audiovisual/`](cookbooks/cosmos3/applications/generator/audiovisual/) |
+| Robotics policy, forward/inverse dynamics | Generator | [`applications/generator/action/`](cookbooks/cosmos3/applications/generator/action/) |
+| Video-to-video transfer, edge-guided generation | Generator | [`applications/generator/transfer/`](cookbooks/cosmos3/applications/generator/transfer/) |
+
+Want to contribute your own application? See the [Contributing Guide](CONTRIBUTING.md) for the directory structure, quality requirements, and README template.
 
 ### Troubleshooting
 
