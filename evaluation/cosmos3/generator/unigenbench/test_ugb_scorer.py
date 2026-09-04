@@ -6,6 +6,37 @@ from pathlib import Path
 from ugb_scorer import build_benchmark_samples, validate_cached_results
 
 
+class NotebookImageCollectionTest(unittest.TestCase):
+    def test_does_not_reuse_images_from_an_earlier_run(self):
+        notebook_path = Path(__file__).with_name("run_with_cosmos_framework.ipynb")
+        notebook = json.loads(notebook_path.read_text(encoding="utf-8"))
+        collection_cell = next(
+            cell
+            for cell in notebook["cells"]
+            if cell.get("id") == "5add5da2-05a4-43c7-a5d5-f9b2b47b1595"
+        )
+        collection_source = "".join(collection_cell["source"])
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            previous_run = root / "previous"
+            current_run = root / "current"
+            (previous_run / "orig0").mkdir(parents=True)
+            (previous_run / "orig0" / "vision.jpg").write_bytes(b"stale")
+            (current_run / "phi0").mkdir(parents=True)
+            (current_run / "phi0" / "vision.jpg").write_bytes(b"current")
+
+            with self.assertRaisesRegex(FileNotFoundError, r"Missing 1 of 2.*orig0"):
+                exec(
+                    compile(collection_source, str(notebook_path), "exec"),
+                    {
+                        "Path": Path,
+                        "id_list": ["orig0", "phi0"],
+                        "output_dir": str(current_run),
+                    },
+                )
+
+
 class BuildBenchmarkSamplesTest(unittest.TestCase):
     def setUp(self):
         self.rows = [
