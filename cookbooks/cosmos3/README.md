@@ -13,7 +13,7 @@ backend you want to run and follow that one section.
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action/transfer) | Generator (Audiovisual, Action, **Transfer**) |
-| [Cosmos3 Certified NIM](#cosmos3-certified-nim) | Prebuilt NGC container serving either the Generator (image/video/action/transfer) or the Reasoner from one image | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
+| [Cosmos3 Certified NIM](#cosmos3-certified-nim) | Prebuilt NGC container serving either the Generator (image/video/action/transfer) or the Reasoner from one image | Reasoner, Generator (Audiovisual, Action, Transfer) |
 | [Reasoner NIM](#reasoner-nim) | Prebuilt OpenAI-compatible reasoning server (image/video understanding); no venv | Reasoner |
 | [Generator NIM](#generator-nim) | Prebuilt NGC container serving the Cosmos3 Generator for Text-to-Video and Image-to-Video inference | Generator (Audiovisual) |
 
