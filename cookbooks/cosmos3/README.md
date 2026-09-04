@@ -8,7 +8,7 @@ backend you want to run and follow that one section.
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
-| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video generation) | Generator (Audiovisual) |
+| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio generation) | Generator (Audiovisual) |
 | [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
@@ -169,9 +169,12 @@ uv pip install --torch-backend=cu130 \
 ## TensorRT-LLM Generator
 
 OpenAI-compatible **VisualGen** server for Generator audiovisual text-to-image,
-text-to-video, and image-to-video examples. Cosmos3 support was added in TensorRT-LLM PR
-[#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824); use a
-TensorRT-LLM checkout or package that includes that change.
+text-to-video, image-to-video, video-to-video, and synchronized audio examples.
+Initial Cosmos3 support was added in TensorRT-LLM PR
+[#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824), synchronized audio
+in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
+video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155).
+Use a TensorRT-LLM checkout or package that includes those changes.
 
 Install TensorRT-LLM following its upstream documentation.
 
@@ -182,7 +185,7 @@ Cosmos3 VisualGen change before it is available in your installed package or
 release image.
 
 ```bash
-apt-get update && apt-get -y install git git-lfs
+apt-get update && apt-get -y install ffmpeg git git-lfs
 git lfs install
 
 git clone https://github.com/NVIDIA/TensorRT-LLM.git
@@ -244,14 +247,19 @@ torchrun --nproc_per_node=4 -m tensorrt_llm.commands.serve \
 
 The server exposes `/health`, `/v1/videos/generations`, `/v1/videos`, and
 `/v1/images/generations`. The audiovisual notebook uses the validated video
-generation endpoint for text-to-image, text-to-video, and image-to-video. Cosmos3
-text-to-image is sent as a one-frame video request, matching the TensorRT-LLM
-Cosmos3 pipeline; the notebook sends it as `num_frames=1`, `seconds=1`, and
-`fps=8` to satisfy the video request schema while preserving a single generated
-frame. Requests send Cosmos3 controls through `extra_params`,
-so use a TensorRT-LLM build that includes the Cosmos3 VisualGen API schema.
-The notebook sets request-level `max_sequence_length=2048` for longer structured
-JSON prompts.
+generation endpoint for text-to-image, text-to-video, image-to-video,
+video-to-video, and synchronized audio. Cosmos3 text-to-image is sent as a
+one-frame video request, matching the TensorRT-LLM Cosmos3 pipeline; the notebook
+sends it as `num_frames=1`, `seconds=1`, and `fps=8` to satisfy the video request
+schema while preserving a single generated frame. Image-to-video and
+video-to-video upload their reference media as multipart `input_reference`;
+TensorRT-LLM classifies the reference by content. Synchronized audio is enabled
+with `enable_audio: true` in `extra_params` and is muxed into the output video.
+Keep `ffmpeg` on the server `PATH`: without it, TensorRT-LLM falls back to a
+video-only AVI encoder and cannot preserve generated audio. Requests send
+Cosmos3 controls through `extra_params`, so use a TensorRT-LLM build that includes
+the Cosmos3 VisualGen API schema. The notebook sets request-level
+`max_sequence_length=4096` for longer structured JSON prompts.
 
 ## TensorRT-LLM Reasoner
 
@@ -304,11 +312,12 @@ and video requests.
 ## Transformers
 
 Local Python inference for the Cosmos3 Reasoner. This backend uses the
-Transformers Cosmos3 integration and loads only the Reasoner tower from the
-unified Cosmos3 checkpoint.
+Transformers Cosmos3 integration and loads only the Reasoner tower.
 
-Cosmos3 support first appears in the Transformers `v5.11.0` release tag. Create
-a venv and install Transformers `5.11.0` or newer:
+**Nano / Super** load the Reasoner tower from the unified
+`nvidia/Cosmos3-Nano` or `nvidia/Cosmos3-Super` checkpoint with
+`Cosmos3OmniForConditionalGeneration`. Support first appears in Transformers
+`v5.11.0`. Create a venv and install Transformers `5.11.0` or newer:
 
 ```bash
 uv venv --python 3.13 --seed --managed-python
@@ -328,10 +337,20 @@ uv pip install --torch-backend=auto \
 that matches your NVIDIA driver. Pin a backend such as `cu128` or `cu130` if
 your environment needs an explicit CUDA wheel.
 
-Use `Cosmos3OmniForConditionalGeneration` with `AutoProcessor` and either
-`nvidia/Cosmos3-Nano` or `nvidia/Cosmos3-Super`. See the
+**Cosmos3-Edge** uses a separate Transformers integration
+(`AutoModelForImageTextToText` / `Cosmos3EdgeForConditionalGeneration`) with
+`nvidia/Cosmos3-Edge`. Do not load Edge with `Cosmos3OmniForConditionalGeneration`.
+Edge support is on Transformers `main` and is not yet in a stable PyPI release;
+install from GitHub instead of the
+`transformers>=5.11.0` pin above:
+
+```bash
+uv pip install "transformers @ git+https://github.com/huggingface/transformers.git"
+```
+
+See the
 [Reasoner Transformers quickstart](reasoner/README.md#run-with-transformers)
-for a runnable image example and video input notes.
+for runnable Nano, Super, and Edge image examples and video input notes.
 
 ## vLLM
 
