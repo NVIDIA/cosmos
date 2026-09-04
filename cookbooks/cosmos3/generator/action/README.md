@@ -58,6 +58,51 @@ fingers.
 
 Action data samples across different embodiments can be inspected interactively in the [Cosmos3 Action Viewer](https://huggingface.co/spaces/nvidia/Cosmos3-Action-Viewer) Hugging Face Space.
 
+## Topological Modeling
+
+The optional [`topology_helpers.py`](./topology_helpers.py) module adds
+topology-aware diagnostics for action forward-dynamics rollouts. It evaluates
+binary or labeled masks from generated robotics videos and reports connected
+components, hole proxies, Euler-characteristic-style summaries, chunk-boundary
+drift, and rollout stability scores. The helper is side-effect-free and does not
+change Cosmos3 inference behavior.
+
+Reports are deterministic: for a given input the JSON and CSV are byte-identical
+across runs and across the insertion order of the label mapping. Persistent
+homology is off unless a backend is named, and `backend="ripser"` raises rather
+than degrading, so a report never depends silently on what is installed.
+
+The modeling note in [`topological_modeling.md`](./topological_modeling.md)
+describes the contribution as one topology-aware layer for Cosmos action FD:
+finite-difference/FDTD rollout structure, topology metrics, topological
+inference extension points, and sparse swarm-routing extension points.
+
+Minimal mask-first usage:
+
+```python
+from pathlib import Path
+from topology_helpers import (
+    RolloutSpec,
+    TopologyConfig,
+    evaluate_fd_rollout,
+    write_topology_csv,
+    write_topology_json,
+)
+
+report = evaluate_fd_rollout(
+    masks=object_masks,  # sequence of binary masks, or {"object": masks, "gripper": masks}
+    rollout=RolloutSpec(
+        video_id="robotics_action_cond_stitched",
+        domain_name="droid_lerobot",
+        fps=15,
+        action_chunk_size=16,
+    ),
+    config=TopologyConfig(min_component_area_px=16, generated_frame_start=1),
+)
+write_topology_json(report, Path("topology_metrics.json"))
+write_topology_csv(report, Path("topology_metrics.csv"))
+```
+
 ## Run with Cosmos Framework
 
 ### Quickstart
