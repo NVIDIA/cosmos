@@ -101,6 +101,13 @@ fi
 TRAILING_ARGS=(-- "${TAIL_OVERRIDES[@]}")
 
 TORCHRUN_ARGS=(--nproc_per_node="${NPROC_PER_NODE:-8}" --master_port="${MASTER_PORT:-50012}")
+if [[ -n "${NNODES:-}" || -n "${NODE_RANK:-}" || -n "${MASTER_ADDR:-}" ]]; then
+    # Fail fast with an actionable message instead of torchrun's opaque
+    # rendezvous error later.
+    : "${NNODES:?set NNODES, NODE_RANK and MASTER_ADDR together for multi-node}"
+    : "${NODE_RANK:?set NNODES, NODE_RANK and MASTER_ADDR together for multi-node}"
+    : "${MASTER_ADDR:?set NNODES, NODE_RANK and MASTER_ADDR together for multi-node}"
+fi
 [[ -n "${NNODES:-}" ]] && TORCHRUN_ARGS+=(--nnodes="$NNODES")
 [[ -n "${NODE_RANK:-}" ]] && TORCHRUN_ARGS+=(--node_rank="$NODE_RANK")
 [[ -n "${MASTER_ADDR:-}" ]] && TORCHRUN_ARGS+=(--master_addr="$MASTER_ADDR")
