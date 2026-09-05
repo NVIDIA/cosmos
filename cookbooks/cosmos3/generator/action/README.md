@@ -56,6 +56,17 @@ fingers.
 | UMI | End-effector pose (9D) + gripper grasp state (1D) | 10D | Meter | Normalization | 16 frames @ 20FPS |
 | Human hand pose | Ego pose (9D) + right wrist (9D) + right fingertips (15D) + left wrist (9D) + left fingertips (15D) | 57D | Meter | Wrist-frame alignment, normalization | 16 frames @ 15FPS |
 
+Action dimensions are tied to the selected embodiment. `domain_name` chooses a registered
+action domain, and Cosmos Framework validates forward-dynamics input width against that
+domain's canonical raw action dimension. Changing a 10D DROID vector to 12D or 18D, for
+example, is not supported by the released checkpoints simply by changing the input shape.
+A custom action layout requires a compatible registered embodiment/domain and model weights
+trained for that action representation. Some dataset-defined domains, such as hand pose and
+LIBERO, can resolve their width from dataset configuration for forward dynamics; this does
+not make arbitrary widths interchangeable within a trained domain. See the
+[Cosmos Framework action-domain registry](https://github.com/NVIDIA/cosmos-framework/blob/main/cosmos_framework/data/generator/action/utils/domain_utils.py)
+for the currently registered canonical widths.
+
 Action data samples across different embodiments can be inspected interactively in the [Cosmos3 Action Viewer](https://huggingface.co/spaces/nvidia/Cosmos3-Action-Viewer) Hugging Face Space.
 
 ## Run with Cosmos Framework
