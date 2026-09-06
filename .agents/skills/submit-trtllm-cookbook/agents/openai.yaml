@@ -1,0 +1,4 @@
+interface:
+  display_name: "Submit TRT-LLM Cookbook"
+  short_description: "Validate TRT-LLM cookbook PRs end to end"
+  default_prompt: "Use $submit-trtllm-cookbook to audit this cookbook PR against current TensorRT-LLM, build through gpu-run, and validate every introduced example."

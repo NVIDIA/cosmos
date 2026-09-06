@@ -2,7 +2,7 @@
 
 Cosmos3 video **transfer** examples — **Nano** (single GPU) and **Super** (multi-GPU, 32B) — on
 the native PyTorch (Cosmos Framework) path, the Diffusers modular pipeline, and the
-OpenAI-compatible vLLM-Omni server path.
+OpenAI-compatible TensorRT-LLM and vLLM-Omni server paths.
 Sample assets under [`assets/`](./assets) cover spatial control signals paired with
 `prompt.json` files:
 
@@ -13,10 +13,10 @@ Sample assets under [`assets/`](./assets) cover spatial control signals paired w
 - **World scenario (WSM)** — world-scenario map control plus caption.
 - **Multi-control** — two or more hints; Cosmos Framework also supports per-hint weights.
 
-Both Cosmos Framework and vLLM-Omni support multi-control transfer. Per-hint
-weighting is supported only by Cosmos Framework; vLLM-Omni accepts multiple
-controls but does not support per-hint weights. Diffusers accepts multiple
-precomputed controls, also without per-hint weights.
+Cosmos Framework, TensorRT-LLM, and vLLM-Omni support multi-control transfer.
+Per-hint weighting is supported only by Cosmos Framework; the serving backends
+accept multiple unweighted controls. Diffusers also accepts multiple
+precomputed controls without per-hint weights.
 
 Environment setup is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide.
@@ -25,6 +25,9 @@ Environment setup is centralized in the shared
 
 Video transfer generates a target clip from a `prompt.json` caption and one or more
 spatial control signals. The Framework path uses `model_mode` `video2video` in a local JSON spec.
+TensorRT-LLM uses `POST /v1/videos/sync`. A raw source used to derive edge or
+blur is multipart `input_reference`; precomputed controls are carried directly
+under their `extra_params` hint and do not need an `input_reference`.
 The vLLM-Omni path uses `POST /v1/videos/sync` and passes one or more hint keys (`edge`, `blur`,
 `depth`, `seg`, or `wsm`) inside `extra_params`. Cosmos Framework accepts pre-computed
 control videos (`control_path`) or derives active controls from a raw source video
@@ -40,7 +43,7 @@ for the negative caption.
 | Blur | `assets/blur/` | `control_blur.mp4` + `prompt.json` | 121 frames @ 30 FPS |
 | Depth | `assets/depth/` | `control_depth.mp4` + `prompt.json` | 121 frames @ 30 FPS |
 | Segmentation | `assets/seg/` | `control_seg.mp4` + `prompt.json` | 121 frames @ 30 FPS |
-| World scenario (WSM) | `assets/wsm/` | `control_wsm.mp4` + `prompt.json` | 101 frames @ 10 FPS |
+| World scenario (WSM) | `assets/wsm/` | `control_wsm.mp4` + `prompt.json` | 100 frames @ 10 FPS |
 | Multi-control | `assets/multi_control/` | `vision_path` + multiple hints (Framework example) | 121 frames @ 30 FPS |
 
 Transfer inference is selected automatically when any hint key is present in the
@@ -191,6 +194,86 @@ by the same five controls on Cosmos3-Super. It reads the same [`specs/`](./specs
 reuses the previews from [`preview_helpers.py`](./preview_helpers.py), writing outputs to
 `outputs/notebooks/diffusers/<model>/transfer_<control>/vision.mp4`.
 
+## Run with TensorRT-LLM
+
+### Quickstart
+
+Set up and launch Nano or Super as described in the shared
+[TensorRT-LLM setup](../../README.md#tensorrt-llm-generator). TensorRT-LLM
+accepts a raw source video as multipart `input_reference` when edge or blur will
+be computed on the server. The checked-in assets are already precomputed
+controls, so this example base64-encodes the control inside its hint and does
+not send an `input_reference`. The server decodes inline media at the HTTP
+boundary before validating and dispatching the request.
+
+```python
+import base64
+import json
+from pathlib import Path
+
+import requests
+
+transfer_root = Path("cookbooks/cosmos3/generator/transfer")
+control_path = transfer_root / "assets/depth/control_depth.mp4"
+prompt = json.dumps(json.load(open(transfer_root / "assets/depth/prompt.json")))
+negative = json.dumps(json.load(open(transfer_root / "assets/negative_prompt.json")))
+extra_params = {
+    "use_resolution_template": False,
+    "use_duration_template": False,
+    "use_system_prompt": False,
+    "use_guardrails": True,
+    "depth": {
+        "control": base64.b64encode(control_path.read_bytes()).decode("ascii")
+    },
+    "control_guidance": 1.5,
+    "num_video_frames_per_chunk": 121,
+    "num_conditional_frames": 1,
+    "num_first_chunk_conditional_frames": 0,
+    "max_frames": 121,
+}
+
+response = requests.post(
+    "http://localhost:8000/v1/videos/sync",
+    json={
+        "prompt": prompt,
+        "negative_prompt": negative,
+        "size": "1280x720",
+        "num_frames": 121,
+        "fps": 30,
+        "num_inference_steps": 35,
+        "guidance_scale": 3.0,
+        "max_sequence_length": 4096,
+        "seed": 2026,
+        "format": "auto",
+        "response_format": "file",
+        "extra_params": extra_params,
+    },
+    headers={"Accept": "video/mp4, video/x-msvideo"},
+)
+response.raise_for_status()
+suffix = ".avi" if "avi" in response.headers.get("content-type", "") else ".mp4"
+Path(f"/tmp/cosmos3_transfer_depth_trtllm{suffix}").write_bytes(response.content)
+```
+
+Only edge and blur can be generated from a raw uploaded source (`"edge": true`
+or `"blur": true`); depth, segmentation, and WSM always require precomputed
+control media. Precomputed edge and blur are also accepted. Use
+`use_guardrails`, not vLLM-Omni's `guardrails`, and send encoded control bytes
+rather than a server-local `control_path`. When neither output dimension is
+specified, TensorRT-LLM chooses the nearest supported bucket from the source or
+first precomputed control's aspect ratio. The checked-in examples explicitly
+request 1280×720 and their native frame count/fps; WSM uses 100 frames at 10
+fps. `/v1/videos/generations` remains only as a deprecated alias of the
+canonical blocking `/v1/videos/sync` route.
+
+### TensorRT-LLM notebook walkthrough
+
+[`run_video_transfer_with_trt_llm.ipynb`](./run_video_transfer_with_trt_llm.ipynb)
+runs edge, blur, depth, segmentation, and WSM against an already-running Nano
+or Super server. It reuses the checked-in media and captions, shows the complete
+mode matrix, validates the JSON/base64 control request contract, and previews the
+synchronous encoded-video responses.
+
 ## Run with vLLM-Omni
 
 ### Quickstart
@@ -315,6 +398,9 @@ Key fields:
 - [`run_video_transfer_with_diffusers.ipynb`](./run_video_transfer_with_diffusers.ipynb) —
   full tutorial for the Diffusers modular pipeline: five single-control transfers on Nano,
   then the same five on Super, driven by the same specs.
+- [`run_video_transfer_with_trt_llm.ipynb`](./run_video_transfer_with_trt_llm.ipynb) —
+  five single-control transfers through TensorRT-LLM's synchronous VisualGen API,
+  using base64-encoded precomputed controls in JSON `extra_params`.
 - [`run_video_transfer_with_vllm_omni.ipynb`](./run_video_transfer_with_vllm_omni.ipynb) —
   full tutorial against an already-running vLLM-Omni server: endpoint checks, repo-local
   control paths, five single-control transfer requests, and compact previews. The API

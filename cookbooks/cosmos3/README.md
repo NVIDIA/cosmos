@@ -8,7 +8,7 @@ backend you want to run and follow that one section.
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
-| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio generation) | Generator (Audiovisual) |
+| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio/action/transfer generation) | Generator (Audiovisual, Action, **Transfer**) |
 | [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
@@ -170,12 +170,16 @@ uv pip install --torch-backend=cu130 \
 ## TensorRT-LLM Generator
 
 OpenAI-compatible **VisualGen** server for Generator audiovisual text-to-image,
-text-to-video, image-to-video, video-to-video, and synchronized audio examples.
+text-to-video, image-to-video, video-to-video, synchronized audio, Transfer, and
+Action examples, including the published four-step T2I and I2V students.
 Initial Cosmos3 support was added in TensorRT-LLM PR
 [#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824), synchronized audio
 in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
-video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155).
-Use a TensorRT-LLM checkout or package that includes those changes.
+video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155),
+Transfer in [#16394](https://github.com/NVIDIA/TensorRT-LLM/pull/16394), and
+Action in [#17325](https://github.com/NVIDIA/TensorRT-LLM/pull/17325).
+These changes are merged on TensorRT-LLM `main`; use a current checkout or a
+package that includes them.
 
 Install TensorRT-LLM following its upstream documentation.
 
@@ -186,7 +190,7 @@ Cosmos3 VisualGen change before it is available in your installed package or
 release image.
 
 ```bash
-apt-get update && apt-get -y install ffmpeg git git-lfs
+apt-get update && apt-get -y install git git-lfs
 git lfs install
 
 git clone https://github.com/NVIDIA/TensorRT-LLM.git
@@ -205,6 +209,7 @@ docker run --rm -it \
   nvcr.io/nvidia/tensorrt-llm/devel:<tag>
 
 # Inside the container:
+apt-get update && apt-get -y install ffmpeg
 python3 scripts/build_wheel.py --use_ccache --skip_building_wheel --linking_install_binary
 pip install -e .
 ```
@@ -218,14 +223,16 @@ explicitly disable guardrails before starting the server:
 
 ```bash
 pip install cosmos_guardrail==0.3.0
-# If needed by your OpenCV stack:
-# pip uninstall opencv-python
+# On headless servers without libGL.so.1, replace the OpenCV wheel pulled in by
+# cosmos_guardrail with the matching headless build:
+pip uninstall -y opencv-python
+pip install opencv-python-headless==5.0.0.93
 ```
 
 Set the TensorRT-LLM source root for the shared VisualGen config YAMLs:
 
 ```bash
-export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD/TensorRT-LLM}"
+export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD}"
 export COSMOS3_TRTLLM_PORT="${COSMOS3_TRTLLM_PORT:-8000}"
 ```
 
@@ -246,13 +253,29 @@ torchrun --nproc_per_node=4 -m tensorrt_llm.commands.serve \
   --port "$COSMOS3_TRTLLM_PORT"
 ```
 
-The server exposes `/health`, `/v1/videos/generations`, `/v1/videos`, and
-`/v1/images/generations`. The audiovisual notebook uses the validated video
-generation endpoint for text-to-image, text-to-video, image-to-video,
-video-to-video, and synchronized audio. Cosmos3 text-to-image is sent as a
-one-frame video request, matching the TensorRT-LLM Cosmos3 pipeline; the notebook
-sends it as `num_frames=1`, `seconds=1`, and `fps=8` to satisfy the video request
-schema while preserving a single generated frame. Image-to-video and
+**Four-step distilled T2I** (single GPU; 1024×1024, one-frame warmup):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Super-Text2Image-4Step \
+  --visual_gen_args "$TRTLLM_ROOT/examples/visual_gen/configs/cosmos3-t2i-1gpu.yaml" \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+**Four-step distilled I2V** (single GPU; default 1280×720, 189-frame shape):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Super-Image2Video-4Step \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+The server exposes `/health`, the blocking `/v1/videos/sync`, the asynchronous
+`/v1/videos`, and `/v1/images/generations`. The older
+`/v1/videos/generations` spelling is a deprecated alias of `/v1/videos/sync`.
+The audiovisual notebook uses `/v1/videos/sync` for text-to-image, text-to-video,
+image-to-video, video-to-video, and synchronized audio. Cosmos3 text-to-image is
+sent as a one-frame video request, matching the TensorRT-LLM Cosmos3 pipeline;
+the notebook sends it as `num_frames=1`, `seconds=1`, and `fps=8` to satisfy the
+video request schema while preserving a single generated frame. Image-to-video and
 video-to-video upload their reference media as multipart `input_reference`;
 TensorRT-LLM classifies the reference by content. Synchronized audio is enabled
 with `enable_audio: true` in `extra_params` and is muxed into the output video.
@@ -261,6 +284,28 @@ video-only AVI encoder and cannot preserve generated audio. Requests send
 Cosmos3 controls through `extra_params`, so use a TensorRT-LLM build that includes
 the Cosmos3 VisualGen API schema. The notebook sets request-level
 `max_sequence_length=4096` for longer structured JSON prompts.
+
+Transfer uses the synchronous `/v1/videos/sync` route. For server-derived edge
+or blur, upload the raw source video as multipart `input_reference` and set the
+corresponding `extra_params` hint to `true`. For a precomputed edge, blur,
+depth, segmentation, or WSM control, base64-encode the control inside its hint;
+no `input_reference` is needed. The server decodes inline media to bytes at the
+HTTP boundary. TensorRT-LLM uses `use_guardrails` for its per-request safety
+switch; `guardrails`, `control_path`, and other vLLM-Omni-only names are not
+interchangeable.
+
+Action requests use the same synchronous route and upload an image or video as
+`input_reference`. Because an action trajectory cannot be represented in MP4 or
+AVI, `format=auto` resolves to `safetensors`; the payload contains named `video`,
+`action`, and `frame_rate` tensors. The asynchronous `/v1/videos` route also
+supports this payload: poll `GET /v1/videos/{id}`, then download it from
+`GET /v1/videos/{id}/content`.
+
+The distilled checkpoints own their four-step stochastic schedules and have
+classifier-free guidance baked into their weights. Leave `num_inference_steps`
+and `guidance_scale` unset; conflicting values are rejected. Also leave
+`use_system_prompt` unset for distilled I2V so its checkpoint-declared default
+is applied.
 
 ## TensorRT-LLM Reasoner
 

@@ -18,15 +18,18 @@ The rest of this doc shows how to run these modes on selected embodiments direct
 - [Run with Diffusers](#run-with-diffusers)
   - [Quickstart](#quickstart-1)
   - [Notebook walkthrough](#diffusers-notebook-walkthrough)
-- [Run with vLLM-Omni](#run-with-vllm-omni)
+- [Run with TensorRT-LLM](#run-with-tensorrt-llm)
   - [Quickstart](#quickstart-2)
+  - [Notebook walkthrough](#tensorrt-llm-notebook-walkthrough)
+- [Run with vLLM-Omni](#run-with-vllm-omni)
+  - [Quickstart](#quickstart-3)
   - [Notebook walkthrough](#vllm-omni-notebook-walkthrough)
 - [Post-Train for Cosmos3-Nano-Policy-DROID](#post-train-for-cosmos3-nano-policy-droid)
 
 ## Overview
 
-All examples are shown across three different inference backends — native
-PyTorch (Cosmos Framework), Diffusers, and vLLM-Omni. Every backend uses the sample
+Examples are shown across native PyTorch (Cosmos Framework), Diffusers,
+TensorRT-LLM, and vLLM-Omni. Every backend uses the sample
 assets under [`assets/`](./assets) and covers three tasks:
 
 Environment setup for all backends is centralized in the shared
@@ -36,7 +39,8 @@ links to the section you need.
 Generator requires the Guardrail. Request access to the gated
 [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
 HF repository before running these examples. To disable the guardrail, set
-`enable_safety_checker=False` (Diffusers), `guardrails: false` (vLLM-Omni
+`enable_safety_checker=False` (Diffusers), `use_guardrails: false`
+(TensorRT-LLM `extra_params`), `guardrails: false` (vLLM-Omni
 `extra_params`/`extra_args`), or `--no-guardrails` (Cosmos Framework).
 
 ## Action Definition
@@ -164,6 +168,78 @@ and the trajectory plots use its pose helpers, so set `COSMOS3_REPO` to your fra
 before running them. The DROID reader resolves its feature layout from the name of the directory
 it is given, so also set `COSMOS3_DROID_ROOT` to a directory named after the DROID release you
 have available.
+
+## Run with TensorRT-LLM
+
+### Quickstart
+
+Set up and launch the VisualGen server with the one-GPU Nano config:
+[TensorRT-LLM setup](../../README.md#tensorrt-llm-generator). Action requests
+upload the conditioning image or video as multipart `input_reference` and put
+the mode-specific fields under `extra_params`.
+
+```python
+import json
+from pathlib import Path
+
+import requests
+from safetensors.torch import load as load_safetensors
+
+action_root = Path("cookbooks/cosmos3/generator/action")
+image_path = action_root / "assets/images/av_0.jpg"
+actions = json.loads((action_root / "assets/actions/av_traj_forward.json").read_text())
+
+with image_path.open("rb") as image_file:
+    response = requests.post(
+        "http://localhost:8000/v1/videos/sync",
+        data={
+            "prompt": "You are an autonomous vehicle planning system.",
+            "format": "safetensors",
+            "response_format": "file",
+            "seed": "0",
+            "extra_params": json.dumps(
+                {
+                    "action_mode": "forward_dynamics",
+                    "domain_name": "av",
+                    "action": actions,
+                    "view_point": "ego_view",
+                    "use_guardrails": True,
+                }
+            ),
+        },
+        files={"input_reference": (image_path.name, image_file, "image/jpeg")},
+        headers={"Accept": "application/octet-stream"},
+    )
+response.raise_for_status()
+payload = load_safetensors(response.content)
+print(payload["video"].shape, payload["action"].shape, payload["frame_rate"].item())
+```
+
+The `av` domain preset supplies its 60-step, 9D, 480p/10 fps recipe; other
+recognized domains similarly fill omitted action width, chunk, resolution, and
+frame rate. Inverse dynamics predicts its action tensor, while forward dynamics
+carries the conditioned action alongside the rollout. Both supported modes use
+a tensor output: `format=auto` selects
+`safetensors`, and explicit `mp4`/`avi` is rejected rather than dropping the
+trajectory.
+
+The quickstart uses the blocking `POST /v1/videos/sync` route with
+`response_format=file`, which returns the tensor payload bytes directly. The
+older `/v1/videos/generations` spelling is a deprecated alias. The asynchronous
+`POST /v1/videos` route returns HTTP 202; poll
+`GET /v1/videos/{id}` and download the same tensor payload from
+`GET /v1/videos/{id}/content`.
+
+### TensorRT-LLM notebook walkthrough
+
+- [`run_fd_with_trt_llm.ipynb`](./run_fd_with_trt_llm.ipynb) — forward
+  dynamics from the checked-in AV image and 60×9 action trajectory.
+- [`run_id_with_trt_llm.ipynb`](./run_id_with_trt_llm.ipynb) — inverse
+  dynamics from the checked-in AV observation clip.
+
+Both notebooks decode TensorRT-LLM's `safetensors` response, write the rollout
+video, and inspect the named `action` tensor. This response contract is not the
+top-level action JSON used by vLLM-Omni.
 
 ## Run with vLLM-Omni
 
