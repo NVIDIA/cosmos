@@ -58,6 +58,20 @@ fingers.
 
 Action data samples across different embodiments can be inspected interactively in the [Cosmos3 Action Viewer](https://huggingface.co/spaces/nvidia/Cosmos3-Action-Viewer) Hugging Face Space.
 
+### AgiBotWorld robot description
+
+The public Cosmos Framework AgiBotWorld forward-kinematics path currently uses the
+committed [`G1_omnipicker_calibrated.urdf`](https://github.com/NVIDIA/cosmos-framework/blob/main/cosmos_framework/data/generator/action/robot_assets/G1_omnipicker_calibrated.urdf)
+as its calibrated kinematics reference. The URDF contains `package://` references to
+visual meshes, but those mesh files are not bundled in the framework's `robot_assets`
+directory. They are not required by the action FK path: the loader removes `<visual>`
+and `<collision>` elements before constructing its MuJoCo kinematics model.
+
+Accordingly, the committed file should be treated as the kinematics reference for the
+registered omnipicker-based AgiBotWorld action path, not as a complete renderable robot
+asset package or a generic description for every AgiBotWorld gripper variant. The public
+framework does not currently include a separate CTEK URDF or the referenced mesh package.
+
 ## Run with Cosmos Framework
 
 ### Quickstart
