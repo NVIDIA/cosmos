@@ -301,6 +301,62 @@ def split_score_breakdown_by_prefix(score_breakdown: dict) -> tuple[dict, dict]:
     return orig, phi
 
 
+def build_benchmark_samples(
+    benchmark_rows: list[dict],
+    image_folder: Path,
+    extension: str,
+    allow_missing_images: bool = False,
+) -> list[dict[str, Any]]:
+    """Build scorer inputs and reject incomplete benchmark generations."""
+    samples = []
+    missing_paths = []
+    for row in benchmark_rows:
+        index = row.get("index") if row.get("index") is not None else row.get("id")
+        if index is None:
+            raise ValueError("Each benchmark row must define either 'index' or 'id'.")
+
+        prompt = row.get("prompt_en") or row.get("prompt")
+        sub_dims = row.get("sub_dims_en") or row.get("sub_dims")
+        metadata = ast.literal_eval(sub_dims) if isinstance(sub_dims, str) else sub_dims
+        image_path = image_folder / f"{index}_0.{extension}"
+        if not image_path.exists():
+            missing_paths.append(image_path)
+            continue
+
+        samples.append(
+            {
+                "image_path": image_path,
+                "prompt": prompt,
+                "metadata": metadata,
+                "extension": extension,
+                "try_num": 0,
+            }
+        )
+
+    if missing_paths and not allow_missing_images:
+        preview = ", ".join(path.name for path in missing_paths[:5])
+        if len(missing_paths) > 5:
+            preview += ", ..."
+        raise FileNotFoundError(
+            f"Missing {len(missing_paths)} of {len(benchmark_rows)} expected image(s) "
+            f"under {image_folder}: {preview}"
+        )
+
+    return samples
+
+
+def validate_cached_results(score_final: dict, samples: list[dict], result_path: Path) -> int:
+    """Reject a cached score whose coverage differs from the current image set."""
+    expected_results = {sample["image_path"].name for sample in samples}
+    cached_results = set(score_final.get("breakdown", {}))
+    if cached_results != expected_results:
+        raise ValueError(
+            f"Existing results at {result_path} cover {len(cached_results)} of "
+            f"{len(expected_results)} currently available image(s); remove the stale result file to rescore."
+        )
+    return len(cached_results)
+
+
 def print_stats_from_json(score_final: dict, input_folder: str, result_path: str) -> None:
     stats = score_final["stats"]
     success_count = score_final.get("success_count", "N/A")
@@ -349,43 +405,34 @@ def main() -> None:
     )
     print(f"\nParams:\n{params_disp}")
 
-    if result_path.exists():
-        print(f"Found existing results at {result_path}, skipping scoring")
-        score_final = json.loads(result_path.read_text())
-        print_stats_from_json(score_final, str(image_folder), str(result_path))
-        return
-
     benchmark_data = json.loads(prompt_file.read_text())
     if isinstance(benchmark_data, dict) and "benchmark" in benchmark_data:
         benchmark_rows = benchmark_data["benchmark"]
     else:
         benchmark_rows = benchmark_data
 
-    samples_todo = []
-    missing_images = 0
-    for row in benchmark_rows:
-        index = row.get("index") or row.get("id")
-        prompt = row.get("prompt_en") or row.get("prompt")
-        sub_dims = row.get("sub_dims_en") or row.get("sub_dims")
-        metadata = ast.literal_eval(sub_dims) if isinstance(sub_dims, str) else sub_dims
-        image_path = image_folder / f"{index}_0.{args.extension}"
-        if not image_path.exists():
-            missing_images += 1
-            continue
-        samples_todo.append(
-            {
-                "image_path": image_path,
-                "prompt": prompt,
-                "metadata": metadata,
-                "extension": args.extension,
-                "try_num": 0,
-            }
-        )
-
-    samples_total = len(samples_todo)
+    samples_todo = build_benchmark_samples(
+        benchmark_rows,
+        image_folder,
+        args.extension,
+        allow_missing_images=args.allow_missing_images,
+    )
+    samples_total = len(benchmark_rows)
+    missing_images = samples_total - len(samples_todo)
     if missing_images:
-        print(f"Missing {missing_images} expected image(s) under {image_folder}")
-    print(f"Total samples: {samples_total}")
+        print(
+            f"Warning: scoring {len(samples_todo)} of {samples_total} benchmark images "
+            "because --allow_missing_images was set"
+        )
+    print(f"Total samples: {len(samples_todo)}/{samples_total}")
+
+    if result_path.exists():
+        score_final = json.loads(result_path.read_text())
+        cached_count = validate_cached_results(score_final, samples_todo, result_path)
+        score_final["success_count"] = f"{cached_count}/{samples_total}"
+        print(f"Found complete existing results at {result_path}, skipping scoring")
+        print_stats_from_json(score_final, str(image_folder), str(result_path))
+        return
 
     vlm = GatewayVLM(
         gateway_url=args.gateway_url,
@@ -473,6 +520,11 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--num_concurrency", type=int, default=128)
     parser.add_argument("--batch_size", type=int, default=1170)
     parser.add_argument("--max_retry", type=int, default=3)
+    parser.add_argument(
+        "--allow_missing_images",
+        action="store_true",
+        help="Score an explicitly incomplete generation for debugging; coverage still uses the full benchmark total.",
+    )
     return parser.parse_args()
 
 
