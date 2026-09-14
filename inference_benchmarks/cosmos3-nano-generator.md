@@ -25,14 +25,15 @@ These tables report **Cosmos3-Nano Generator** latency in seconds. Lower is bett
   - [Inverse Dynamics — Robot](#inverse-dynamics--robot)
   - [Policy — AV](#policy--autonomous-vehicle-av)
   - [Policy — Robot](#policy--robot)
+  - [Policy — DROID](#policy--droid)
 
 ## Benchmark methodology
 
 The primary t2v, i2v, and t2i tables preserve the previously published benchmark campaigns across PyTorch, vLLM-Omni, Diffusers, and NIM. Those tables use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
 
-The additional audiovisual and action tables come from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**. PyTorch values are average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. Columns combine the 256p, 480p, and 720p tiers with 1, 4, or 8 GPUs. Values are rounded to two decimal places. The workbook does not include B300, so B300 is retained as an empty reservation.
+The additional audiovisual and action tables come from three internal benchmark reports. PyTorch values are from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**: average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (action)**, measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep reports 1/2/4 GPUs only: 8-GPU Ulysses runs failed a sequence-length divisibility check, so `/8` action cells stay empty. The 2-GPU columns are omitted to keep the published table layout. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. Super was not measured on H20, H100 NVL, or H100 80GB HBM3. Values are rounded to two decimal places.
 
-The PBR establishes the reported timing matrix but does not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
+These reports establish the reported timing matrix but do not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
 
 ## Workload definitions
 
@@ -45,6 +46,7 @@ The PBR establishes the reported timing matrix but does not expose every prompt 
 | Forward dynamics | Initial visual observation and an action trajectory | Future-observation rollout video |
 | Inverse dynamics | Observed video | Recovered action trajectory; some serving integrations also return video |
 | Policy | Initial visual observation, instruction, and optional state | Predicted action trajectory and, for general Generator paths, a rollout video |
+| Policy-DROID | Multiview wrist/exterior observations for the DROID embodiment | Predicted action chunk from the Policy-DROID checkpoint |
 
 The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound-producing modes `t2vs`, `v2vs`, and `i2vs`. See the [audiovisual cookbook](../cookbooks/cosmos3/generator/audiovisual/README.md) for generation inputs and the [action cookbook](../cookbooks/cosmos3/generator/action/README.md) for action representations and output contracts. vLLM-Omni request shapes are maintained in the [Nano recipe](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md). Public recipes cover more embodiments than this PBR; the action tables below intentionally use only its measured domain rows.
 
@@ -202,28 +204,28 @@ A text prompt produces synchronized video and sound.
 | GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 14.13 | 6.47 | 4.89 | 180.98 | 57.21 | 35.77 | 794.74 | 225.73 | 127.53 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 12.25 | 5.32 | 4.19 | 106.02 | 36.11 | 24.02 | 373.10 | 115.06 | 69.19 |
 | | Diffusers | | | | | | | | | |
 | **H20** | PyTorch | 30.82 | 11.21 | 7.87 | 256.41 | 80.22 | 50.51 | 922.35 | 268.73 | 158.03 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 29.43 | 10.74 | 7.88 | 260.84 | 78.67 | 48.02 | 937.93 | 262.83 | 148.26 |
 | | Diffusers | | | | | | | | | |
 | **H100 NVL** | PyTorch | 9.99 | 4.27 | 3.95 | 82.32 | 28.50 | 21.46 | 297.88 | 94.45 | 60.25 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 9.92 | 3.85 | 3.26 | 81.57 | 27.15 | 18.93 | 291.91 | 90.29 | 55.66 |
 | | Diffusers | | | | | | | | | |
 | **H200 NVL** | PyTorch | 8.20 | 3.75 | 3.08 | 69.88 | 24.30 | 15.17 | 250.46 | 78.00 | 45.75 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 7.82 | 3.43 | 2.35 | 65.42 | 21.42 | 12.93 | 244.60 | 70.56 | 39.95 |
 | | Diffusers | | | | | | | | | |
 | **H100 80GB HBM3** | PyTorch | 7.60 | 3.43 | 3.18 | 59.09 | 21.18 | 14.32 | 207.87 | 66.74 | 41.71 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 7.34 | 3.54 | 3.43 | 58.65 | 20.10 | 13.47 | 203.92 | 63.22 | 38.45 |
 | | Diffusers | | | | | | | | | |
 | **H200 141GB HBM3** | PyTorch | 7.55 | 3.33 | 3.13 | 60.17 | 20.86 | 13.90 | 211.59 | 67.02 | 41.24 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 7.13 | 3.45 | 3.35 | 58.27 | 19.62 | 13.11 | 209.29 | 63.53 | 37.92 |
 | | Diffusers | | | | | | | | | |
 | **B200** | PyTorch | 4.63 | 2.81 | 2.81 | 32.60 | 13.17 | 9.64 | 113.89 | 39.59 | 26.33 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 4.29 | 2.51 | 3.47 | 32.20 | 12.70 | 10.08 | 107.74 | 36.10 | 23.83 |
 | | Diffusers | | | | | | | | | |
 | **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 5.59 | 4.21 | 5.54 | 33.15 | 14.10 | 11.90 | 104.92 | 36.00 | 24.92 |
 | | Diffusers | | | | | | | | | |
 
 ### Video-to-Audio-and-Video (v2av)
@@ -264,61 +266,61 @@ A text prompt and source image produce video with synchronized sound.
 | GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 14.08 | 6.48 | 4.91 | 181.64 | 57.25 | 35.69 | 787.81 | 226.71 | 127.85 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 12.61 | 5.72 | 4.53 | 108.05 | 38.30 | 26.20 | 378.04 | 120.08 | 74.23 |
 | | Diffusers | | | | | | | | | |
 | **H20** | PyTorch | 31.34 | 11.36 | 7.97 | 259.06 | 80.55 | 50.63 | 924.39 | 269.21 | 157.97 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 30.36 | 11.60 | 8.91 | 265.37 | 83.11 | 52.70 | 948.09 | 272.93 | 158.76 |
 | | Diffusers | | | | | | | | | |
 | **H100 NVL** | PyTorch | 10.45 | 4.31 | 3.97 | 84.37 | 28.74 | 21.46 | 298.61 | 94.02 | 60.57 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 10.34 | 4.30 | 3.72 | 83.21 | 29.20 | 20.82 | 295.65 | 94.44 | 59.83 |
 | | Diffusers | | | | | | | | | |
 | **H200 NVL** | PyTorch | 8.29 | 3.76 | 3.08 | 71.20 | 24.34 | 15.05 | 248.35 | 76.82 | 46.40 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 8.24 | 3.85 | 2.81 | 67.23 | 23.05 | 14.65 | 249.41 | 74.44 | 43.50 |
 | | Diffusers | | | | | | | | | |
 | **H100 80GB HBM3** | PyTorch | 7.73 | 3.46 | 3.11 | 59.13 | 21.24 | 14.30 | 207.93 | 67.50 | 41.75 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 7.74 | 3.96 | 4.08 | 60.27 | 21.81 | 15.26 | 207.53 | 66.74 | 41.92 |
 | | Diffusers | | | | | | | | | |
 | **H200 141GB HBM3** | PyTorch | 7.66 | 3.35 | 3.14 | 60.55 | 20.98 | 13.99 | 214.82 | 67.35 | 41.21 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 7.55 | 3.90 | 3.77 | 59.73 | 21.35 | 14.67 | 212.73 | 66.78 | 41.03 |
 | | Diffusers | | | | | | | | | |
 | **B200** | PyTorch | 4.62 | 2.78 | 2.80 | 32.82 | 13.09 | 9.69 | 113.85 | 39.76 | 26.56 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 4.58 | 2.83 | 3.85 | 33.36 | 13.89 | 11.14 | 110.05 | 38.82 | 26.30 |
 | | Diffusers | | | | | | | | | |
 | **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 6.01 | 4.76 | 6.09 | 34.39 | 15.45 | 13.15 | 108.59 | 38.62 | 27.59 |
 | | Diffusers | | | | | | | | | |
 
 ## Action generation
 
-Forward dynamics is reported separately for AV, camera, and robot inputs. Inverse dynamics and policy are reported for AV and robot because those are the only domain rows in this PBR; no camera row is inferred. For each domain, PyTorch is populated from the PBR while vLLM-Omni and Diffusers rows are reserved for future measurements.
+Forward dynamics is reported separately for AV, camera, and robot inputs. Inverse dynamics and policy are reported for AV and robot because those are the only domain rows in PBR `#308197`; no camera row is inferred. For each domain, PyTorch is populated from that report. vLLM-Omni currently covers forward dynamics AV and inverse dynamics AV from PBR `#308481`. Camera, robot-FD, robot-ID, policy-AV, and policy-robot vLLM-Omni rows remain reserved. **Policy — DROID** is a separate checkpoint (`nvidia/Cosmos3-Nano-Policy-DROID`) and is not mixed with the policy-robot table.
 
 ### Forward Dynamics — Autonomous Vehicle (AV)
 
 | GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 16.87 | 12.13 | 8.96 | 16.86 | 12.18 | 8.95 | 16.85 | 12.14 | 8.94 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 2.08 | 1.46 |  | 12.94 | 7.06 |  | 36.19 | 16.58 |  |
 | | Diffusers | | | | | | | | | |
 | **H20** | PyTorch | 31.47 | 19.97 | 13.77 | 31.16 | 19.91 | 13.78 | 31.45 | 19.95 | 13.78 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 4.82 | 2.36 |  | 31.36 | 12.83 |  | 87.55 | 32.09 |  |
 | | Diffusers | | | | | | | | | |
 | **H100 NVL** | PyTorch | 10.32 | 7.36 | 6.46 | 10.66 | 7.35 | 6.31 | 10.64 | 7.43 | 6.32 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.71 | 1.46 |  | 10.58 | 5.63 |  | 28.26 | 13.61 |  |
 | | Diffusers | | | | | | | | | |
 | **H200 NVL** | PyTorch | 8.30 | 6.18 | 4.41 | 8.31 | 6.16 | 4.39 | 8.33 | 6.14 | 4.39 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.43 | 1.50 |  | 8.21 | 3.83 |  | 22.78 | 9.37 |  |
 | | Diffusers | | | | | | | | | |
 | **H100 80GB HBM3** | PyTorch | 7.80 | 5.69 | 4.30 | 7.87 | 5.68 | 4.34 | 7.79 | 5.68 | 4.30 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.33 | 1.51 |  | 7.74 | 3.77 |  | 20.60 | 9.09 |  |
 | | Diffusers | | | | | | | | | |
 | **H200 141GB HBM3** | PyTorch | 7.77 | 5.51 | 4.16 | 7.76 | 5.56 | 4.18 | 7.81 | 5.54 | 4.16 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.33 | 1.49 |  | 7.72 | 3.63 |  | 20.65 | 8.79 |  |
 | | Diffusers | | | | | | | | | |
 | **B200** | PyTorch | 4.75 | 3.88 | 3.38 | 4.75 | 3.85 | 3.37 | 4.73 | 3.87 | 3.36 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 0.94 | 1.20 |  | 4.93 | 2.84 |  | 12.00 | 5.84 |  |
 | | Diffusers | | | | | | | | | |
 | **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.09 | 2.30 |  | 4.86 | 3.56 |  | 11.70 | 6.31 |  |
 | | Diffusers | | | | | | | | | |
 
 ### Forward Dynamics — Camera
@@ -384,28 +386,28 @@ Forward dynamics is reported separately for AV, camera, and robot inputs. Invers
 | GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 16.74 | 12.05 | 8.79 | 16.75 | 12.02 | 8.78 | 16.75 | 12.02 | 8.78 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 2.10 | 1.47 |  | 12.96 | 7.09 |  | 36.10 | 16.61 |  |
 | | Diffusers | | | | | | | | | |
 | **H20** | PyTorch | 31.22 | 19.66 | 13.52 | 30.99 | 19.68 | 13.52 | 31.22 | 19.70 | 13.53 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 4.84 | 2.39 |  | 31.36 | 12.81 |  | 87.50 | 32.08 |  |
 | | Diffusers | | | | | | | | | |
 | **H100 NVL** | PyTorch | 10.47 | 7.13 | 6.16 | 10.45 | 7.16 | 6.26 | 10.44 | 7.10 | 6.14 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.74 | 1.48 |  | 10.54 | 5.61 |  | 28.16 |  |  |
 | | Diffusers | | | | | | | | | |
 | **H200 NVL** | PyTorch | 8.12 | 5.96 | 4.19 | 8.13 | 5.97 | 4.20 | 8.10 | 5.98 | 4.20 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.46 | 1.46 |  | 8.20 | 3.80 |  | 22.34 | 9.32 |  |
 | | Diffusers | | | | | | | | | |
 | **H100 80GB HBM3** | PyTorch | 7.62 | 5.54 | 4.15 | 7.63 | 5.52 | 4.16 | 7.68 | 5.53 | 4.14 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.39 | 1.50 |  | 7.72 | 3.75 |  | 20.55 | 9.05 |  |
 | | Diffusers | | | | | | | | | |
 | **H200 141GB HBM3** | PyTorch | 7.51 | 5.36 | 4.00 | 7.64 | 5.34 | 3.99 | 7.51 | 5.37 | 3.99 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.36 | 1.48 |  | 7.69 | 3.60 |  | 20.65 | 8.71 |  |
 | | Diffusers | | | | | | | | | |
 | **B200** | PyTorch | 4.60 | 3.74 | 3.20 | 4.63 | 3.73 | 3.19 | 4.58 | 3.76 | 3.23 |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 0.92 | 1.55 |  | 5.10 | 2.83 |  | 12.29 | 5.92 |  |
 | | Diffusers | | | | | | | | | |
 | **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
+| | vLLM-Omni | 1.36 | 2.55 |  | 5.75 | 4.04 |  | 11.89 | 6.67 |  |
 | | Diffusers | | | | | | | | | |
 
 ### Inverse Dynamics — Robot
@@ -495,9 +497,43 @@ Forward dynamics is reported separately for AV, camera, and robot inputs. Invers
 | | vLLM-Omni | | | | | | | | | |
 | | Diffusers | | | | | | | | | |
 
+### Policy — DROID
+
+These rows report **Cosmos3-Nano-Policy-DROID**, not the general Cosmos3-Nano checkpoint used in the other action tables. vLLM-Omni only supports this modality at **480p on one GPU** (multi-GPU is disabled, and resolution is fixed for the multiview wrist/exterior inputs). PyTorch and Diffusers cells are reserved.
+
+| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | | | | | | | | | |
+| | vLLM-Omni | | | | 3.82 | | | | | |
+| | Diffusers | | | | | | | | | |
+| **H20** | PyTorch | | | | | | | | | |
+| | vLLM-Omni | | | | 8.51 | | | | | |
+| | Diffusers | | | | | | | | | |
+| **H100 NVL** | PyTorch | | | | | | | | | |
+| | vLLM-Omni | | | | 2.94 | | | | | |
+| | Diffusers | | | | | | | | | |
+| **H200 NVL** | PyTorch | | | | | | | | | |
+| | vLLM-Omni | | | | 2.34 | | | | | |
+| | Diffusers | | | | | | | | | |
+| **H100 80GB HBM3** | PyTorch | | | | | | | | | |
+| | vLLM-Omni | | | | 2.23 | | | | | |
+| | Diffusers | | | | | | | | | |
+| **H200 141GB HBM3** | PyTorch | | | | | | | | | |
+| | vLLM-Omni | | | | 2.21 | | | | | |
+| | Diffusers | | | | | | | | | |
+| **B200** | PyTorch | | | | | | | | | |
+| | vLLM-Omni | | | | 1.47 | | | | | |
+| | Diffusers | | | | | | | | | |
+| **B300** | PyTorch | | | | | | | | | |
+| | vLLM-Omni | | | | 2.15 | | | | | |
+| | Diffusers | | | | | | | | | |
+
 <sub>Additional-modality notes:
-1. All reported values are average PyTorch generation (sampling) latency in seconds; lower is better.
+1. PyTorch values are average generation (sampling) latency in seconds from PBR `#308197`; lower is better.
 2. PyTorch values use `CUDA_GRAPH=No` and the `latency` automatic-sharding preset.
-3. The `/1`, `/4`, and `/8` suffixes denote the number of GPUs used by the benchmark run.
-4. vLLM-Omni and Diffusers rows are intentionally empty reservations for future benchmark campaigns.
-5. Empty cells indicate unmeasured combinations, not unsupported combinations.</sub>
+3. vLLM-Omni audiovisual values for `t2av`/`t2vs` and `i2av`/`i2vs` are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`.
+4. Action vLLM-Omni `/8` cells are empty because 8-GPU Ulysses runs failed sequence-length divisibility checks. Two documented action misses are also left blank: Super inverse-dynamics AV at 720p/4 on H200 141GB HBM3 (OOM), and Nano inverse-dynamics AV at 720p/4 on H100 NVL (CUDA/NCCL failure).
+5. Policy-DROID vLLM-Omni uses the `nvidia/Cosmos3-Nano-Policy-DROID` checkpoint at 480p/1 only. It is reported in its own table and is not comparable to the PyTorch policy-robot row.
+6. Diffusers rows are intentionally empty reservations for future benchmark campaigns.
+7. The `/1`, `/4`, and `/8` suffixes denote the number of GPUs used by the benchmark run.
+8. Empty cells indicate unmeasured combinations, not unsupported combinations.</sub>
