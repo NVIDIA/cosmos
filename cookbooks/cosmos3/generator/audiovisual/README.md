@@ -272,7 +272,7 @@ prompt = json.load(open("assets/prompts/text2video/robot_kitchen.json"))
 negative = json.load(open("assets/negative_prompts/text2video/neg_prompt.json"))
 
 response = requests.post(
-    "http://localhost:8000/v1/videos/generations",
+    "http://localhost:8000/v1/videos/sync",
     json={
         "prompt": json.dumps(prompt, ensure_ascii=True, separators=(",", ":")),
         "negative_prompt": json.dumps(negative, ensure_ascii=True, separators=(",", ":")),
@@ -284,6 +284,8 @@ response = requests.post(
         "guidance_scale": 6.0,
         "max_sequence_length": 4096,
         "seed": 0,
+        "format": "mp4",
+        "response_format": "file",
         "extra_params": {
             "use_resolution_template": False,
             "use_duration_template": False,
@@ -291,20 +293,26 @@ response = requests.post(
             "use_guardrails": True,
         },
     },
+    headers={"Accept": "video/mp4"},
 )
 response.raise_for_status()
-suffix = ".avi" if "x-msvideo" in response.headers.get("content-type", "") else ".mp4"
-Path(f"/tmp/cosmos3_t2v_trtllm{suffix}").write_bytes(response.content)
+if (
+    "video/mp4" not in response.headers.get("content-type", "")
+    or response.content[4:8] != b"ftyp"
+):
+    raise RuntimeError("TensorRT-LLM did not return browser-compatible MP4")
+Path("/tmp/cosmos3_t2v_trtllm.mp4").write_bytes(response.content)
 ```
 
 For image-to-video, post multipart form data to the same endpoint with the
-reference image under `input_reference`. To generate synchronized audio for a
+reference image under `image_reference`. To generate synchronized audio for a
 text-to-video or image-to-video request, add `"enable_audio": True` to
 `extra_params`. Keep `ffmpeg` installed in the server environment so TensorRT-LLM
-can mux the generated audio into the MP4; its fallback AVI encoder is video-only.
+can mux the generated audio into MP4. Explicit `format=mp4` makes a missing
+encoder fail early instead of returning browser-incompatible AVI.
 
-For video-to-video, upload an MP4 or AVI reference under `input_reference`.
-TensorRT-LLM classifies the upload by content and forwards the encoded bytes to
+For video-to-video, upload an MP4 reference under `video_reference`.
+TensorRT-LLM forwards the encoded bytes to
 the Cosmos3 workers, which decode the conditioning window with NVDEC:
 
 ```python
@@ -319,7 +327,7 @@ v2v_negative = json.load(open("assets/negative_prompts/image2video/neg_prompt.js
 
 with source_video.open("rb") as video_file:
     response = requests.post(
-        "http://localhost:8000/v1/videos/generations",
+        "http://localhost:8000/v1/videos/sync",
         data={
             "prompt": json.dumps(v2v_prompt, ensure_ascii=True, separators=(",", ":")),
             "negative_prompt": json.dumps(v2v_negative, ensure_ascii=True, separators=(",", ":")),
@@ -330,6 +338,8 @@ with source_video.open("rb") as video_file:
             "guidance_scale": "6.0",
             "max_sequence_length": "4096",
             "seed": "0",
+            "format": "mp4",
+            "response_format": "file",
             "extra_params": json.dumps(
                 {
                     "use_resolution_template": False,
@@ -342,12 +352,16 @@ with source_video.open("rb") as video_file:
                 separators=(",", ":"),
             ),
         },
-        files={"input_reference": (source_video.name, video_file, "video/mp4")},
-        headers={"Accept": "video/mp4, video/x-msvideo"},
+        files={"video_reference": (source_video.name, video_file, "video/mp4")},
+        headers={"Accept": "video/mp4"},
     )
 response.raise_for_status()
-suffix = ".avi" if "x-msvideo" in response.headers.get("content-type", "") else ".mp4"
-Path(f"/tmp/cosmos3_v2v_trtllm{suffix}").write_bytes(response.content)
+if (
+    "video/mp4" not in response.headers.get("content-type", "")
+    or response.content[4:8] != b"ftyp"
+):
+    raise RuntimeError("TensorRT-LLM did not return browser-compatible MP4")
+Path("/tmp/cosmos3_v2v_trtllm.mp4").write_bytes(response.content)
 ```
 
 `condition_video_latent_indexes` identifies clean latent frames in the output;
@@ -355,10 +369,10 @@ with `[0, 1]`, TensorRT-LLM consumes the first five pixel frames from the input.
 Set `condition_video_keep` to `"last"` to condition on the corresponding tail
 window instead.
 
-For text-to-image, use the same video generation endpoint with `num_frames=1`,
-`seconds=1`, and `fps=8`; TensorRT-LLM Cosmos3 returns a one-frame video
-response for this path. `num_frames` is passed explicitly so the server does not
-derive an eight-frame clip from `seconds * fps`.
+For text-to-image, send JSON to `/v1/images/generations` with `format=png`,
+`response_format=b64_json`, and `extra_params.output_type="image"`, then
+base64-decode `data[0].b64_json`. This produces a PNG image instead of wrapping
+one frame in a video container.
 
 The TRT-LLM notebook always sends model-specific `extra_params`, so use a
 TensorRT-LLM release with the Cosmos3 VisualGen API schema. The notebook sets
@@ -369,9 +383,8 @@ request-level `max_sequence_length=4096` for longer structured JSON prompts.
 [`run_with_trt_llm.ipynb`](./run_with_trt_llm.ipynb) is the full tutorial for the
 TensorRT-LLM backend: it walks through text-to-image, text-to-video and
 image-to-video with or without synchronized audio, and video-to-video requests
-against an already-running VisualGen server. Server launch options (Nano and
-Super, FP8 dynamic quantization, CFG parallelism, Ulysses, and parallel VAE)
-live in the
+against an already-running VisualGen server. Server launch options for Nano and
+Super live in the
 [shared environment setup guide](../../README.md#tensorrt-llm-generator).
 
 ## Run with NIM
