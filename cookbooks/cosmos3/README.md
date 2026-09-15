@@ -175,6 +175,8 @@ Initial Cosmos3 support was added in TensorRT-LLM PR
 [#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824), synchronized audio
 in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
 video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155).
+Cosmos3-Edge (Nemotron-dense backbone) was added in
+[#16773](https://github.com/NVIDIA/TensorRT-LLM/pull/16773).
 Use a TensorRT-LLM checkout or package that includes those changes.
 
 Install TensorRT-LLM following its upstream documentation.
@@ -245,6 +247,22 @@ torchrun --nproc_per_node=4 -m tensorrt_llm.commands.serve \
   --visual_gen_args "$TRTLLM_ROOT/examples/visual_gen/configs/cosmos3-super-4gpu.yaml" \
   --port "$COSMOS3_TRTLLM_PORT"
 ```
+
+**Cosmos3-Edge** (single GPU):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Edge \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+Edge is the compact 4B checkpoint. Its 480p-native generation defaults
+(832x480 with 121 frames, 50 UniPC steps on the checkpoint-declared native flow
+schedule, guidance 5.0, flow shift 3.0) are read from the checkpoint, so it takes
+no `--visual_gen_args` override. TensorRT-LLM serves Edge for text-to-image,
+text-to-video, and image-to-video only: Edge has no audio tower, its action
+weights are not served by this pipeline, and video-to-video is validated for Nano
+and Super. Requests outside the model card's validated envelope (256p/480p,
+50-150 frames, 12-30 FPS) still run and log an advisory line.
 
 The server exposes `/health`, `/v1/videos/generations`, `/v1/videos`, and
 `/v1/images/generations`. The audiovisual notebook uses the validated video
