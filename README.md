@@ -9,7 +9,7 @@
 
 ### World Foundation Models for physical AI
 
-**One model family that sees, reasons, and generates — video, sound, language, and action.**
+**One model family that sees, reasons, simulates, and acts.**
 
 [![Models](https://img.shields.io/badge/-Cosmos%203%20models-ffd21e?logo=huggingface&logoColor=white&labelColor=555)](https://huggingface.co/collections/nvidia/cosmos3)
 [![Paper](https://img.shields.io/badge/-Technical%20Report-76b900?logo=arxiv&logoColor=white&labelColor=555)](https://research.nvidia.com/labs/cosmos-lab/cosmos3/technical-report.pdf)
