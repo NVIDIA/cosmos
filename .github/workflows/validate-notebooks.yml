@@ -1,0 +1,101 @@
+name: Validate notebooks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.ipynb"
+      - ".github/workflows/validate-notebooks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-notebooks:
+    name: Validate notebooks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install notebook checks
+        run: python -m pip install --disable-pip-version-check nbformat==5.11.1 ruff==0.16.4
+
+      - name: Parse tracked notebooks
+        shell: bash
+        run: |
+          invalid=0
+          count=0
+
+          while IFS= read -r -d '' notebook; do
+            count=$((count + 1))
+            if ! python -m json.tool "$notebook" >/dev/null; then
+              echo "::error file=$notebook::Notebook is not valid JSON"
+              invalid=1
+            fi
+          done < <(git ls-files -z -- '*.ipynb')
+
+          echo "Validated $count tracked notebooks."
+          exit "$invalid"
+
+      - name: Validate notebook schemas
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import subprocess
+          from pathlib import Path
+
+          import nbformat
+
+
+          def annotation_escape(value: object) -> str:
+              return (
+                  str(value)
+                  .replace("%", "%25")
+                  .replace("\r", "%0D")
+                  .replace("\n", "%0A")
+              )
+
+
+          tracked = subprocess.run(
+              ["git", "ls-files", "-z", "--", "*.ipynb"],
+              check=True,
+              capture_output=True,
+          ).stdout
+          notebooks = [Path(os.fsdecode(path)) for path in tracked.split(b"\0") if path]
+
+          invalid = 0
+          for notebook_path in notebooks:
+              try:
+                  notebook = nbformat.read(
+                      notebook_path, as_version=nbformat.NO_CONVERT
+                  )
+                  nbformat.validate(notebook)
+              except Exception as error:
+                  print(
+                      f"::error file={annotation_escape(notebook_path)}::"
+                      f"{annotation_escape(type(error).__name__ + ': ' + str(error))}"
+                  )
+                  invalid += 1
+
+          print(f"Validated {len(notebooks)} tracked notebooks against the nbformat schema.")
+          raise SystemExit(bool(invalid))
+          PY
+
+      - name: Lint notebook code
+        shell: bash
+        run: |
+          mapfile -d '' notebooks < <(git ls-files -z -- '*.ipynb')
+          # Catch syntax and runtime-invalid constructs without enforcing style on legacy notebooks.
+          ruff check --output-format=github --select=E9,F63,F7,F82 -- "${notebooks[@]}"

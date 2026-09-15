@@ -1,7 +1,8 @@
 # Cosmos3 Generator Transfer Examples
 
 Cosmos3 video **transfer** examples — **Nano** (single GPU) and **Super** (multi-GPU, 32B) — on
-the native PyTorch (Cosmos Framework) path and the OpenAI-compatible vLLM-Omni server path.
+the native PyTorch (Cosmos Framework) path, the Diffusers modular pipeline, and the
+OpenAI-compatible vLLM-Omni server path.
 Sample assets under [`assets/`](./assets) cover spatial control signals paired with
 `prompt.json` files:
 
@@ -14,7 +15,8 @@ Sample assets under [`assets/`](./assets) cover spatial control signals paired w
 
 Both Cosmos Framework and vLLM-Omni support multi-control transfer. Per-hint
 weighting is supported only by Cosmos Framework; vLLM-Omni accepts multiple
-controls but does not support per-hint weights.
+controls but does not support per-hint weights. Diffusers accepts multiple
+precomputed controls, also without per-hint weights.
 
 Environment setup is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide.
@@ -132,6 +134,62 @@ jupyter execute run_video_transfer_with_cosmos_framework.ipynb
 ```
 
 Outputs land under `outputs/notebooks/<model>/transfer_<control>/vision.mp4`.
+
+## Run with Diffusers
+
+### Quickstart
+
+Set up the environment: [Diffusers setup](../../README.md#diffusers). Transfer is
+reachable only through the modular pipeline, which takes precomputed control videos as
+`control_videos={hint: frames}`:
+
+```python
+import json
+from pathlib import Path
+
+import torch
+from diffusers import Cosmos3OmniModularPipeline
+from diffusers.utils import export_to_video, load_video
+
+transfer_root = Path("cookbooks/cosmos3/generator/transfer")
+prompt = json.dumps(json.load(open(transfer_root / "assets/depth/prompt.json")))
+negative = json.dumps(json.load(open(transfer_root / "assets/negative_prompt.json")))
+
+pipe = Cosmos3OmniModularPipeline.from_pretrained("nvidia/Cosmos3-Nano", torch_dtype=torch.bfloat16)
+pipe.load_components(torch_dtype=torch.bfloat16)
+pipe.enable_safety_checker()
+pipe.to("cuda")
+
+videos = pipe(
+    prompt=prompt,
+    negative_prompt=negative,
+    control_videos={"depth": load_video(str(transfer_root / "assets/depth/control_depth.mp4"))},
+    control_guidance=1.5,
+    num_frames=121,
+    num_video_frames_per_chunk=121,
+    num_conditional_frames=1,
+    height=720,
+    width=1280,
+    fps=30.0,
+    num_inference_steps=50,
+    guidance_scale=3.0,
+    generator=torch.Generator(device="cuda").manual_seed(2026),
+    output="videos",
+)
+export_to_video(videos, "/tmp/cosmos3_transfer_depth.mp4", fps=30, macro_block_size=1)
+```
+
+To run **Cosmos3-Super** instead, load the larger checkpoint:
+`Cosmos3OmniModularPipeline.from_pretrained("nvidia/Cosmos3-Super", ...)`.
+
+### Diffusers notebook walkthrough
+
+[`run_video_transfer_with_diffusers.ipynb`](./run_video_transfer_with_diffusers.ipynb) is
+the full tutorial for the Diffusers backend: it provisions a dedicated venv, then runs
+edge, blur, depth, segmentation, and world-scenario-map transfer on Cosmos3-Nano followed
+by the same five controls on Cosmos3-Super. It reads the same [`specs/`](./specs) files and
+reuses the previews from [`preview_helpers.py`](./preview_helpers.py), writing outputs to
+`outputs/notebooks/diffusers/<model>/transfer_<control>/vision.mp4`.
 
 ## Run with vLLM-Omni
 
@@ -254,6 +312,9 @@ Key fields:
 
 - [`run_video_transfer_with_cosmos_framework.ipynb`](./run_video_transfer_with_cosmos_framework.ipynb) —
   self-contained notebook: §9–§13 Nano single-control, §14–§18 Super single-control, §19 multi-control (Nano). Edit §2, run top-to-bottom.
+- [`run_video_transfer_with_diffusers.ipynb`](./run_video_transfer_with_diffusers.ipynb) —
+  full tutorial for the Diffusers modular pipeline: five single-control transfers on Nano,
+  then the same five on Super, driven by the same specs.
 - [`run_video_transfer_with_vllm_omni.ipynb`](./run_video_transfer_with_vllm_omni.ipynb) —
   full tutorial against an already-running vLLM-Omni server: endpoint checks, repo-local
   control paths, five single-control transfer requests, and compact previews. The API
