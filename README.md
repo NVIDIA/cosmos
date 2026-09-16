@@ -7,7 +7,7 @@
 
 # NVIDIA Cosmos
 
-### World Foundation Models for physical AI
+### World Foundation Models for Physical AI
 
 **One model family that sees, reasons, simulates, and acts.**
 
