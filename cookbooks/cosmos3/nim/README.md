@@ -175,7 +175,7 @@ pages and examples as their source of truth and default to read-only assistance.
 
 - [Operations and troubleshooting](operations.md)
 - [Release notes](release-notes.md)
-- [Acknowledgements](acknowledgements.md)
+- [Acknowledgements](acknowledgements/README.md)
 
 ## Safety, license, and notices
 
@@ -187,4 +187,4 @@ This cookbook is licensed under the repository
 [LICENSE](../../../LICENSE). The running NIM exposes bundled product license
 information at `/v1/license`. The image also contains product terms, notices,
 component licenses, and the included package-modification source described
-under [Acknowledgements](acknowledgements.md).
+under [Acknowledgements](acknowledgements/README.md).
