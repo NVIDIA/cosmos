@@ -374,6 +374,21 @@ Super, FP8 dynamic quantization, CFG parallelism, Ulysses, and parallel VAE)
 live in the
 [shared environment setup guide](../../README.md#tensorrt-llm-generator).
 
+### Distilled 4-step notebook
+
+[`run_distilled_with_trt_llm.ipynb`](./run_distilled_with_trt_llm.ipynb) is the
+tutorial for the two published DMD2-distilled Cosmos3-Super students,
+`nvidia/Cosmos3-Super-Text2Image-4Step` and
+`nvidia/Cosmos3-Super-Image2Video-4Step`. Each serves on a single GPU and runs a
+fixed four-step stochastic schedule with classifier-free guidance baked into the
+weights, so requests omit `num_inference_steps` and `guidance_scale` entirely
+and let the server read both from the checkpoint; sending a conflicting value is
+rejected rather than clamped. Requests also leave `use_system_prompt` unset so
+the image-to-video student's `default_use_system_prompt: true` applies. These
+students cover text-to-image and image-to-video only. Server launch commands
+live in the
+[shared environment setup guide](../../README.md#tensorrt-llm-generator).
+
 ## Run with NIM
 
 ### Quickstart
