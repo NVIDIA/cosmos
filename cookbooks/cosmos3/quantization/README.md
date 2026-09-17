@@ -2,65 +2,57 @@
 
 Convert the Cosmos3 checkpoints to static-scale **FP8** with NVIDIA TensorRT Model
 Optimizer (ModelOpt). FP8 roughly halves a model's memory footprint and speeds up
-inference on NVIDIA GPUs with FP8 tensor cores, while preserving generation quality.
+inference on NVIDIA GPUs with FP8 tensor cores. Quality depends on calibration and the task.
 The output is a drop-in diffusers checkpoint (FP8 weights + per-tensor `weight_scale` /
 `input_scale` sidecars + `hf_quant_config.json`) that loads on vLLM-Omni.
 
-Everything needed for the FP8 recipe lives in [`src/`](./src); the cookbook loads
-Cosmos3 through the `cosmos-framework` inference API, and the notebooks are
-thin walkthroughs on top of it. No other quantization pipeline is required.
+The recipe lives in `cosmos_framework.quantization`: checkpoint loading,
+calibration, FP8 export and metadata assembly are owned by cosmos-framework.
+These notebooks are walkthroughs of that API.
 
 ## What's in this folder
 
 | Path | Role |
 | --- | --- |
-| [`src/`](./src) | The complete FP8 recipe (framework load, calibrate, export). |
-| [`notebooks/`](./notebooks) | Three customer-facing walkthroughs (one per model family). |
-
-### The `src/` package
-
-`import src` exposes a one-call API; the internals are split for readability:
-
-| Module | Contents |
-| --- | --- |
-| `src/checkpoint_io.py` | Load through `OmniInference`; save sharded safetensors. |
-| `src/calibration.py` | Calibration prompts, image conditioning, the skip filter, and the denoising `forward_loop` ModelOpt calibrates against. |
-| `src/export.py` | Materialize the FP8 weights + scales into a vLLM-Omni diffusers checkpoint. |
-| `src/__init__.py` | The public API: `Sampler` / `Shape` presets and `quantize_fp8_checkpoint(...)`. |
+| [quantize_nano_super.ipynb](./quantize_nano_super.ipynb) | Nano and Super video-model quantization. |
+| [quantize_super_text2image.ipynb](./quantize_super_text2image.ipynb) | Base and distilled Text-to-Image quantization. |
+| [quantize_super_image2video.ipynb](./quantize_super_image2video.ipynb) | Base and distilled Image-to-Video quantization. |
+| [Makefile](./Makefile) | `make help` lists the existing notebook entry points. |
 
 The whole pipeline for one checkpoint is a single call:
 
 ```python
-import src
-from src import quantize_fp8_checkpoint, SHAPE_VIDEO, SAMPLER_VIDEO_BASE
+from cosmos_framework.quantization import quantize_fp8_checkpoint, SHAPE_VIDEO, SAMPLER_VIDEO_BASE
 
 quantize_fp8_checkpoint(
     model_name_or_path="nvidia/Cosmos3-Nano",  # Hugging Face repo ID or local checkpoint
     output_dir="/path/to/nano-fp8",       # the FP8 drop-in written here
     profile="t2v", sampler=SAMPLER_VIDEO_BASE, shape=SHAPE_VIDEO,
-    num_samples=8,
+    num_samples=8, calibration_behavior="framework",
 )
 ```
 
-`calibration_behavior="framework"` is the default for new checkpoints. For a
-legacy T2V calibration-equivalence run, use
-`calibration_behavior="legacy"`; it restores the historical scheduler, numeric
-arithmetic, padded-text attention context, and SDPA attention. This compatibility
-route is single-sample T2V only and is slower than the framework default. It
-targets legacy-equivalent calibration rather than promising bit-perfect output
-for every prompt; the remaining known discrepancy is a small unconditional
-language-attention residual.
+`calibration_behavior="framework"` is the default for new checkpoints and is
+explicit in all six notebook calls. It uses the framework sampler and model
+behavior. `calibration_behavior="legacy"` is an opt-in compatibility recipe;
+it is not the normal calibration path in these notebooks.
 
-A base model and its distilled student are the *same* network and **differ only by the
-`Sampler`** (scheduler class + steps + guidance). That is the whole idea behind the
-Text-to-Image and Image-to-Video notebooks: the same call, twice, with a different sampler.
+Base and distilled checkpoints use the same quantization API with their
+respective sampler presets and weights. Keep the preset paired with the
+checkpoint selected in each notebook section.
+
+## Mixed activation precision
+
+Framework exports keep FP8 weights and store the activation policy in `transformer/config.json`.
+By default, vLLM-Omni uses A16 (16-bit activations) for first/last 3 diffusion steps and the generator reasoner; middle steps use FP8.
+A16 activation computation does not turn the FP8 checkpoint into a BF16 baseline.
 
 ## Setup (once)
 
 Use a Linux machine with an NVIDIA GPU and Hugging Face model access (`uvx hf@latest
-auth login` or `HF_TOKEN`). Each notebook includes an install cell (**step 3**) that
-builds the environment and registers a Jupyter kernel; to build it from the shell
-instead:
+auth login` or `HF_TOKEN`). The notebooks include environment setup instructions
+(**step 3**). The Nano/Super install cell is currently commented out; use the
+commands below if you need to create the environment and register its kernel:
 
 ```bash
 cd cookbooks/cosmos3/quantization
@@ -84,7 +76,7 @@ Then either open a notebook in Jupyter and run the cells top to bottom (switchin
 commands below.
 
 By default the notebooks run in **DEMO** mode — one calibration prompt at a small shape, so
-a run takes minutes. Set `DEMO=0` for the shipped recipe (the production shape and 8
+a run takes minutes. Set `DEMO=0` for full calibration (the larger shape and 8
 calibration prompts). See [Demo vs. full runs](#demo-vs-full-runs).
 
 ## Quantize Cosmos3-Nano and Cosmos3-Super
@@ -99,20 +91,20 @@ cd cookbooks/cosmos3/quantization
 DEMO=1 "$COSMOS3_QUANTIZE_VENV/bin/jupyter" nbconvert --to notebook --execute --inplace \
   --ExecutePreprocessor.kernel_name=cosmos3-quantize \
   --ExecutePreprocessor.timeout=7200 \
-  notebooks/quantize_nano_super.ipynb
+  quantize_nano_super.ipynb
 ```
 
 ### Notebook walkthrough
 
-[`notebooks/quantize_nano_super.ipynb`](./notebooks/quantize_nano_super.ipynb) walks
+[`quantize_nano_super.ipynb`](./quantize_nano_super.ipynb) walks
 through prerequisites, environment setup, and then quantizes Nano and Super in separate
 sections, printing a short summary of each FP8 checkpoint it writes.
 
 ## Quantize Cosmos3-Super Text-to-Image (base and distilled)
 
 Quantize the full-quality Text-to-Image model, then its 4-step distilled student. The
-two are the same network; only the sampler differs (50-step UniPC vs. 4-step
-FlowMatchEuler, guidance off), and the notebook shows exactly that.
+two use different checkpoint weights and sampler presets (50-step UniPC vs.
+4-step FlowMatchEuler, guidance off). The notebook calibrates each separately.
 
 ### Run
 
@@ -121,12 +113,12 @@ cd cookbooks/cosmos3/quantization
 DEMO=1 "$COSMOS3_QUANTIZE_VENV/bin/jupyter" nbconvert --to notebook --execute --inplace \
   --ExecutePreprocessor.kernel_name=cosmos3-quantize \
   --ExecutePreprocessor.timeout=7200 \
-  notebooks/quantize_super_text2image.ipynb
+  quantize_super_text2image.ipynb
 ```
 
 ### Notebook walkthrough
 
-[`notebooks/quantize_super_text2image.ipynb`](./notebooks/quantize_super_text2image.ipynb)
+[`quantize_super_text2image.ipynb`](./quantize_super_text2image.ipynb)
 quantizes the base model in one section, then the distilled model in a second section that
 explains the sampler difference.
 
@@ -145,26 +137,27 @@ DEMO=1 I2V_COND_DIR=/path/to/cond_images \
   "$COSMOS3_QUANTIZE_VENV/bin/jupyter" nbconvert --to notebook --execute --inplace \
   --ExecutePreprocessor.kernel_name=cosmos3-quantize \
   --ExecutePreprocessor.timeout=7200 \
-  notebooks/quantize_super_image2video.ipynb
+  quantize_super_image2video.ipynb
 ```
 
 ### Notebook walkthrough
 
-[`notebooks/quantize_super_image2video.ipynb`](./notebooks/quantize_super_image2video.ipynb)
+[`quantize_super_image2video.ipynb`](./quantize_super_image2video.ipynb)
 sets up conditioning images, then quantizes the base and distilled models in separate
 sections.
 
 ## Demo vs. full runs
 
-| | `DEMO=1` (default) | `DEMO=0` (shipped recipe) |
+| | `DEMO=1` (default) | `DEMO=0` (full calibration) |
 | --- | --- | --- |
 | Calibration prompts | 1 | 8 |
 | Shape | small (e.g. 480×720, 29 frames) | production (720×1280, up to 189 frames) |
-| Purpose | quick, runnable end to end | reproduces the shipped FP8 scales |
+| Purpose | quick end-to-end check | calibrate with more prompts and a larger shape |
 
 The FP8 **weights** are identical either way — they are computed directly from the bf16
 weights (`weight_scale = max|W| / 448`) and do not depend on calibration. DEMO only affects
-the calibrated activation **scales** (fewer samples, smaller shape).
+the calibrated activation **scales** (fewer samples, smaller shape). Neither mode
+guarantees reproduction of published scales or generation quality.
 
 ## What gets produced
 
@@ -175,7 +168,10 @@ Each run writes a drop-in checkpoint at `OUTPUT_ROOT/<name>-fp8/`:
 ├── transformer/                 # FP8 weights + weight_scale/input_scale + quantization_config
 │   ├── diffusion_pytorch_model-*.safetensors
 │   ├── diffusion_pytorch_model.safetensors.index.json
-│   └── config.json
+│   ├── modelopt_state.pth       # Diffusers ModelOpt state
+│   └── config.json              # includes quantization_config.runtime.diffusion_step_policy
+├── modelopt_state.pth           # reasoner ModelOpt state for Transformers
+├── quantization_metadata.json   # producing environment, source and calibration recipe
 ├── hf_quant_config.json         # FP8 quantization_config at the root
 ├── model.safetensors.index.json # regenerated whole-model index
 └── vae/ scheduler/ ...          # symlinked back to the source checkpoint
