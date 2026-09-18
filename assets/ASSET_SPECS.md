@@ -20,7 +20,7 @@ All six are sourced from the [Cosmos 3 research page](https://research.nvidia.co
 | `policy_screwdriver.gif` | `robot-policy/20260520_01_…_trim_4x.mp4` | Real robot policy execution |
 | `driving_sim_falling_rocks.gif` | `audio-visual-gen/falling_rocks2.mp4` | Driving simulation: hazard scenario — "Falling Rocks" sign appears, rocks fall, car stops |
 | `fd_egocentric_repair_poses.gif` | `forward-dynamics/egocentric-011{,-camera-trajectory,-hand-pose}.mp4` (composited) | Forward dynamics rollout with input camera + hand pose overlays |
-| `reasoner_traffic_report.gif` | Launch video 0:44–0:47 (4K, video region only, 720px) | World Reasoner: drone timelapse → traffic-engineer report; prompt text legible |
+| `reasoner_driving_hazard.gif` | Provided GIF `cosmos-world-reasoning-3s.gif` (2026-09-17), re-encoded 600px @14 fps, 128 colors; no MP4 source on hand | World Reasoner: dashcam hazard anticipation — rolling ball, reasoning overlay legible |
 
 Re-cut guidance if replacing: obvious motion in frame 1, no watermark text, captions live in the README.
 

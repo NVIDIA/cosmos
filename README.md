@@ -50,8 +50,8 @@
       <sub><a href="cookbooks/cosmos3/generator/action/run_fd_with_vllm_omni.ipynb"><b>Action-conditioned World Model</b></a><br>Forward dynamics: egocentric rollout from input camera + hand pose</sub>
     </td>
     <td align="center" width="33%">
-      <img src="assets/demos/reasoner_traffic_report.gif" alt="World Reasoner: drone timelapse traffic report">
-      <sub><a href="cookbooks/cosmos3/reasoner/run_with_vllm.ipynb"><b>World reasoning</b></a><br>"Generate a report on this drone timelapse… 3 actionable insights for a traffic engineer"</sub>
+      <img src="assets/demos/reasoner_driving_hazard.gif" alt="World Reasoner: dashcam hazard anticipation">
+      <sub><a href="cookbooks/cosmos3/reasoner/run_with_vllm.ipynb"><b>World reasoning</b></a><br>Hazard anticipation while driving: a rolling ball means a child or pet may follow</sub>
     </td>
   </tr>
 </table>
