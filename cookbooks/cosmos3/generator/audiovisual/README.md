@@ -363,8 +363,13 @@ derive an eight-frame clip from `seconds * fps`.
 To run **Cosmos3-Edge** instead, serve `nvidia/Cosmos3-Edge` on a single GPU with
 no config override (`trtllm-serve nvidia/Cosmos3-Edge --port 8000`) and send
 Edge's 480p-native shape: `"size": "832x480"`, `"num_frames": 121`,
-`"num_inference_steps": 50`, and `"guidance_scale": 5.0`. For text-to-image use
-Edge's native `"size": "640x640"` with `"guidance_scale": 4.0`. Flow shift (3.0)
+`"num_inference_steps": 50`, and `"guidance_scale": 5.0`. Text-to-image is a
+native image request: post to `/v1/images/generations` with
+`"output_type": "image"` in `extra_params`, Edge's native `"size": "640x640"`,
+and `"guidance_scale": 4.0`. That flag selects the image path; without it the
+server runs video mode and defaults the negative prompt to Cosmos3's video
+negative prompt, whose motion and frame-to-frame artifact terms do not apply to
+a still. The images API carries no frame or frame-rate fields. Flow shift (3.0)
 rides the checkpoint-declared native flow schedule, so requests do not send it.
 TensorRT-LLM serves Edge for text-to-image, text-to-video, and image-to-video
 only: Edge has no audio tower, so `enable_audio` is unavailable, its action

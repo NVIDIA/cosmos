@@ -258,8 +258,11 @@ trtllm-serve nvidia/Cosmos3-Edge \
 Edge is the compact 4B checkpoint. Its 480p-native generation defaults
 (832x480 with 121 frames, 50 UniPC steps on the checkpoint-declared native flow
 schedule, guidance 5.0, flow shift 3.0) are read from the checkpoint, so it takes
-no `--visual_gen_args` override. TensorRT-LLM serves Edge for text-to-image,
-text-to-video, and image-to-video only: Edge has no audio tower, its action
+no `--visual_gen_args` override. Edge text-to-image goes to
+`/v1/images/generations` with `"output_type": "image"` in `extra_params` (video
+mode would otherwise apply Cosmos3's video negative prompt to a still); the two
+video modes go to `/v1/videos/generations`. TensorRT-LLM serves Edge for
+text-to-image, text-to-video, and image-to-video only: Edge has no audio tower, its action
 weights are not served by this pipeline, and video-to-video is validated for Nano
 and Super. Requests outside the model card's validated envelope (256p/480p,
 50-150 frames, 12-30 FPS) still run and log an advisory line.
