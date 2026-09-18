@@ -174,7 +174,10 @@ text-to-video, image-to-video, video-to-video, and synchronized audio examples.
 Initial Cosmos3 support was added in TensorRT-LLM PR
 [#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824), synchronized audio
 in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
-video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155).
+video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155). The
+DMD2-distilled four-step checkpoints were added in
+[#16563](https://github.com/NVIDIA/TensorRT-LLM/pull/16563) (text-to-image) and
+[#16690](https://github.com/NVIDIA/TensorRT-LLM/pull/16690) (image-to-video).
 Use a TensorRT-LLM checkout or package that includes those changes.
 
 Install TensorRT-LLM following its upstream documentation.
@@ -222,11 +225,18 @@ pip install cosmos_guardrail==0.3.0
 # pip uninstall opencv-python
 ```
 
-Set the TensorRT-LLM source root for the shared VisualGen config YAMLs:
+Set the TensorRT-LLM source root for the shared VisualGen config YAMLs. Run this
+from inside the TensorRT-LLM checkout — the directory the `git clone` above
+created, which is where `examples/` lives — or point `TRTLLM_ROOT` at that
+checkout explicitly. `trtllm-serve` only reports a bad `--visual_gen_args` path
+after it has started, so check it here instead:
 
 ```bash
-export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD/TensorRT-LLM}"
+export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD}"
 export COSMOS3_TRTLLM_PORT="${COSMOS3_TRTLLM_PORT:-8000}"
+
+test -d "$TRTLLM_ROOT/examples/visual_gen/configs" \
+  || echo "TRTLLM_ROOT=$TRTLLM_ROOT does not look like a TensorRT-LLM checkout"
 ```
 
 **Cosmos3-Nano** (single GPU):
@@ -245,6 +255,35 @@ torchrun --nproc_per_node=4 -m tensorrt_llm.commands.serve \
   --visual_gen_args "$TRTLLM_ROOT/examples/visual_gen/configs/cosmos3-super-4gpu.yaml" \
   --port "$COSMOS3_TRTLLM_PORT"
 ```
+
+**Cosmos3-Super-Text2Image-4Step** (single GPU; DMD2-distilled text-to-image):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Super-Text2Image-4Step \
+  --visual_gen_args "$TRTLLM_ROOT/examples/visual_gen/configs/cosmos3-t2i-1gpu.yaml" \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+**Cosmos3-Super-Image2Video-4Step** (single GPU; DMD2-distilled image-to-video):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Super-Image2Video-4Step \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+Both distilled students run a fixed four-step stochastic schedule read from the
+checkpoint's scheduler config, with classifier-free guidance baked into the
+weights. TensorRT-LLM supplies both values and rejects a request that sends a
+different `num_inference_steps`, or a `guidance_scale` other than `1.0`, so leave
+both out of the request. `Cosmos3-Super-Image2Video-4Step` also declares
+`default_use_system_prompt: true`, which applies only while the request leaves
+`use_system_prompt` unset. The text-to-image student deploys at 1024x1024, the
+shape `cosmos3-t2i-1gpu.yaml` warms; the image-to-video student deploys at the
+default 720p x 189-frame omni shape and needs no config file. The
+[distilled 4-step notebook](generator/audiovisual/run_distilled_with_trt_llm.ipynb)
+runs both against a running server. These students cover text-to-image and
+image-to-video only; use the base checkpoints for text-to-video, video-to-video,
+and synchronized audio.
 
 The server exposes `/health`, `/v1/videos/generations`, `/v1/videos`, and
 `/v1/images/generations`. The audiovisual notebook uses the validated video
