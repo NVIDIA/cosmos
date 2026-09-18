@@ -61,7 +61,7 @@
 ## What's new
 
 - **[Jul 2026]** [Cosmos3-Edge](https://huggingface.co/nvidia/Cosmos3-Edge) released — the 4B tier for on-device, real-time deployment (Jetson AGX Orin / Thor / RTX Pro 6000).
-- **[May 2026]** Cosmos 3 released: [HF collection](https://huggingface.co/collections/nvidia/cosmos3) · [technical report](https://research.nvidia.com/labs/cosmos-lab/cosmos3/technical-report.pdf).
+- **[May 2026]** Cosmos 3 released: [HF collection](https://huggingface.co/collections/nvidia/cosmos3) · [Technical Report](https://research.nvidia.com/labs/cosmos-lab/cosmos3/technical-report.pdf).
 
 ## What is Cosmos?
 
