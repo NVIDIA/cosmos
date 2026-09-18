@@ -177,8 +177,16 @@ in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
 video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155),
 Transfer in [#16394](https://github.com/NVIDIA/TensorRT-LLM/pull/16394), and
 Action in [#17325](https://github.com/NVIDIA/TensorRT-LLM/pull/17325).
-These changes are merged on TensorRT-LLM `main`; use a current checkout or a
-package that includes them.
+These changes are merged on TensorRT-LLM `main`. The Action and Transfer
+notebooks were executed against source revision
+[`bca6761ab84fbcd58fc7f914eade7de48b32e35e`](https://github.com/NVIDIA/TensorRT-LLM/commit/bca6761ab84fbcd58fc7f914eade7de48b32e35e).
+Use that revision to reproduce their request contract, or a newer build with
+the same API. The older `799d7d42` validation used `input_reference` and does
+not validate these notebooks' `image_reference` / `video_reference` fields.
+See the [Action and Transfer validation record](generator/trtllm-validation.md)
+for the executed cases, output dimensions, and remaining runtime limitations.
+The source revision is significant: a package version of `1.3.0rc26` alone
+does not establish compatibility with the action image-decoding path.
 
 Install TensorRT-LLM following its upstream documentation.
 
@@ -194,6 +202,8 @@ git lfs install
 
 git clone https://github.com/NVIDIA/TensorRT-LLM.git
 cd TensorRT-LLM
+# Source revision used for the Action/Transfer notebook validation below.
+git checkout bca6761ab84fbcd58fc7f914eade7de48b32e35e
 git submodule update --init --recursive
 git lfs pull
 

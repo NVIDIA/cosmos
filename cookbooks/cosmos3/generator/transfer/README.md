@@ -274,6 +274,12 @@ requests its native 4:3 bucket, 1104×832; the other examples request
 at 10 fps. `/v1/videos/generations` remains only as a deprecated alias of the
 canonical blocking `/v1/videos/sync` route.
 
+The [validation record](../trtllm-validation.md) reports the later execution of
+all five controls at TensorRT-LLM source revision
+`bca6761ab84fbcd58fc7f914eade7de48b32e35e`, including blur at 1104×832.
+The earlier 1280×720 blur result used a previous request and does not describe
+the checked-in notebook.
+
 ### TensorRT-LLM notebook walkthrough
 
 [`run_video_transfer_with_trt_llm.ipynb`](./run_video_transfer_with_trt_llm.ipynb)

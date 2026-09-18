@@ -180,6 +180,12 @@ upload a conditioning image as multipart `image_reference` or a video as
 Use the same trained AV prompt as the Cosmos Framework reference; the legacy
 `view_point` field is ignored by current TensorRT-LLM.
 
+Both notebooks' current multipart fields were exercised against TensorRT-LLM
+source revision `bca6761ab84fbcd58fc7f914eade7de48b32e35e`. Follow the source
+pin in the shared setup; the earlier `799d7d42` run used the old
+`input_reference` API. The [validation record](../trtllm-validation.md) covers
+forward and inverse dynamics separately and records the guardrail limitation.
+
 ```python
 import json
 from pathlib import Path
