@@ -30,6 +30,7 @@ Generator results are published incrementally from internal benchmark runs. **Em
   - [H200 141GB HBM3](#h200-141gb-hbm3)
   - [B200](#b200)
   - [B300](#b300)
+  - [RTX 4090 Reference Runs](#rtx-4090-reference-runs)
 - [Cosmos3-Super Reasoner](#cosmos3-super-reasoner)
   - [RTX PRO 6000 Blackwell](#rtx-pro-6000-blackwell-1)
   - [H20](#h20-1)
@@ -790,6 +791,67 @@ All runs use the **`nvidia/Cosmos3-Nano`** checkpoint. Metrics are collected wit
 3. **Time To First Token (TTFT)** measures latency until the first output token is emitted. **Request Latency** is end-to-end time per request. For single-token outputs (Output 1), TTFT and request latency are identical.
 4. **Request Throughput** is completed requests per second. **Output Token Throughput** is generated tokens per second (for Output 1 workloads, the two throughputs match).
 5. Concurrency is the number of simultaneous client requests issued by AIPerf, not tensor-parallel GPU count.</sub>
+
+### RTX 4090 Reference Runs
+
+These additional reference runs measure **Cosmos3-Nano** on a single NVIDIA
+GeForce RTX 4090 using the repository's sample image and video assets. They are
+reported separately from the standardized vLLM tables because they use five
+requests at concurrency 1 rather than the larger datacenter-GPU sweep. Results
+should not be compared directly across the two methodologies.
+
+#### vLLM serving
+
+The vLLM run used vLLM `0.29.0`, PyTorch `2.13.0+cu130`, one GPU, and
+`--max-model-len 8192`. AIPerf issued five requests at concurrency 1, with
+exactly 128 output tokens per request.
+
+| Workload | TTFT (ms) | Request latency (ms) | Request throughput (req/s) | Output throughput (tok/s) | Requests | Concurrency |
+|---|---:|---:|---:|---:|---:|---:|
+| Image | 109.38 | 2290.95 | 0.44 | 55.74 | 5 | 1 |
+| Video | 97.18 | 2310.59 | 0.43 | 55.27 | 5 | 1 |
+
+The image workload used
+`cookbooks/cosmos3/reasoner/assets/robot_153.jpg`. The video workload used
+`cookbooks/cosmos3/reasoner/assets/video_caption.mp4`.
+
+#### Transformers in-process inference
+
+The Transformers run used Transformers `5.17.0`, PyTorch `2.10.0+cu128`,
+`Cosmos3OmniForConditionalGeneration`, and five deterministic image trials
+after model loading. Model-loading time is excluded from the per-trial timings.
+
+| Workload | Mean generation time (s) | Median (s) | Standard deviation (s) | Peak memory allocated (GB) | Trials |
+|---|---:|---:|---:|---:|---:|
+| Image | 5.178 | 5.302 | 0.291 | 16.61 | 5 |
+
+The Transformers timings measure in-process generation, while the vLLM
+measurements include OpenAI-compatible serving request timing. These are
+complementary reference measurements, not a direct apples-to-apples comparison.
+
+#### Reproduction
+
+The vLLM server was launched with:
+
+```bash
+VLLM_USE_DEEP_GEMM=0 \
+vllm serve nvidia/Cosmos3-Nano \
+  --tensor-parallel-size 1 \
+  --max-model-len 8192 \
+  --mm-encoder-tp-mode data \
+  --async-scheduling \
+  --allowed-local-media-path /workspace/cosmos/cookbooks/cosmos3 \
+  --media-io-kwargs '{"video": {"num_frames": -1}}' \
+  --port 8000
+```
+
+The AIPerf profiles used five requests, concurrency 1, and 128 output tokens
+with `min_tokens:128`. Benchmark artifacts were written to:
+
+- `/workspace/aiperf-artifacts/image-final`
+- `/workspace/aiperf-artifacts/video-final`
+
+
 ## Cosmos3-Super Reasoner
 
 These tables report **Cosmos3-Super** reasoner serving performance through **vLLM**. Unlike the generator sections, Reasoner benchmarks measure **text understanding and generation latency** - time to first token (TTFT) in milliseconds, end-to-end request latency in milliseconds, and token throughput under concurrent load - not diffusion sampling time. Workloads vary input sequence length, output sequence length, and video frame rate to reflect common captioning, VQA, and video-understanding request profiles.
