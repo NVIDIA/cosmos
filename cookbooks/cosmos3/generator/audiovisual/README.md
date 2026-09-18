@@ -360,6 +360,23 @@ For text-to-image, use the same video generation endpoint with `num_frames=1`,
 response for this path. `num_frames` is passed explicitly so the server does not
 derive an eight-frame clip from `seconds * fps`.
 
+To run **Cosmos3-Edge** instead, serve `nvidia/Cosmos3-Edge` on a single GPU with
+no config override (`trtllm-serve nvidia/Cosmos3-Edge --port 8000`) and send
+Edge's 480p-native shape: `"size": "832x480"`, `"num_frames": 121`,
+`"num_inference_steps": 50`, and `"guidance_scale": 5.0`. Text-to-image is a
+native image request: post to `/v1/images/generations` with
+`"output_type": "image"` in `extra_params`, Edge's native `"size": "640x640"`,
+and `"guidance_scale": 4.0`. That flag selects the image path; without it the
+server runs video mode and defaults the negative prompt to Cosmos3's video
+negative prompt, whose motion and frame-to-frame artifact terms do not apply to
+a still. The images API carries no frame or frame-rate fields. Flow shift (3.0)
+rides the checkpoint-declared native flow schedule, so requests do not send it.
+TensorRT-LLM serves Edge for text-to-image, text-to-video, and image-to-video
+only: Edge has no audio tower, so `enable_audio` is unavailable, its action
+weights are not served by this pipeline, and video-to-video is validated for Nano
+and Super. Edge support landed in TensorRT-LLM PR
+[#16773](https://github.com/NVIDIA/TensorRT-LLM/pull/16773).
+
 The TRT-LLM notebook always sends model-specific `extra_params`, so use a
 TensorRT-LLM release with the Cosmos3 VisualGen API schema. The notebook sets
 request-level `max_sequence_length=4096` for longer structured JSON prompts.
@@ -369,9 +386,10 @@ request-level `max_sequence_length=4096` for longer structured JSON prompts.
 [`run_with_trt_llm.ipynb`](./run_with_trt_llm.ipynb) is the full tutorial for the
 TensorRT-LLM backend: it walks through text-to-image, text-to-video and
 image-to-video with or without synchronized audio, and video-to-video requests
-against an already-running VisualGen server. Server launch options (Nano and
-Super, FP8 dynamic quantization, CFG parallelism, Ulysses, and parallel VAE)
-live in the
+against an already-running VisualGen server. It also includes a dedicated
+Cosmos3-Edge section with 480p text-to-image, text-to-video, and image-to-video
+examples. Server launch options (Nano, Super, and Edge, FP8 dynamic
+quantization, CFG parallelism, Ulysses, and parallel VAE) live in the
 [shared environment setup guide](../../README.md#tensorrt-llm-generator).
 
 ## Run with NIM
