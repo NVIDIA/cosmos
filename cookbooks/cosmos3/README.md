@@ -225,11 +225,18 @@ pip install cosmos_guardrail==0.3.0
 # pip uninstall opencv-python
 ```
 
-Set the TensorRT-LLM source root for the shared VisualGen config YAMLs:
+Set the TensorRT-LLM source root for the shared VisualGen config YAMLs. Run this
+from inside the TensorRT-LLM checkout — the directory the `git clone` above
+created, which is where `examples/` lives — or point `TRTLLM_ROOT` at that
+checkout explicitly. `trtllm-serve` only reports a bad `--visual_gen_args` path
+after it has started, so check it here instead:
 
 ```bash
-export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD/TensorRT-LLM}"
+export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD}"
 export COSMOS3_TRTLLM_PORT="${COSMOS3_TRTLLM_PORT:-8000}"
+
+test -d "$TRTLLM_ROOT/examples/visual_gen/configs" \
+  || echo "TRTLLM_ROOT=$TRTLLM_ROOT does not look like a TensorRT-LLM checkout"
 ```
 
 **Cosmos3-Nano** (single GPU):
