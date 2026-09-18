@@ -84,18 +84,26 @@ The notebook file SHA-256 values at the tested cookbook commit are:
 | `action/run_id_with_trt_llm.ipynb` | `86232889e69e65dd73c1cc895896375ed586bbbc33ee15553511d2bfaaee2363` |
 | `transfer/run_video_transfer_with_trt_llm.ipynb` | `61f960a34ae9e84e2eea7fa287df6d7cdae2206fa3b7c46a119f2e6d9651b63c` |
 
-## Runtime issues and remaining limits
+## September 7 merge-hold issue
 
-The [Mon 7 Sep 2026 merge hold](https://github.com/NVIDIA/cosmos/pull/310#issuecomment-5571009086)
-was followed by the fixes and checks below. The evidence does **not** establish
-that every issue is resolved in every release image.
+The runtime issue behind the
+[Mon 7 Sep 2026 merge hold](https://github.com/NVIDIA/cosmos/pull/310#issuecomment-5571009086)
+concerned the distilled model. The distilled T2I/I2V examples were removed from
+this PR in [7ff4a86](https://github.com/NVIDIA/cosmos/commit/7ff4a8686f52e6fdd32ebf449171fec9b0695444),
+so that issue no longer applies to this PR's scope. This addresses the review
+concern by excluding the affected examples; it does not claim an upstream fix
+or a passing distilled-model test.
+
+## Separate runtime observations and validation limits
+
+The following observations qualify the retained generation evidence. They are
+separate from the distilled-model issue behind the September 7 merge hold.
 
 | Reported issue | Evidence and current scope |
 | --- | --- |
 | Forward-dynamics visual corruption on the reviewer's GB200 runtime | Later H100 and GB200 runs produced coherent output. The native GB200 run `20260910-180258-e3d281` executed all FD cells, used default GPU RNG, and produced 61 frames at 832×480/10 fps. It used the ARM64 rc26 wheel plus the upstream action image-bytes decoder fix, not the reviewer's exact daily container. The original corruption was not reproduced, and its root cause is not established. |
 | Transfer videos did not play in Firefox | The notebook explicitly requests MP4, checks the response MIME type and MP4 signature, and embeds the result. All five later Transfer responses were MP4. Actual Firefox playback was not tested in these runs. |
-| Distilled I2V entered the LLM/MPI launcher and failed to spawn | The documented launch explicitly selects VisualGen with `--visual_gen_args`. The tested Nano server launched one VisualGen worker and served requests successfully. This does not establish a fix for generic LLM/MPI spawning or certify distilled I2V. |
-| Distilled T2I/I2V | Removed from this PR in [7ff4a86](https://github.com/NVIDIA/cosmos/commit/7ff4a8686f52e6fdd32ebf449171fec9b0695444). They are excluded, not reported as passing. |
+| VisualGen launch | The documented launch explicitly selects VisualGen with `--visual_gen_args`. The tested Nano server launched one VisualGen worker and served requests successfully. |
 | Guardrails | The requests set `use_guardrails=True`, but retained logs warn `No safety models found, returning safe`. These runs validate generation, not functioning safety checks. The [Thu 17 Sep 2026 follow-up](https://github.com/NVIDIA/cosmos/pull/310#issuecomment-5722101980) additionally reports HTTP 500 from `pathsec` with Guardrail cache symlinks and success only with guardrails disabled. Working guardrails remain unverified here. |
 
 The Thu 17 Sep follow-up separately reports successful FD generation on H100
@@ -106,5 +114,5 @@ those cases.
 This validation matrix covers **Nano** Action and Transfer. It does not certify
 the shared Super launch, every audiovisual example, optional raw-source control
 preprocessing, or later TensorRT-LLM revisions. The evidence supports the
-documented request contract and the dimensions above, but not a blanket removal
-of the merge hold while the guardrail/default-environment issue remains open.
+documented generation request contract and the dimensions above; it does not
+certify functioning guardrails.
