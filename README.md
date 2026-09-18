@@ -51,7 +51,7 @@
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/reasoner_driving_hazard.gif" alt="World Reasoner: dashcam hazard anticipation">
-      <sub><a href="cookbooks/cosmos3/reasoner/run_with_vllm.ipynb"><b>World reasoning</b></a><br>Hazard anticipation while driving: a rolling ball means a child or pet may follow</sub>
+      <sub><a href="cookbooks/cosmos3/reasoner/run_with_vllm.ipynb"><b>World reasoning</b></a><br>Reason in complex real-world scenarios: a rolling ball means a child or pet may follow</sub>
     </td>
   </tr>
 </table>
