@@ -238,6 +238,52 @@ pip uninstall -y opencv-python
 pip install opencv-python-headless==5.0.0.93
 ```
 
+#### Server-side NLTK data setup
+
+With `cosmos_guardrail==0.3.0`, NLTK's path checks can reject tokenizer or
+dictionary files that are symlinks from a Hugging Face snapshot into its
+`blobs/` directory. Prepare a separate copy of the NLTK data as regular files
+**on the server, in the same container and shell used to launch TensorRT-LLM**:
+
+```bash
+export NLTK_DATA="$(mktemp -d "${TMPDIR:-/tmp}/cosmos3-nltk.XXXXXX")"
+python3 - <<'PY'
+import os
+import shutil
+from pathlib import Path
+
+import nltk
+from huggingface_hub import snapshot_download
+
+snapshot = snapshot_download(
+    "nvidia/Cosmos-1.0-Guardrail",
+    revision="cf03c0395fac8c4de386c0bdab12cc4fc8d66362",
+    allow_patterns=["blocklist/**"],
+)
+source = Path(snapshot) / "blocklist" / "nltk_data"
+destination = Path(os.environ["NLTK_DATA"]).resolve()
+shutil.copytree(source, destination, symlinks=False, dirs_exist_ok=True)
+assert not any(path.is_symlink() for path in destination.rglob("*"))
+
+# Check both resource lookups used by the text blocklist before starting a GPU server.
+nltk.data.path[:] = [str(destination)]
+tokens = nltk.word_tokenize("You are an autonomous vehicle planning system.")
+assert nltk.WordNetLemmatizer().lemmatize("vehicles") == "vehicle"
+print("Guardrail NLTK data ready:", destination, tokens)
+PY
+```
+
+Keep `NLTK_DATA` exported when starting the server below. Repeat this setup
+after recreating the container or removing the temporary directory. Running it
+only in the client notebook's environment does not configure a remote server.
+This workaround does not rewrite cached files or symlinks, and keeps NLTK
+path security and `use_guardrails=True` enabled.
+
+The separate `No safety models found, returning safe` warning in guardrail
+0.3.0 refers to its intentionally empty video-content classifier list. Text
+checks and face blurring remain configured; the NLTK workaround does not enable
+video-content classification or suppress that warning.
+
 Set the TensorRT-LLM source root for the shared VisualGen config YAMLs:
 
 ```bash

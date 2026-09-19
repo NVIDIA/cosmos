@@ -174,7 +174,9 @@ have available.
 ### Quickstart
 
 Set up and launch the VisualGen server with the one-GPU Nano config:
-[TensorRT-LLM setup](../../README.md#tensorrt-llm-generator). Action requests
+[TensorRT-LLM setup](../../README.md#tensorrt-llm-generator), including the
+[server-side NLTK data setup](../../README.md#server-side-nltk-data-setup).
+Keep `NLTK_DATA` exported in the server's shell. Action requests
 upload a conditioning image as multipart `image_reference` or a video as
 `video_reference`, and put the mode-specific fields under `extra_params`.
 Use the same trained AV prompt as the Cosmos Framework reference; the legacy

@@ -199,7 +199,9 @@ reuses the previews from [`preview_helpers.py`](./preview_helpers.py), writing o
 ### Quickstart
 
 Set up and launch Nano or Super as described in the shared
-[TensorRT-LLM setup](../../README.md#tensorrt-llm-generator). TensorRT-LLM
+[TensorRT-LLM setup](../../README.md#tensorrt-llm-generator), including the
+[server-side NLTK data setup](../../README.md#server-side-nltk-data-setup).
+Keep `NLTK_DATA` exported in the server's shell. TensorRT-LLM
 accepts a raw source video as multipart `video_reference` when edge or blur will
 be computed on the server. The checked-in assets are already precomputed
 controls, so this example base64-encodes the control inside its hint and does

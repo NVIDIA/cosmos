@@ -2,12 +2,13 @@
 
 This record reconciles the saved GPU runs with the notebook requests in
 [cookbook commit `7f973ea81f4b37bab2d875fa34a90313c35a9990`](https://github.com/NVIDIA/cosmos/commit/7f973ea81f4b37bab2d875fa34a90313c35a9990).
-It was audited on Fri 18 Sep 2026 (Pacific) using the retained logs and
-artifacts; this documentation update did not run new GPU inference.
+The historical runs were audited on Fri 18 Sep 2026 (Pacific) using retained
+logs and artifacts. A fresh run of the NLTK workaround is recorded separately
+below; do not confuse its environment with the earlier runs.
 
 ## Compatible runtime
 
-The Action and Nano Transfer notebook runs used TensorRT-LLM source revision
+The historical Action and Nano Transfer notebook runs used TensorRT-LLM source revision
 [`bca6761ab84fbcd58fc7f914eade7de48b32e35e`](https://github.com/NVIDIA/TensorRT-LLM/commit/bca6761ab84fbcd58fc7f914eade7de48b32e35e)
 in a native Python 3.12 environment, with PyTorch `2.12.0+cu130` and
 `cosmos_guardrail==0.3.0`. The runtime reported `1.3.0rc26`; that package
@@ -84,6 +85,84 @@ The notebook file SHA-256 values at the tested cookbook commit are:
 | `action/run_id_with_trt_llm.ipynb` | `86232889e69e65dd73c1cc895896375ed586bbbc33ee15553511d2bfaaee2363` |
 | `transfer/run_video_transfer_with_trt_llm.ipynb` | `61f960a34ae9e84e2eea7fa287df6d7cdae2206fa3b7c46a119f2e6d9651b63c` |
 
+## NLTK workaround validation — Fri 18 Sep 2026
+
+The [server-side NLTK setup](../README.md#server-side-nltk-data-setup) copies
+the Guardrail snapshot's NLTK resources into a private directory as regular
+files, then exports `NLTK_DATA` in the server shell. It does not disable NLTK
+path security, change request guardrail settings, or patch either library.
+
+The runtime was rebuilt natively from the same TensorRT-LLM source revision
+`bca6761ab84fbcd58fc7f914eade7de48b32e35e`, using one H200 on `ipp2-0039`.
+Build run `20260918-203438-1aaf41` passed and installed
+`1.3.0rc26+bca6761ab8`. This is a native build, not a container validation.
+The environment used Python 3.12.3, PyTorch `2.12.0+cu130`, Transformers
+`5.5.4`, `cosmos_guardrail==0.3.0`, NLTK `3.10.3`, and driver `595.58.03`.
+The installed imageio-ffmpeg 7.0.2 executable was exposed as `ffmpeg` in the
+runtime's own `PATH`; no system package installation was performed.
+
+Preflight run `20260918-205406-56f855` executed the README's NLTK setup
+verbatim, then called the installed `Blocklist.is_safe()` on the FD prompt.
+It passed with `nltk.pathsec.ENFORCE=True`, 383 blocklist entries and 1,430
+exact-match entries loaded, and the tokenizer resolved inside the new NLTK
+directory. This preflight is a CPU component check, not GPU inference.
+
+Notebook run `20260918-205707-474ba5` executed the README setup and the FD
+notebook's server command verbatim, then executed the checked-in code cells
+of both Action notebooks and the full Transfer notebook. All requests retain
+`use_guardrails=True`. It **passed**, exiting 0 after 3,149.8 seconds
+(20:57–21:49 Pacific). All 5 FD, 5 ID, and 12 Transfer code cells executed
+without cell errors; all seven requests returned HTTP 200. There was no
+`pathsec` exception or HTTP 500. Notebook inference code was not changed for
+this workaround; only setup instructions in Markdown cells were added.
+
+Artifact-check run `20260918-215026-556c5a` decoded every frame of every MP4
+and verified the following results. Both Action safetensors files contain
+`video[61,480,832,3]` uint8 and finite `action[60,9]` float32 tensors.
+
+| Case | Result | Decoded MP4 (width × height, frames, fps) |
+| --- | --- | --- |
+| Forward dynamics | PASS | 832×480, 61, 10 |
+| Inverse dynamics | PASS | 832×480, 61, 10 |
+| Transfer edge | PASS | 1280×720, 121, 30 |
+| Transfer blur | PASS | 1104×832, 121, 30 |
+| Transfer depth | PASS | 1280×720, 121, 30 |
+| Transfer segmentation | PASS | 1280×720, 121, 30 |
+| Transfer WSM | PASS | 1280×720, 100, 10 |
+
+The executed notebook SHA-256 values identify the tested files independently
+of later edits to this validation record:
+
+| Notebook | SHA-256 |
+| --- | --- |
+| `action/run_fd_with_trt_llm.ipynb` | `2ee065cf6a96fdfdd64c00f2f89d972e41d2c198d1e03f6f0dbe8e304780cf52` |
+| `action/run_id_with_trt_llm.ipynb` | `1f7d5c0e46ca19350cc7fb3a001ac774308a5f5762dcab55896065639a1f2638` |
+| `transfer/run_video_transfer_with_trt_llm.ipynb` | `8946c3fdd1fb81bdde53bff67e76527cf693bf49155db832901a4fb4d3ec24d3` |
+
+Full logs, dependency versions, executed notebooks, tensors, and artifact
+hashes are retained under the author's scratch directory
+`/home/scratch.ishovkun_gpu/gpu-run/artifacts/pr310-guardrail-20260918-2057/`.
+Local videos are under
+`~/sim/cosmos3/transfer-action-output/guardrail-workaround-20260918/<case>/`,
+named `tensorrt-llm.mp4`, beside the previously saved `cosmos-framework.mp4`
+reference. These are local evidence paths, not public downloads. The Framework
+references were not rerun; visual comparison is not a pixel-parity claim.
+
+The documented `nvidia/Cosmos3-Nano` model ID resolved to snapshot
+`e59a53c25979a090fa8706c9acc0c254a6e89b92`. A read-only cache comparison
+(`20260918-211533-9a4325`) confirmed that its model safetensors files share
+the same cached data as the earlier `7a312c...` snapshot. The snapshot IDs
+are nevertheless recorded separately.
+
+This is not a warning-free runtime. Guardrail 0.3.0 still warns about its
+intentionally disabled video-content classifier; its text checks and
+RetinaFace postprocessing remain configured. Native MPI optional-plugin,
+torchao compatibility, and upstream deprecation/shape-warmup warnings are
+retained in the logs. The notebook execution harness also reported an
+IPython history-file error on shared storage, and Python reported a leaked
+semaphore at shutdown. None is silently filtered out or counted as validation
+of the disabled video-content classifier.
+
 ## September 7 merge-hold issue
 
 The runtime issue behind the
@@ -104,7 +183,7 @@ separate from the distilled-model issue behind the September 7 merge hold.
 | Forward-dynamics visual corruption on the reviewer's GB200 runtime | Later H100 and GB200 runs produced coherent output. The native GB200 run `20260910-180258-e3d281` executed all FD cells, used default GPU RNG, and produced 61 frames at 832×480/10 fps. It used the ARM64 rc26 wheel plus the upstream action image-bytes decoder fix, not the reviewer's exact daily container. The original corruption was not reproduced, and its root cause is not established. |
 | Transfer videos did not play in Firefox | The notebook explicitly requests MP4, checks the response MIME type and MP4 signature, and embeds the result. All five later Transfer responses were MP4. Actual Firefox playback was not tested in these runs. |
 | VisualGen launch | The documented launch explicitly selects VisualGen with `--visual_gen_args`. The tested Nano server launched one VisualGen worker and served requests successfully. |
-| Guardrails | The requests set `use_guardrails=True`, but retained logs warn `No safety models found, returning safe`. These runs validate generation, not functioning safety checks. The [Thu 17 Sep 2026 follow-up](https://github.com/NVIDIA/cosmos/pull/310#issuecomment-5722101980) additionally reports HTTP 500 from `pathsec` with Guardrail cache symlinks and success only with guardrails disabled. Working guardrails remain unverified here. |
+| Guardrails | The requests set `use_guardrails=True`. In `cosmos_guardrail==0.3.0`, `No safety models found, returning safe` comes from the intentionally empty video-content classifier list, not from failed loading of every safety component. Its constructor configures Blocklist and Qwen3Guard text checks plus RetinaFace face blurring. The separate [Thu 17 Sep 2026 follow-up](https://github.com/NVIDIA/cosmos/pull/310#issuecomment-5722101980) reports HTTP 500 from `pathsec` with Guardrail cache symlinks. The [server-side NLTK setup](../README.md#server-side-nltk-data-setup) materializes those resources without disabling path security. The fresh run above passed both Action notebooks and all five Transfer cases with that workaround and the unmodified guardrail 0.3.0 package. The disabled video-content classifier remains unvalidated. |
 
 The Thu 17 Sep follow-up separately reports successful FD generation on H100
 and H200 with rc26/rc27 images and a source overlay. It explicitly did not rerun
@@ -114,5 +193,7 @@ those cases.
 This validation matrix covers **Nano** Action and Transfer. It does not certify
 the shared Super launch, every audiovisual example, optional raw-source control
 preprocessing, or later TensorRT-LLM revisions. The evidence supports the
-documented generation request contract and the dimensions above; it does not
-certify functioning guardrails.
+documented generation request contract, the dimensions above, and a working
+default guardrail 0.3.0 configuration with the NLTK workaround. It is not a
+safety-efficacy benchmark and does not certify the disabled video-content
+classifier.
