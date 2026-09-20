@@ -40,4 +40,4 @@ Runnable notebooks for every Cosmos 3 capability. Each is self-contained; pick b
 
 Prompting the Reasoner well: [`cosmos3/reasoner/reasoner_prompt_guide.md`](cosmos3/reasoner/reasoner_prompt_guide.md). Evaluation suites (PAIBench, Physics-IQ, RBench, UniGenBench, VLMEvalKit) live in [`evaluation/`](../evaluation/).
 
-New here? Read the matching [quickstart](../docs/quickstarts/) first — notebooks assume the environment it sets up. Environment setup shared by all cookbooks (backends, CUDA pairing, guardrail toggles): `cosmos3/README.md`.
+Environment setup shared by all cookbooks (backends, CUDA pairing, guardrail toggles): `cosmos3/README.md`.

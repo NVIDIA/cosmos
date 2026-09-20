@@ -14,7 +14,6 @@
 [![Models](https://img.shields.io/badge/-Cosmos%203%20models-ffd21e?logo=huggingface&logoColor=white&labelColor=555)](https://huggingface.co/collections/nvidia/cosmos3)
 [![Paper](https://img.shields.io/badge/-Technical%20Report-76b900?logo=arxiv&logoColor=white&labelColor=555)](https://research.nvidia.com/labs/cosmos-lab/cosmos3/technical-report.pdf)
 [![Website](assets/brand/badge-website.svg)](https://research.nvidia.com/labs/cosmos-lab/cosmos3/)
-[![Documentation](https://img.shields.io/badge/-Documentation-4c9aff?logo=readthedocs&logoColor=white&labelColor=555)](docs/)
 [![Discussions](https://img.shields.io/badge/-Discussions-181717?logo=github&logoColor=white&labelColor=555)](https://github.com/NVIDIA/cosmos/discussions)
 
 [**Try it in your browser**](https://build.nvidia.com/nvidia/cosmos3-nano-reasoner) · [**Quickstart**](#generate-your-first-video) · [**Find your path**](#find-your-path) · [**Model Family**](#models)
@@ -81,13 +80,13 @@ This repository is the home of the models: everything for exploring, running, an
 <table>
   <tr><th align="left" width="46%">I want to…</th><th align="left" width="42%">Go to</th><th align="left">Time</th></tr>
   <tr><td><b>See it work</b> — zero install</td><td><a href="https://build.nvidia.com/nvidia/cosmos3-nano">Video generation</a>, <a href="https://build.nvidia.com/nvidia/cosmos3-nano-reasoner">visual reasoning</a></td><td>1 min</td></tr>
-  <tr><td><b>Generate my first video</b></td><td><a href="#generate-your-first-video">Quickstart ↓</a> or <a href="docs/quickstarts/generate.md">full guide</a></td><td>10 min</td></tr>
-  <tr><td><b>Reason over images &amp; video</b></td><td><a href="docs/quickstarts/reason.md">Reasoner quickstart</a></td><td>10 min</td></tr>
-  <tr><td><b>Serve an OpenAI-compatible API</b></td><td><a href="docs/quickstarts/serve.md">Serving guide</a> — vLLM, vLLM-Omni, or NIM</td><td>30 min</td></tr>
+  <tr><td><b>Generate my first video</b></td><td><a href="#generate-your-first-video">Quickstart ↓</a></td><td>10 min</td></tr>
+  <tr><td><b>Reason over images &amp; video</b></td><td><a href="cookbooks/cosmos3/reasoner/run_with_vllm.ipynb">Reasoner notebook</a></td><td>10 min</td></tr>
+  <tr><td><b>Serve an OpenAI-compatible API</b></td><td><a href="cookbooks/cosmos3/README.md">Serving setup guide</a> — vLLM, vLLM-Omni, or NIM</td><td>30 min</td></tr>
   <tr><td><b>Post-train on my own data</b> — SFT, distillation, RL</td><td><a href="https://github.com/NVIDIA/cosmos-framework">Cosmos Framework</a>, then <a href="evaluation/">evaluate here</a></td><td>hours</td></tr>
   <tr><td><b>Explore runnable notebooks</b></td><td><a href="cookbooks/">Cookbooks</a></td><td>browse</td></tr>
   <tr><td><b>Evaluate a model</b></td><td><a href="evaluation/">Evaluation suites</a> — PAIBench, Physics-IQ, VLMEvalKit</td><td>hours</td></tr>
-  <tr><td><b>Check latency &amp; throughput</b></td><td><a href="docs/reference/benchmarks.md">Benchmarks</a></td><td>browse</td></tr>
+  <tr><td><b>Check latency &amp; throughput</b></td><td><a href="inference_benchmarks.md">Benchmarks</a></td><td>browse</td></tr>
 </table>
 
 ## Generate your first video
@@ -113,7 +112,7 @@ video = pipe(prompt="A mobile robot navigates a warehouse aisle and stops at a s
 export_to_video(video, "first_video.mp4", fps=24)
 ```
 
-First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so long step times are normal. Full options, image/sound modes, and every other backend: [generate quickstart](docs/quickstarts/generate.md) · setup issues: [FAQ](docs/reference/faq.md).
+First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so long step times are normal. Full options, image/sound modes, and every other backend: [audiovisual cookbooks](cookbooks/cosmos3/generator/audiovisual/) · setup issues: [environment setup guide](cookbooks/cosmos3/README.md).
 
 
 ## Models
@@ -147,8 +146,7 @@ cosmos/
 │   └── cosmos3/        # generator (audiovisual · action · transfer) · reasoner + prompt guide
 ├── evaluation/         # quality benchmark suites: PAIBench, Physics-IQ, RBench, UniGenBench, VLMEvalKit
 ├── docs/
-│   ├── quickstarts/    # task-oriented: generate · reason · serve
-│   └── reference/      # lookup: models · benchmarks · FAQ
+│   └── reference/      # lookup: model reference
 ├── assets/             # brand + demo media
 └── README.md           # you are here
 ```
@@ -164,7 +162,7 @@ Training, optimization, and deployment tooling lives in [Cosmos Framework](https
 | [Cosmos Curator](https://github.com/NVIDIA/cosmos-curator) | Distributed data curation: processing, annotation, filtering, dedup |
 | [Cosmos Evaluator](https://github.com/NVIDIA/cosmos-evaluator) | Automated evaluation system for world generation & reasoning outputs |
 
-Cosmos 3 runs on Diffusers, Transformers, vLLM, vLLM-Omni, SGLang, TensorRT-LLM, and NIM — pick a backend in the [serving guide](docs/quickstarts/serve.md).
+Cosmos 3 runs on Diffusers, Transformers, vLLM, vLLM-Omni, SGLang, TensorRT-LLM, and NIM — pick a backend in the [environment setup guide](cookbooks/cosmos3/README.md).
 
 ## Community & contributing
 
@@ -172,7 +170,7 @@ Questions and ideas → [Discussions](https://github.com/NVIDIA/cosmos/discussio
 
 ## Limitations & safety
 
-Cosmos 3 can produce artifacts in long, high-resolution, or physically complex outputs (temporal inconsistency, object morphing, implausible dynamics). Safety-critical applications need additional validation and system-level safety analysis. Generation ships with [guardrails](docs/quickstarts/serve.md#guardrails) on by default.
+Cosmos 3 can produce artifacts in long, high-resolution, or physically complex outputs (temporal inconsistency, object morphing, implausible dynamics). Safety-critical applications need additional validation and system-level safety analysis. Generation ships with [guardrails](cookbooks/cosmos3/README.md) on by default.
 
 ## Citation & license
 
