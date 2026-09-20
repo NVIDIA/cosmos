@@ -11,7 +11,7 @@ Every visual placeholder in the prototype, with exact production specs. Owner co
 
 ## Demo grid (`assets/demos/`) — the six hero assets ✅ in place
 
-All six are sourced from the [Cosmos 3 research page](https://research.nvidia.com/labs/cosmos-lab/cosmos3/), converted to GIF (480px wide, 12 fps, first 4 s, ≤ 5 MB — GitHub READMEs won't autoplay video). Source MP4s kept under `demos/mp4/` for future `<video>` upgrades or re-cuts.
+All six are sourced from the [Cosmos 3 research page](https://research.nvidia.com/labs/cosmos-lab/cosmos3/), converted to GIF (480px wide, 12 fps, first 4 s, ≤ 5 MB — GitHub READMEs won't autoplay video). Source MP4s are archived outside the repo (internal); re-cut from the sources listed below.
 
 | File | Source | Shows |
 |---|---|---|
