@@ -2,8 +2,6 @@
 
 Runnable notebooks for every Cosmos 3 capability. Each is self-contained; pick by what you want to do, then by which backend you run.
 
-> **Prototype note:** notebooks migrate unchanged from `cosmos/cookbooks/cosmos3/`.
-
 ## Generator
 
 | Notebook | Workflows | Backend |
