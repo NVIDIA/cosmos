@@ -60,7 +60,7 @@ Cosmos 3 is built on a unified Mixture-of-Transformers (MoT) architecture combin
 \* Output format: JPG, MP4, AAC-in-MP4 (stereo 48 kHz), JSON actions, text\
 \* Prompt length: < 300 words recommended for world generation
 
-Every workflow has a runnable notebook — see [cookbooks](https://github.com/NVIDIA/cosmos/blob/main/cookbooks/README.md).
+Every workflow has a runnable notebook — see [cookbooks](../../cookbooks/cosmos3/README.md).
 
 ## Generation settings
 
