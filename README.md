@@ -22,7 +22,7 @@
 
 <!-- ============================================================
      DEMO GRID — the model sells itself.
-     Asset sources and re-cut specs: assets/ASSET_SPECS.md (grid section).
+     Asset sources and re-cut specs: assets/ASSET_SPECS.md in the private repo (nvidia-cosmos/cosmos-private).
      ============================================================ -->
 <table>
   <tr>
