@@ -72,6 +72,7 @@ Every workflow has a runnable notebook — see [cookbooks](../../cookbooks/cosmo
 | Frame count | 5–300 (default 189) |
 | Precision | BF16 tested |
 | OS / GPU | Linux; Ampere, Hopper, Blackwell |
+
 \* Cosmos3-Edge supports only 256p and 480p, frame count is 50-150.
 
 ## Sampling defaults
