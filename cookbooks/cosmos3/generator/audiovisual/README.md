@@ -369,8 +369,10 @@ request-level `max_sequence_length=4096` for longer structured JSON prompts.
 [`run_with_trt_llm.ipynb`](./run_with_trt_llm.ipynb) is the full tutorial for the
 TensorRT-LLM backend: it walks through text-to-image, text-to-video and
 image-to-video with or without synchronized audio, and video-to-video requests
-against an already-running VisualGen server. Server launch options (Nano and
-Super, FP8 dynamic quantization, CFG parallelism, Ulysses, and parallel VAE)
+against an already-running VisualGen server. It includes a dedicated
+Cosmos3-Edge I2V example using 20 steps, guidance 5, flow shift 8, 121 frames,
+24 FPS, and 832x480 output. Server launch options (Nano, Super, Edge, FP8
+dynamic quantization, CFG parallelism, Ulysses, and parallel VAE)
 live in the
 [shared environment setup guide](../../README.md#tensorrt-llm-generator).
 
