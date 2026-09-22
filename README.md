@@ -91,13 +91,15 @@ This repository is the home of the models: everything for exploring, running, an
 
 ## Generate your first video
 
+`Cosmos3-Nano` is ungated, but this example enables guardrails by default. Before running the code, request access to [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail) and accept its access conditions. Once access is granted, log in below with a Hugging Face read token from the same account. Logging in alone does not grant access.
+
 ```bash
 uv venv --python 3.13 --seed --managed-python && source .venv/bin/activate
 uv pip install --torch-backend=auto \
   "diffusers @ git+https://github.com/huggingface/diffusers.git" \
   accelerate av cosmos_guardrail huggingface_hub imageio imageio-ffmpeg \
   torch torchvision transformers
-uvx hf@latest auth login   # Cosmos 3 checkpoints require a Hugging Face token
+uvx hf@latest auth login   # Authenticate for the gated Guardrail repository
 ```
 
 ```python
