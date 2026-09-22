@@ -91,7 +91,7 @@ This repository is the home of the models: everything for exploring, running, an
 
 ## Generate your first video
 
-`Cosmos3-Nano` is ungated, but this example enables guardrails by default. Before running the code, request access to [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail) and accept its access conditions. Once access is granted, log in below with a Hugging Face read token from the same account. Logging in alone does not grant access.
+Before running the code, request access to [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail) and accept its access conditions. Once access is granted, log in below with a Hugging Face read token from the same account. Logging in alone does not grant access.
 
 ```bash
 uv venv --python 3.13 --seed --managed-python && source .venv/bin/activate
