@@ -185,7 +185,6 @@ Video inputs use the `video_url` content type and accept `media_io_kwargs`
 frame-sampling controls through `extra_body`
 (`{"media_io_kwargs": {"video": {"fps": 4.0}}}`). See the
 [Cosmos Reason 3 NIM API reference](https://docs.nvidia.com/nim/vision-language-models/1.7.0/examples/cosmos-reason3/api.html)
-and the [NIM section in the top-level README](../../../README.md#reasoner-with-nim)
 for the full request reference.
 
 ### Notebook walkthrough

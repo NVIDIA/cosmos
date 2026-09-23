@@ -51,7 +51,7 @@ If you encounter a bug or have a feature request, please open an issue on the [G
 ### Prerequisites
 
 - Python 3.10 or later
-- CUDA 12.8 or 13.x (see [Troubleshooting](README.md#troubleshooting) for version matching)
+- CUDA 12.8 or 13.x (see [CUDA driver and backend selection](cookbooks/cosmos3/README.md#cuda-driver-and-the-cuxxx-backend) for version matching)
 - An NVIDIA GPU with sufficient VRAM for your target workflow
 - `uv` >= 0.11.3 (install from [astral.sh/uv](https://astral.sh/uv))
 

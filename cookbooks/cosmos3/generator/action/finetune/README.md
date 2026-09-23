@@ -301,7 +301,7 @@ python -m cosmos_framework.scripts.convert_model_to_diffusers \
     --checkpoint-path "$RUN_DIR/model" -o "$RUN_DIR/diffusers"
 ```
 
-The input is the Hugging Face directory produced by `export_model` above (not a raw DCP checkpoint), so run the export first. See the [Export and Convert Checkpoints](../../../../../README.md#export-and-convert-checkpoints) overview for details.
+The input is the Hugging Face directory produced by `export_model` above (not a raw DCP checkpoint), so run the export first. See the Cosmos Framework [export](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/training.md#export-checkpoint-to-hugging-face-safetensors) and [conversion](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/training.md#convert-to-diffusers) guides for details.
 
 ## Advanced configuration
 
