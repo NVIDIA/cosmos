@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 import requests
-from common import decode_video, media_to_data_url, require_generator_profile
+from common import decode_video, media_to_data_url, nim_infer, require_generator_profile
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
@@ -285,7 +285,17 @@ def main() -> None:
         choices=CANONICAL_CASES + tuple(CASE_ALIASES),
         default="av_forward",
     )
-    selected_case = parser.parse_args().case
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help=(
+            "Output path prefix for the rollout video (and action JSON); "
+            "default: outputs/action_<case>."
+        ),
+    )
+    args = parser.parse_args()
+    selected_case = args.case
     case = CASE_ALIASES.get(selected_case, selected_case)
     allowed_variants = (
         ("nano",) if case.startswith("av_policy_") else ("nano", "super")
@@ -299,9 +309,7 @@ def main() -> None:
     if expected_behavior:
         print(f"Expected qualitative behavior: {expected_behavior}.")
 
-    response = requests.post(f"{NIM_URL}/v1/infer", json=request, timeout=1800)
-    response.raise_for_status()
-    result = response.json()
+    result = nim_infer(NIM_URL, request=request)
     if not isinstance(result, dict):
         raise TypeError("Action response must be a JSON object")
 
@@ -311,12 +319,14 @@ def main() -> None:
         raise ValueError("General Action response did not contain rollout video")
 
     OUTPUTS.mkdir(exist_ok=True)
-    video_path = OUTPUTS / f"action_{case}.mp4"
+    stem = args.output or OUTPUTS / f"action_{case}"
+    stem.parent.mkdir(exist_ok=True)
+    video_path = stem.with_suffix(".mp4")
     video_path.write_bytes(decode_video(result["b64_video"]))
     print(f"Saved video to {video_path}")
 
     if action is not None:
-        action_path = OUTPUTS / f"action_{case}.json"
+        action_path = stem.with_suffix(".json")
         action_path.write_text(
             json.dumps(action, indent=2) + "\n", encoding="utf-8"
         )
