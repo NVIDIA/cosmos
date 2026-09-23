@@ -43,6 +43,12 @@ for the negative caption.
 | World scenario (WSM) | `assets/wsm/` | `control_wsm.mp4` + `prompt.json` | 101 frames @ 10 FPS |
 | Multi-control | `assets/multi_control/` | `vision_path` + multiple hints (Framework example) | 121 frames @ 30 FPS |
 
+World-scenario-map transfer is supported by both Cosmos3-Nano and Cosmos3-Super in the
+current release. Transfer generation is single-view: a WSM control video conditions one
+RGB output view per generation. The `multi-control` examples combine multiple control
+modalities for the same output view; they do not perform synchronized multi-camera
+generation. Joint multi-view video generation is not supported by the current release.
+
 Transfer inference is selected automatically when any hint key is present in the
 Framework spec or in vLLM-Omni `extra_params`.
 The same spec files are used for both Nano and Super — model selection is controlled
