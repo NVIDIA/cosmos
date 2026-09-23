@@ -47,6 +47,8 @@ To infer with API models (GPT-4v, Gemini-Pro-V, etc.) or use LLM APIs as the **j
   LMDEPLOY_API_BASE=
   # MiniMax API
   MINIMAX_API_KEY=
+  # OrcaRouter API
+  ORCAROUTER_API_KEY=
   # You can also set a proxy for calling api models during the evaluation stage
   EVAL_PROXY=
   ```

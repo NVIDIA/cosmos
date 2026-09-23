@@ -523,6 +523,31 @@ api_models = {
         max_tokens=2048,
         retry=10,
     ),
+    # OrcaRouter (set ORCAROUTER_API_KEY)
+    "OrcaRouter_Gemini-3.1-Flash-Lite": partial(
+        api.OrcaRouterAPI,
+        model="google/gemini-3.1-flash-lite",
+        temperature=0,
+        retry=10,
+    ),
+    "OrcaRouter_Gemini-3.5-Flash": partial(
+        api.OrcaRouterAPI,
+        model="google/gemini-3.5-flash",
+        temperature=0,
+        retry=10,
+    ),
+    "OrcaRouter_Claude-Sonnet-5": partial(
+        api.OrcaRouterAPI,
+        model="anthropic/claude-sonnet-5",
+        temperature=0,
+        retry=10,
+    ),
+    "OrcaRouter_DeepSeek-V4-Flash-Vision": partial(
+        api.OrcaRouterAPI,
+        model="deepseek/deepseek-v4-flash-vision-exp",
+        temperature=0,
+        retry=10,
+    ),
     # MiniMax (set MINIMAX_API_KEY)
     "MiniMax-M2.7": partial(
         api.MiniMaxAPI,
