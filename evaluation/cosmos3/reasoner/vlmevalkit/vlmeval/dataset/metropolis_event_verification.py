@@ -222,6 +222,10 @@ class MetropolisEventVerification(VideoBaseDataset):
         """
         Evaluate predictions against ground truth.
 
+        Unparseable answers remain abstentions: they count as false negatives
+        for their ground-truth class, without adding an abstention class to the
+        macro average. Valid Predictions reports parse coverage separately.
+
         Returns:
             pd.DataFrame: Evaluation results. Top-level `macro_f1` key is the
             primary rollup (matches VANTAGE paper Table 2); the full sklearn
@@ -231,6 +235,8 @@ class MetropolisEventVerification(VideoBaseDataset):
 
         predictions = []
         ground_truths = []
+        valid_predictions = 0
+        invalid_answer = '__invalid__'
 
         for _, row in data.iterrows():
             pred = row.get('prediction', '')
@@ -249,22 +255,31 @@ class MetropolisEventVerification(VideoBaseDataset):
                 and (pred_answer.strip().lower() in ['yes', 'no'])
             ):
                 predictions.append(pred_answer.strip().lower())
-                ground_truths.append(str(gt).strip().lower())
+                valid_predictions += 1
+            else:
+                predictions.append(invalid_answer)
+            ground_truths.append(str(gt).strip().lower())
 
         if len(predictions) == 0:
-            print("Warning: No valid predictions found!")
+            print("Warning: No ground-truth samples found!")
             return pd.DataFrame([{
                 'macro_f1': None,
                 'Valid Predictions': 0,
                 'Total Samples': len(data),
             }])
 
-        from sklearn.metrics import classification_report
-        report = classification_report(ground_truths, predictions, output_dict=True)
+        from sklearn.metrics import accuracy_score, classification_report
+        labels = sorted(set(ground_truths) | (set(predictions) - {invalid_answer}))
+        report = classification_report(
+            ground_truths, predictions, labels=labels, output_dict=True,
+            zero_division=0,
+        )
+        # Explicit labels omit the abstention class; retain overall accuracy too.
+        report['accuracy'] = accuracy_score(ground_truths, predictions)
         macro_f1 = float(report.get('macro avg', {}).get('f1-score', 0.0))
         summary = {
             'macro_f1': macro_f1,
-            "Valid Predictions": len(predictions),
+            "Valid Predictions": valid_predictions,
             'Total Samples': len(data),
             **flatten_dict(report),
         }
