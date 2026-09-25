@@ -48,6 +48,13 @@ Framework spec or in vLLM-Omni `extra_params`.
 The same spec files are used for both Nano and Super — model selection is controlled
 entirely by `--checkpoint-path`.
 
+> **PAIBench-C reproduction**: The checked-in specs (`specs/*.json`) with `--seed 2026`
+> are the canonical inference recipe used for the PAIBench-C results in the Cosmos3 report.
+> Prompts follow the structured `prompt.json` format shown in `assets/*/`. For the full
+> benchmark run, use the same per-clip seed (`2026`) for all clips. Evaluation
+> reproducibility is tracked separately at
+> [SHI-Labs/physical-ai-bench#7](https://github.com/SHI-Labs/physical-ai-bench/issues/7).
+
 ## Run with Cosmos Framework
 
 ### Quickstart — Single-control transfer
