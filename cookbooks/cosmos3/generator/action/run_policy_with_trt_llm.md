@@ -18,7 +18,10 @@ cd TensorRT-LLM
 make -C docker release_build IMAGE_TAG=edge-policy-droid
 ```
 
-Launch the container and start the policy server. `trtllm-serve` reads the checkpoint's policy defaults, including its 32-action chunk, 15 FPS, state conditioning, and sampler settings:
+Launch the container and start the policy server. `--enable_visual_gen` selects
+the video-generation route; without it, TensorRT-LLM selects its language-model
+loader for this checkpoint. The server reads the checkpoint's policy defaults,
+including its 32-action chunk, 15 FPS, state conditioning, and sampler settings:
 
 ```bash
 : "${HF_TOKEN:?Set HF_TOKEN to an authorized Hugging Face token}"
@@ -31,7 +34,7 @@ docker run -d --name cosmos3-trtllm-policy-notebook \
   -v "$HOME/.cache/huggingface:/root/.cache/huggingface" \
   -p 8000:8000 --ipc=host \
   tensorrt_llm/release:edge-policy-droid \
-  trtllm-serve nvidia/Cosmos3-Edge-Policy-DROID --port 8000
+  trtllm-serve nvidia/Cosmos3-Edge-Policy-DROID --enable_visual_gen --port 8000
 
 # Wait until this returns 200 before running a client against it.
 curl -i http://localhost:8000/health

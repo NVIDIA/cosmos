@@ -311,7 +311,7 @@ and synchronized audio.
 **Cosmos3-Edge-Policy-DROID** (single GPU; state-conditioned action policy):
 
 ```bash
-trtllm-serve nvidia/Cosmos3-Edge-Policy-DROID --port "$COSMOS3_TRTLLM_PORT"
+trtllm-serve nvidia/Cosmos3-Edge-Policy-DROID --enable_visual_gen --port "$COSMOS3_TRTLLM_PORT"
 ```
 
 The checkpoint selects its 32-action chunk and 15 FPS policy defaults. The
