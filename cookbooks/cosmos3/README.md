@@ -185,10 +185,7 @@ These changes are merged on TensorRT-LLM `main`. The Action and Transfer
 notebooks were executed against source revision
 [`bca6761ab84fbcd58fc7f914eade7de48b32e35e`](https://github.com/NVIDIA/TensorRT-LLM/commit/bca6761ab84fbcd58fc7f914eade7de48b32e35e).
 Use that revision to reproduce their request contract, or a newer build with
-the same API. The older `799d7d42` validation used `input_reference` and does
-not validate these notebooks' `image_reference` / `video_reference` fields.
-See the [Action and Transfer validation record](generator/trtllm-validation.md)
-for the executed cases, output dimensions, and remaining runtime limitations.
+the same API.
 The source revision is significant: a package version of `1.3.0rc26` alone
 does not establish compatibility with the action image-decoding path.
 
