@@ -208,6 +208,24 @@ write outputs under `outputs/cosmos3_action_vllm/`:
 - [`run_policy_with_vllm_omni.ipynb`](./run_policy_with_vllm_omni.ipynb) — policy
   inference for DROID through the async video API.
 
+## Run Policy with TensorRT-LLM
+
+### Quickstart
+
+Start a TensorRT-LLM VisualGen server with `nvidia/Cosmos3-Edge-Policy-DROID` as
+shown in the [policy server guide](./run_policy_with_trt_llm.md). The checkpoint
+selects its 32-action, 15 FPS policy defaults. Send a concatenated DROID camera
+image, structured task prompt, and current 8-value model-space state through
+`POST /v1/videos/sync`; the response is a `safetensors` payload with rollout
+video and a `[32, 8]` action tensor.
+
+### Notebook Walkthrough
+
+[`run_policy_with_trt_llm.ipynb`](./run_policy_with_trt_llm.ipynb) builds the
+conditioning image from the checked-in DROID sample, submits one synchronous
+request, decodes the tensors, and writes an MP4 preview. It reads the
+first current-state row from the same checked-in DROID sample as the camera frames.
+
 ## Post-Train for Cosmos3-Nano-Policy-DROID
 
 To reproduce our post-training recipe for [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID), use the

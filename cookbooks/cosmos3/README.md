@@ -8,7 +8,7 @@ backend you want to run and follow that one section.
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
-| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio generation) | Generator (Audiovisual) |
+| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio/action generation) | Generator (Audiovisual, Action) |
 | [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
@@ -168,7 +168,8 @@ uv pip install --torch-backend=cu130 \
 ## TensorRT-LLM Generator
 
 OpenAI-compatible **VisualGen** server for Generator audiovisual text-to-image,
-text-to-video, image-to-video, video-to-video, and synchronized audio examples.
+text-to-video, image-to-video, video-to-video, synchronized audio, and DROID
+policy examples.
 Initial Cosmos3 support was added in TensorRT-LLM PR
 [#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824), synchronized audio
 in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
@@ -177,7 +178,9 @@ DMD2-distilled four-step checkpoints were added in
 [#16563](https://github.com/NVIDIA/TensorRT-LLM/pull/16563) (text-to-image) and
 [#16690](https://github.com/NVIDIA/TensorRT-LLM/pull/16690) (image-to-video), and
 Cosmos3-Edge (Nemotron-dense backbone) in
-[#16773](https://github.com/NVIDIA/TensorRT-LLM/pull/16773).
+[#16773](https://github.com/NVIDIA/TensorRT-LLM/pull/16773). The separate
+Cosmos3-Edge-Policy-DROID checkpoint is served by the Action support in
+[#18463](https://github.com/NVIDIA/TensorRT-LLM/pull/18463).
 Use a TensorRT-LLM checkout or package that includes those changes.
 
 Install TensorRT-LLM following its upstream documentation.
@@ -270,9 +273,10 @@ no `--visual_gen_args` override. Edge text-to-image goes to
 `/v1/images/generations` with `"output_type": "image"` in `extra_params` (video
 mode would otherwise apply Cosmos3's video negative prompt to a still); the two
 video modes go to `/v1/videos/generations`. TensorRT-LLM serves Edge for
-text-to-image, text-to-video, and image-to-video only: Edge has no audio tower, its action
-weights are not served by this pipeline, and video-to-video is validated for Nano
-and Super. Requests outside the model card's validated envelope (256p/480p,
+text-to-image, text-to-video, and image-to-video only: the base Edge checkpoint
+has no audio tower or served action weights, and video-to-video is validated for
+Nano and Super. The separate Edge Policy DROID checkpoint is described below.
+Requests outside the model card's validated envelope (256p/480p,
 50-150 frames, 12-30 FPS) still run and log an advisory line.
 
 **Cosmos3-Super-Text2Image-4Step** (single GPU; DMD2-distilled text-to-image):
@@ -303,6 +307,20 @@ default 720p x 189-frame omni shape and needs no config file. The
 runs both against a running server. These students cover text-to-image and
 image-to-video only; use the base checkpoints for text-to-video, video-to-video,
 and synchronized audio.
+
+**Cosmos3-Edge-Policy-DROID** (single GPU; state-conditioned action policy):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Edge-Policy-DROID --enable_visual_gen --port "$COSMOS3_TRTLLM_PORT"
+```
+
+The checkpoint selects its 32-action chunk and 15 FPS policy defaults. The
+[DROID policy notebook](generator/action/run_policy_with_trt_llm.ipynb) sends a
+three-camera image, structured prompt, and current 8-value state to
+`POST /v1/videos/sync`, then decodes a `safetensors` response with 33 video
+frames and a `[32, 8]` action tensor. See the
+[policy server guide](generator/action/run_policy_with_trt_llm.md) for the
+container launch and the RoboLab adapter boundary.
 
 The server exposes `/health`, `/v1/videos/generations`, `/v1/videos`, and
 `/v1/images/generations`. The audiovisual notebook uses the validated video
