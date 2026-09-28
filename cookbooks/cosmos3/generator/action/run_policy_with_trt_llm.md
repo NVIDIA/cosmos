@@ -1,6 +1,6 @@
 # Cosmos3-Edge-Policy-DROID server with TensorRT-LLM
 
-**DRAFT — not yet run end-to-end.** This serves [`nvidia/Cosmos3-Edge-Policy-DROID`](https://huggingface.co/nvidia/Cosmos3-Edge-Policy-DROID) through TensorRT-LLM. Run the [one-shot notebook](./run_policy_with_trt_llm.ipynb) to inspect the HTTP response. RoboLab integration needs an adapter to TensorRT-LLM's request and response format.
+This serves [`nvidia/Cosmos3-Edge-Policy-DROID`](https://huggingface.co/nvidia/Cosmos3-Edge-Policy-DROID) through TensorRT-LLM. Run the [one-shot notebook](./run_policy_with_trt_llm.ipynb) to inspect the HTTP response. RoboLab integration needs an adapter to TensorRT-LLM's request and response format.
 
 ## Table of Contents
 
