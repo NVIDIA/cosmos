@@ -97,9 +97,8 @@ by activating it (`source .venv/bin/activate`) or via its absolute interpreter
 
 For CUDA 13, NVIDIA documents the [NGC PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
 `nvcr.io/nvidia/pytorch:25.09-py3` as the recommended starting point; for CUDA 12 use
-`nvcr.io/nvidia/pytorch:25.06-py3`. See the repo root
-[Which base container should I use?](../../README.md#which-base-container-should-i-use)
-and [Cosmos Framework setup](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/setup.md#recommended-base-image).
+`nvcr.io/nvidia/pytorch:25.06-py3`. See
+[Cosmos Framework setup](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/setup.md#recommended-base-image).
 
 Inside that image (or any minimal GPU host), install the system packages below **before**
 your first `torchrun` inference — `uv sync --all-extras` alone is not enough for
@@ -128,8 +127,7 @@ python -c "import cv2; print(cv2.__version__)"
 ```
 
 If you see `libxcb.so.1: cannot open shared object file`, the `libxcb1` / `libgl1`
-packages above were not installed. The same fix is documented in the repo root
-[troubleshooting guide](../../README.md#import-fails-with-libxcbso1-cannot-open-shared-object-file).
+packages above were not installed.
 
 When using the **NGC PyTorch base image**, clear `LD_LIBRARY_PATH` after activating the
 venv so the container’s bundled libtorch does not shadow the venv (see
@@ -180,7 +178,9 @@ Transfer in [#16394](https://github.com/NVIDIA/TensorRT-LLM/pull/16394), and
 Action in [#17325](https://github.com/NVIDIA/TensorRT-LLM/pull/17325).
 The DMD2-distilled four-step checkpoints were added in
 [#16563](https://github.com/NVIDIA/TensorRT-LLM/pull/16563) (text-to-image) and
-[#16690](https://github.com/NVIDIA/TensorRT-LLM/pull/16690) (image-to-video).
+[#16690](https://github.com/NVIDIA/TensorRT-LLM/pull/16690) (image-to-video), and
+Cosmos3-Edge (Nemotron-dense backbone) in
+[#16773](https://github.com/NVIDIA/TensorRT-LLM/pull/16773).
 These changes are merged on TensorRT-LLM `main`. The Action and Transfer
 notebooks were executed against source revision
 [`bca6761ab84fbcd58fc7f914eade7de48b32e35e`](https://github.com/NVIDIA/TensorRT-LLM/commit/bca6761ab84fbcd58fc7f914eade7de48b32e35e).
@@ -318,6 +318,25 @@ torchrun --nproc_per_node=4 -m tensorrt_llm.commands.serve \
   --visual_gen_args "$TRTLLM_ROOT/examples/visual_gen/configs/cosmos3-super-4gpu.yaml" \
   --port "$COSMOS3_TRTLLM_PORT"
 ```
+
+**Cosmos3-Edge** (single GPU):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Edge \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+Edge is the compact 4B checkpoint. Its 480p-native generation defaults
+(832x480 with 121 frames, 50 UniPC steps on the checkpoint-declared native flow
+schedule, guidance 5.0, flow shift 3.0) are read from the checkpoint, so it takes
+no `--visual_gen_args` override. Edge text-to-image goes to
+`/v1/images/generations` with `"output_type": "image"` in `extra_params` (video
+mode would otherwise apply Cosmos3's video negative prompt to a still); the two
+video modes go to `/v1/videos/generations`. TensorRT-LLM serves Edge for
+text-to-image, text-to-video, and image-to-video only: Edge has no audio tower, its action
+weights are not served by this pipeline, and video-to-video is validated for Nano
+and Super. Requests outside the model card's validated envelope (256p/480p,
+50-150 frames, 12-30 FPS) still run and log an advisory line.
 
 **Cosmos3-Super-Text2Image-4Step** (single GPU; DMD2-distilled text-to-image):
 
@@ -598,9 +617,7 @@ vllm serve nvidia/Cosmos3-Nano \
   --init-timeout 1800
 ```
 
-Alternatively, pass a
-[`--deploy-config`](../../README.md#generator-with-vllm-omni) as documented in
-the repository root README. See also the
+See also the
 [vLLM-Omni Cosmos3-Nano recipe](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md).
 
 ### Option 1: Docker (recommended)
