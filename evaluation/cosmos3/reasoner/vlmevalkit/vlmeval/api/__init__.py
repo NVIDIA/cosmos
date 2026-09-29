@@ -24,6 +24,7 @@ from .mug_u import MUGUAPI
 from .nemotron import Nemotron
 from .nv_gemini import NVGemini
 from .openai_sdk import OpenAISDKWrapper
+from .orcarouter import OrcaRouterAPI
 from .qwen_api import QwenAPI
 from .qwen_vl_api import Qwen2VLAPI, QwenVLAPI, QwenVLWrapper
 from .rbdashmm_chat3_5_api import RBdashMMChat3_5_38B_API, RBdashMMChat3_78B_API
@@ -44,6 +45,7 @@ __all__ = [
     'SenseChatVisionAPI', 'SenseChatVisionV2API', 'HunyuanVision', 'Qwen2VLAPI', 'BlueLMWrapper', 'BlueLM_API',
     'JTVLChatAPI', 'JTVLChatAPI_Mini', 'JTVLChatAPI_2B', 'bailingMMAPI', 'TaiyiAPI', 'TeleMMAPI',
     'SiliconFlowAPI', 'LMDeployAPI', 'ARM_thinker', 'OpenAISDKWrapper', 'LMDeployWrapper',
+    'OrcaRouterAPI',
     'TaichuVLAPI', 'TaichuVLRAPI', 'DoubaoVL', "MUGUAPI", 'KimiVLAPIWrapper', 'KimiVLAPI',
     'RBdashMMChat3_API', 'RBdashChat3_5_API', 'RBdashMMChat3_78B_API', 'RBdashMMChat3_5_38B_API',
     'VideoChatOnlineV2API', 'TeleMM2_API', 'TeleMM2Thinking_API', 'TogetherAPI', 'GCPVertexAPI',
