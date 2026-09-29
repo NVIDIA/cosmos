@@ -13,5 +13,25 @@ dependencies = [
   "requests==2.34.2",
 ]
 
+[dependency-groups]
+dev = [
+  "pytest==8.4.1",
+  "ruff==0.16.4",
+]
+
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["examples", "tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Match the existing notebook workflow's strictness: syntax/runtime-level only,
+# not full style on legacy example scripts.
+select = ["E9", "F63", "F7", "F82"]
