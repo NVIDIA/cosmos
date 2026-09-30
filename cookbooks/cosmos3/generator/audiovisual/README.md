@@ -118,10 +118,12 @@ from diffusers.utils import export_to_video
 
 prompt = json.load(open("assets/prompts/text2video/robot_kitchen.json"))
 negative = json.load(open("assets/negative_prompts/text2video/neg_prompt.json"))
+device = "xpu" if torch.xpu.is_available() else "cuda"
 
 pipe = Cosmos3OmniPipeline.from_pretrained(
-    "nvidia/Cosmos3-Nano", torch_dtype=torch.bfloat16, device_map="cuda"
+    "nvidia/Cosmos3-Nano", torch_dtype=torch.bfloat16
 )
+pipe.to(device)
 pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config, flow_shift=10.0)
 
 result = pipe(
@@ -137,7 +139,7 @@ result = pipe(
     enable_sound=False,
     add_resolution_template=False,
     add_duration_template=False,
-    generator=torch.Generator(device="cuda").manual_seed(1234),
+    generator=torch.Generator(device=device).manual_seed(1234),
 )
 export_to_video(result.video, "/tmp/cosmos3_t2v_diffusers.mp4", fps=24)
 ```
@@ -148,6 +150,7 @@ To run **Cosmos3-Super** instead, load the larger checkpoint:
 To run **Cosmos3-Edge** instead, load `nvidia/Cosmos3-Edge` and use its
 single-GPU, no-audio settings: `height=480`, `width=832`, `num_frames=121`,
 `num_inference_steps=20`, `guidance_scale=5.0`, and `flow_shift=8.0`.
+The Diffusers device selection above supports both CUDA and Intel XPU devices.
 
 ### Notebook walkthrough
 
