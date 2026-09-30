@@ -37,6 +37,38 @@ The VideoPhy-2 download/convert steps are skipped once their outputs exist (Edge
 
 These recipes default to 8 GPUs. On a 4-GPU node (e.g. GB200×4), set `--nproc_per_node=4` on the `torchrun` line in the launch script.
 
+## LoRA fine-tuning
+
+LoRA freezes the reasoner backbone and trains small low-rank adapters on the LLM attention projections, so only the adapters carry optimizer state — which is what makes the 32B Super tier comfortable on a 4-GPU allocation.
+
+Every recipe above is a full fine-tune, but LoRA is a **TOML-level switch**: no code change and no separate LoRA experiment to register. Keep `[job].experiment` on the recipe you started from (`videophy2_sft_nano` / `_super` / `_edge`, or `pre_exp012_llava_ov` for the LLaVA-OneVision recipe) and change `[job].name` so the run gets its own output directory. The generator cookbook's [`launch_sft_vision_super.sh`](../../generator/audiovisual/finetune/launch_sft_vision_super.sh) is a ready-made LoRA recipe driven by the same mechanism on the `vfm` side — worth reading alongside.
+
+Copy the recipe's TOML and touch two places:
+
+| TOML section | Change | Why |
+| --- | --- | --- |
+| `[model]` | `lora_enabled = true`, plus `lora_rank` / `lora_alpha` / `lora_target_modules` | injects the adapters before FSDP wraps the network |
+| `[optimizer]` | `keys_to_select = ["lora_"]`, and raise `lr` | trains the adapters only; they start at zero and are a tiny fraction of the parameters, so they take a larger LR than the full-FT recipe's |
+
+For the reasoner backbones the targets are the LLM attention projections — the rank/alpha below are an example to start from, not a required setting:
+
+```toml
+lora_enabled        = true
+lora_rank           = 16     # e.g. — larger rank buys capacity at the cost of more trainable params
+lora_alpha          = 32     # e.g. — commonly around 2x rank
+lora_target_modules = "q_proj,k_proj,v_proj,o_proj"
+```
+
+Names are matched against the *live* module tree, not checkpoint keys, and these four cover both Qwen3-VL (Nano/Super) and the Cosmos3-Edge reasoner; adding the MLP projections (`gate_proj,up_proj,down_proj` on Qwen3-VL, `up_proj,down_proj` on Edge) is the usual way to buy more capacity. For the LR, start from the recipe's full-FT value and go up — for example, ~5× (`1e-6` → `5e-6`).
+
+**On Cosmos3-Edge add one more line:** `lora_exclude_path_regex = "^model\\.visual\\."`. Its SigLIP2 vision tower names three of its four projections `q_proj`/`k_proj`/`v_proj` too, so name matching alone would also adapt the tower the recipe deliberately freezes — and the run would look healthy while training the wrong subnetwork.
+
+Nothing else *has* to change: `[model.ema].enabled` and `[model.compile].enabled` are already `false` in these recipes (LoRA injection subclasses `nn.Linear`, so keep compile off), and `[checkpoint].keys_to_skip_loading` stays `[]` — the VLM backbone loads from HF safetensors, not from a DCP checkpoint that could carry stale adapter keys. Separately from LoRA, the VideoPhy-2 recipes are short smoke runs (`[trainer].max_iter = 50`), so a real run also wants a higher `max_iter` with `[scheduler].cycle_lengths` matched to it.
+
+Then copy the matching launch shell and point `--sft-toml` at the new TOML; data prep and checkpoint preparation are unchanged.
+
+The VideoPhy-2 recipes enable the HF export callback, so every checkpoint save also writes an HF snapshot next to the DCP checkpoint. That snapshot is an ordinary HF checkpoint even for a LoRA run — the callback merges each adapter into its base weight (`W + (alpha/r) · B·A`), so it carries no `lora_*` keys and loads exactly like a full fine-tune's. Gathering the whole backbone on rank 0 per save is wasted work on a short convergence run, so pass `-- checkpoint.hf_export.enabled=false` on the `torchrun` line while you're only watching loss curves.
+
 ## Outputs
 
 Training writes to `outputs/train/<project>/<group>/<name>/`:
