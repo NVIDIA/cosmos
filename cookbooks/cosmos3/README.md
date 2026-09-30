@@ -19,7 +19,8 @@ backend you want to run and follow that one section.
 
 ## Prerequisites
 
-- Linux with NVIDIA GPU access.
+- Linux with NVIDIA GPU access, or an Intel GPU supported by PyTorch XPU for
+  the Diffusers backend.
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/), `git`, and `git-lfs` installed.
 - Hugging Face access to the gated Cosmos3 model repos. Generator also requires
   access to the gated
@@ -164,6 +165,28 @@ uv pip install --torch-backend=cu130 \
   torchvision \
   transformers
 ```
+
+For Intel GPUs supported by PyTorch XPU, use the `xpu` Torch backend instead:
+
+```bash
+uv venv --python 3.13 --seed --managed-python
+source .venv/bin/activate
+
+uv pip install --torch-backend=xpu \
+  "diffusers @ git+https://github.com/huggingface/diffusers.git" \
+  accelerate \
+  av \
+  cosmos_guardrail \
+  huggingface_hub \
+  imageio \
+  imageio-ffmpeg \
+  torch \
+  torchvision \
+  transformers
+```
+
+The Intel XPU path is supported by the Diffusers Cosmos3-Edge generator. The
+other backends in this guide retain their documented NVIDIA GPU requirements.
 
 ## TensorRT-LLM Generator
 
