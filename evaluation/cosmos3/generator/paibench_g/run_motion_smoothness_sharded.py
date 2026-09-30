@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import multiprocessing as mp
 import os
 import queue
@@ -42,10 +43,10 @@ def read_records(path: Path) -> list[dict]:
     return records
 
 
-def write_json_atomic(path: Path, value: object) -> None:
+def write_json_atomic(path: Path, value: object, *, allow_nan: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    temporary.write_text(json.dumps(value, indent=2) + "\n")
+    temporary.write_text(json.dumps(value, indent=2, allow_nan=allow_nan) + "\n")
     os.replace(temporary, path)
 
 
@@ -117,9 +118,14 @@ def collect_saved_records(output_dir: Path) -> dict[str, dict]:
     for path in sorted(output_dir.glob("worker_*.json")):
         for record in read_records(path):
             video_path = str(Path(record["video_path"]).absolute())
+            score = float(record["video_results"])
+            if not math.isfinite(score):
+                raise ValueError(
+                    f"non-finite saved score {score} for {video_path} in {path}"
+                )
             normalized = {
                 "video_path": video_path,
-                "video_results": float(record["video_results"]),
+                "video_results": score,
             }
             if video_path in by_video:
                 raise ValueError(f"duplicate saved score for {video_path}")
@@ -158,6 +164,8 @@ def worker_main(
                 break
             try:
                 score = float(motion.motion_score(video_path))
+                if not math.isfinite(score):
+                    raise ValueError(f"motion score is non-finite: {score}")
                 records.append({"video_path": video_path, "video_results": score})
                 write_json_atomic(output_path, records)
                 status_queue.put(("done", worker_id, video_path, score))
@@ -180,6 +188,8 @@ def write_merged_result(*, output_dir: Path, result_file: Path, videos: list[str
         raise RuntimeError(f"missing {len(missing)} motion-smoothness results")
     ordered = [saved[video_path] for video_path in videos]
     mean_score = fmean(record["video_results"] for record in ordered)
+    if not math.isfinite(mean_score):
+        raise ValueError(f"non-finite mean score: {mean_score}")
     write_json_atomic(result_file, {"motion_smoothness": [mean_score, ordered]})
     return mean_score
 
