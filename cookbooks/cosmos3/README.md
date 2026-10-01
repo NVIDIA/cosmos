@@ -8,11 +8,12 @@ backend you want to run and follow that one section.
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
-| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio generation) | Generator (Audiovisual) |
+| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio/action/transfer generation) | Generator (Audiovisual, Action, **Transfer**) |
 | [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
 | [vLLM-Omni](#vllm-omni) | OpenAI-compatible generation server (image/video/audio/action/transfer) | Generator (Audiovisual, Action, **Transfer**) |
+| [Cosmos3 Certified NIM](#cosmos3-certified-nim) | Prebuilt NGC container serving either the Generator (image/video/action/transfer) or the Reasoner from one image | Reasoner, Generator (Audiovisual, Action, Transfer) |
 | [Reasoner NIM](#reasoner-nim) | Prebuilt OpenAI-compatible reasoning server (image/video understanding); no venv | Reasoner |
 | [Generator NIM](#generator-nim) | Prebuilt NGC container serving the Cosmos3 Generator for Text-to-Video and Image-to-Video inference | Generator (Audiovisual) |
 
@@ -96,9 +97,8 @@ by activating it (`source .venv/bin/activate`) or via its absolute interpreter
 
 For CUDA 13, NVIDIA documents the [NGC PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
 `nvcr.io/nvidia/pytorch:25.09-py3` as the recommended starting point; for CUDA 12 use
-`nvcr.io/nvidia/pytorch:25.06-py3`. See the repo root
-[Which base container should I use?](../../README.md#which-base-container-should-i-use)
-and [Cosmos Framework setup](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/setup.md#recommended-base-image).
+`nvcr.io/nvidia/pytorch:25.06-py3`. See
+[Cosmos Framework setup](https://github.com/NVIDIA/cosmos-framework/blob/main/docs/setup.md#recommended-base-image).
 
 Inside that image (or any minimal GPU host), install the system packages below **before**
 your first `torchrun` inference — `uv sync --all-extras` alone is not enough for
@@ -127,8 +127,7 @@ python -c "import cv2; print(cv2.__version__)"
 ```
 
 If you see `libxcb.so.1: cannot open shared object file`, the `libxcb1` / `libgl1`
-packages above were not installed. The same fix is documented in the repo root
-[troubleshooting guide](../../README.md#import-fails-with-libxcbso1-cannot-open-shared-object-file).
+packages above were not installed.
 
 When using the **NGC PyTorch base image**, clear `LD_LIBRARY_PATH` after activating the
 venv so the container’s bundled libtorch does not shadow the venv (see
@@ -169,12 +168,26 @@ uv pip install --torch-backend=cu130 \
 ## TensorRT-LLM Generator
 
 OpenAI-compatible **VisualGen** server for Generator audiovisual text-to-image,
-text-to-video, image-to-video, video-to-video, and synchronized audio examples.
+text-to-video, image-to-video, video-to-video, synchronized audio, Transfer, and
+Action examples.
 Initial Cosmos3 support was added in TensorRT-LLM PR
 [#14824](https://github.com/NVIDIA/TensorRT-LLM/pull/14824), synchronized audio
 in [#14827](https://github.com/NVIDIA/TensorRT-LLM/pull/14827), and
-video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155).
-Use a TensorRT-LLM checkout or package that includes those changes.
+video-to-video in [#16155](https://github.com/NVIDIA/TensorRT-LLM/pull/16155),
+Transfer in [#16394](https://github.com/NVIDIA/TensorRT-LLM/pull/16394), and
+Action in [#17325](https://github.com/NVIDIA/TensorRT-LLM/pull/17325).
+The DMD2-distilled four-step checkpoints were added in
+[#16563](https://github.com/NVIDIA/TensorRT-LLM/pull/16563) (text-to-image) and
+[#16690](https://github.com/NVIDIA/TensorRT-LLM/pull/16690) (image-to-video), and
+Cosmos3-Edge (Nemotron-dense backbone) in
+[#16773](https://github.com/NVIDIA/TensorRT-LLM/pull/16773).
+These changes are merged on TensorRT-LLM `main`. The Action and Transfer
+notebooks were executed against source revision
+[`bca6761ab84fbcd58fc7f914eade7de48b32e35e`](https://github.com/NVIDIA/TensorRT-LLM/commit/bca6761ab84fbcd58fc7f914eade7de48b32e35e).
+Use that revision to reproduce their request contract, or a newer build with
+the same API.
+The source revision is significant: a package version of `1.3.0rc26` alone
+does not establish compatibility with the action image-decoding path.
 
 Install TensorRT-LLM following its upstream documentation.
 
@@ -185,11 +198,13 @@ Cosmos3 VisualGen change before it is available in your installed package or
 release image.
 
 ```bash
-apt-get update && apt-get -y install ffmpeg git git-lfs
+apt-get update && apt-get -y install git git-lfs
 git lfs install
 
 git clone https://github.com/NVIDIA/TensorRT-LLM.git
 cd TensorRT-LLM
+# Source revision used for the Action/Transfer notebook validation below.
+git checkout bca6761ab84fbcd58fc7f914eade7de48b32e35e
 git submodule update --init --recursive
 git lfs pull
 
@@ -204,6 +219,7 @@ docker run --rm -it \
   nvcr.io/nvidia/tensorrt-llm/devel:<tag>
 
 # Inside the container:
+apt-get update && apt-get -y install ffmpeg
 python3 scripts/build_wheel.py --use_ccache --skip_building_wheel --linking_install_binary
 pip install -e .
 ```
@@ -217,15 +233,70 @@ explicitly disable guardrails before starting the server:
 
 ```bash
 pip install cosmos_guardrail==0.3.0
-# If needed by your OpenCV stack:
-# pip uninstall opencv-python
+# On headless servers without libGL.so.1, replace the OpenCV wheel pulled in by
+# cosmos_guardrail with the matching headless build:
+pip uninstall -y opencv-python
+pip install opencv-python-headless==5.0.0.93
 ```
 
-Set the TensorRT-LLM source root for the shared VisualGen config YAMLs:
+#### Server-side NLTK data setup
+
+With `cosmos_guardrail==0.3.0`, NLTK's path checks can reject tokenizer or
+dictionary files that are symlinks from a Hugging Face snapshot into its
+`blobs/` directory. Prepare a separate copy of the NLTK data as regular files
+**on the server, in the same container and shell used to launch TensorRT-LLM**:
 
 ```bash
-export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD/TensorRT-LLM}"
+export NLTK_DATA="$(mktemp -d "${TMPDIR:-/tmp}/cosmos3-nltk.XXXXXX")"
+python3 - <<'PY'
+import os
+import shutil
+from pathlib import Path
+
+import nltk
+from huggingface_hub import snapshot_download
+
+snapshot = snapshot_download(
+    "nvidia/Cosmos-1.0-Guardrail",
+    revision="cf03c0395fac8c4de386c0bdab12cc4fc8d66362",
+    allow_patterns=["blocklist/**"],
+)
+source = Path(snapshot) / "blocklist" / "nltk_data"
+destination = Path(os.environ["NLTK_DATA"]).resolve()
+shutil.copytree(source, destination, symlinks=False, dirs_exist_ok=True)
+assert not any(path.is_symlink() for path in destination.rglob("*"))
+
+# Check both resource lookups used by the text blocklist before starting a GPU server.
+nltk.data.path[:] = [str(destination)]
+tokens = nltk.word_tokenize("You are an autonomous vehicle planning system.")
+assert nltk.WordNetLemmatizer().lemmatize("vehicles") == "vehicle"
+print("Guardrail NLTK data ready:", destination, tokens)
+PY
+```
+
+Keep `NLTK_DATA` exported when starting the server below. Repeat this setup
+after recreating the container or removing the temporary directory. Running it
+only in the client notebook's environment does not configure a remote server.
+This workaround does not rewrite cached files or symlinks, and keeps NLTK
+path security and `use_guardrails=True` enabled.
+
+The separate `No safety models found, returning safe` warning in guardrail
+0.3.0 refers to its intentionally empty video-content classifier list. Text
+checks and face blurring remain configured; the NLTK workaround does not enable
+video-content classification or suppress that warning.
+
+Set the TensorRT-LLM source root for the shared VisualGen config YAMLs. Run this
+from inside the TensorRT-LLM checkout — the directory the `git clone` above
+created, which is where `examples/` lives — or point `TRTLLM_ROOT` at that
+checkout explicitly. `trtllm-serve` only reports a bad `--visual_gen_args` path
+after it has started, so check it here instead:
+
+```bash
+export TRTLLM_ROOT="${TRTLLM_ROOT:-$PWD}"
 export COSMOS3_TRTLLM_PORT="${COSMOS3_TRTLLM_PORT:-8000}"
+
+test -d "$TRTLLM_ROOT/examples/visual_gen/configs" \
+  || echo "TRTLLM_ROOT=$TRTLLM_ROOT does not look like a TensorRT-LLM checkout"
 ```
 
 **Cosmos3-Nano** (single GPU):
@@ -245,21 +316,89 @@ torchrun --nproc_per_node=4 -m tensorrt_llm.commands.serve \
   --port "$COSMOS3_TRTLLM_PORT"
 ```
 
-The server exposes `/health`, `/v1/videos/generations`, `/v1/videos`, and
-`/v1/images/generations`. The audiovisual notebook uses the validated video
-generation endpoint for text-to-image, text-to-video, image-to-video,
-video-to-video, and synchronized audio. Cosmos3 text-to-image is sent as a
-one-frame video request, matching the TensorRT-LLM Cosmos3 pipeline; the notebook
-sends it as `num_frames=1`, `seconds=1`, and `fps=8` to satisfy the video request
-schema while preserving a single generated frame. Image-to-video and
-video-to-video upload their reference media as multipart `input_reference`;
-TensorRT-LLM classifies the reference by content. Synchronized audio is enabled
-with `enable_audio: true` in `extra_params` and is muxed into the output video.
-Keep `ffmpeg` on the server `PATH`: without it, TensorRT-LLM falls back to a
-video-only AVI encoder and cannot preserve generated audio. Requests send
+**Cosmos3-Edge** (single GPU):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Edge \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+Edge is the compact 4B checkpoint. Its 480p-native generation defaults
+(832x480 with 121 frames, 50 UniPC steps on the checkpoint-declared native flow
+schedule, guidance 5.0, flow shift 3.0) are read from the checkpoint, so it takes
+no `--visual_gen_args` override. Edge text-to-image goes to
+`/v1/images/generations` with `"output_type": "image"` in `extra_params` (video
+mode would otherwise apply Cosmos3's video negative prompt to a still); the two
+video modes go to `/v1/videos/generations`. TensorRT-LLM serves Edge for
+text-to-image, text-to-video, and image-to-video only: Edge has no audio tower, its action
+weights are not served by this pipeline, and video-to-video is validated for Nano
+and Super. Requests outside the model card's validated envelope (256p/480p,
+50-150 frames, 12-30 FPS) still run and log an advisory line.
+
+**Cosmos3-Super-Text2Image-4Step** (single GPU; DMD2-distilled text-to-image):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Super-Text2Image-4Step \
+  --visual_gen_args "$TRTLLM_ROOT/examples/visual_gen/configs/cosmos3-t2i-1gpu.yaml" \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+**Cosmos3-Super-Image2Video-4Step** (single GPU; DMD2-distilled image-to-video):
+
+```bash
+trtllm-serve nvidia/Cosmos3-Super-Image2Video-4Step \
+  --port "$COSMOS3_TRTLLM_PORT"
+```
+
+Both distilled students run a fixed four-step stochastic schedule read from the
+checkpoint's scheduler config, with classifier-free guidance baked into the
+weights. TensorRT-LLM supplies both values and rejects a request that sends a
+different `num_inference_steps`, or a `guidance_scale` other than `1.0`, so leave
+both out of the request. `Cosmos3-Super-Image2Video-4Step` also declares
+`default_use_system_prompt: true`, which applies only while the request leaves
+`use_system_prompt` unset. The text-to-image student deploys at 1024x1024, the
+shape `cosmos3-t2i-1gpu.yaml` warms; the image-to-video student deploys at the
+default 720p x 189-frame omni shape and needs no config file. The
+[distilled 4-step notebook](generator/audiovisual/run_distilled_with_trt_llm.ipynb)
+runs both against a running server. These students cover text-to-image and
+image-to-video only; use the base checkpoints for text-to-video, video-to-video,
+and synchronized audio.
+
+The server exposes `/health`, the blocking `/v1/videos/sync`, the asynchronous
+`/v1/videos`, and `/v1/images/generations`. The older
+`/v1/videos/generations` spelling is a deprecated alias of `/v1/videos/sync`.
+The base audiovisual notebook uses `/v1/images/generations` for text-to-image
+and `/v1/videos/sync` for text-to-video, image-to-video, video-to-video, and
+synchronized audio. Text-to-image sets `extra_params.output_type="image"` and
+returns a base64-encoded PNG. Image-to-video uploads multipart
+`image_reference`; video-to-video uses `video_reference`. Synchronized audio is
+enabled with `enable_audio: true` in `extra_params` and is muxed into the output
+video.
+Every video request explicitly selects MP4. Keep `ffmpeg` on the server `PATH`:
+without it, the request fails early instead of returning browser-incompatible
+AVI or dropping generated audio. Requests send
 Cosmos3 controls through `extra_params`, so use a TensorRT-LLM build that includes
 the Cosmos3 VisualGen API schema. The notebook sets request-level
 `max_sequence_length=4096` for longer structured JSON prompts.
+
+Transfer uses the synchronous `/v1/videos/sync` route. For server-derived edge
+or blur, upload the raw source video as multipart `video_reference` and set the
+corresponding `extra_params` hint to `true`. For a precomputed edge, blur,
+depth, segmentation, or WSM control, base64-encode the control inside its hint;
+no top-level reference is needed. The server decodes inline media to bytes at the
+HTTP boundary. TensorRT-LLM uses `use_guardrails` for its per-request safety
+switch; `guardrails`, `control_path`, and other vLLM-Omni-only names are not
+interchangeable.
+
+Action requests use the same synchronous route and upload an image as
+`image_reference` or a video as `video_reference`. For the checked-in AV
+examples, use the Cosmos Framework reference prompt shown in the Action
+cookbook; current TensorRT-LLM ignores the legacy `view_point` field.
+Because an action trajectory cannot be represented in MP4 or
+AVI, `format=auto` resolves to `safetensors`; the payload contains named `video`,
+`action`, and `frame_rate` tensors. The asynchronous `/v1/videos` route also
+supports this payload: poll `GET /v1/videos/{id}`, then download it from
+`GET /v1/videos/{id}/content`.
 
 ## TensorRT-LLM Reasoner
 
@@ -475,9 +614,7 @@ vllm serve nvidia/Cosmos3-Nano \
   --init-timeout 1800
 ```
 
-Alternatively, pass a
-[`--deploy-config`](../../README.md#generator-with-vllm-omni) as documented in
-the repository root README. See also the
+See also the
 [vLLM-Omni Cosmos3-Nano recipe](https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md).
 
 ### Option 1: Docker (recommended)
@@ -654,8 +791,54 @@ export NGC_API_KEY=<your_key>
 echo "$NGC_API_KEY" | docker login nvcr.io --username '$oauthtoken' --password-stdin
 ```
 
-Both NIMs expose readiness at `GET /v1/health/ready` after model download,
-engine initialization, and warmup complete.
+Each NIM below exposes readiness at `GET /v1/health/ready` after model
+download, engine initialization, and warmup complete.
+
+### Cosmos3 Certified NIM
+
+A single prebuilt container that serves **either** runtime — one runtime per
+container, chosen at launch with `NIM_MODEL_TYPE`:
+
+- **Generator** (`POST /v1/infer`) — text-to-image, text-to-video,
+  image-to-video, video-to-video, Action (forward dynamics, inverse dynamics,
+  policy), and Transfer. Each request sets an explicit top-level `model_mode`.
+- **Reasoner** — OpenAI-compatible image and video understanding through Chat
+  Completions and the Responses API.
+
+Start the Nano Generator runtime:
+
+```bash
+export NGC_API_KEY=<your_key>
+export LOCAL_NIM_CACHE="${LOCAL_NIM_CACHE:-$HOME/.cache/nim}"
+mkdir -p "$LOCAL_NIM_CACHE"
+
+docker run -d --name cosmos3-generator \
+  --gpus '"device=0"' \
+  --shm-size 16g \
+  --ulimit memlock=-1 \
+  --ulimit stack=67108864 \
+  --ulimit nofile=65536:65536 \
+  -p 8000:8000 \
+  -e NGC_API_KEY \
+  -e NIM_MODEL_TYPE=generator \
+  -e NIM_MODEL_VARIANT=nano \
+  -e NIM_PERF_PROFILE=latency \
+  -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
+  nvcr.io/nim/nvidia/cosmos3:2.0.0
+```
+
+Set `NIM_MODEL_TYPE=reasoner` for the Reasoner runtime. `NIM_MODEL_VARIANT`
+selects the checkpoint: `nano` or `super` for either runtime, plus
+`nano-droid`, `super-t2i`, `super-t2i-4step`, `super-i2v`, and
+`super-i2v-4step` for the Generator. On DGX Spark/GB10 and Jetson AGX Thor, the
+Reasoner also needs `NIM_GPU_MEMORY_UTILIZATION` set explicitly.
+
+The [Cosmos3 Certified NIM cookbook](nim/README.md) is the full guide —
+[deployment](nim/deployment.md), [support matrix](nim/support-matrix.md),
+[configuration](nim/configuration.md), and [API reference](nim/api-reference.md),
+with worked examples for [generation](nim/generation.md),
+[action](nim/action.md), [transfer](nim/transfer.md), and
+[reasoning](nim/reasoning.md).
 
 ### Reasoner NIM
 

@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+
+# RoboCasa mobile-base action-policy SFT on Cosmos3-Nano.
+#
+# All 18 `target/atomic` RoboCasa tasks with a mobile base. The action contract is 15-D and
+# carries RoboCasa's native base command unchanged (`base_encoding="raw"`):
+#
+#   [base_motion(4), control_mode(1), eef_pos(3), eef_rot6d(6), gripper(1)]
+#
+# Observation is `camera_set="left_wrist"` — agentview_left | eye_in_hand concatenated
+# horizontally at their native 256x256 each — plus EEF proprioception as a clean condition
+# token (`use_state=True`). `action_normalization=None`: the state token is absolute, so delta
+# statistics do not apply. 32-step action chunk at 20 fps.
+#
+# Global batch 2048 = 128 samples x 16 ranks (HSDP 8x2, i.e. 4 nodes x 4 GPUs).
+#
+# Closed-loop eval must use the same contract:
+#   ACTION_HORIZON=32 CAMERA_SET=left_wrist USE_STATE=1
+#   USE_BASE_ACTION=1 BASE_ENCODING=raw RAW_ACTION_DIM=15
+
+[job]
+task         = "vfm"
+experiment   = "action_policy_robocasa_nano"
+project      = "cosmos3_action_robocasa"
+group        = "action_sft"
+name         = "action_policy_robocasa"
+wandb_mode   = "online"
+
+[model]
+precision = "bfloat16"
+max_num_tokens_after_packing = 74000
+
+[model.parallelism]
+data_parallel_shard_degree     = 8
+data_parallel_replicate_degree = 2    # HSDP 8x2 = 16 ranks (4 nodes); gbs = 128 x 16 = 2048
+
+[model.activation_checkpointing]
+mode           = "selective"
+save_ops_regex = ["fmha"]
+
+[model.tokenizer]
+vae_path = "${oc.env:WAN_VAE_PATH}"
+
+[optimizer]
+lr = 5.0e-05
+
+[scheduler]
+cycle_lengths = [16000]   # linear decay over the full run (== max_iter)
+warm_up_steps = [500]
+
+[trainer]
+max_iter        = 16000
+logging_iter    = 50
+grad_accum_iter = 1
+
+[checkpoint]
+load_path = "${oc.env:BASE_CHECKPOINT_PATH}"
+save_iter = 1000

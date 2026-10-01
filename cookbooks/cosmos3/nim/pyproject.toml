@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+[project]
+name = "cosmos3-nim-examples"
+version = "0.1.0"
+description = "Client environment for the Cosmos3 Certified NIM examples"
+requires-python = ">=3.10"
+dependencies = [
+  "openai==2.53.0",
+  "pillow==12.1.0",
+  "pyyaml==6.0.3",
+  "requests==2.34.2",
+]
+
+[tool.uv]
+package = false
