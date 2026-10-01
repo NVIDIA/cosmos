@@ -15,6 +15,7 @@
 import argparse
 import ast
 import difflib
+import hashlib
 import json
 import os.path as osp
 import re
@@ -345,14 +346,45 @@ def build_benchmark_samples(
     return samples
 
 
-def validate_cached_results(score_final: dict, samples: list[dict], result_path: Path) -> int:
-    """Reject a cached score whose coverage differs from the current image set."""
+def build_run_manifest(
+    benchmark_rows: list[dict], samples: list[dict], judge_model: str, gateway_url: str
+) -> dict[str, Any]:
+    """Identify the inputs and scoring implementation without storing API credentials."""
+    scorer_dir = Path(__file__).resolve().parent
+    return {
+        "schema_version": 1,
+        "judge_model": judge_model,
+        "gateway_url": gateway_url.rstrip("/"),
+        "benchmark_sha256": hashlib.sha256(
+            json.dumps(benchmark_rows, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+        "images_sha256": {
+            sample["image_path"].name: hashlib.sha256(sample["image_path"].read_bytes()).hexdigest()
+            for sample in samples
+        },
+        "scorer_sha256": {
+            filename: hashlib.sha256((scorer_dir / filename).read_text(encoding="utf-8").encode("utf-8")).hexdigest()
+            for filename in ("ugb_scorer.py", "utils.py")
+        },
+        "system_prompt_sha256": hashlib.sha256(SYSTEM_PROMPT.encode("utf-8")).hexdigest(),
+    }
+
+
+def validate_cached_results(
+    score_final: dict, samples: list[dict], result_path: Path, run_manifest: dict
+) -> int:
+    """Reject cached scores from different inputs or a different scoring run."""
     expected_results = {sample["image_path"].name for sample in samples}
     cached_results = set(score_final.get("breakdown", {}))
     if cached_results != expected_results:
         raise ValueError(
             f"Existing results at {result_path} cover {len(cached_results)} of "
             f"{len(expected_results)} currently available image(s); remove the stale result file to rescore."
+        )
+    if score_final.get("run_manifest") != run_manifest:
+        raise ValueError(
+            f"Existing results at {result_path} have a missing or mismatched run manifest; "
+            "remove the stale result file to rescore with the requested inputs and judge."
         )
     return len(cached_results)
 
@@ -405,7 +437,7 @@ def main() -> None:
     )
     print(f"\nParams:\n{params_disp}")
 
-    benchmark_data = json.loads(prompt_file.read_text())
+    benchmark_data = json.loads(prompt_file.read_text(encoding="utf-8"))
     if isinstance(benchmark_data, dict) and "benchmark" in benchmark_data:
         benchmark_rows = benchmark_data["benchmark"]
     else:
@@ -425,10 +457,11 @@ def main() -> None:
             "because --allow_missing_images was set"
         )
     print(f"Total samples: {len(samples_todo)}/{samples_total}")
+    run_manifest = build_run_manifest(benchmark_rows, samples_todo, args.modelstr, args.gateway_url)
 
     if result_path.exists():
-        score_final = json.loads(result_path.read_text())
-        cached_count = validate_cached_results(score_final, samples_todo, result_path)
+        score_final = json.loads(result_path.read_text(encoding="utf-8"))
+        cached_count = validate_cached_results(score_final, samples_todo, result_path, run_manifest)
         score_final["success_count"] = f"{cached_count}/{samples_total}"
         print(f"Found complete existing results at {result_path}, skipping scoring")
         print_stats_from_json(score_final, str(image_folder), str(result_path))
@@ -500,11 +533,12 @@ def main() -> None:
             "all": compute_final_metrics(score_breakdown, verbose=False),
         },
         "judge_model": args.modelstr,
+        "run_manifest": run_manifest,
         "success_count": f"{len(score_breakdown)}/{samples_total}",
         "breakdown": score_breakdown,
     }
 
-    result_path.write_text(json.dumps(score_final, indent=4))
+    result_path.write_text(json.dumps(score_final, indent=4), encoding="utf-8")
     print_stats_from_json(score_final, str(image_folder), str(result_path))
 
 
