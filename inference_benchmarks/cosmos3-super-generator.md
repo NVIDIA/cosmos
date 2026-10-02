@@ -21,6 +21,7 @@ Empty cells mean that a run has not been completed for that GPU, engine, or reso
   - [Text-to-Audio-and-Video (t2av)](#text-to-audio-and-video-t2av)
   - [Video-to-Audio-and-Video (v2av)](#video-to-audio-and-video-v2av)
   - [Image-to-Audio-and-Video (i2av)](#image-to-audio-and-video-i2av)
+- [Transfer generation](#transfer-generation)
 - [Action generation](#action-generation)
   - [Forward Dynamics — AV](#forward-dynamics--autonomous-vehicle-av)
   - [Forward Dynamics — Camera](#forward-dynamics--camera)
@@ -35,7 +36,7 @@ Empty cells mean that a run has not been completed for that GPU, engine, or reso
 
 The primary t2v, i2v, and t2i tables preserve the previously published benchmark campaigns across PyTorch, vLLM-Omni, Diffusers, and NIM. Those tables use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
 
-The additional audiovisual and action tables come from three internal benchmark reports. PyTorch values are from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**: average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (action)**, measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. Super was not measured on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from three further reports: PBR `#308202` (all modalities) and PBR `#308451` (video-to-video) on one GPU and PBR `#308918` for 4- and 8-GPU runs. Where PBR `#308918` offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. Values are rounded to two decimal places.
+The additional audiovisual and action tables come from three internal benchmark reports. PyTorch values are from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**: average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (action)**, measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. Super was not measured on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from four further reports: PBR `#308202` (all modalities) and PBR `#308451` (video-to-video) on one GPU, PBR `#308918` for 4- and 8-GPU runs, and PBR `#308587` for transfer. Where PBR `#308918` offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. Values are rounded to two decimal places.
 
 These reports establish the reported timing matrix but do not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
 
@@ -47,6 +48,7 @@ These reports establish the reported timing matrix but do not expose every promp
 | Text-to-audio-and-video (`t2av`) | Text prompt | Synchronized video and sound |
 | Video-to-audio-and-video (`v2av`) | Text prompt and source video | Generated video with synchronized sound |
 | Image-to-audio-and-video (`i2av`) | Text prompt and source image | Generated video with synchronized sound |
+| Transfer video-to-video (`transfer`) | Text prompt, source video, and one control hint | Generated video steered by that hint |
 | Forward dynamics | Initial visual observation and an action trajectory | Future-observation rollout video |
 | Inverse dynamics | Observed video | Recovered action trajectory; some serving integrations also return video |
 | Policy | Initial visual observation, instruction, and optional state | Predicted action trajectory and, for general Generator paths, a rollout video |
@@ -293,6 +295,61 @@ A text prompt and source image produce video with synchronized sound.
 | **B300** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 1 | 16.46 | 114.02 | 373.17 |
 |  | Diffusers | 1 | 29.16 | 134.46 | 414.22 |
+
+## Transfer generation
+
+Transfer conditions a video-to-video generation on a structural control hint
+extracted from the source video. Each control is reported separately because
+the hint changes how much of the frame the model must synthesise.
+
+| GPU | Transfer control | Engine | GPUs | 256p | 480p | 720p |
+|---|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | blur | Diffusers | — |  |  |  |
+|  | depth | Diffusers | — |  |  |  |
+|  | edge | Diffusers | — |  |  |  |
+|  | seg | Diffusers | — |  |  |  |
+|  | wsm | Diffusers | — |  |  |  |
+| **H20** | blur | Diffusers | — |  |  |  |
+|  | depth | Diffusers | — |  |  |  |
+|  | edge | Diffusers | — |  |  |  |
+|  | seg | Diffusers | — |  |  |  |
+|  | wsm | Diffusers | — |  |  |  |
+| **H100 NVL** | blur | Diffusers | — |  |  |  |
+|  | depth | Diffusers | — |  |  |  |
+|  | edge | Diffusers | — |  |  |  |
+|  | seg | Diffusers | — |  |  |  |
+|  | wsm | Diffusers | — |  |  |  |
+| **H100 80GB HBM3** | blur | Diffusers | — |  |  |  |
+|  | depth | Diffusers | — |  |  |  |
+|  | edge | Diffusers | — |  |  |  |
+|  | seg | Diffusers | — |  |  |  |
+|  | wsm | Diffusers | — |  |  |  |
+| **H200 NVL** | blur | Diffusers | 1 | 83.43 | 551.97 | 1935.10 |
+|  | depth | Diffusers | 1 | 98.52 | 572.97 | 1970.31 |
+|  | edge | Diffusers | 1 | 84.72 | 552.34 | 1940.58 |
+|  | seg | Diffusers | 1 | 88.16 | 555.93 | 1950.38 |
+|  | wsm | Diffusers | 1 | 80.77 | 445.36 | 1470.27 |
+| **H200 141GB HBM3** | blur | Diffusers | 1 | 71.83 | 463.77 | 1593.34 |
+|  | depth | Diffusers | 1 | 84.88 | 481.84 | 1618.53 |
+|  | edge | Diffusers | 1 | 73.22 | 466.10 | 1594.90 |
+|  | seg | Diffusers | 1 | 77.09 | 476.15 | 1598.31 |
+|  | wsm | Diffusers | 1 | 70.53 | 382.72 | 1216.43 |
+| **B200** | blur | Diffusers | 1 | 42.14 | 241.28 | 789.92 |
+|  | depth | Diffusers | 1 | 49.41 | 254.68 | 792.02 |
+|  | edge | Diffusers | 1 | 43.57 | 241.17 | 774.34 |
+|  | seg | Diffusers | 1 | 45.43 | 243.27 | 792.36 |
+|  | wsm | Diffusers | 1 | 40.66 | 198.30 | 604.37 |
+| **B300** | blur | Diffusers | 1 | 39.64 | 226.08 | 720.04 |
+|  | depth | Diffusers | 1 | 45.83 | 231.26 | 730.46 |
+|  | edge | Diffusers | 1 | 39.99 | 226.42 | 719.35 |
+|  | seg | Diffusers | 1 | 41.64 | 228.18 | 720.63 |
+|  | wsm | Diffusers | 1 | 38.40 | 186.76 | 555.47 |
+
+<sub>Transfer notes:
+1. Values are average generation latency in seconds from PBR `#308587`; lower is better.
+2. All transfer runs use a single GPU; multi-GPU transfer has not been measured.
+3. Only Diffusers has transfer coverage so far; other runtimes are unmeasured, not unsupported.
+4. Control hints follow the vLLM-Omni `extra_params` names: `blur`, `depth`, `edge`, `seg`, and `wsm`.</sub>
 
 ## Action generation
 
