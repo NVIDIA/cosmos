@@ -4,7 +4,7 @@
 
 These tables report **Cosmos3-Super Generator** latency in seconds. Lower is better.
 
-Every row reports one GPU configuration, named in the **GPUs** column, and all three resolutions in that row come from it. The configuration is one GPU when the model fits on a single device at its highest resolution, 720p, and eight GPUs when it does not. Under vLLM-Omni, Cosmos3-Super fits on a single GPU on every GPU measured. Under Diffusers and NIM it fits on one GPU on H200 NVL, H200 141GB HBM3, B200, and B300, and is reported at eight GPUs on RTX PRO 6000 Blackwell, H20, H100 NVL, and H100 80GB HBM3. PyTorch needs eight GPUs everywhere except B200. Because the configuration varies between rows, read the **GPUs** column before comparing latencies down a column.
+Every row reports one GPU configuration, named in the **GPUs** column, and all three resolutions in that row come from it. The configuration is one GPU when the model fits on a single device at its highest resolution, 720p, and eight GPUs when it does not. Within one GPU's block every engine reports the same configuration, so a column can be read straight across the runtimes. Cosmos3-Super is reported at one GPU on H200 NVL, H200 141GB HBM3, B200, and B300, and at eight GPUs on RTX PRO 6000 Blackwell, H20, H100 NVL, and H100 80GB HBM3. vLLM-Omni does fit on a single GPU on those four smaller-memory parts, but is reported at eight alongside the other runtimes; PyTorch is the engine that sets the eight-GPU configuration on the H200 parts. Because the configuration varies between rows, read the **GPUs** column before comparing latencies down a column.
 
 Empty cells mean that a run has not been completed for that GPU, engine, or resolution; they do not indicate that a combination is unsupported.
 
@@ -100,15 +100,15 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 | GPU | Engine | GPUs | 256p | 480p | 720p |
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.54 | 118.95 | 427.96 |
-|  | vLLM-Omni | 1 | 81.30 | 401.81 | 1374.84 |
+|  | vLLM-Omni | 8 | 11.66 | 80.94 | 240.27 |
 |  | Diffusers | 8 | 26.29 | 156.16 | 540.65 |
 |  | NIM | 8 | 14.48 | 100.23 | 289.93 |
 | **H20** | PyTorch | 8 | 28.22 | 153.19 | 491.93 |
-|  | vLLM-Omni | 1 | 110.12 | 1009.04 | 3525.12 |
+|  | vLLM-Omni | 8 | 19.65 | 148.77 | 488.51 |
 |  | Diffusers | 8 | 27.65 | 165.91 | 530.44 |
 |  | NIM | 8 | 14.06 | 114.49 | 405.68 |
 | **H100 NVL** | PyTorch | 8 | 16.96 | 64.17 | 186.47 |
-|  | vLLM-Omni | 1 | 86.20 | 317.79 | 1075.57 |
+|  | vLLM-Omni | 8 | 8.48 | 59.44 | 212.53 |
 |  | Diffusers | 8 | 25.45 | 112.36 | 325.56 |
 |  | NIM | 8 | 13.30 | 67.34 | 201.39 |
 | **H200 NVL** | PyTorch | 8 | 24.70 | 47.60 | 141.62 |
@@ -116,7 +116,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | Diffusers | 1 | 33.00 | 287.20 | 1034.60 |
 |  | NIM | 1 | 17.51 | 201.45 | 817.35 |
 | **H100 80GB HBM3** | PyTorch | — |  |  |  |
-|  | vLLM-Omni | 1 | 80.39 | 225.74 | 765.95 |
+|  | vLLM-Omni | 8 | 6.48 | 38.31 |  |
 |  | Diffusers | 8 | 19.98 | 55.63 | 184.81 |
 |  | NIM | 8 | 6.49 | 36.81 | 118.77 |
 | **H200 141GB HBM3** | PyTorch | 8 | 11.80 | 42.10 | 123.57 |
@@ -137,19 +137,19 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 | GPU | Engine | GPUs | 256p | 480p | 720p |
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 8 | 93.18 | 93.39 | 93.47 |
-|  | vLLM-Omni | 1 | 105.12 | 105.17 | 105.42 |
+|  | vLLM-Omni | 8 | 3.11 | 3.54 | 5.70 |
 |  | Diffusers | 8 | 16.90 | 17.52 | 16.73 |
 | **H20** | PyTorch | 8 | 14.18 | 16.46 | 20.92 |
-|  | vLLM-Omni | 1 | 105.03 | 105.28 | 105.64 |
+|  | vLLM-Omni | 8 | 5.12 | 5.44 | 8.85 |
 |  | Diffusers | 8 | 18.29 | 18.48 | 18.46 |
 | **H100 NVL** | PyTorch | 8 | 19.86 | 19.80 | 19.87 |
-|  | vLLM-Omni | 1 | 112.13 | 112.28 | 112.37 |
+|  | vLLM-Omni | 8 | 3.54 | 3.48 | 4.11 |
 |  | Diffusers | 8 | 16.56 | 16.60 | 16.88 |
 | **H200 NVL** | PyTorch | 8 | 32.86 | 33.05 | 33.16 |
 |  | vLLM-Omni | 1 | 2.73 | 6.28 | 11.02 |
 |  | Diffusers | 1 | 5.00 | 8.00 | 12.00 |
 | **H100 80GB HBM3** | PyTorch | — |  |  |  |
-|  | vLLM-Omni | 1 | 104.71 | 104.82 | 104.93 |
+|  | vLLM-Omni | 8 | 5.09 | 5.16 | 4.91 |
 |  | Diffusers | 8 | 17.97 | 18.03 | 19.28 |
 | **H200 141GB HBM3** | PyTorch | 8 | 13.48 | 13.53 | 13.50 |
 |  | vLLM-Omni | 1 | 2.83 | 5.70 | 10.24 |
@@ -164,11 +164,12 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 <sub>Notes:
 1. All times measured on identical workloads (same seed, sampler settings, prompt).
 2. Multi-GPU configurations use tensor parallelism.
-3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo; subject to change before GA. Current vLLM-Omni coverage is B200 at 720p.
-4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs, and were measured on a single GPU only.
+3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo and are subject to change before GA.
+4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs. Single-GPU values come from PBR `#308202` and PBR `#308451`; multi-GPU values from PBR `#308918`.
 5. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
 6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
-7. NIM numbers use latency profiles with FP8 precision and report end-to-end `Request Latency s`, including request processing, video generation, output encoding, and returning the response.</sub>
+7. NIM numbers use latency profiles with FP8 precision and report end-to-end `Request Latency s`, including request processing, video generation, output encoding, and returning the response.
+8. The 720p i2v cell for vLLM-Omni on H100 80GB HBM3 is empty because the multi-GPU runs for it returned times far below the 480p result, which is not physically plausible; the measurement is being rerun.</sub>
 
 ## Additional audiovisual generation
 

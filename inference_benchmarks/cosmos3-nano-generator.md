@@ -4,7 +4,7 @@
 
 These tables report **Cosmos3-Nano Generator** latency in seconds. Lower is better.
 
-Every row reports one GPU configuration, named in the **GPUs** column, and all three resolutions in that row come from it. The configuration is one GPU when the model fits on a single device at its highest resolution, 720p, and eight GPUs when it does not. Cosmos3-Nano fits on a single GPU at 720p, so all populated rows here report one GPU.
+Every row reports one GPU configuration, named in the **GPUs** column, and all three resolutions in that row come from it. The configuration is one GPU when the model fits on a single device at its highest resolution, 720p, and eight GPUs when it does not. Within one GPU's block every engine reports the same configuration, so a column can be read straight across the runtimes. Cosmos3-Nano fits on a single GPU at 720p, so all populated rows here report one GPU.
 
 Empty cells mean that a run has not been completed for that GPU, engine, or resolution; they do not indicate that a combination is unsupported.
 
@@ -164,8 +164,8 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 <sub>Notes:
 1. All times measured on identical workloads (same seed, sampler settings, prompt).
 2. Multi-GPU configurations use tensor parallelism.
-3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo; subject to change before GA. Values marked with (*) are pre-release vLLM-Omni measurements on H100 NVL and may change before GA.
-4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs, and were measured on a single GPU only.
+3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo and are subject to change before GA; the H100 NVL values in particular are pre-release.
+4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs. Single-GPU values come from PBR `#308202` and PBR `#308451`; multi-GPU values from PBR `#308918`.
 5. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 6. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
 7. NIM numbers use latency profiles with FP8 precision and report end-to-end `Request Latency s`, including request processing, video generation, output encoding, and returning the response.</sub>
