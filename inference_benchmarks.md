@@ -1,6 +1,6 @@
 # Inference Benchmarks
 
-These reports collect inference benchmarks for Cosmos3. **Generator** pages measure image, video, audiovisual, and action-generation latency across PyTorch, vLLM-Omni, Diffusers, and NIM where results are available. **Reasoner** sections below measure VLM serving and token-generation performance for text, image, and video inputs through vLLM and Hugging Face Transformers.
+These reports collect inference benchmarks for Cosmos3. **Generator** pages measure image, video, audiovisual, and action-generation latency across PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and NIM where results are available. **Reasoner** sections below measure VLM serving and token-generation performance for text, image, and video inputs through vLLM and Hugging Face Transformers.
 
 Results are published incrementally from internal benchmark runs. **Empty cells mean that combination has not been measured yet** — not that it is unsupported. See each model page or section for workload details and data-source definitions.
 
@@ -10,7 +10,7 @@ Generator results are organized by model so future checkpoints can be added with
 
 | Model | Primary vision generation | Additional audiovisual generation | Transfer generation | Action generation |
 |---|---|---|---|---|
-| Cosmos3-Edge | [i2v](inference_benchmarks/cosmos3-edge-generator.md) | Not reported | Not reported | Not reported |
+| Cosmos3-Edge | [t2v, i2v, t2i](inference_benchmarks/cosmos3-edge-generator.md#text-to-video-t2v) | [v2v](inference_benchmarks/cosmos3-edge-generator.md#video-to-video-v2v) | Not reported | Not reported |
 | Cosmos3-Nano | [t2v, i2v, t2i](inference_benchmarks/cosmos3-nano-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-nano-generator.md#additional-audiovisual-generation) | [blur, depth, edge, seg, wsm](inference_benchmarks/cosmos3-nano-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-nano-generator.md#action-generation) |
 | Cosmos3-Super | [t2v, i2v, t2i](inference_benchmarks/cosmos3-super-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-super-generator.md#additional-audiovisual-generation) | [blur, depth, edge, seg, wsm](inference_benchmarks/cosmos3-super-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-super-generator.md#action-generation) |
 
