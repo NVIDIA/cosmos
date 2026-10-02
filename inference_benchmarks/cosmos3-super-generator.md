@@ -2,7 +2,11 @@
 
 [Back to the inference benchmark index](../inference_benchmarks.md)
 
-These tables report **Cosmos3-Super Generator** latency in seconds. Lower is better. Empty cells mean that a run has not been completed for that GPU, engine, resolution, or GPU count; they do not indicate that a combination is unsupported.
+These tables report **Cosmos3-Super Generator** latency in seconds. Lower is better.
+
+Every row reports one GPU configuration, named in the **GPUs** column, and all three resolutions in that row come from it. The configuration is one GPU when the model fits on a single device at its highest resolution, 720p, and eight GPUs when it does not. Cosmos3-Super fits on a single GPU on B200 and B300, and on H200 NVL and H200 141GB HBM3 for every engine except PyTorch; on RTX PRO 6000 Blackwell, H20, H100 NVL, and H100 80GB HBM3 it is reported at eight GPUs. Because the configuration varies between rows, read the **GPUs** column before comparing latencies down a column.
+
+Empty cells mean that a run has not been completed for that GPU, engine, or resolution; they do not indicate that a combination is unsupported.
 
 ## Table of Contents
 
@@ -31,7 +35,7 @@ These tables report **Cosmos3-Super Generator** latency in seconds. Lower is bet
 
 The primary t2v, i2v, and t2i tables preserve the previously published benchmark campaigns across PyTorch, vLLM-Omni, Diffusers, and NIM. Those tables use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
 
-The additional audiovisual and action tables come from three internal benchmark reports. PyTorch values are from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**: average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (action)**, measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep reports 1/2/4 GPUs only: 8-GPU Ulysses runs failed a sequence-length divisibility check, so `/8` action cells stay empty. The 2-GPU columns are omitted to keep the published table layout. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. Super was not measured on H20, H100 NVL, or H100 80GB HBM3. Values are rounded to two decimal places.
+The additional audiovisual and action tables come from three internal benchmark reports. PyTorch values are from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**: average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (action)**, measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. Super was not measured on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from three further reports: PBR `#308202` (all modalities) and PBR `#308451` (video-to-video) on one GPU and PBR `#308918` for 4- and 8-GPU runs. Where PBR `#308918` offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. Values are rounded to two decimal places.
 
 These reports establish the reported timing matrix but do not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
 
@@ -54,113 +58,113 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 
 ### Text-to-Video (t2v)
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 65.10 | 66.04 |  | 201.16 | 118.90 |  | 789.03 | 427.16 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| | NIM |  | 12.65 | 13.99 |  | 104.25 | 99.05 |  | 350.74 | 286.02 |
-| **H20** | PyTorch | | 40.74 | 27.72 | | 276.24 | 152.46 | | 930.45 | 492.41 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| | NIM |  | 20.07 | 12.95 |  | 192.45 | 110.71 |  | 734.37 | 395.56 |
-| **H100 NVL** | PyTorch |  | 20.73 | 16.83 |  | 101.27 | 64.14 |  | 330.04 | 186.19 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| | NIM |  | 8.77 | 12.73 |  | 73.37 | 66.07 |  | 267.64 | 197.32 |
-| **H200 NVL** | PyTorch | | 24.90 | 24.78 | | 82.19 | 47.69 | | 267.66 | 142.35 |
-| | vLLM-Omni | 27.54 | | 5.06 | 252.33 | | 36.66 | 911.49 | 245.51 | 123.85 |
-| | Diffusers | 33.00 | | | 286.80 | | | 1036.00 | | |
-| | NIM | 17.13 | 6.79 | 4.43 | 200.00 | 58.55 | 32.87 | 811.41 | 223.00 | 117.98 |
-| **H100 80GB HBM3** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| | NIM |  | 6.98 | 5.89 |  | 55.10 | 35.52 |  | 198.13 | 114.92 |
-| **H200 141GB HBM3** | PyTorch |  | 14.82 | 11.82 |  | 70.27 | 41.78 |  | 224.43 | 123.49 |
-| | vLLM-Omni | 25.61 | | 5.87 | 219.11 | | 35.26 | 769.63 | 212.30 | 111.94 |
-| | Diffusers | 31.00 | | | 251.60 | | | 886.20 | | |
-| | NIM | 15.95 | 6.14 | 4.28 | 174.71 | 52.94 | 30.94 | 695.89 | 194.34 | 106.16 |
-| **B200** | PyTorch | 14.66 | 5.59 | 4.09 | 114.38 | 35.73 | 21.39 | 407.50 | 118.38 | 65.93 |
-| | vLLM-Omni | 13.84 | | 4.76 | 114.08 | | 22.09 | 390.28 | 113.31 | 62.11 |
-| | Diffusers | | | | 127.20 | | | 414.40 | | |
-| | NIM | 9.09 | 4.26 | 3.38 | 82.39 | 27.83 | 17.74 | 314.68 | 92.25 | 53.43 |
-| **B300** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | 14.57 | | 6.68 | 109.03 | | 22.67 | 366.66 | 108.58 | 60.73 |
-| | Diffusers | 54.20 | | | 155.40 | | | 424.80 | | |
-| | NIM | 9.67 | 5.23 | 5.19 | 79.73 | 28.97 | 18.39 | 292.35 | 92.31 | 54.07 |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.04 | 118.90 | 427.16 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 25.39 | 154.25 | 437.57 |
+|  | NIM | 8 | 13.99 | 99.05 | 286.02 |
+| **H20** | PyTorch | 8 | 27.72 | 152.46 | 492.41 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 26.66 | 161.49 | 517.37 |
+|  | NIM | 8 | 12.95 | 110.71 | 395.56 |
+| **H100 NVL** | PyTorch | 8 | 16.83 | 64.14 | 186.19 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 24.21 | 108.70 | 322.28 |
+|  | NIM | 8 | 12.73 | 66.07 | 197.32 |
+| **H200 NVL** | PyTorch | 8 | 24.78 | 47.69 | 142.35 |
+|  | vLLM-Omni | 1 | 27.54 | 252.33 | 911.49 |
+|  | Diffusers | 1 | 33.00 | 286.80 | 1036.00 |
+|  | NIM | 1 | 17.13 | 200.00 | 811.41 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 19.40 | 56.39 | 174.57 |
+|  | NIM | 8 | 5.89 | 35.52 | 114.92 |
+| **H200 141GB HBM3** | PyTorch | 8 | 11.82 | 41.78 | 123.49 |
+|  | vLLM-Omni | 1 | 25.61 | 219.11 | 769.63 |
+|  | Diffusers | 1 | 31.00 | 251.60 | 886.20 |
+|  | NIM | 1 | 15.95 | 174.71 | 695.89 |
+| **B200** | PyTorch | 1 | 14.66 | 114.38 | 407.50 |
+|  | vLLM-Omni | 1 | 13.84 | 114.08 | 390.28 |
+|  | Diffusers | 1 | 19.00 | 127.20 | 414.40 |
+|  | NIM | 1 | 9.09 | 82.39 | 314.68 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | 1 | 14.57 | 109.03 | 366.66 |
+|  | Diffusers | 1 | 17.73 | 125.70 | 398.94 |
+|  | NIM | 1 | 9.67 | 79.73 | 292.35 |
 
 ### Image-to-Video (i2v)
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 65.42 | 66.54 |  | 202.26 | 118.95 |  | 795.14 | 427.96 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| | NIM |  | 13.17 | 14.48 |  | 106.50 | 100.23 |  | 356.60 | 289.93 |
-| **H20** | PyTorch | | 41.37 | 28.22 | | 278.23 | 153.19 | | 931.74 | 491.93 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| | NIM |  | 21.16 | 14.06 |  | 196.86 | 114.49 |  | 745.12 | 405.68 |
-| **H100 NVL** | PyTorch |  | 20.85 | 16.96 |  | 99.56 | 64.17 |  | 331.40 | 186.47 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| | NIM |  | 9.32 | 13.30 |  | 75.31 | 67.34 |  | 271.46 | 201.39 |
-| **H200 NVL** | PyTorch |  | 24.81 | 24.70 |  | 82.51 | 47.60 |  | 269.85 | 141.62 |
-| | vLLM-Omni | 27.90 | | 5.52 | 254.29 | | 38.51 | 915.05 | 248.89 | 127.32 |
-| | Diffusers | 33.00 | | | 287.20 | | | 1034.60 | | |
-| | NIM | 17.51 | 7.43 | 5.04 | 201.45 | 60.15 | 34.48 | 817.35 | 226.38 | 121.35 |
-| **H100 80GB HBM3** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| | NIM |  | 7.50 | 6.49 |  | 56.33 | 36.81 |  | 200.97 | 118.77 |
-| **H200 141GB HBM3** | PyTorch |  | 14.87 | 11.80 |  | 70.45 | 42.10 |  | 224.36 | 123.57 |
-| | vLLM-Omni | 25.47 | | 6.32 | 220.70 | | 36.90 | 766.33 | 215.03 | 117.52 |
-| | Diffusers | 31.00 | | | 249.20 | | | 879.20 | | |
-| | NIM | 16.39 | 6.74 | 4.90 | 175.95 | 54.46 | 32.51 | 699.13 | 197.96 | 109.55 |
-| **B200** | PyTorch | 14.71 | 5.63 | 4.12 | 112.40 | 35.70 | 21.25 | 397.31 | 117.98 | 65.91 |
-| | vLLM-Omni | 14.13 | | 5.31 | 115.17 | | 23.26 | 393.02 | 115.69 | 64.82 |
-| | Diffusers | 19.20 | | | | | | 414.80 | | |
-| | NIM | 9.36 | 4.83 | 4.12 | 83.19 | 29.09 | 19.14 | 316.76 | 94.65 | 55.92 |
-| **B300** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | 14.14 | | 7.19 | 111.42 | | 23.91 | 368.73 | 111.41 | 63.25 |
-| | Diffusers | 54.20 | | | 151.80 | | | 425.00 | | |
-| | NIM | 9.73 | 5.58 | 5.94 | 80.51 | 30.17 | 20.62 | 294.11 | 93.77 | 56.76 |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.54 | 118.95 | 427.96 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 26.29 | 156.16 | 540.65 |
+|  | NIM | 8 | 14.48 | 100.23 | 289.93 |
+| **H20** | PyTorch | 8 | 28.22 | 153.19 | 491.93 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 27.65 | 165.91 | 530.44 |
+|  | NIM | 8 | 14.06 | 114.49 | 405.68 |
+| **H100 NVL** | PyTorch | 8 | 16.96 | 64.17 | 186.47 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 25.45 | 112.36 | 325.56 |
+|  | NIM | 8 | 13.30 | 67.34 | 201.39 |
+| **H200 NVL** | PyTorch | 8 | 24.70 | 47.60 | 141.62 |
+|  | vLLM-Omni | 1 | 27.90 | 254.29 | 915.05 |
+|  | Diffusers | 1 | 33.00 | 287.20 | 1034.60 |
+|  | NIM | 1 | 17.51 | 201.45 | 817.35 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 19.98 | 55.63 | 184.81 |
+|  | NIM | 8 | 6.49 | 36.81 | 118.77 |
+| **H200 141GB HBM3** | PyTorch | 8 | 11.80 | 42.10 | 123.57 |
+|  | vLLM-Omni | 1 | 25.47 | 220.70 | 766.33 |
+|  | Diffusers | 1 | 31.00 | 249.20 | 879.20 |
+|  | NIM | 1 | 16.39 | 175.95 | 699.13 |
+| **B200** | PyTorch | 1 | 14.71 | 112.40 | 397.31 |
+|  | vLLM-Omni | 1 | 14.13 | 115.17 | 393.02 |
+|  | Diffusers | 1 | 19.20 | 127.00 | 414.80 |
+|  | NIM | 1 | 9.36 | 83.19 | 316.76 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | 1 | 14.14 | 111.42 | 368.73 |
+|  | Diffusers | 1 | 25.21 | 132.23 | 410.81 |
+|  | NIM | 1 | 9.73 | 80.51 | 294.11 |
 
 ### Text-to-Image (t2i)
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch | | 93.20 | 93.18 | | 92.22 | 93.39 | | 92.89 | 93.47 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 14.58 | 14.18 |  | 19.93 | 16.46 |  | 26.26 | 20.92 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch | | 19.73 | 19.86 | | 19.78 | 19.80 | | 20.68 | 19.87 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 32.51 | 32.86 |  | 32.53 | 33.05 |  | 32.64 | 33.16 |
-| | vLLM-Omni | 2.73 | | 3.20 | 6.28 | | 17.71 | 11.02 | 4.22 | 3.26 |
-| | Diffusers | 5.00 | | | 8.00 | | | 12.00 | | |
-| **H100 80GB HBM3** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 13.62 | 13.48 |  | 13.33 | 13.53 |  | 13.78 | 13.50 |
-| | vLLM-Omni | 2.83 | | 4.50 | 5.70 | | 7.16 | 10.24 | 4.23 | 4.43 |
-| | Diffusers | 5.00 | | | 8.00 | | | 11.00 | | |
-| **B200** | PyTorch | 4.51 | 4.10 | 4.27 | 4.78 | 4.13 | 4.48 | 7.25 | 4.28 | 4.65 |
-| | vLLM-Omni | 2.32 | | 4.58 | 3.29 | | 9.10 | 6.02 | 3.09 | 4.43 |
-| | Diffusers | | | | | | | 8.00 | | |
-| **B300** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | 5.05 | | 7.62 | 3.79 | | 72.65 | 7.08 | 5.79 | 7.24 |
-| | Diffusers | 38.80 | | | 39.40 | | | 40.40 | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 93.18 | 93.39 | 93.47 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 16.90 | 17.52 | 16.73 |
+| **H20** | PyTorch | 8 | 14.18 | 16.46 | 20.92 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 18.29 | 18.48 | 18.46 |
+| **H100 NVL** | PyTorch | 8 | 19.86 | 19.80 | 19.87 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 16.56 | 16.60 | 16.88 |
+| **H200 NVL** | PyTorch | 8 | 32.86 | 33.05 | 33.16 |
+|  | vLLM-Omni | 1 | 2.73 | 6.28 | 11.02 |
+|  | Diffusers | 1 | 5.00 | 8.00 | 12.00 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 17.97 | 18.03 | 19.28 |
+| **H200 141GB HBM3** | PyTorch | 8 | 13.48 | 13.53 | 13.50 |
+|  | vLLM-Omni | 1 | 2.83 | 5.70 | 10.24 |
+|  | Diffusers | 1 | 5.00 | 8.00 | 11.00 |
+| **B200** | PyTorch | 1 | 4.51 | 4.78 | 7.25 |
+|  | vLLM-Omni | 1 | 2.32 | 3.29 | 6.02 |
+|  | Diffusers | 1 | 4.40 | 6.00 | 8.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | 1 | 5.05 | 3.79 | 7.08 |
+|  | Diffusers | 1 | 6.49 | 6.76 | 7.11 |
 
 <sub>Notes:
 1. All times measured on identical workloads (same seed, sampler settings, prompt).
-2. 4×/8× GPU configurations use tensor parallelism.
+2. Multi-GPU configurations use tensor parallelism.
 3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo; subject to change before GA. Current vLLM-Omni coverage is B200 at 720p.
-4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs; reported at 256p/1, 480p/1, and 720p/1 (single-GPU only).
-5. At 256p, multi-GPU configurations on B300 may underperform single-GPU due to small-workload TP overhead; single-GPU is recommended at this resolution.
+4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs, and were measured on a single GPU only.
+5. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
 6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 7. NIM numbers use latency profiles with FP8 precision and report end-to-end `Request Latency s`, including request processing, video generation, output encoding, and returning the response.</sub>
 
@@ -170,125 +174,125 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 
 A text prompt and source video condition a generated continuation or transformation.
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 64.80 | 66.31 |  | 201.59 | 118.92 |  | 787.37 | 427.19 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 40.93 | 27.98 |  | 277.39 | 153.02 |  | 931.12 | 491.75 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 20.75 | 16.79 |  | 99.57 | 63.84 |  | 328.83 | 183.64 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 24.87 | 24.74 |  | 82.22 | 47.60 |  | 268.16 | 142.23 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 14.66 | 11.76 |  | 70.52 | 41.85 |  | 223.86 | 123.09 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 14.30 | 5.59 | 4.07 | 111.49 | 35.68 | 21.43 | 395.97 | 117.46 | 65.62 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.31 | 118.92 | 427.19 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 28.39 | 158.14 | 545.45 |
+| **H20** | PyTorch | 8 | 27.98 | 153.02 | 491.75 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 28.18 | 167.95 | 532.68 |
+| **H100 NVL** | PyTorch | 8 | 16.79 | 63.84 | 183.64 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 25.01 | 112.47 | 348.31 |
+| **H200 NVL** | PyTorch | 8 | 24.74 | 47.60 | 142.23 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 40.73 | 316.00 | 1093.16 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 21.61 | 57.74 | 188.43 |
+| **H200 141GB HBM3** | PyTorch | 8 | 11.76 | 41.85 | 123.09 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 41.17 | 269.44 | 916.41 |
+| **B200** | PyTorch | 1 | 14.30 | 111.49 | 395.97 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 26.30 | 142.61 | 437.27 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 25.86 | 139.04 | 416.98 |
 
 ### Text-to-Audio-and-Video (t2av)
 
 A text prompt produces synchronized video and sound.
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 65.38 | 65.79 |  | 202.34 | 118.87 |  | 788.88 | 429.78 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 40.69 | 27.73 |  | 277.33 | 152.53 |  | 930.63 | 492.38 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 20.78 | 16.86 |  | 99.28 | 64.17 |  | 329.26 | 183.81 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 24.88 | 24.79 |  | 82.49 | 47.67 |  | 267.86 | 142.06 |
-| | vLLM-Omni | 29.07 | 9.51 | 5.36 | 260.51 | 70.75 | 36.78 | 916.51 | 249.35 | 127.17 |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 15.05 | 11.74 |  | 70.09 | 41.49 |  | 223.96 | 123.35 |
-| | vLLM-Omni | 27.21 | 9.01 | 6.16 | 221.67 | 64.07 | 35.22 | 763.74 | 212.47 | 119.74 |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 14.52 | 5.64 | 4.07 | 112.99 | 35.93 | 21.57 | 395.20 | 118.67 | 65.93 |
-| | vLLM-Omni | 14.77 | 5.54 | 5.01 | 115.26 | 36.20 | 21.76 | 388.51 | 115.08 | 62.56 |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | 15.26 | 6.89 | 7.09 | 113.34 | 36.79 | 23.39 | 372.74 | 110.75 | 61.99 |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 65.79 | 118.87 | 429.78 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H20** | PyTorch | 8 | 27.73 | 152.53 | 492.38 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H100 NVL** | PyTorch | 8 | 16.86 | 64.17 | 183.81 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 NVL** | PyTorch | 8 | 24.79 | 47.67 | 142.06 |
+|  | vLLM-Omni | 1 | 29.07 | 260.51 | 916.51 |
+|  | Diffusers | 1 | 35.00 | 291.40 | 1034.20 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 141GB HBM3** | PyTorch | 8 | 11.74 | 41.49 | 123.35 |
+|  | vLLM-Omni | 1 | 27.21 | 221.67 | 763.74 |
+|  | Diffusers | 1 | 33.00 | 253.40 | 874.60 |
+| **B200** | PyTorch | 1 | 14.52 | 112.99 | 395.20 |
+|  | vLLM-Omni | 1 | 14.77 | 115.26 | 388.51 |
+|  | Diffusers | 1 | 20.00 | 128.00 | 422.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | 1 | 15.26 | 113.34 | 372.74 |
+|  | Diffusers | 1 | 18.94 | 126.86 | 402.37 |
 
 ### Video-to-Audio-and-Video (v2av)
 
 A text prompt and source video produce transformed video with synchronized sound.
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 64.67 | 66.10 |  | 202.31 | 118.88 |  | 785.77 | 428.64 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 40.89 | 28.00 |  | 276.26 | 152.78 |  | 930.81 | 492.63 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 20.65 | 16.79 |  | 99.90 | 64.69 |  | 323.95 | 183.62 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 24.88 | 24.73 |  | 82.36 | 47.67 |  | 268.78 | 143.06 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 14.85 | 11.74 |  | 70.42 | 41.59 |  | 223.23 | 123.06 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 14.28 | 5.60 | 4.07 | 111.84 | 35.64 | 21.48 | 406.66 | 117.16 | 65.30 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.10 | 118.88 | 428.64 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H20** | PyTorch | 8 | 28.00 | 152.78 | 492.63 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H100 NVL** | PyTorch | 8 | 16.79 | 64.69 | 183.62 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 NVL** | PyTorch | 8 | 24.73 | 47.67 | 143.06 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 48.42 | 320.70 | 1093.26 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 141GB HBM3** | PyTorch | 8 | 11.74 | 41.59 | 123.06 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 43.23 | 270.19 | 909.99 |
+| **B200** | PyTorch | 1 | 14.28 | 111.84 | 406.66 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 30.26 | 141.75 | 446.20 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 30.36 | 138.17 | 420.63 |
 
 ### Image-to-Audio-and-Video (i2av)
 
 A text prompt and source image produce video with synchronized sound.
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 65.54 | 66.27 |  | 202.65 | 119.05 |  | 790.09 | 429.26 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 41.33 | 28.11 |  | 277.13 | 153.33 |  | 931.18 | 493.51 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 20.83 | 16.85 |  | 99.62 | 64.19 |  | 329.80 | 186.66 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 24.81 | 24.69 |  | 82.65 | 47.65 |  | 269.74 | 142.18 |
-| | vLLM-Omni | 29.42 | 9.94 | 5.84 | 262.20 | 72.67 | 38.57 | 922.18 | 252.67 | 131.32 |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 15.09 | 11.82 |  | 69.80 | 41.95 |  | 224.65 | 123.42 |
-| | vLLM-Omni | 27.58 | 9.29 | 6.59 | 220.57 | 65.65 | 36.71 | 774.15 | 217.68 | 7.00 |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 14.84 | 5.64 | 4.12 | 113.32 | 35.84 | 21.70 | 407.30 | 117.95 | 65.20 |
-| | vLLM-Omni | 15.15 | 5.88 | 5.38 | 116.54 | 37.32 | 23.07 | 396.11 | 117.51 | 65.98 |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | 16.46 | 7.22 | 7.38 | 114.02 | 38.10 | 24.69 | 373.17 | 113.46 | 64.64 |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.27 | 119.05 | 429.26 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H20** | PyTorch | 8 | 28.11 | 153.33 | 493.51 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H100 NVL** | PyTorch | 8 | 16.85 | 64.19 | 186.66 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 NVL** | PyTorch | 8 | 24.69 | 47.65 | 142.18 |
+|  | vLLM-Omni | 1 | 29.42 | 262.20 | 922.18 |
+|  | Diffusers | 1 | 35.00 | 292.20 | 1037.00 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 141GB HBM3** | PyTorch | 8 | 11.82 | 41.95 | 123.42 |
+|  | vLLM-Omni | 1 | 27.58 | 220.57 | 774.15 |
+|  | Diffusers | 1 | 33.00 | 256.00 | 880.40 |
+| **B200** | PyTorch | 1 | 14.84 | 113.32 | 407.30 |
+|  | vLLM-Omni | 1 | 15.15 | 116.54 | 396.11 |
+|  | Diffusers | 1 | 20.00 | 128.00 | 423.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | 1 | 16.46 | 114.02 | 373.17 |
+|  | Diffusers | 1 | 29.16 | 134.46 | 414.22 |
 
 ## Action generation
 
@@ -296,244 +300,244 @@ Forward dynamics is reported separately for AV, camera, and robot inputs. Invers
 
 ### Forward Dynamics — Autonomous Vehicle (AV)
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 79.50 | 59.39 |  | 61.21 | 59.31 |  | 61.15 | 59.35 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 67.73 | 41.51 |  | 67.83 | 41.47 |  | 67.85 | 41.42 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 28.53 | 21.00 |  | 28.69 | 21.00 |  | 28.56 | 21.04 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 24.40 | 22.66 |  | 24.38 | 22.67 |  | 24.46 | 22.65 |
-| | vLLM-Omni | 4.33 | 2.16 |  | 28.78 | 9.47 |  | 82.08 | 24.83 |  |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 19.88 | 14.41 |  | 19.87 | 14.41 |  | 19.88 | 14.41 |
-| | vLLM-Omni | 3.99 | 2.27 |  | 26.04 | 8.83 |  | 71.61 | 23.02 |  |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 13.59 | 9.29 | 6.33 | 13.55 | 9.29 | 6.37 | 13.86 | 9.32 | 6.34 |
-| | vLLM-Omni | 2.37 | 1.93 |  | 14.59 | 5.75 |  | 38.41 | 13.46 |  |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | 2.85 | 3.20 |  | 14.20 | 6.07 |  | 36.96 | 13.31 |  |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 59.39 | 59.31 | 59.35 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 11.99 | 22.93 | 23.68 |
+| **H20** | PyTorch | 8 | 41.51 | 41.47 | 41.42 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 11.40 | 26.98 | 28.79 |
+| **H100 NVL** | PyTorch | 8 | 21.00 | 21.00 | 21.04 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 10.30 | 19.29 | 20.05 |
+| **H200 NVL** | PyTorch | 8 | 22.66 | 22.67 | 22.65 |
+|  | vLLM-Omni | 1 | 4.33 | 28.78 | 82.08 |
+|  | Diffusers | 1 | 27.17 | 53.19 | 51.89 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 10.34 | 12.89 | 13.45 |
+| **H200 141GB HBM3** | PyTorch | 8 | 14.41 | 14.41 | 14.41 |
+|  | vLLM-Omni | 1 | 3.99 | 26.04 | 71.61 |
+|  | Diffusers | 1 | 26.51 | 47.34 | 50.20 |
+| **B200** | PyTorch | 1 | 13.59 | 13.55 | 13.86 |
+|  | vLLM-Omni | 1 | 2.37 | 14.59 | 38.41 |
+|  | Diffusers | 1 | 4.00 | 16.00 | 16.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | 1 | 2.85 | 14.20 | 36.96 |
+|  | Diffusers | 1 | 22.18 | 35.41 | 38.82 |
 
 ### Forward Dynamics — Camera
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 60.75 | 59.62 |  | 60.69 | 59.39 |  | 60.61 | 59.55 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 67.86 | 41.13 |  | 67.89 | 41.10 |  | 67.88 | 41.11 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 28.73 | 21.05 |  | 28.76 | 20.98 |  | 28.65 | 21.00 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 24.33 | 22.55 |  | 24.35 | 22.54 |  | 24.37 | 22.54 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 19.85 | 14.30 |  | 19.92 | 14.30 |  | 20.29 | 14.29 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 13.73 | 9.32 | 6.27 | 13.72 | 9.27 | 6.27 | 13.58 | 9.28 | 6.27 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 59.62 | 59.39 | 59.55 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H20** | PyTorch | 8 | 41.13 | 41.10 | 41.11 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H100 NVL** | PyTorch | 8 | 21.05 | 20.98 | 21.00 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 NVL** | PyTorch | 8 | 22.55 | 22.54 | 22.54 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 141GB HBM3** | PyTorch | 8 | 14.30 | 14.30 | 14.29 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **B200** | PyTorch | 1 | 13.73 | 13.72 | 13.58 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
 
 ### Forward Dynamics — Robot
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 75.52 | 56.35 |  | 55.04 | 56.38 |  | 54.88 | 56.01 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 20.93 | 15.60 |  | 20.91 | 15.61 |  | 20.78 | 15.59 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 13.61 | 12.90 |  | 13.68 | 12.90 |  | 13.57 | 12.90 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 20.25 | 20.16 |  | 20.25 | 20.15 |  | 20.25 | 20.15 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 9.34 | 8.74 |  | 9.34 | 8.74 |  | 9.33 | 8.70 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 3.50 | 2.91 | 2.98 | 3.49 | 3.06 | 3.00 | 3.47 | 2.96 | 3.00 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 56.35 | 56.38 | 56.01 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 9.40 | 10.60 | 10.82 |
+| **H20** | PyTorch | 8 | 15.60 | 15.61 | 15.59 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 8.95 | 10.24 | 10.65 |
+| **H100 NVL** | PyTorch | 8 | 12.90 | 12.90 | 12.90 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 8.03 | 8.49 | 8.61 |
+| **H200 NVL** | PyTorch | 8 | 20.16 | 20.15 | 20.15 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 22.21 | 28.53 | 27.35 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 10.27 | 9.04 | 9.25 |
+| **H200 141GB HBM3** | PyTorch | 8 | 8.74 | 8.74 | 8.70 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 22.02 | 26.45 | 26.38 |
+| **B200** | PyTorch | 1 | 3.50 | 3.49 | 3.47 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 3.00 | 5.00 | 5.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 22.21 | 21.81 | 24.51 |
 
 ### Inverse Dynamics — Autonomous Vehicle (AV)
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 60.92 | 59.20 |  | 60.87 | 59.14 |  | 60.95 | 59.07 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 67.37 | 41.17 |  | 67.09 | 40.96 |  | 67.37 | 41.06 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 28.42 | 20.76 |  | 28.39 | 21.05 |  | 28.41 | 20.69 |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 24.16 | 22.40 |  | 24.17 | 22.40 |  | 24.18 | 22.42 |
-| | vLLM-Omni | 4.36 | 2.17 |  | 28.21 | 9.43 |  | 80.85 | 25.46 |  |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni |  |  |  |  |  |  |  |  |  |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 20.05 | 14.30 |  | 19.68 | 14.32 |  | 19.91 | 14.16 |
-| | vLLM-Omni | 4.03 | 2.29 |  | 25.99 | 8.79 |  | 71.45 |  |  |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 13.38 | 9.08 | 6.11 | 13.37 | 9.13 | 6.15 | 13.36 | 9.08 | 6.11 |
-| | vLLM-Omni | 2.42 | 2.29 |  | 14.69 | 5.85 |  | 38.74 | 13.54 |  |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | 2.69 | 3.54 |  | 14.44 | 6.52 |  | 37.70 | 13.88 |  |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 59.20 | 59.14 | 59.07 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 11.15 | 23.33 | 23.28 |
+| **H20** | PyTorch | 8 | 41.17 | 40.96 | 41.06 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 11.33 | 26.66 | 28.46 |
+| **H100 NVL** | PyTorch | 8 | 20.76 | 21.05 | 20.69 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 9.72 | 18.67 | 20.67 |
+| **H200 NVL** | PyTorch | 8 | 22.40 | 22.40 | 22.42 |
+|  | vLLM-Omni | 1 | 4.36 | 28.21 | 80.85 |
+|  | Diffusers | 1 | 15.22 | 44.50 | 43.51 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 10.49 | 12.73 | 13.30 |
+| **H200 141GB HBM3** | PyTorch | 8 | 14.30 | 14.32 | 14.16 |
+|  | vLLM-Omni | 1 | 4.03 | 25.99 | 71.45 |
+|  | Diffusers | 1 | 16.58 | 39.75 | 41.71 |
+| **B200** | PyTorch | 1 | 13.38 | 13.37 | 13.36 |
+|  | vLLM-Omni | 1 | 2.42 | 14.69 | 38.74 |
+|  | Diffusers | 1 | 4.00 | 16.00 | 16.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | 1 | 2.69 | 14.44 | 37.70 |
+|  | Diffusers | 1 | 15.13 | 26.24 | 28.51 |
 
 ### Inverse Dynamics — Robot
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 55.15 | 56.28 |  | 55.12 | 56.33 |  | 54.83 | 56.00 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 20.71 | 15.51 |  | 20.83 | 15.52 |  | 20.84 | 15.51 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 13.51 | 12.51 |  | 13.54 | 12.51 |  | 13.50 | 12.51 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 20.21 | 20.11 |  | 20.18 | 20.10 |  | 20.19 | 20.12 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 9.30 | 8.68 |  | 9.28 | 8.68 |  | 9.29 | 8.65 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 3.42 | 2.89 | 2.96 | 3.49 | 3.02 | 2.92 | 3.41 | 2.90 | 3.03 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 56.28 | 56.33 | 56.00 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 9.59 | 10.90 | 8.71 |
+| **H20** | PyTorch | 8 | 15.51 | 15.52 | 15.51 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 9.48 | 10.17 | 10.65 |
+| **H100 NVL** | PyTorch | 8 | 12.51 | 12.51 | 12.51 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 7.92 | 8.46 | 8.79 |
+| **H200 NVL** | PyTorch | 8 | 20.11 | 20.10 | 20.12 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 12.09 | 16.87 | 18.74 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 8.71 | 8.93 | 9.08 |
+| **H200 141GB HBM3** | PyTorch | 8 | 8.68 | 8.68 | 8.65 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 25.77 | 16.25 | 16.29 |
+| **B200** | PyTorch | 1 | 3.42 | 3.49 | 3.41 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 3.00 | 5.00 | 5.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 9.65 | 15.08 | 15.21 |
 
 ### Policy — Autonomous Vehicle (AV)
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 61.03 | 59.66 |  | 61.19 | 59.51 |  | 61.04 | 59.49 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 67.86 | 41.54 |  | 67.56 | 41.51 |  | 67.62 | 41.49 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 28.61 | 21.02 |  | 28.77 | 21.00 |  | 28.54 | 21.31 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 24.40 | 22.64 |  | 24.46 | 22.63 |  | 24.47 | 22.64 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 20.31 | 14.54 |  | 19.87 | 14.41 |  | 20.14 | 14.52 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 13.71 | 9.33 | 6.36 | 13.73 | 9.31 | 6.34 | 13.60 | 9.32 | 6.34 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 59.66 | 59.51 | 59.49 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 12.11 | 22.60 | 25.76 |
+| **H20** | PyTorch | 8 | 41.54 | 41.51 | 41.49 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 11.35 | 26.61 | 28.81 |
+| **H100 NVL** | PyTorch | 8 | 21.02 | 21.00 | 21.31 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 9.77 | 18.80 | 20.12 |
+| **H200 NVL** | PyTorch | 8 | 22.64 | 22.63 | 22.64 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 15.35 | 41.89 | 45.40 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 10.55 | 13.02 | 13.52 |
+| **H200 141GB HBM3** | PyTorch | 8 | 14.54 | 14.41 | 14.52 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 14.71 | 41.30 | 40.35 |
+| **B200** | PyTorch | 1 | 13.71 | 13.73 | 13.60 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 4.00 | 16.00 | 16.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 15.29 | 28.62 | 28.87 |
 
 ### Policy — Robot
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch |  | 55.13 | 56.31 |  | 55.47 | 56.29 |  | 54.92 | 55.95 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch |  | 20.90 | 15.60 |  | 20.88 | 15.60 |  | 20.92 | 15.62 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch |  | 13.57 | 12.56 |  | 13.58 | 12.55 |  | 13.60 | 12.54 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch |  | 20.25 | 20.16 |  | 20.26 | 20.17 |  | 20.26 | 20.16 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch |  | 9.33 | 8.72 |  | 9.35 | 8.75 |  | 9.34 | 8.70 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | 3.48 | 2.95 | 3.07 | 3.49 | 3.02 | 2.98 | 3.48 | 2.92 | 3.05 |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch |  |  |  |  |  |  |  |  |  |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | 8 | 56.31 | 56.29 | 55.95 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 9.57 | 10.08 | 8.76 |
+| **H20** | PyTorch | 8 | 15.60 | 15.60 | 15.62 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 9.03 | 10.19 | 10.73 |
+| **H100 NVL** | PyTorch | 8 | 12.56 | 12.55 | 12.54 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 8.05 | 8.60 | 8.89 |
+| **H200 NVL** | PyTorch | 8 | 20.16 | 20.17 | 20.16 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 13.82 | 16.92 | 17.03 |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 8 | 8.71 | 9.09 | 9.12 |
+| **H200 141GB HBM3** | PyTorch | 8 | 8.72 | 8.75 | 8.70 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 11.90 | 16.13 | 14.72 |
+| **B200** | PyTorch | 1 | 3.48 | 3.49 | 3.48 |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 3.00 | 5.00 | 5.00 |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | 1 | 10.57 | 15.31 | 15.33 |
 
 ### Policy — DROID
 
 PBR `#308481` measured Policy-DROID only for Cosmos3-Nano-Policy-DROID. Super has no Policy-DROID row in that sweep; this table is reserved.
 
-| GPU | Engine | 256p/1 | 256p/4 | 256p/8 | 480p/1 | 480p/4 | 480p/8 | 720p/1 | 720p/4 | 720p/8 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H20** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 NVL** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 NVL** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H100 80GB HBM3** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **H200 141GB HBM3** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B200** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
-| **B300** | PyTorch | | | | | | | | | |
-| | vLLM-Omni | | | | | | | | | |
-| | Diffusers | | | | | | | | | |
+| GPU | Engine | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| **RTX PRO 6000 Blackwell** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H20** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H100 NVL** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 NVL** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H100 80GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **H200 141GB HBM3** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **B200** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+| **B300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
 
 <sub>Additional-modality notes:
 1. PyTorch values are average generation (sampling) latency in seconds from PBR `#308197`; lower is better.
 2. PyTorch values use `CUDA_GRAPH=No` and the `latency` automatic-sharding preset.
 3. vLLM-Omni audiovisual values for `t2av`/`t2vs` and `i2av`/`i2vs` are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`.
-4. Action vLLM-Omni `/8` cells are empty because 8-GPU Ulysses runs failed sequence-length divisibility checks. Two documented action misses are also left blank: Super inverse-dynamics AV at 720p/4 on H200 141GB HBM3 (OOM), and Nano inverse-dynamics AV at 720p/4 on H100 NVL (CUDA/NCCL failure).
+4. Action vLLM-Omni rows report one GPU because the 8-GPU Ulysses runs failed sequence-length divisibility checks.
 5. Policy-DROID is reported in its own table. PBR `#308481` has no Super Policy-DROID measurement.
 6. Diffusers rows are intentionally empty reservations for future benchmark campaigns.
-7. The `/1`, `/4`, and `/8` suffixes denote the number of GPUs used by the benchmark run.
+7. The **GPUs** column gives the number of GPUs behind every value in that row.
 8. Empty cells indicate unmeasured combinations, not unsupported combinations.</sub>
