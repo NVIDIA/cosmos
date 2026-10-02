@@ -34,9 +34,9 @@ Empty cells mean that a run has not been completed for that GPU, engine, or reso
 
 ## Benchmark methodology
 
-The primary t2v, i2v, and t2i tables preserve the previously published benchmark campaigns across PyTorch, vLLM-Omni, Diffusers, and NIM. Those tables use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
+The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, and NIM. Their vLLM-Omni values are from PBR `#307999`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (t2i, t2v, i2v)**; the PyTorch and NIM values preserve the previously published campaigns. Those tables use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
 
-The additional audiovisual and action tables come from three internal benchmark reports. PyTorch values are from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**: average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (action)**, measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. Super was not measured on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from four further reports: PBR `#308202` (all modalities) and PBR `#308451` (video-to-video) on one GPU, PBR `#308918` for 4- and 8-GPU runs, and PBR `#308587` for transfer. Where PBR `#308918` offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. Values are rounded to two decimal places.
+The additional audiovisual and action tables come from three internal benchmark reports. PyTorch values are from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**: average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (action)**, measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. That action sweep did not cover Super on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from four further reports: PBR `#308202` (all modalities) and PBR `#308451` (video-to-video) on one GPU, PBR `#308918` for 4- and 8-GPU runs, and PBR `#308587` for transfer. vLLM-Omni transfer values are from PBR `#308574`. Where PBR `#308918` offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. Values are rounded to two decimal places.
 
 These reports establish the reported timing matrix but do not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
 
@@ -63,7 +63,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 | GPU | Engine | GPUs | 256p | 480p | 720p |
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 1 | 13.95 | 180.81 | 786.37 |
-|  | vLLM-Omni | 1 | 10.65 | 105.61 | 369.67 |
+|  | vLLM-Omni | 1 | 10.65 | 105.61 | 371.53 |
 |  | Diffusers | 1 | 11.20 | 112.00 | 392.00 |
 |  | NIM | 1 | 7.93 | 82.69 | 318.69 |
 | **H20** | PyTorch | 1 | 30.57 | 257.51 | 931.39 |
@@ -71,7 +71,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | Diffusers | 1 | 30.20 | 258.00 | 926.00 |
 |  | NIM | 1 | 17.81 | 192.07 | 771.37 |
 | **H100 NVL** | PyTorch | 1 | 10.03 | 84.12 | 297.27 |
-|  | vLLM-Omni | 1 | 9.25 | 80.75 | 311.13 |
+|  | vLLM-Omni | 1 | 9.25 | 80.75 | 281.99 |
 |  | Diffusers | 1 | 11.00 | 90.00 | 324.20 |
 |  | NIM | 1 | 7.09 | 68.01 | 267.73 |
 | **H200 NVL** | PyTorch | 1 | 8.17 | 69.79 | 244.39 |
@@ -87,7 +87,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | Diffusers | 1 | 9.00 | 67.00 | 239.60 |
 |  | NIM | 1 | 5.72 | 51.90 | 200.63 |
 | **B200** | PyTorch | 1 | 4.56 | 33.20 | 114.85 |
-|  | vLLM-Omni | 1 | 4.03 | 32.04 | 107.84 |
+|  | vLLM-Omni | 1 | 4.03 | 32.04 | 107.79 |
 |  | Diffusers | 1 | 7.00 | 36.80 | 117.00 |
 |  | NIM | 1 | 3.72 | 26.68 | 93.33 |
 | **B300** | PyTorch | — |  |  |  |
@@ -100,7 +100,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 | GPU | Engine | GPUs | 256p | 480p | 720p |
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 1 | 14.08 | 182.14 | 788.80 |
-|  | vLLM-Omni | 1 | 11.04 | 107.77 | 375.01 |
+|  | vLLM-Omni | 1 | 11.04 | 107.77 | 376.44 |
 |  | Diffusers | 1 | 12.00 | 112.00 | 397.00 |
 |  | NIM | 1 | 8.23 | 84.58 | 326.96 |
 | **H20** | PyTorch | 1 | 31.36 | 257.10 | 933.07 |
@@ -108,7 +108,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | Diffusers | 1 | 31.00 | 258.00 | 925.00 |
 |  | NIM | 1 | 18.67 | 195.10 | 774.88 |
 | **H100 NVL** | PyTorch | 1 | 10.19 | 84.50 | 298.57 |
-|  | vLLM-Omni | 1 | 9.62 | 82.61 | 286.33 |
+|  | vLLM-Omni | 1 | 9.62 | 82.61 | 286.19 |
 |  | Diffusers | 1 | 11.00 | 91.00 | 325.20 |
 |  | NIM | 1 | 7.39 | 69.39 | 272.29 |
 | **H200 NVL** | PyTorch | 1 | 8.27 | 69.99 | 246.62 |
@@ -124,7 +124,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | Diffusers | 1 | 9.00 | 67.20 | 240.00 |
 |  | NIM | 1 | 6.04 | 53.25 | 203.66 |
 | **B200** | PyTorch | 1 | 4.60 | 33.08 | 113.90 |
-|  | vLLM-Omni | 1 | 4.33 | 33.09 | 110.19 |
+|  | vLLM-Omni | 1 | 4.33 | 33.09 | 110.08 |
 |  | Diffusers | 1 | 7.00 | 37.00 | 116.00 |
 |  | NIM | 1 | 4.05 | 27.72 | 95.57 |
 | **B300** | PyTorch | — |  |  |  |
@@ -143,7 +143,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | vLLM-Omni | 1 | 1.73 | 4.92 | 10.73 |
 |  | Diffusers | 1 | 3.00 | 6.00 | 10.00 |
 | **H100 NVL** | PyTorch | 1 | 2.77 | 2.83 | 4.21 |
-|  | vLLM-Omni | 1 | 1.55 | 1.92 | 3.44 |
+|  | vLLM-Omni | 1 | 1.55 | 1.92 | 3.43 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 | **H200 NVL** | PyTorch | 1 | 2.75 | 2.85 | 3.58 |
 |  | vLLM-Omni | 1 | 1.53 | 1.58 | 2.81 |
@@ -155,7 +155,7 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | vLLM-Omni | 1 | 1.57 | 1.52 | 2.60 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 | **B200** | PyTorch | 1 | 2.68 | 2.75 | 2.87 |
-|  | vLLM-Omni | 1 | 1.49 | 1.20 | 1.77 |
+|  | vLLM-Omni | 1 | 1.49 | 1.20 | 1.76 |
 |  | Diffusers | 1 | 3.00 | 3.20 | 3.00 |
 | **B300** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 1 | 1.97 | 1.81 | 2.34 |
@@ -305,51 +305,107 @@ the hint changes how much of the frame the model must synthesise.
 | GPU | Transfer control | Engine | GPUs | 256p | 480p | 720p |
 |---|---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | blur | Diffusers | 1 | 30.95 | 217.40 | 735.43 |
+|  |  | vLLM-Omni | 1 | 40.11 | 288.60 | 1061.44 |
 |  | depth | Diffusers | 1 | 36.52 | 225.34 | 745.70 |
+|  |  | vLLM-Omni | 1 | 31.56 | 291.76 | 1090.33 |
 |  | edge | Diffusers | 1 | 31.25 | 217.90 | 735.35 |
+|  |  | vLLM-Omni | 1 | 30.64 | 287.82 | 1080.82 |
+|  | multi_control | Diffusers | — |  |  |  |
+|  |  | vLLM-Omni | 1 | 73.36 | 1060.11 | 3988.93 |
 |  | seg | Diffusers | 1 | 32.89 | 220.10 | 738.51 |
+|  |  | vLLM-Omni | 1 | 31.50 | 289.01 | 1083.64 |
 |  | wsm | Diffusers | 1 | 29.84 | 176.06 | 565.32 |
+|  |  | vLLM-Omni | 1 | 26.12 | 225.70 | 814.25 |
 | **H20** | blur | Diffusers | 1 | 73.61 | 491.22 | 1726.61 |
+|  |  | vLLM-Omni | 1 | 85.93 | 625.60 | 2280.10 |
 |  | depth | Diffusers | 1 | 86.84 | 510.15 | 1753.96 |
+|  |  | vLLM-Omni | 1 | 66.69 | 636.40 | 2367.37 |
 |  | edge | Diffusers | 1 | 74.68 | 492.78 | 1728.26 |
+|  |  | vLLM-Omni | 1 | 64.75 | 626.76 | 2321.00 |
+|  | multi_control | Diffusers | — |  |  |  |
+|  |  | vLLM-Omni | 8 | 60.40 |  | 2622.35 |
 |  | seg | Diffusers | 1 | 77.50 | 496.77 | 1734.77 |
+|  |  | vLLM-Omni | 1 | 65.84 | 623.52 | 2341.06 |
 |  | wsm | Diffusers | 1 | 70.42 | 398.67 | 1319.24 |
+|  |  | vLLM-Omni | 1 | 53.66 | 488.58 | 1753.23 |
 | **H100 NVL** | blur | Diffusers | 1 | 26.97 | 224.61 | 775.61 |
+|  |  | vLLM-Omni | 1 | 27.53 | 184.34 | 684.44 |
 |  | depth | Diffusers | 1 | 31.63 | 233.03 | 610.83 |
+|  |  | vLLM-Omni | 1 | 20.73 | 191.19 | 683.55 |
 |  | edge | Diffusers | 1 | 34.73 | 173.04 | 602.04 |
+|  |  | vLLM-Omni | 1 | 20.32 | 188.64 | 674.49 |
+|  | multi_control | Diffusers | — |  |  |  |
+|  |  | vLLM-Omni | 1 | 50.16 | 674.18 | 2999.04 |
 |  | seg | Diffusers | 1 | 28.55 | 174.78 | 777.58 |
+|  |  | vLLM-Omni | 1 | 20.87 | 190.35 | 680.37 |
 |  | wsm | Diffusers | 1 | 26.17 | 139.82 | 594.21 |
+|  |  | vLLM-Omni | 1 | 17.17 | 148.32 | 507.19 |
 | **H100 80GB HBM3** | blur | Diffusers | 1 | 21.06 | 131.86 | 454.46 |
+|  |  | vLLM-Omni | 1 | 20.40 | 133.27 | 476.11 |
 |  | depth | Diffusers | 1 | 24.61 | 135.88 | 457.43 |
+|  |  | vLLM-Omni | 1 | 15.75 | 135.11 | 488.18 |
 |  | edge | Diffusers | 1 | 21.28 | 132.06 | 447.24 |
+|  |  | vLLM-Omni | 1 | 15.33 | 133.00 | 483.75 |
+|  | multi_control | Diffusers | — |  |  |  |
+|  |  | vLLM-Omni | 1 | 36.94 | 477.12 | 2122.18 |
 |  | seg | Diffusers | 1 | 22.54 | 133.24 | 456.55 |
+|  |  | vLLM-Omni | 1 | 16.04 | 133.82 | 484.97 |
 |  | wsm | Diffusers | 1 | 20.25 | 106.79 | 342.79 |
+|  |  | vLLM-Omni | 1 | 13.03 | 105.20 | 365.05 |
 | **H200 NVL** | blur | Diffusers | 1 | 22.82 | 152.13 | 535.83 |
+|  |  | vLLM-Omni | 1 | 21.94 | 156.49 | 586.19 |
 |  | depth | Diffusers | 1 | 26.80 | 156.98 | 541.71 |
+|  |  | vLLM-Omni | 1 | 16.93 | 159.81 | 597.37 |
 |  | edge | Diffusers | 1 | 23.06 | 152.54 | 533.87 |
+|  |  | vLLM-Omni | 1 | 16.46 | 157.29 | 592.05 |
+|  | multi_control | Diffusers | — |  |  |  |
+|  |  | vLLM-Omni | 1 | 40.28 | 587.45 | 2792.29 |
 |  | seg | Diffusers | 1 | 24.12 | 153.68 | 537.15 |
+|  |  | vLLM-Omni | 1 | 17.13 | 157.81 | 594.45 |
 |  | wsm | Diffusers | 1 | 21.90 | 123.08 | 407.57 |
+|  |  | vLLM-Omni | 1 | 13.97 | 122.69 | 442.62 |
 | **H200 141GB HBM3** | blur | Diffusers | 1 | 20.63 | 128.41 | 450.79 |
+|  |  | vLLM-Omni | 1 | 20.78 | 134.95 | 492.24 |
 |  | depth | Diffusers | 1 | 24.01 | 134.51 | 457.91 |
+|  |  | vLLM-Omni | 1 | 16.00 | 138.25 | 497.13 |
 |  | edge | Diffusers | 1 | 20.87 | 130.99 | 443.92 |
+|  |  | vLLM-Omni | 1 | 15.26 | 136.41 | 492.75 |
+|  | multi_control | Diffusers | — |  |  |  |
+|  |  | vLLM-Omni | 1 | 38.09 | 500.91 | 2316.90 |
 |  | seg | Diffusers | 1 | 21.84 | 130.12 | 453.51 |
+|  |  | vLLM-Omni | 1 | 16.03 | 136.90 | 493.89 |
 |  | wsm | Diffusers | 1 | 19.65 | 106.00 | 344.09 |
+|  |  | vLLM-Omni | 1 | 12.95 | 109.39 | 371.24 |
 | **B200** | blur | Diffusers | 1 | 12.69 | 70.78 | 226.51 |
+|  |  | vLLM-Omni | 1 | 13.26 | 72.95 | 257.39 |
 |  | depth | Diffusers | 1 | 14.79 | 73.23 | 229.54 |
+|  |  | vLLM-Omni | 1 | 10.55 | 73.56 | 264.11 |
 |  | edge | Diffusers | 1 | 12.76 | 71.04 | 223.24 |
+|  |  | vLLM-Omni | 1 | 10.35 | 74.00 | 261.85 |
+|  | multi_control | Diffusers | — |  |  |  |
+|  |  | vLLM-Omni | 1 | 23.27 | 257.99 | 1111.03 |
 |  | seg | Diffusers | 1 | 13.54 | 71.21 | 223.41 |
+|  |  | vLLM-Omni | 1 | 11.10 | 73.35 | 262.72 |
 |  | wsm | Diffusers | 1 | 12.16 | 59.29 | 172.60 |
+|  |  | vLLM-Omni | 1 | 9.41 | 59.04 | 195.99 |
 | **B300** | blur | Diffusers | 1 | 12.39 | 66.13 | 207.59 |
+|  |  | vLLM-Omni | 1 | 13.85 | 73.35 | 240.39 |
 |  | depth | Diffusers | 1 | 14.26 | 70.00 | 211.12 |
+|  |  | vLLM-Omni | 1 | 11.11 | 71.59 | 247.16 |
 |  | edge | Diffusers | 1 | 12.48 | 67.68 | 207.95 |
+|  |  | vLLM-Omni | 1 | 13.05 | 72.93 | 245.16 |
+|  | multi_control | Diffusers | — |  |  |  |
+|  |  | vLLM-Omni | 1 | 26.79 | 243.97 | 1026.91 |
 |  | seg | Diffusers | 1 | 13.43 | 68.85 | 210.33 |
+|  |  | vLLM-Omni | 1 | 14.38 | 71.85 | 246.04 |
 |  | wsm | Diffusers | 1 | 11.95 | 55.41 | 162.28 |
+|  |  | vLLM-Omni | 1 | 10.06 | 58.97 | 185.08 |
 
 <sub>Transfer notes:
-1. Values are average generation latency in seconds from PBR `#308587`; lower is better.
-2. All transfer runs use a single GPU; multi-GPU transfer has not been measured.
-3. Only Diffusers has transfer coverage so far; other runtimes are unmeasured, not unsupported.
-4. Control hints follow the vLLM-Omni `extra_params` names: `blur`, `depth`, `edge`, `seg`, and `wsm`.</sub>
+1. Values are average generation latency in seconds; lower is better. Diffusers numbers come from PBR `#308587`, vLLM-Omni from PBR `#308574`.
+2. The **GPUs** column gives the number of GPUs behind every value in that row.
+3. PyTorch and NIM have no transfer coverage yet; those rows are unmeasured, not unsupported.
+4. Control hints follow the vLLM-Omni `extra_params` names: `blur`, `depth`, `edge`, `multi_control`, `seg`, and `wsm`. `multi_control` combines several hints in one request.</sub>
 
 ## Action generation
 
