@@ -6,13 +6,15 @@ Results are published incrementally from internal benchmark runs. **Empty cells 
 
 ## Generator benchmarks
 
-Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation.
+Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover the quantized Nano and Super checkpoints; every other Generator page reports BF16, except NIM rows, which are FP8.
 
 | Model | Primary vision generation | Additional audiovisual generation | Transfer generation | Action generation |
 |---|---|---|---|---|
 | Cosmos3-Edge | [t2v, i2v, t2i](inference_benchmarks/cosmos3-edge-generator.md#text-to-video-t2v) | [v2v](inference_benchmarks/cosmos3-edge-generator.md#video-to-video-v2v) | Not reported | Not reported |
 | Cosmos3-Nano | [t2v, i2v, t2i](inference_benchmarks/cosmos3-nano-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-nano-generator.md#additional-audiovisual-generation) | [blur, depth, edge, seg, wsm](inference_benchmarks/cosmos3-nano-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-nano-generator.md#action-generation) |
 | Cosmos3-Super | [t2v, i2v, t2i](inference_benchmarks/cosmos3-super-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-super-generator.md#additional-audiovisual-generation) | [blur, depth, edge, seg, wsm](inference_benchmarks/cosmos3-super-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-super-generator.md#action-generation) |
+| Cosmos3-Nano-FP8 | [t2v, i2v, t2i](inference_benchmarks/cosmos3-nano-fp8-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-nano-fp8-generator.md#additional-audiovisual-generation) | [blur, depth, edge, multi_control, seg, wsm](inference_benchmarks/cosmos3-nano-fp8-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-nano-fp8-generator.md#action-generation) |
+| Cosmos3-Super-FP8 | [t2v, i2v, t2i](inference_benchmarks/cosmos3-super-fp8-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-super-fp8-generator.md#additional-audiovisual-generation) | [blur, depth, edge, multi_control, seg, wsm](inference_benchmarks/cosmos3-super-fp8-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-super-fp8-generator.md#action-generation) |
 
 ## Reasoner benchmarks
 
