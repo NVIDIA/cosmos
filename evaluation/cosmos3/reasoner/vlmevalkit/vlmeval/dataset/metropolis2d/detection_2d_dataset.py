@@ -292,22 +292,38 @@ class Metropolis2DDetectionDataset(ImageBaseDataset):
             total_pred += len(pred_boxes_car)
 
             # Sort predictions by confidence (descending)
-            pred_boxes_car = sorted(pred_boxes_car, key=lambda x: x.get('score', 1.0), reverse=True)
+            pred_boxes_car = sorted(
+                pred_boxes_car,
+                key=lambda x: x.get('score', 1.0),
+                reverse=True
+            )
 
+            # Precompute IoU matrix once for all prediction/ground-truth pairs.
+            num_preds = len(pred_boxes_car)
+            num_gts = len(gt_boxes_car)
+
+            iou_matrix = np.zeros((num_preds, num_gts), dtype=np.float64)
+
+            for pred_idx, pred in enumerate(pred_boxes_car):
+                pred_bbox = pred['bbox']
+
+                for gt_idx, gt in enumerate(gt_boxes_car):
+                    iou_matrix[pred_idx, gt_idx] = compute_2d_iou(
+                        pred_bbox, gt['bbox']
+                )
             # Match predictions to ground truth at each IoU threshold
             for iou_thresh in iou_thresholds:
                 gt_matched = [False] * len(gt_boxes_car)
 
-                for pred in pred_boxes_car:
-                    pred_bbox = pred['bbox']
+                for pred_idx, pred in enumerate(pred_boxes_car):
                     confidence = pred.get('score', 1.0)
                     best_iou = 0.0
                     best_gt_idx = -1
 
-                    for gt_idx, gt in enumerate(gt_boxes_car):
+                    for gt_idx in range(num_gts):
                         if gt_matched[gt_idx]:
                             continue
-                        iou = compute_2d_iou(pred_bbox, gt['bbox'])
+                        iou = iou_matrix[pred_idx, gt_idx]
                         if iou > best_iou:
                             best_iou = iou
                             best_gt_idx = gt_idx
