@@ -424,10 +424,11 @@ live in the
 ### Cosmos3 Nano and Super FP8 notebook
 
 [`run_fp8_with_trt_llm.ipynb`](./run_fp8_with_trt_llm.ipynb)
-runs local, ModelOpt-calibrated Cosmos3 Nano and Super FP8 checkpoints directly
-through TensorRT-LLM's offline Cosmos3 entry point. It contains the complete
+runs the ModelOpt-calibrated Cosmos3 Nano and Super FP8 checkpoints (the `fp8`
+revision on Hugging Face) directly through TensorRT-LLM's offline Cosmos3 entry point. It contains the complete
 single-GPU commands for text-to-image, text-to-video, image-to-video, and
-video-to-video generation, followed by PNG and MP4 validation. The checkpoint
+video-to-video generation on this folder's shared prompts and reference media,
+followed by PNG and MP4 validation. Super needs a Blackwell-class single GPU. The checkpoint
 metadata supplies the calibrated weight and activation scales; no runtime
 quantization flag is required.
 

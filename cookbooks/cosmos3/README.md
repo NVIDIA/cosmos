@@ -291,19 +291,26 @@ video-content classification or suppress that warning.
 Cosmos3 Nano and Super publish ModelOpt-calibrated checkpoints on the `fp8`
 revision of their Hugging Face repositories. These revisions contain the FP8
 weights, activation scales, and runtime policy. TensorRT-LLM reads that metadata
-directly, so no quantization flag is required.
+directly, so no quantization flag is required. Static-FP8 loading
+([#17476](https://github.com/NVIDIA/TensorRT-LLM/pull/17476)) is merged on
+TensorRT-LLM `main`; use a checkout at or after it rather than the older revision
+pinned above. Select the FP8 weights with `--revision fp8`; TensorRT-LLM
+downloads them on first use:
 
 ```bash
-hf download nvidia/Cosmos3-Nano \
-  --revision fp8 \
-  --local-dir checkpoints/Cosmos3-Nano-FP8
-hf download nvidia/Cosmos3-Super \
-  --revision fp8 \
-  --local-dir checkpoints/Cosmos3-Super-FP8
+python3 examples/visual_gen/models/cosmos3/cosmos3.py \
+  --model nvidia/Cosmos3-Nano --revision fp8 \
+  --visual_gen_args examples/visual_gen/configs/cosmos3-nano-1gpu.yaml \
+  --prompt_file examples/visual_gen/models/cosmos3/prompts/t2v.json \
+  --output_path nano_fp8_t2v.mp4
 ```
 
-These FP8 checkpoints support one GPU only. Use the BF16 checkpoints for tensor,
-Ulysses, context, or CFG parallelism, or for parallel VAE. The
+Install `cosmos_guardrail==0.3.2` (not the `0.3.0` pin shown above) for these
+offline runs; it needs no NLTK data setup. These FP8 checkpoints support one GPU
+only, and the weights are about 21 GB for Nano and 70 GB for Super, so Super needs
+a single GPU with enough memory for 70 GB of weights plus activations. Use the
+BF16 checkpoints for tensor, Ulysses, context, or CFG parallelism, or for
+parallel VAE. The
 [FP8 checkpoint notebook](generator/audiovisual/run_fp8_with_trt_llm.ipynb)
 runs Nano and Super through the offline TensorRT-LLM entry point for
 text-to-image, text-to-video, image-to-video, and video-to-video generation and
