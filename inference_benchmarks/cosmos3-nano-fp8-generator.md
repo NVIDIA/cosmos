@@ -33,7 +33,9 @@ Empty cells mean that a run has not been completed for that GPU, engine, or reso
 
 ## Benchmark methodology
 
-PyTorch values are from PBR `#309161`, **FP8 Cosmos3-Nano/Super (regular non-distilled) Generator PyTorch Inference Benchmarking**, reporting average generation latency over datacenter configurations at 1, 4, and 8 GPUs. Diffusers values are from PBR `#309434`, **FP8 Cosmos3-Nano/Super Generator Diffusers Inference Benchmarking**, measured on a single GPU only and at 480p and 720p only, which is why the 256p column is empty for Diffusers and why its rows are empty wherever a block reports eight GPUs. Neither campaign covered H100 NVL or H200 NVL, so those GPUs are absent from this page. GB300 appears only in the Diffusers campaign. vLLM-Omni, TensorRT-LLM, and NIM have no FP8 results yet. Values are rounded to two decimal places.
+PyTorch values are from PBR `#309161`, **FP8 Cosmos3-Nano/Super (regular non-distilled) Generator PyTorch Inference Benchmarking**, reporting average generation latency over datacenter configurations at 1, 4, and 8 GPUs. Diffusers values are from PBR `#309434`, **FP8 Cosmos3-Nano/Super Generator Diffusers Inference Benchmarking**, measured on a single GPU only and at 480p and 720p only, which is why the 256p column is empty for Diffusers and why its rows are empty wherever a block reports eight GPUs. Neither OSS campaign covered H100 NVL or H200 NVL; those GPUs have NIM results only in the primary tables. GB300 appears only in the Diffusers campaign. vLLM-Omni and TensorRT-LLM have no FP8 results here. Values are rounded to two decimal places.
+
+[NIM](../cookbooks/cosmos3/nim/README.md) results cover t2v, i2v, and t2i. NIM reports `Avg. Generation Time (s)` using FP8 latency profiles with offload disabled, excluding request overhead and MP4 encoding. Runs use concurrency 1, three measured requests, and 189 video frames or one image frame. The same measurements are also shown on the [Nano page](cosmos3-nano-generator.md), which includes [additional GPU counts and profiles](cosmos3-nano-generator.md#additional-nim-configurations). Precision alone does not establish identical checkpoints or benchmark settings across backends.
 
 These reports establish the reported timing matrix but do not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
 
@@ -63,18 +65,27 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 1 | 4.71 | 47.34 | 173.02 |
 |  | Diffusers | 1 |  |  |  |
+|  | NIM | 1 | 7.24 | 81.35 | 313.63 |
 | **H20** | PyTorch | 1 | 11.82 | 112.34 | 427.62 |
 |  | Diffusers | 1 |  |  |  |
+|  | NIM | 1 | 18.78 | 195.35 | 776.37 |
 | **H100 80GB HBM3** | PyTorch | 1 | 3.12 | 26.01 | 94.01 |
 |  | Diffusers | 1 |  | 69.55 | 237.29 |
+|  | NIM | 1 | 5.35 | 46.08 | 173.20 |
 | **H200 141GB HBM3** | PyTorch | 1 | 3.09 | 26.59 | 94.57 |
 |  | Diffusers | 1 |  | 68.32 | 237.18 |
+|  | NIM | 1 | 5.02 | 46.93 | 177.23 |
 | **B200** | PyTorch | 1 | 1.97 | 14.85 | 51.85 |
 |  | Diffusers | 1 |  | 39.70 | 124.10 |
+|  | NIM | 1 | 2.94 | 25.03 | 91.62 |
 | **B300** | PyTorch | 1 | 1.99 | 13.68 | 46.41 |
 |  | Diffusers | 1 |  | 37.61 | 115.14 |
+|  | NIM | 1 | 2.86 | 23.67 | 85.52 |
 | **GB300** | PyTorch | 1 |  |  |  |
 |  | Diffusers | 1 |  | 34.53 | 97.30 |
+|  | NIM | 1 |  |  |  |
+| **H100 NVL** | NIM | 1 | 6.70 | 67.09 | 252.22 |
+| **H200 NVL** | NIM | 1 | 5.42 | 56.85 | 227.34 |
 
 ### Image-to-Video (i2v)
 
@@ -82,18 +93,27 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 1 | 4.50 | 45.96 | 169.15 |
 |  | Diffusers | 1 |  |  |  |
+|  | NIM | 1 | 7.27 | 81.50 | 313.64 |
 | **H20** | PyTorch | 1 | 11.19 | 110.19 | 419.99 |
 |  | Diffusers | 1 |  |  |  |
+|  | NIM | 1 | 18.69 | 195.87 | 776.48 |
 | **H100 80GB HBM3** | PyTorch | 1 | 2.96 | 25.04 | 91.65 |
 |  | Diffusers | 1 |  | 71.06 | 241.53 |
+|  | NIM | 1 | 5.37 | 46.34 | 173.14 |
 | **H200 141GB HBM3** | PyTorch | 1 | 2.94 | 25.56 | 92.44 |
 |  | Diffusers | 1 |  | 69.69 | 237.95 |
+|  | NIM | 1 | 5.07 | 46.95 | 177.57 |
 | **B200** | PyTorch | 1 | 1.87 | 14.24 | 50.24 |
 |  | Diffusers | 1 |  | 40.69 | 126.07 |
+|  | NIM | 1 | 2.98 | 25.59 | 91.65 |
 | **B300** | PyTorch | 1 | 1.78 | 13.08 | 44.94 |
 |  | Diffusers | 1 |  | 38.35 | 117.18 |
+|  | NIM | 1 | 2.88 | 23.74 | 85.50 |
 | **GB300** | PyTorch | 1 |  |  |  |
 |  | Diffusers | 1 |  | 34.96 | 99.37 |
+|  | NIM | 1 |  |  |  |
+| **H100 NVL** | NIM | 1 | 6.76 | 67.50 | 251.21 |
+| **H200 NVL** | NIM | 1 | 5.43 | 57.02 | 226.12 |
 
 ### Text-to-Image (t2i)
 
@@ -101,21 +121,30 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch | 1 | 0.97 | 1.02 | 1.50 |
 |  | Diffusers | 1 |  | 7.29 |  |
+|  | NIM | 1 | 1.01 | 1.33 | 2.25 |
 | **H20** | PyTorch | 1 | 1.27 | 1.74 | 3.25 |
 |  | Diffusers | 1 |  |  |  |
+|  | NIM | 1 | 1.18 | 2.54 | 4.70 |
 | **H100 80GB HBM3** | PyTorch | 1 | 1.16 | 1.14 | 1.21 |
 |  | Diffusers | 1 |  | 7.50 | 7.68 |
+|  | NIM | 1 | 1.10 | 1.24 | 1.51 |
 | **H200 141GB HBM3** | PyTorch | 1 | 1.12 | 1.14 | 1.21 |
 |  | Diffusers | 1 |  | 7.44 | 7.74 |
+|  | NIM | 1 | 1.17 | 1.18 | 1.42 |
 | **B200** | PyTorch | 1 | 0.96 | 0.92 | 0.97 |
 |  | Diffusers | 1 |  | 6.82 | 6.94 |
+|  | NIM | 1 | 0.99 | 1.06 | 1.02 |
 | **B300** | PyTorch | 1 | 0.95 | 0.95 | 1.51 |
 |  | Diffusers | 1 |  | 10.28 | 6.71 |
+|  | NIM | 1 | 1.45 | 1.50 | 1.48 |
 | **GB300** | PyTorch | 1 |  |  |  |
 |  | Diffusers | 1 |  | 11.79 | 13.19 |
+|  | NIM | 1 |  |  |  |
+| **H100 NVL** | NIM | 1 | 1.14 | 1.15 | 1.72 |
+| **H200 NVL** | NIM | 1 | 1.12 | 1.16 | 1.46 |
 
 <sub>Notes:
-1. All times measured on identical workloads (same seed, sampler settings, prompt).
+1. OSS times measured on identical workloads (same seed, sampler settings, prompt).
 2. Multi-GPU configurations use tensor parallelism.
 3. Values are average generation latency in seconds; lower is better.
 4. The **GPUs** column gives the number of GPUs behind every value in that row, and is the same for every engine in a GPU block so the rows can be compared directly.

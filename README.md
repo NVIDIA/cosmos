@@ -82,7 +82,7 @@ This repository is the home of the models: everything for exploring, running, an
   <tr><td><b>See it work</b> — zero install</td><td><a href="https://build.nvidia.com/nvidia/cosmos3-nano">Video generation</a>, <a href="https://build.nvidia.com/nvidia/cosmos3-nano-reasoner">visual reasoning</a></td><td>1 min</td></tr>
   <tr><td><b>Generate my first video</b></td><td><a href="#generate-your-first-video">Quickstart ↓</a></td><td>10 min</td></tr>
   <tr><td><b>Reason over images &amp; video</b></td><td><a href="cookbooks/cosmos3/reasoner/run_with_vllm.ipynb">Reasoner notebook</a></td><td>10 min</td></tr>
-  <tr><td><b>Serve an OpenAI-compatible API</b></td><td><a href="cookbooks/cosmos3/README.md">Serving setup guide</a> — vLLM, vLLM-Omni, or NIM</td><td>30 min</td></tr>
+  <tr><td><b>Serve models through an API</b></td><td><a href="cookbooks/cosmos3/README.md">Serving setup guide</a> — vLLM, vLLM-Omni, or the <a href="cookbooks/cosmos3/nim/README.md">Cosmos3 Certified NIM</a></td><td>30 min</td></tr>
   <tr><td><b>Post-train on my own data</b> — SFT, distillation, RL</td><td><a href="https://github.com/NVIDIA/cosmos-framework">Cosmos Framework</a>, then <a href="evaluation/">evaluate here</a></td><td>hours</td></tr>
   <tr><td><b>Explore runnable notebooks</b></td><td><a href="cookbooks/cosmos3/README.md">Cookbooks</a></td><td>browse</td></tr>
   <tr><td><b>Evaluate a model</b></td><td><a href="evaluation/">Evaluation suites</a> — PAIBench, Physics-IQ, VLMEvalKit</td><td>hours</td></tr>
@@ -164,7 +164,7 @@ Training, optimization, and deployment tooling lives in [Cosmos Framework](https
 | [Cosmos Curator](https://github.com/NVIDIA/cosmos-curator) | Distributed data curation: processing, annotation, filtering, dedup |
 | [Cosmos Evaluator](https://github.com/NVIDIA/cosmos-evaluator) | Automated evaluation system for world generation & reasoning outputs |
 
-Cosmos 3 runs on Diffusers, Transformers, vLLM, vLLM-Omni, SGLang, TensorRT-LLM, and NIM — pick a backend in the [environment setup guide](cookbooks/cosmos3/README.md).
+Cosmos 3 runs on Diffusers, Transformers, vLLM, vLLM-Omni, SGLang, TensorRT-LLM, and [NIM](cookbooks/cosmos3/nim/README.md) — pick a backend in the [environment setup guide](cookbooks/cosmos3/README.md).
 
 ## Community & contributing
 
