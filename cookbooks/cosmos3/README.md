@@ -313,8 +313,10 @@ BF16 checkpoints for tensor, Ulysses, context, or CFG parallelism, or for
 parallel VAE. The
 [FP8 checkpoint notebook](generator/audiovisual/run_fp8_with_trt_llm.ipynb)
 runs Nano and Super through the offline TensorRT-LLM entry point for
-text-to-image, text-to-video, image-to-video, and video-to-video generation and
-then validates every PNG and MP4 artifact.
+text-to-image, text-to-video, image-to-video, and video-to-video generation,
+text-to-video and image-to-video with synchronized audio, validates every PNG
+and MP4 artifact, and serves the FP8 Reasoner for image and
+video understanding.
 
 ### VisualGen server
 
@@ -480,6 +482,28 @@ The server exposes `/health` and the OpenAI-compatible API at
 `http://localhost:8001/v1`. See the
 [Reasoner TensorRT-LLM notebook](reasoner/run_with_tensorrt_llm.ipynb) for image
 and video requests.
+
+**Cosmos3-Nano or Cosmos3-Super FP8** (single GPU, port 8001). The `fp8`
+revision carries ModelOpt-calibrated weights and static activation scales;
+`trtllm-serve` reads them from the checkpoint, so no quantization flag is
+needed. This needs a TensorRT-LLM build from `main`, as described in the
+[FP8 checkpoint section](#cosmos3-nano-and-super-fp8-checkpoints-offline-single-gpu),
+and Super FP8 fits on one Blackwell-class GPU:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 \
+trtllm-serve nvidia/Cosmos3-Nano \
+  --hf_revision fp8 \
+  --host 0.0.0.0 \
+  --port 8001 \
+  --max_num_tokens 32768
+```
+
+Replace `nvidia/Cosmos3-Nano` with `nvidia/Cosmos3-Super` for Super. On a Slurm
+compute node where `trtllm-serve` stalls at `worker_initialization_wait`,
+prefix the command with `mpirun -np 1 --bind-to none trtllm-llmapi-launch`.
+The [FP8 checkpoint notebook](generator/audiovisual/run_fp8_with_trt_llm.ipynb)
+starts this server and sends image and video requests to both models.
 
 ## Transformers
 
