@@ -4,7 +4,7 @@
 
 These tables report **Cosmos3-Nano Generator** latency in seconds. Lower is better.
 
-Every row reports one GPU configuration, named in the **GPUs** column, and all three resolutions in that row come from it. The configuration is one GPU when the model fits on a single device at its highest resolution, 720p, and eight GPUs when it does not. Within one GPU's block every engine reports the same configuration, so a column can be read straight across the runtimes. Cosmos3-Nano fits on a single GPU at 720p, so all populated rows here report one GPU.
+Each primary vision-generation row reports one GPU configuration, named in the **GPUs** column, and all three resolutions in that row come from it. The configuration is one GPU when the model fits on a single device at its highest resolution, 720p, and eight GPUs when it does not. Within one GPU's block every engine reports the same configuration, so a column can be read straight across the runtimes. Cosmos3-Nano fits on a single GPU at 720p, so its primary vision-generation rows report one GPU. Additional NIM GPU counts are listed separately.
 
 Empty cells mean that a run has not been completed for that GPU, engine, or resolution; they do not indicate that a combination is unsupported.
 
@@ -16,6 +16,7 @@ Empty cells mean that a run has not been completed for that GPU, engine, or reso
   - [Text-to-Video (t2v)](#text-to-video-t2v)
   - [Image-to-Video (i2v)](#image-to-video-i2v)
   - [Text-to-Image (t2i)](#text-to-image-t2i)
+- [Additional NIM configurations](#additional-nim-configurations)
 - [Additional audiovisual generation](#additional-audiovisual-generation)
   - [Video-to-Video (v2v)](#video-to-video-v2v)
   - [Text-to-Audio-and-Video (t2av)](#text-to-audio-and-video-t2av)
@@ -34,7 +35,7 @@ Empty cells mean that a run has not been completed for that GPU, engine, or reso
 
 ## Benchmark methodology
 
-The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and NIM. Their vLLM-Omni values are from PBR `#307999`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (t2i, t2v, i2v)**; the PyTorch and NIM values preserve the previously published campaigns. Those tables use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
+The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and NIM. Their vLLM-Omni values are from PBR `#307999`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (t2i, t2v, i2v)**; the PyTorch values preserve the previously published campaigns. NIM values report average generation time using FP8 latency profiles (see note 7). NIM FP8 output quality has been validated to be comparable to the BF16 baseline. OSS rows use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
 
 The additional audiovisual and action tables come from three internal benchmark reports. PyTorch values are from PBR `#308197`, **Cosmos3-Generator OSS Inference Benchmarking 32B and 8B (189 frames)**: average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) are from PBR `#308195`. vLLM-Omni action values are from PBR `#308481`, **Cosmos3-Generator vLLM-Omni Inference Benchmarking (action)**, measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. That action sweep did not cover Super on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from four further reports: PBR `#308202` (all modalities) and PBR `#308451` (video-to-video) on one GPU, PBR `#308918` for 4- and 8-GPU runs, and PBR `#308587` for transfer. vLLM-Omni transfer values are from PBR `#308574`. Where PBR `#308918` offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. TensorRT-LLM values are from PBR `#308000`, **Cosmos3-Generator TRT-LLM Inference Benchmarking**, which sweeps tensor-parallel, CFG-parallel, and Ulysses-parallel splits at each GPU count; the fastest split at the count a row reports is the one published. That campaign covers six GPUs, so the TensorRT-LLM rows for H100 NVL and H200 NVL are empty, and it includes no action workloads. Values are rounded to two decimal places.
 
@@ -66,42 +67,42 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | vLLM-Omni | 1 | 10.65 | 105.61 | 371.53 |
 |  | Diffusers | 1 | 11.20 | 112.00 | 392.00 |
 |  | TensorRT-LLM | 1 | 10.27 | 102.55 | 369.78 |
-|  | NIM | 1 | 7.93 | 82.69 | 318.69 |
+|  | NIM | 1 | 7.24 | 81.35 | 313.63 |
 | **H20** | PyTorch | 1 | 30.57 | 257.51 | 931.39 |
 |  | vLLM-Omni | 1 | 28.58 | 256.97 | 929.81 |
 |  | Diffusers | 1 | 30.20 | 258.00 | 926.00 |
 |  | TensorRT-LLM | 1 | 26.92 | 251.79 | 908.90 |
-|  | NIM | 1 | 17.81 | 192.07 | 771.37 |
+|  | NIM | 1 | 18.78 | 195.35 | 776.37 |
 | **H100 NVL** | PyTorch | 1 | 10.03 | 84.12 | 297.27 |
 |  | vLLM-Omni | 1 | 9.25 | 80.75 | 281.99 |
 |  | Diffusers | 1 | 11.00 | 90.00 | 324.20 |
 |  | TensorRT-LLM | — |  |  |  |
-|  | NIM | 1 | 7.09 | 68.01 | 267.73 |
+|  | NIM | 1 | 6.70 | 67.09 | 252.22 |
 | **H200 NVL** | PyTorch | 1 | 8.17 | 69.79 | 244.39 |
 |  | vLLM-Omni | 1 | 7.44 | 64.58 | 240.05 |
 |  | Diffusers | 1 | 9.00 | 74.00 | 276.20 |
 |  | TensorRT-LLM | — |  |  |  |
-|  | NIM | 1 | 5.87 | 57.10 | 229.63 |
+|  | NIM | 1 | 5.42 | 56.85 | 227.34 |
 | **H100 80GB HBM3** | PyTorch | 1 | 7.61 | 59.83 | 207.78 |
 |  | vLLM-Omni | 1 | 6.97 | 58.17 | 202.29 |
 |  | Diffusers | 1 | 9.00 | 68.00 | 240.00 |
 |  | TensorRT-LLM | 1 | 6.50 | 60.10 | 223.51 |
-|  | NIM | 1 | 5.72 | 51.73 | 199.46 |
+|  | NIM | 1 | 5.35 | 46.08 | 173.20 |
 | **H200 141GB HBM3** | PyTorch | 1 | 7.53 | 60.18 | 214.28 |
 |  | vLLM-Omni | 1 | 6.79 | 58.14 | 208.36 |
 |  | Diffusers | 1 | 9.00 | 67.00 | 239.60 |
 |  | TensorRT-LLM | 1 | 6.42 | 60.57 | 225.06 |
-|  | NIM | 1 | 5.72 | 51.90 | 200.63 |
+|  | NIM | 1 | 5.02 | 46.93 | 177.23 |
 | **B200** | PyTorch | 1 | 4.56 | 33.20 | 114.85 |
 |  | vLLM-Omni | 1 | 4.03 | 32.04 | 107.79 |
 |  | Diffusers | 1 | 7.00 | 36.80 | 117.00 |
 |  | TensorRT-LLM | 1 | 3.43 | 28.28 | 100.02 |
-|  | NIM | 1 | 3.72 | 26.68 | 93.33 |
+|  | NIM | 1 | 2.94 | 25.03 | 91.62 |
 | **B300** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 1 | 4.46 | 32.18 | 102.10 |
 |  | Diffusers | 1 | 6.40 | 39.32 | 121.74 |
 |  | TensorRT-LLM | 1 | 3.31 | 26.52 | 91.15 |
-|  | NIM | 1 | 4.51 | 27.49 | 90.39 |
+|  | NIM | 1 | 2.86 | 23.67 | 85.52 |
 
 ### Image-to-Video (i2v)
 
@@ -111,42 +112,42 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | vLLM-Omni | 1 | 11.04 | 107.77 | 376.44 |
 |  | Diffusers | 1 | 12.00 | 112.00 | 397.00 |
 |  | TensorRT-LLM | 1 | 10.77 | 105.03 | 374.89 |
-|  | NIM | 1 | 8.23 | 84.58 | 326.96 |
+|  | NIM | 1 | 7.27 | 81.50 | 313.64 |
 | **H20** | PyTorch | 1 | 31.36 | 257.10 | 933.07 |
 |  | vLLM-Omni | 1 | 29.50 | 261.56 | 940.16 |
 |  | Diffusers | 1 | 31.00 | 258.00 | 925.00 |
 |  | TensorRT-LLM | 1 | 28.07 | 254.79 | 915.71 |
-|  | NIM | 1 | 18.67 | 195.10 | 774.88 |
+|  | NIM | 1 | 18.69 | 195.87 | 776.48 |
 | **H100 NVL** | PyTorch | 1 | 10.19 | 84.50 | 298.57 |
 |  | vLLM-Omni | 1 | 9.62 | 82.61 | 286.19 |
 |  | Diffusers | 1 | 11.00 | 91.00 | 325.20 |
 |  | TensorRT-LLM | — |  |  |  |
-|  | NIM | 1 | 7.39 | 69.39 | 272.29 |
+|  | NIM | 1 | 6.76 | 67.50 | 251.21 |
 | **H200 NVL** | PyTorch | 1 | 8.27 | 69.99 | 246.62 |
 |  | vLLM-Omni | 1 | 7.83 | 66.39 | 243.52 |
 |  | Diffusers | 1 | 9.00 | 74.00 | 275.20 |
 |  | TensorRT-LLM | — |  |  |  |
-|  | NIM | 1 | 6.25 | 58.64 | 232.47 |
+|  | NIM | 1 | 5.43 | 57.02 | 226.12 |
 | **H100 80GB HBM3** | PyTorch | 1 | 7.64 | 59.95 | 207.87 |
 |  | vLLM-Omni | 1 | 7.37 | 59.77 | 205.97 |
 |  | Diffusers | 1 | 9.00 | 68.00 | 239.80 |
 |  | TensorRT-LLM | 1 | 6.90 | 63.24 | 226.15 |
-|  | NIM | 1 | 6.08 | 53.02 | 202.59 |
+|  | NIM | 1 | 5.37 | 46.34 | 173.14 |
 | **H200 141GB HBM3** | PyTorch | 1 | 7.65 | 60.51 | 214.80 |
 |  | vLLM-Omni | 1 | 7.28 | 59.64 | 209.65 |
 |  | Diffusers | 1 | 9.00 | 67.20 | 240.00 |
 |  | TensorRT-LLM | 1 | 6.74 | 63.54 | 231.15 |
-|  | NIM | 1 | 6.04 | 53.25 | 203.66 |
+|  | NIM | 1 | 5.07 | 46.95 | 177.57 |
 | **B200** | PyTorch | 1 | 4.60 | 33.08 | 113.90 |
 |  | vLLM-Omni | 1 | 4.33 | 33.09 | 110.08 |
 |  | Diffusers | 1 | 7.00 | 37.00 | 116.00 |
 |  | TensorRT-LLM | 1 | 3.70 | 29.33 | 102.35 |
-|  | NIM | 1 | 4.05 | 27.72 | 95.57 |
+|  | NIM | 1 | 2.98 | 25.59 | 91.65 |
 | **B300** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 1 | 5.61 | 33.45 | 104.75 |
 |  | Diffusers | 1 | 13.40 | 49.59 | 131.25 |
 |  | TensorRT-LLM | 1 | 3.70 | 27.73 | 93.88 |
-|  | NIM | 1 | 4.50 | 28.90 | 92.59 |
+|  | NIM | 1 | 2.88 | 23.74 | 85.50 |
 
 ### Text-to-Image (t2i)
 
@@ -156,43 +157,106 @@ The PBR uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound
 |  | vLLM-Omni | 1 | 1.59 | 2.87 | 4.99 |
 |  | Diffusers | 1 | 2.00 | 4.00 | 5.00 |
 |  | TensorRT-LLM | 1 | 1.18 | 2.35 | 4.50 |
+|  | NIM | 1 | 1.01 | 1.33 | 2.25 |
 | **H20** | PyTorch | 1 | 3.06 | 6.51 | 12.31 |
 |  | vLLM-Omni | 1 | 1.73 | 4.92 | 10.73 |
 |  | Diffusers | 1 | 3.00 | 6.00 | 10.00 |
 |  | TensorRT-LLM | 1 | 1.94 | 5.55 | 11.56 |
+|  | NIM | 1 | 1.18 | 2.54 | 4.70 |
 | **H100 NVL** | PyTorch | 1 | 2.77 | 2.83 | 4.21 |
 |  | vLLM-Omni | 1 | 1.55 | 1.92 | 3.43 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 |  | TensorRT-LLM | — |  |  |  |
+|  | NIM | 1 | 1.14 | 1.15 | 1.72 |
 | **H200 NVL** | PyTorch | 1 | 2.75 | 2.85 | 3.58 |
 |  | vLLM-Omni | 1 | 1.53 | 1.58 | 2.81 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 |  | TensorRT-LLM | — |  |  |  |
+|  | NIM | 1 | 1.12 | 1.16 | 1.46 |
 | **H100 80GB HBM3** | PyTorch | 1 | 3.01 | 3.01 | 3.45 |
 |  | vLLM-Omni | 1 | 1.61 | 1.53 | 2.61 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 |  | TensorRT-LLM | 1 | 1.02 | 1.30 | 2.63 |
+|  | NIM | 1 | 1.10 | 1.24 | 1.51 |
 | **H200 141GB HBM3** | PyTorch | 1 | 2.96 | 3.04 | 3.28 |
 |  | vLLM-Omni | 1 | 1.57 | 1.52 | 2.60 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 |  | TensorRT-LLM | 1 | 1.05 | 1.30 | 2.60 |
+|  | NIM | 1 | 1.17 | 1.18 | 1.42 |
 | **B200** | PyTorch | 1 | 2.68 | 2.75 | 2.87 |
 |  | vLLM-Omni | 1 | 1.49 | 1.20 | 1.76 |
 |  | Diffusers | 1 | 3.00 | 3.20 | 3.00 |
 |  | TensorRT-LLM | 1 | 0.86 | 0.88 | 1.40 |
+|  | NIM | 1 | 0.99 | 1.06 | 1.02 |
 | **B300** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 1 | 1.97 | 1.81 | 2.34 |
 |  | Diffusers | 1 | 3.86 | 3.86 | 3.99 |
 |  | TensorRT-LLM | 1 | 1.36 | 1.30 | 1.40 |
+|  | NIM | 1 | 1.45 | 1.50 | 1.48 |
 
 <sub>Notes:
-1. All times measured on identical workloads (same seed, sampler settings, prompt).
+1. OSS times measured on identical workloads (same seed, sampler settings, prompt).
 2. Multi-GPU configurations use tensor parallelism, except TensorRT-LLM, which may also split across CFG and Ulysses dimensions.
 3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo and are subject to change before GA; the H100 NVL values in particular are pre-release.
 4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs. Single-GPU values come from PBR `#308202` and PBR `#308451`; multi-GPU values from PBR `#308918`.
 5. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 6. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
-7. NIM numbers use latency profiles with FP8 precision and report end-to-end `Request Latency s`, including request processing, video generation, output encoding, and returning the response.</sub>
+7. NIM numbers use FP8 latency profiles with offload disabled and report `Avg. Generation Time (s)`, excluding request overhead and MP4 encoding. Runs use concurrency 1, three measured requests, and 189 video frames or one image frame.</sub>
+
+## Additional NIM configurations
+
+Average generation time in seconds for GPU counts not shown in the primary tables above. These runs use the same FP8 latency profiles with offload disabled (see note 7).
+
+| GPU | Modality | GPUs | 256p | 480p | 720p |
+|---|---|:-:|---:|---:|---:|
+| RTX PRO 6000 Blackwell | t2v | 4 | 3.45 | 25.41 | 90.81 |
+| RTX PRO 6000 Blackwell | t2v | 8 | 2.83 | 17.04 | 49.33 |
+| H20 | t2v | 4 | 5.88 | 53.77 | 203.35 |
+| H20 | t2v | 8 | 3.84 | 28.51 | 105.11 |
+| H100 NVL | t2v | 4 | 2.50 | 24.35 | 102.48 |
+| H100 NVL | t2v | 8 | 2.46 | 12.96 | 48.50 |
+| H200 NVL | t2v | 4 | 2.62 | 16.95 | 62.77 |
+| H200 NVL | t2v | 8 | 2.14 | 10.30 | 33.53 |
+| H100 80GB HBM3 | t2v | 4 | 2.24 | 13.78 | 48.35 |
+| H100 80GB HBM3 | t2v | 8 | 1.81 | 7.77 | 26.14 |
+| H200 141GB HBM3 | t2v | 4 | 2.12 | 13.65 | 48.75 |
+| H200 141GB HBM3 | t2v | 8 | 1.85 | 7.56 | 25.78 |
+| B200 | t2v | 4 | 1.57 | 7.54 | 25.97 |
+| B200 | t2v | 8 | 1.56 | 4.41 | 14.50 |
+| B300 | t2v | 4 | 2.48 | 7.36 | 24.41 |
+| B300 | t2v | 8 | 2.50 | 4.82 | 13.80 |
+| RTX PRO 6000 Blackwell | i2v | 4 | 3.50 | 25.54 | 90.98 |
+| RTX PRO 6000 Blackwell | i2v | 8 | 2.98 | 16.03 | 49.97 |
+| H20 | i2v | 4 | 5.97 | 53.73 | 203.76 |
+| H20 | i2v | 8 | 3.96 | 28.66 | 105.06 |
+| H100 NVL | i2v | 4 | 2.61 | 24.29 | 99.98 |
+| H100 NVL | i2v | 8 | 2.53 | 13.18 | 48.97 |
+| H200 NVL | i2v | 4 | 2.72 | 17.07 | 62.81 |
+| H200 NVL | i2v | 8 | 2.32 | 10.58 | 33.63 |
+| H100 80GB HBM3 | i2v | 4 | 2.29 | 13.88 | 48.33 |
+| H100 80GB HBM3 | i2v | 8 | 1.93 | 7.92 | 26.37 |
+| H200 141GB HBM3 | i2v | 4 | 2.19 | 13.72 | 48.66 |
+| H200 141GB HBM3 | i2v | 8 | 1.95 | 7.69 | 26.00 |
+| B200 | i2v | 4 | 1.62 | 7.62 | 26.13 |
+| B200 | i2v | 8 | 1.71 | 4.59 | 14.50 |
+| B300 | i2v | 4 | 2.48 | 7.45 | 24.56 |
+| B300 | i2v | 8 | 2.62 | 4.97 | 14.20 |
+| RTX PRO 6000 Blackwell | t2i | 4 | 0.90 | 0.92 | 1.13 |
+| RTX PRO 6000 Blackwell | t2i | 8 | 0.89 | 0.94 | 1.00 |
+| H20 | t2i | 4 | 1.06 | 1.13 | 1.61 |
+| H20 | t2i | 8 | 1.09 | 2.98 | 1.18 |
+| H100 NVL | t2i | 4 | 0.96 | 0.98 | 1.00 |
+| H100 NVL | t2i | 8 | 0.97 | 2.72 | 1.00 |
+| H200 NVL | t2i | 4 | 0.92 | 0.98 | 0.98 |
+| H200 NVL | t2i | 8 | 1.03 | 2.81 | 1.04 |
+| H100 80GB HBM3 | t2i | 4 | 0.98 | 1.00 | 1.08 |
+| H100 80GB HBM3 | t2i | 8 | 1.02 | 2.93 | 1.07 |
+| H200 141GB HBM3 | t2i | 4 | 1.04 | 0.99 | 1.06 |
+| H200 141GB HBM3 | t2i | 8 | 1.09 | 2.93 | 1.10 |
+| B200 | t2i | 4 | 0.87 | 0.91 | 0.89 |
+| B200 | t2i | 8 | 0.90 | 1.02 | 0.91 |
+| B300 | t2i | 4 | 1.36 | 1.40 | 1.37 |
+| B300 | t2i | 8 | 1.38 | 1.45 | 1.47 |
 
 ## Additional audiovisual generation
 

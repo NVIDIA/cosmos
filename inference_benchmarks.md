@@ -1,12 +1,12 @@
 # Inference Benchmarks
 
-These reports collect inference benchmarks for Cosmos3. **Generator** pages measure image, video, audiovisual, and action-generation latency across PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and NIM where results are available. **Reasoner** sections below measure VLM serving and token-generation performance for text, image, and video inputs through vLLM and Hugging Face Transformers.
+These reports collect inference benchmarks for Cosmos3. **Generator** pages measure image, video, audiovisual, and action-generation latency across PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and [Cosmos3 Certified NIM](cookbooks/cosmos3/nim/README.md) (NIM) where results are available. **Reasoner** sections below measure VLM serving and token-generation performance for text, image, and video inputs through vLLM and Hugging Face Transformers.
 
-Results are published incrementally from internal benchmark runs. **Empty cells mean that combination has not been measured yet** — not that it is unsupported. See each model page or section for workload details and data-source definitions.
+Results are published incrementally from internal benchmark runs. Empty cells mean that a run has not been completed for that GPU, engine, or resolution; they do not indicate that a combination is unsupported. See each model page or section for workload details and data-source definitions.
 
 ## Generator benchmarks
 
-Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover the quantized Nano and Super checkpoints; every other Generator page reports BF16, except NIM rows, which are FP8.
+Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover the quantized Nano and Super checkpoints; every other Generator page reports BF16, except NIM rows, which use FP8 with output quality validated to be comparable to the BF16 baseline.
 
 | Model | Primary vision generation | Additional audiovisual generation | Transfer generation | Action generation |
 |---|---|---|---|---|

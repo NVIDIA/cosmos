@@ -5,26 +5,27 @@ Generate images and video (with optional audio) from text, image or video prompt
 distilled Cosmos3-Super students across Cosmos Framework, Diffusers, vLLM-Omni, TRT-LLM
 and NIM backends. Sample prompts live under [`assets/`](./assets).
 
-> **NIM scope:** `Cosmos3-Generator` NIM currently exposes Text2Video and
-> Image2Video only. It does not expose text-to-image, video-to-video,
-> sound/audio generation, action modes, or transfer controls.
+> **NIM scope:** [Cosmos3 Certified NIM](../../nim/README.md) supports
+> text-to-image, text-to-video, image-to-video, and video-to-video,
+> plus [Action](../../nim/action.md) and [Transfer](../../nim/transfer.md).
+> Sound/audio generation is not exposed by the public Generator API.
 
 Environment setup for every backend is centralized in the shared
 [Cosmos3 cookbooks environment setup](../../README.md) guide; each backend below
 links to the section you need. The quickstarts are minimal text-to-video examples
 to get one generation running per backend — run them from this folder.
 
-Generator requires the Guardrail. Request access to the gated
+For backends other than NIM, request access to the gated
 [nvidia/Cosmos-1.0-Guardrail](https://huggingface.co/nvidia/Cosmos-1.0-Guardrail)
 HF repository before running these examples. To disable the guardrail, set
 `enable_safety_checker=False` (Diffusers), `TRTLLM_DISABLE_COSMOS3_GUARDRAILS=1`
 or `use_guardrails: false` through `extra_params` (TensorRT-LLM),
 `guardrails: false` (vLLM-Omni `extra_params`/`extra_args`), or
-`--no-guardrails` (Cosmos Framework). For
-Generator NIM set `NIM_ENABLE_TEXT_GUARDRAILS=0 NIM_ENABLE_VIDEO_GUARDRAILS=0`.
+`--no-guardrails` (Cosmos Framework). For NIM, see
+[Guardrails](../../nim/operations.md#guardrails).
 
-NIM backends use NGC authentication instead of Hugging Face login; see the
-[Generator NIM setup](../../README.md#generator-nim) for details.
+NIM uses NGC authentication instead of Hugging Face login; see the
+[NIM setup](../../nim/deployment.md) for details.
 
 ## Run with Cosmos Framework
 
@@ -423,125 +424,12 @@ live in the
 
 ## Run with NIM
 
-### Quickstart
+Use [NIM](../../nim/README.md) with `NIM_MODEL_TYPE=generator`. Follow the
+[deployment guide](../../nim/deployment.md)
+to select a compatible model and latency or throughput profile, then use the
+[generation guide](../../nim/generation.md) for text-to-image, text-to-video,
+image-to-video, and video-to-video requests through `POST /v1/infer`.
 
-Set up the environment: [Generator NIM setup](../../README.md#generator-nim).
-`Cosmos3-Generator` NIM is a prebuilt NGC container that serves Text2Video and
-Image2Video through `POST /v1/infer`. It returns JSON with a base64-encoded MP4
-in `b64_video`; unlike vLLM-Omni, it does not use `/v1/videos/sync` and does not
-return MP4 bytes directly.
-
-Authenticate Docker to NGC once:
-
-```bash
-export NGC_API_KEY=<your_key>
-echo "$NGC_API_KEY" | docker login nvcr.io --username '$oauthtoken' --password-stdin
-```
-
-Launch **Cosmos3-Nano** (default model size, FP8, latency profile):
-
-```bash
-export LOCAL_NIM_CACHE="${LOCAL_NIM_CACHE:-$HOME/.cache/nim}"
-mkdir -p "$LOCAL_NIM_CACHE"
-chmod -R 777 "$LOCAL_NIM_CACHE" 2>/dev/null || true
-
-docker run -it --rm --name cosmos3-generator \
-  --runtime=nvidia \
-  --gpus all \
-  --shm-size=32GB \
-  --ulimit nofile=65536:65536 \
-  -e NGC_API_KEY="$NGC_API_KEY" \
-  -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
-  -p 8000:8000 \
-  nvcr.io/nim/nvidia/cosmos3-generator:1.0.0
-```
-
-Launch **Cosmos3-Super** by adding `NIM_MODEL_SIZE=super`:
-
-```bash
-docker run -it --rm --name cosmos3-generator \
-  --runtime=nvidia \
-  --gpus all \
-  --shm-size=32GB \
-  --ulimit nofile=65536:65536 \
-  -e NGC_API_KEY="$NGC_API_KEY" \
-  -e NIM_MODEL_SIZE=super \
-  -e NIM_PRECISION=fp8 \
-  -e NIM_PERF_PROFILE=latency \
-  -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
-  -p 8000:8000 \
-  nvcr.io/nim/nvidia/cosmos3-generator:1.0.0
-```
-
-Wait until the readiness endpoint returns success:
-
-```bash
-curl -fsS http://127.0.0.1:8000/v1/health/ready
-```
-
-Send a Text2Video request. The NIM infers T2V from a non-empty `prompt` with no
-`image` field:
-
-```bash
-curl -sS -X POST http://127.0.0.1:8000/v1/infer \
-  -H 'Accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "prompt": "A humanoid robot walks through a futuristic warehouse, inspecting shelves of mechanical components. Photorealistic, cinematic lighting.",
-    "seed": 42,
-    "guidance_scale": 6.0,
-    "steps": 35,
-    "resolution": "256",
-    "num_output_frames": 25,
-    "fps": 24.0
-  }' | jq -r '.b64_video' | base64 -d > /tmp/cosmos3_nim_t2v.mp4
-```
-
-Send an Image2Video request with a local image encoded as a data URI:
-
-```bash
-IMG_B64=$(base64 -w 0 assets/images/image2video/humanoid_robot.jpg)
-cat > /tmp/cosmos3_nim_i2v.json <<EOF
-{
-  "prompt": "The humanoid robot performs a controlled standing backflip in a modern living room, then lands steadily on both feet.",
-  "image": "data:image/jpeg;base64,${IMG_B64}",
-  "seed": 123,
-  "guidance_scale": 6.0,
-  "steps": 35,
-  "resolution": "256",
-  "num_output_frames": 25,
-  "fps": 24.0
-}
-EOF
-
-curl -sS -X POST http://127.0.0.1:8000/v1/infer \
-  -H 'Accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d @/tmp/cosmos3_nim_i2v.json | jq -r '.b64_video' | base64 -d > /tmp/cosmos3_nim_i2v.mp4
-```
-
-Key request fields and constraints:
-
-| Field | Constraint / default |
-| --- | --- |
-| `prompt` | Required for T2V; optional when `image` is provided; max 20000 chars |
-| `negative_prompt` | Optional; omitted means the server uses the Cosmos3 default |
-| `image` | I2V conditioning image; raw base64, `data:image/...;base64,...`, or public URL when URL inputs are enabled |
-| `guidance_scale` | `1.0` to `7.0`, default `6.0` |
-| `steps` | `1` to `100`, default `35` |
-| `resolution` | `256`, `480`, `720`, optionally with `_16_9`, `_1_1`, `_9_16`, `_4_3`, or `_3_4` |
-| `num_output_frames` | Must follow the 4k+1 cadence (`25, 29, 33, ...`); caps: `256 <= 397`, `480 <= 297`, `720 <= 197` |
-| `fps` | `1.0` to `60.0`, recommended `10` to `30`, default `24.0` |
-
-### Notebook walkthrough
-
-[`run_with_nim.ipynb`](./run_with_nim.ipynb) launches the NIM container,
-waits for readiness, inspects the service endpoints, sends T2V and I2V requests,
-decodes `b64_video`, and previews the generated MP4 files inline.
-
-### Limitations
-
-`Cosmos3-Generator` NIM currently exposes **Text2Video** and **Image2Video** only.
-It does **not** expose text-to-image, video-to-video, sound/audio generation,
-action modes, or transfer controls. For those broader Generator API workflows,
-use vLLM-Omni or Cosmos Framework as appropriate.
+Requests select the task explicitly with `model_mode`. The guide includes
+[Python examples](../../nim/examples/) for general-purpose and four-step
+models, response decoding, and saving generated media.
