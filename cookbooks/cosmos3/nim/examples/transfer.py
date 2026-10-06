@@ -10,9 +10,10 @@ from pathlib import Path
 import requests
 from common import (
     compact_json_file,
-    decode_video,
     media_to_data_url,
+    nim_infer,
     require_generator_profile,
+    write_media_output,
 )
 
 NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
@@ -101,20 +102,34 @@ def build_request(case: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--case", choices=CASES, default="precomputed_edge")
-    case = parser.parse_args().case
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output MP4 path (default: outputs/transfer_<case>.mp4).",
+    )
+    parser.add_argument(
+        "--unique",
+        action="store_true",
+        help="Avoid overwriting an existing output file (append a suffix).",
+    )
+    args = parser.parse_args()
+    case = args.case
     require_generator_profile(
         NIM_URL,
         allowed_variants=("nano", "super"),
     )
     request = build_request(case)
 
-    response = requests.post(f"{NIM_URL}/v1/infer", json=request, timeout=3600)
-    response.raise_for_status()
-
-    OUTPUTS.mkdir(exist_ok=True)
-    output = OUTPUTS / f"transfer_{case}.mp4"
-    output.write_bytes(decode_video(response.json()["b64_video"]))
-    print(f"Saved video to {output}")
+    payload = nim_infer(NIM_URL, request=request, timeout=3600)
+    output = args.output or OUTPUTS / f"transfer_{case}.mp4"
+    write_media_output(
+        output.parent,
+        name=output.name,
+        response_payload=payload,
+        key="b64_video",
+        unique=args.unique,
+    )
 
 
 if __name__ == "__main__":

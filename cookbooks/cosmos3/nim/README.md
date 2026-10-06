@@ -119,6 +119,41 @@ For a Reasoner:
 uv run python examples/reasoner.py --case image_caption
 ```
 
+Run the **full example suite** in one command with the batch runner. It
+validates the active runtime/profile, pre-flights the local assets, runs every
+Generator example (plus the Reasoner catalog) as subprocesses, and reports
+per-run PASS/SKIP/FAIL with a meaningful exit code:
+
+```bash
+uv run python examples/run_all_examples.py --list      # show available runs
+uv run python examples/run_all_examples.py --check     # validate runtime + assets (no inference)
+uv run python examples/run_all_examples.py             # run everything                      exit 0/1/2/3
+uv run python examples/run_all_examples.py --case t2v  # run one example
+uv run python examples/run_all_examples.py --parallel  # run independent examples concurrently
+uv run python examples/run_all_examples.py --override seed=42   # tune a shared default for every run
+uv run python examples/run_all_examples.py --format json   # machine-readable summary
+```
+
+The runner's run registry is defined in `examples/runs.yaml` (the in-code
+registry is the fallback), and `--check` also verifies the served Generator
+**variant** matches what each example needs — so a `super-i2v-4step`-only NIM
+skips (rather than hangs on) examples that require `nano`/`super`.
+
+Generation defaults (`seed`, `resolution`, `num_frames`, `fps`, steps,
+guidance, `flow_shift`) share one source of truth in
+`examples/settings.py`; all example scripts and request builders read from it.
+The generator scripts also accept `--output`/`--seed`/`--prompt`/`--image`/
+`--video` and a `--unique` flag to never clobber an earlier output.
+
+The example-client suite has offline tests (no NIM/GPU required) covering the
+shared helpers, the request builders, the runner, and a **contract suite** that
+guards the request builders' recorded snapshots (`tests/snapshots/requests.json`)
+against drift:
+
+```bash
+uv run --dev pytest -q
+```
+
 ### Deploy the NIM yourself
 
 1. Verify the GPU host against [Prerequisites](prerequisites.md).

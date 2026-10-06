@@ -4,18 +4,20 @@
 """Generate an image-conditioned video with a super-i2v-4step profile."""
 
 import argparse
-import os
 from pathlib import Path
 
-import requests
+import settings
 from common import (
     compact_json_file,
-    decode_video,
+    get_default_nim_url,
     media_to_data_url,
+    nim_infer,
+    prompt_or_json,
     require_generator_profile,
+    write_media_output,
 )
 
-NIM_URL = os.environ.get("NIM_URL", "http://localhost:8000").rstrip("/")
+NIM_URL = get_default_nim_url()
 COSMOS3_ROOT = Path(__file__).resolve().parents[2]
 ASSETS = COSMOS3_ROOT / "generator" / "audiovisual" / "assets"
 IMAGE = ASSETS / "images" / "image2video" / "car_driving.jpg"
@@ -25,32 +27,63 @@ OUTPUT = Path(__file__).parent / "outputs" / "i2v_car_driving_4step.mp4"
 
 
 def main() -> None:
-    argparse.ArgumentParser(description=__doc__).parse_args()
+    flow = settings.flow_defaults("image2video-4step")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=OUTPUT, help="Output MP4 path.")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=flow["seed"],
+        help="Random seed (default: the shared image2video-4step default).",
+    )
+    parser.add_argument(
+        "--image",
+        type=Path,
+        default=IMAGE,
+        help="Conditioning image path (default: the cookbook car_driving image).",
+    )
+    parser.add_argument(
+        "--prompt",
+        default=compact_json_file(PROMPT),
+        help="Text prompt or path to a .json prompt asset (default: the cookbook prompt).",
+    )
+    parser.add_argument(
+        "--negative-prompt",
+        default=compact_json_file(NEGATIVE_PROMPT),
+        help="Negative prompt text (default: the cookbook negation).",
+    )
+    parser.add_argument(
+        "--unique",
+        action="store_true",
+        help="Avoid overwriting an existing output file (append a suffix).",
+    )
+    args = parser.parse_args()
+
     require_generator_profile(
         NIM_URL,
         allowed_variants=("super-i2v-4step",),
     )
 
     # Start the NIM with NIM_MODEL_VARIANT=super-i2v-4step. The profile owns
-    # num_inference_steps, guidance_scale, and flow_shift, so this request
-    # omits all three.
+    # num_inference_steps, guidance_scale, and flow_shift; the shared
+    # "image2video-4step" flow omits all three.
     request = {
         "model_mode": "image2video",
-        "prompt": compact_json_file(PROMPT),
-        "negative_prompt": compact_json_file(NEGATIVE_PROMPT),
-        "input_reference": media_to_data_url(IMAGE),
-        "resolution": "720",
-        "num_frames": 189,
-        "fps": 24.0,
-        "seed": 0,
+        "prompt": prompt_or_json(args.prompt),
+        "negative_prompt": prompt_or_json(args.negative_prompt),
+        "input_reference": media_to_data_url(args.image),
+        **flow,
+        "seed": args.seed,
     }
 
-    response = requests.post(f"{NIM_URL}/v1/infer", json=request, timeout=1800)
-    response.raise_for_status()
-
-    OUTPUT.parent.mkdir(exist_ok=True)
-    OUTPUT.write_bytes(decode_video(response.json()["b64_video"]))
-    print(f"Saved video to {OUTPUT}")
+    payload = nim_infer(NIM_URL, request=request)
+    write_media_output(
+        args.output.parent,
+        name=args.output.name,
+        response_payload=payload,
+        key="b64_video",
+        unique=args.unique,
+    )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: OpenMDW-1.1
+
+# Run registry for `run_all_examples.py`.
+#
+# This manifest is the *extensible* source of run definitions: the runner loads
+# it first, then falls back to the built-in registry in `run_all_examples.py`
+# if this file is missing or empty. Each run names an example script module and
+# the Generator model variants it works with. `allowed_variants: []` means "any
+# Generator profile". A `reasoner` runtime entry runs the reasoner catalog.
+runs:
+  - id: t2v
+    module: t2v
+    runtime: generator
+    allowed_variants: [nano, super]
+  - id: t2i
+    module: t2i
+    runtime: generator
+    allowed_variants: [nano, super, super-t2i]
+  - id: i2v
+    module: i2v
+    runtime: generator
+    allowed_variants: [nano, super, super-i2v]
+  - id: i2v_4step
+    module: i2v_4step
+    runtime: generator
+    allowed_variants: [super-i2v-4step]
+  - id: t2i_4step
+    module: t2i_4step
+    runtime: generator
+    allowed_variants: [super-t2i-4step]
+  - id: v2v
+    module: v2v
+    runtime: generator
+    allowed_variants: [nano, super]
+  - id: transfer
+    module: transfer
+    runtime: generator
+    allowed_variants: [nano, super]
+  - id: action
+    module: action
+    runtime: generator
+    allowed_variants: [nano, super]
+  - id: reasoner
+    module: reasoner
+    runtime: reasoner
+    allowed_variants: []
