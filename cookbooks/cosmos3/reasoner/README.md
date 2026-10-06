@@ -126,6 +126,33 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
+For video requests, frame-sampling controls are multimodal processor options. With
+the OpenAI client, pass them through `extra_body`:
+
+```python
+response = client.chat.completions.create(
+    model=client.models.list().data[0].id,
+    messages=messages,
+    extra_body={"mm_processor_kwargs": {"fps": 4, "do_sample_frames": True}},
+)
+```
+
+If you call `/v1/chat/completions` directly with `requests`, send the equivalent
+`mm_processor_kwargs` object in the JSON body. Do not send `fps` or
+`do_sample_frames` as standalone top-level chat-completion fields:
+
+```python
+payload = {
+    "model": "Cosmos3-Super",
+    "messages": messages,
+    "mm_processor_kwargs": {"fps": 4, "do_sample_frames": True},
+}
+```
+
+This is especially important for motion-dependent video tasks such as physical
+plausibility analysis, where the sampled frames determine which temporal events
+are visible to the Reasoner.
+
 ### Notebook walkthrough
 
 [`run_with_vllm.ipynb`](./run_with_vllm.ipynb) uses the **Cosmos3-Super** launch
