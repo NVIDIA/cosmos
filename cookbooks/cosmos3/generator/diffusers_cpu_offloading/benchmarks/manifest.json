@@ -1,0 +1,94 @@
+{
+  "schema_version": 2,
+  "bf16_model": {
+    "repo_id": "nvidia/Cosmos3-Nano",
+    "revision": "fea6e03ac3d7884b4105ed8ee79fc480fca70965"
+  },
+  "name": "cosmos3-nano-native-streaming",
+  "model": {
+    "repo_id": "nvidia/Cosmos3-Nano-FP8",
+    "revision": "main"
+  },
+  "safety_models": [
+    {
+      "repo_id": "nvidia/Cosmos-1.0-Guardrail",
+      "revision": "cf03c0395fac8c4de386c0bdab12cc4fc8d66362",
+      "allow_patterns": [
+        "blocklist/**",
+        "face_blur_filter/**"
+      ]
+    },
+    {
+      "repo_id": "Qwen/Qwen3Guard-Gen-0.6B",
+      "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
+      "allow_patterns": [
+        "*.json",
+        "*.safetensors",
+        "*.txt",
+        "*.jinja"
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "path": "v2v/input_robot_pouring.mp4",
+      "modalities": [
+        "v2v"
+      ],
+      "url": "https://media.githubusercontent.com/media/nvidia-cosmos/cosmos-dependencies/2b17a2413bd86b2cf9b03823637108851e4ddf2d/inputs/vision/robot_pouring.mp4",
+      "sha256": "75b38640974fd5ad8245fa610acee9b0efe1f29d3c8fea829799d7b8fa799be8"
+    },
+    {
+      "path": "action/bridge_20260501_0.mp4",
+      "modalities": [
+        "action"
+      ],
+      "url": "https://media.githubusercontent.com/media/nvidia-cosmos/cosmos-dependencies/2b17a2413bd86b2cf9b03823637108851e4ddf2d/inputs/action/bridge_20260501_0.mp4",
+      "sha256": "a86cfc81633b216891ca26dc58c72193a979c10ad72f123175fa8d61a67cdaec"
+    },
+    {
+      "path": "transfer/edge/control_edge.mp4",
+      "modalities": [
+        "transfer"
+      ],
+      "url": "https://raw.githubusercontent.com/NVIDIA/cosmos/b0e54e88c322695dab188e6ed160c4d6d071c39d/cookbooks/cosmos3/generator/transfer/assets/edge/control_edge.mp4",
+      "sha256": "9d0fb1d1d29d5a081299a46d960fd496bce9997daecf4b39c16d2f4efa395719"
+    },
+    {
+      "path": "transfer/edge/prompt.json",
+      "modalities": [
+        "transfer"
+      ],
+      "url": "https://raw.githubusercontent.com/NVIDIA/cosmos/b0e54e88c322695dab188e6ed160c4d6d071c39d/cookbooks/cosmos3/generator/transfer/assets/edge/prompt.json",
+      "sha256": "03380ef96dceface2f4e79a8c526902d5654f556f38eebd7069a99f482655322"
+    },
+    {
+      "path": "transfer/negative_prompt.json",
+      "modalities": [
+        "transfer"
+      ],
+      "url": "https://raw.githubusercontent.com/NVIDIA/cosmos/b0e54e88c322695dab188e6ed160c4d6d071c39d/cookbooks/cosmos3/generator/transfer/assets/negative_prompt.json",
+      "sha256": "5ef32d9dcedfd5099be30d4dc9d5e959ad40da77f4d5daad782b40b195dbbb54"
+    },
+    {
+      "path": "v2v/input_prompt.json",
+      "modalities": [
+        "v2v"
+      ],
+      "bundled": "v2v_prompt.json",
+      "sha256": "e4721b5f27e73637c007ab24c8c6b513297df1d52708c4aa865fd085598b9c19"
+    },
+    {
+      "path": "v2v/input_negative_prompt.json",
+      "modalities": [
+        "v2v"
+      ],
+      "bundled": "v2v_negative_prompt.json",
+      "sha256": "7a60bd0c1335641cddd8b3ae66de767d2282f08861324f0ebe850e613af6a3a1"
+    }
+  ],
+  "example_model": {
+    "repo_id": "nvidia/Cosmos3-Nano",
+    "revision": "fea6e03ac3d7884b4105ed8ee79fc480fca70965"
+  }
+}

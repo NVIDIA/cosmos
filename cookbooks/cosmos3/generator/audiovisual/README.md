@@ -104,6 +104,11 @@ recipe, not a production reproduction recipe.
 
 ## Run with Diffusers
 
+For Cosmos3-Nano on lower-VRAM GPUs, see the
+[CPU-GPU weight-streaming cookbook](../diffusers_cpu_offloading/). It keeps
+nonresident weights in system RAM while computation stays on the GPU, with
+BF16/FP8 examples and full-generation benchmark scripts.
+
 ### Quickstart
 
 Set up the environment: [Diffusers setup](../../README.md#diffusers).

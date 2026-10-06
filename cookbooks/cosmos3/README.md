@@ -7,7 +7,7 @@ backend you want to run and follow that one section.
 | Backend | Use it for | Used by |
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
-| [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
+| [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` or [CPU-GPU weight streaming](generator/diffusers_cpu_offloading/) | Generator (Audiovisual; streaming also covers Action and Transfer) |
 | [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio/action/transfer generation) | Generator (Audiovisual, Action, **Transfer**) |
 | [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
@@ -164,6 +164,11 @@ uv pip install --torch-backend=cu130 \
   torchvision \
   transformers
 ```
+
+For Cosmos3-Nano on lower-VRAM GPUs, continue with the
+[Diffusers CPU-GPU offloading cookbook](generator/diffusers_cpu_offloading/).
+It reuses your CUDA-enabled environment and supports BF16 and FP8 generation,
+including audiovisual, Action, and Transfer workflows.
 
 ## TensorRT-LLM Generator
 
