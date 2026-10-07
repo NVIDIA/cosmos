@@ -97,5 +97,6 @@ jobs:
         shell: bash
         run: |
           mapfile -d '' notebooks < <(git ls-files -z -- '*.ipynb')
+          (( ${#notebooks[@]} )) || exit 0
           # Catch syntax and runtime-invalid constructs without enforcing style on legacy notebooks.
           ruff check --output-format=github --select=E9,F63,F7,F82 -- "${notebooks[@]}"
