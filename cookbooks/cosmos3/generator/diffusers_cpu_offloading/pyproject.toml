@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cosmos3-streaming"
+version = "0.1.0"
+description = "External BF16 and FP8 CPU-offloaded execution for the Diffusers Cosmos 3 modular pipeline"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "Apache-2.0"}
+dependencies = [
+    "accelerate>=0.31.0",
+    "av>=17.1.0",
+    "cosmos-guardrail>=0.3.1",
+    "diffusers @ git+https://github.com/huggingface/diffusers.git@main",
+    "imageio>=2.37.4",
+    "imageio-ffmpeg>=0.6.0",
+    "opencv-python-headless>=4.10.0.84",
+    "sentencepiece>=0.1.91,!=0.1.92",
+    "torch>=2.7",
+    "transformers>=4.41.2",
+]
+
+[project.optional-dependencies]
+fp8 = ["nvidia-modelopt==0.44.0"]
+benchmarks = ["scipy>=1.13", "cosmos-guardrail==0.3.1"]
+
+[tool.setuptools.packages.find]
+include = ["cosmos3_streaming*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.setuptools]
+include-package-data = false
