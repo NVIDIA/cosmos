@@ -6,7 +6,8 @@ from typing import Any
 
 import torch
 
-DEFAULT_FP8_MODEL_ID = "nvidia/Cosmos3-Nano-FP8"
+DEFAULT_FP8_MODEL_ID = "nvidia/Cosmos3-Nano"
+DEFAULT_FP8_REVISION = "fp8"
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +40,10 @@ def materialize_fp8_checkpoint(
     else:
         from huggingface_hub import snapshot_download
 
+        # Nano publishes BF16 on its default branch and FP8 on a separate one.
+        # Do not override a caller's pinned revision or another repository's default.
+        if revision is None and model_id == DEFAULT_FP8_MODEL_ID:
+            revision = DEFAULT_FP8_REVISION
         checkpoint_dir = Path(
             snapshot_download(
                 model_id,
@@ -51,7 +56,7 @@ def materialize_fp8_checkpoint(
     if not modelopt_state.is_file():
         raise RuntimeError(
             f"FP8 was requested, but the checkpoint has no ModelOpt state at {modelopt_state}. "
-            f"Use {DEFAULT_FP8_MODEL_ID} with published Diffusers checkpoint files, "
+            f"Use {DEFAULT_FP8_MODEL_ID} with revision={DEFAULT_FP8_REVISION!r}, "
             "or a local Diffusers FP8 snapshot."
         )
     return checkpoint_dir

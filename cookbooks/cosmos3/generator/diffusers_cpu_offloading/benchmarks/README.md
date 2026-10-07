@@ -12,7 +12,7 @@ Each run records generation settings, the precision policy, timings, and outputs
   configuration, not a measured minimum RAM requirement.
 - Allow at least 80 GB per precision of disk space for dependencies, checkpoint caches,
   compiler caches, and generated artifacts. A complete matrix can take hours.
-- Access to `nvidia/Cosmos3-Nano`, `nvidia/Cosmos3-Nano-FP8` and the safety-model repositories on Hugging
+- Access to `nvidia/Cosmos3-Nano` (including its `fp8` branch) and the safety-model repositories on Hugging
   Face. Accept any applicable model terms. For gated downloads, supply an
   `HF_TOKEN` through your usual secure environment setup. Do not put tokens
   into scripts, logs, or a public issue.
@@ -47,7 +47,9 @@ python benchmarks/benchmark_fp8.py --output-dir artifacts/benchmark-fp8
 ```
 
 No manual checkpoint download or tiling settings are needed. BF16 uses
-`nvidia/Cosmos3-Nano`; FP8 uses `nvidia/Cosmos3-Nano-FP8`. The runner also
+`nvidia/Cosmos3-Nano`; FP8 uses the same repository with `revision="fp8"`.
+The runner resolves the branch to an immutable commit for each new run and
+retains that commit on resume. The runner also
 downloads the example prompts and conditioning inputs it needs.
 
 Subsequent runs reuse the dedicated cache under the output directory.

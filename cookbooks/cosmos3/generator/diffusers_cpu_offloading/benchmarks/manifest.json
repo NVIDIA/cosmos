@@ -6,8 +6,8 @@
   },
   "name": "cosmos3-nano-native-streaming",
   "model": {
-    "repo_id": "nvidia/Cosmos3-Nano-FP8",
-    "revision": "main"
+    "repo_id": "nvidia/Cosmos3-Nano",
+    "revision": "fp8"
   },
   "safety_models": [
     {

@@ -71,19 +71,23 @@ export_to_video(frames, "video.mp4", fps=24)
 Use the official model-card prompts and conditioning assets for comparison with
 the model's examples. The short prompt above illustrates the API.
 
-## Use the official FP8 repository
+## Use the official FP8 checkpoint
 
 ```python
 pipe = build_pipeline(
-    "nvidia/Cosmos3-Nano-FP8",
+    "nvidia/Cosmos3-Nano",
+    revision="fp8",
     checkpoint_precision="fp8",
     config=StreamingConfig(device="cuda:0"),
     dtype=torch.bfloat16,
 )
 ```
 
-If you omit the model ID, `checkpoint_precision="fp8"` selects this repository
-automatically; the BF16 default remains `nvidia/Cosmos3-Nano`.
+FP8 uses the `fp8` branch of `nvidia/Cosmos3-Nano`. If you omit the model ID,
+`checkpoint_precision="fp8"` selects that repository automatically. For this
+repository, an omitted FP8 revision defaults to `fp8`; an explicit commit hash
+or branch is preserved. Other repository IDs retain their own default branch.
+BF16 continues to use `nvidia/Cosmos3-Nano` on its default branch.
 
 Diffusers reads the precision policy from the checkpoint and selects the
 precision for each module and denoising step. Attention uses BF16 PyTorch SDPA.
@@ -162,7 +166,7 @@ python benchmarks/benchmark_fp8.py --output-dir artifacts/benchmark-fp8
 ```
 
 These run complete examples at each selected resolution. FP8 uses the
-checkpoint-defined Diffusers policy and `nvidia/Cosmos3-Nano-FP8`. Reports
+checkpoint-defined Diffusers policy and `nvidia/Cosmos3-Nano` with `revision="fp8"`. Reports
 include generation settings, the precision policy, safety settings, and timings.
 
 ## Source layout
