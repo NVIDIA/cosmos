@@ -71,7 +71,7 @@ One model, two surfaces:
 |  | Inputs | Outputs | Use it for |
 |---|---|---|---|
 | **Reasoner** | text, vision | text | world understanding, grounding, task planning, embodied reasoning |
-| **Generator** | text, vision, sound, action | vision, sound, action | world simulation, future prediction, synthetic data, policy learning |
+| **Generator** | text, vision, audio, action | vision, audio, action | world simulation, future prediction, synthetic data, policy learning |
 
 This repository is the home of the models: everything for exploring, running, and evaluating Cosmos. For model training (SFT, LoRA, RL, distillation etc.), go to [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework). Use [Cosmos Curator](https://github.com/NVIDIA/cosmos-curator) for data curation, and [Cosmos Evaluator](https://github.com/NVIDIA/cosmos-evaluator) for model output evaluation.
 
@@ -114,7 +114,7 @@ video = pipe(prompt="A mobile robot navigates a warehouse aisle and stops at a s
 export_to_video(video, "first_video.mp4", fps=24)
 ```
 
-First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so long step times are normal. Full options, image/sound modes, and every other backend: [audiovisual cookbooks](cookbooks/cosmos3/generator/audiovisual/) · setup issues: [environment setup guide](cookbooks/cosmos3/README.md).
+First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so long step times are normal. Full options, image/audio modes, and every other backend: [audiovisual cookbooks](cookbooks/cosmos3/generator/audiovisual/) · setup issues: [environment setup guide](cookbooks/cosmos3/README.md).
 
 
 ## Models
