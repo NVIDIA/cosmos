@@ -421,6 +421,18 @@ students cover text-to-image and image-to-video only. Server launch commands
 live in the
 [shared environment setup guide](../../README.md#tensorrt-llm-generator).
 
+### Cosmos3 Nano and Super FP8 notebook
+
+[`run_fp8_with_trt_llm.ipynb`](./run_fp8_with_trt_llm.ipynb)
+runs the ModelOpt-calibrated Cosmos3 Nano and Super FP8 checkpoints (the `fp8`
+revision on Hugging Face) directly through TensorRT-LLM's offline Cosmos3 entry point. It contains the complete
+single-GPU commands for text-to-image, text-to-video, image-to-video, and
+video-to-video generation, text-to-video and image-to-video with audio, on this folder's shared prompts and reference media,
+followed by PNG and MP4 validation, plus image and video understanding through
+the FP8 Reasoner served with `trtllm-serve`. Super needs a Blackwell-class single GPU. The checkpoint
+metadata supplies the calibrated weight and activation scales; no runtime
+quantization flag is required.
+
 ## Run with NIM
 
 ### Quickstart

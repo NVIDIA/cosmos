@@ -8,7 +8,7 @@ backend you want to run and follow that one section.
 | --- | --- | --- |
 | [Cosmos Framework](#cosmos-framework) | Native PyTorch inference, launched with `torchrun` | Reasoner, Generator (Audiovisual, Action, **Transfer**) |
 | [Diffusers](#diffusers) | Direct generation with `Cosmos3OmniPipeline` | Generator (Audiovisual) |
-| [TensorRT-LLM Generator](#tensorrt-llm-generator) | OpenAI-compatible VisualGen server (image/video/audio/action/transfer generation) | Generator (Audiovisual, Action, **Transfer**) |
+| [TensorRT-LLM Generator](#tensorrt-llm-generator) | Offline FP8 image/video generation and OpenAI-compatible VisualGen server (image/video/audio/action/transfer generation) | Generator (Audiovisual, Action, **Transfer**) |
 | [TensorRT-LLM Reasoner](#tensorrt-llm-reasoner) | OpenAI-compatible image/video reasoning server | Reasoner |
 | [Transformers](#transformers) | Hugging Face Transformers inference | Reasoner |
 | [vLLM](#vllm) | OpenAI-compatible reasoning server (image/video understanding) | Reasoner |
@@ -167,7 +167,7 @@ uv pip install --torch-backend=cu130 \
 
 ## TensorRT-LLM Generator
 
-OpenAI-compatible **VisualGen** server for Generator audiovisual text-to-image,
+Offline FP8 checkpoint generation and an OpenAI-compatible **VisualGen** server for Generator audiovisual text-to-image,
 text-to-video, image-to-video, video-to-video, synchronized audio, Transfer, and
 Action examples.
 Initial Cosmos3 support was added in TensorRT-LLM PR
@@ -229,7 +229,8 @@ For Python-only changes, the upstream guide also documents
 installing the checkout in editable mode.
 
 Then install the Cosmos3 guardrail package in the same environment unless you
-explicitly disable guardrails before starting the server:
+explicitly disable guardrails before running offline inference or starting the
+server:
 
 ```bash
 pip install cosmos_guardrail==0.3.0
@@ -284,6 +285,40 @@ The separate `No safety models found, returning safe` warning in guardrail
 0.3.0 refers to its intentionally empty video-content classifier list. Text
 checks and face blurring remain configured; the NLTK workaround does not enable
 video-content classification or suppress that warning.
+
+### Cosmos3 Nano and Super FP8 checkpoints (offline, single GPU)
+
+Cosmos3 Nano and Super publish ModelOpt-calibrated checkpoints on the `fp8`
+revision of their Hugging Face repositories. These revisions contain the FP8
+weights, activation scales, and runtime policy. TensorRT-LLM reads that metadata
+directly, so no quantization flag is required. Static-FP8 loading
+([#17476](https://github.com/NVIDIA/TensorRT-LLM/pull/17476)) is merged on
+TensorRT-LLM `main`; use a checkout at or after it rather than the older revision
+pinned above. Select the FP8 weights with `--revision fp8`; TensorRT-LLM
+downloads them on first use:
+
+```bash
+python3 examples/visual_gen/models/cosmos3/cosmos3.py \
+  --model nvidia/Cosmos3-Nano --revision fp8 \
+  --visual_gen_args examples/visual_gen/configs/cosmos3-nano-1gpu.yaml \
+  --prompt_file examples/visual_gen/models/cosmos3/prompts/t2v.json \
+  --output_path nano_fp8_t2v.mp4
+```
+
+Install `cosmos_guardrail==0.3.2` (not the `0.3.0` pin shown above) for these
+offline runs; it needs no NLTK data setup. These FP8 checkpoints support one GPU
+only, and the weights are about 21 GB for Nano and 70 GB for Super, so Super needs
+a single GPU with enough memory for 70 GB of weights plus activations. Use the
+BF16 checkpoints for tensor, Ulysses, context, or CFG parallelism, or for
+parallel VAE. The
+[FP8 checkpoint notebook](generator/audiovisual/run_fp8_with_trt_llm.ipynb)
+runs Nano and Super through the offline TensorRT-LLM entry point for
+text-to-image, text-to-video, image-to-video, and video-to-video generation,
+text-to-video and image-to-video with synchronized audio, validates every PNG
+and MP4 artifact, and serves the FP8 Reasoner for image and
+video understanding.
+
+### VisualGen server
 
 Set the TensorRT-LLM source root for the shared VisualGen config YAMLs. Run this
 from inside the TensorRT-LLM checkout — the directory the `git clone` above
@@ -447,6 +482,28 @@ The server exposes `/health` and the OpenAI-compatible API at
 `http://localhost:8001/v1`. See the
 [Reasoner TensorRT-LLM notebook](reasoner/run_with_tensorrt_llm.ipynb) for image
 and video requests.
+
+**Cosmos3-Nano or Cosmos3-Super FP8** (single GPU, port 8001). The `fp8`
+revision carries ModelOpt-calibrated weights and static activation scales;
+`trtllm-serve` reads them from the checkpoint, so no quantization flag is
+needed. This needs a TensorRT-LLM build from `main`, as described in the
+[FP8 checkpoint section](#cosmos3-nano-and-super-fp8-checkpoints-offline-single-gpu),
+and Super FP8 fits on one Blackwell-class GPU:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 \
+trtllm-serve nvidia/Cosmos3-Nano \
+  --hf_revision fp8 \
+  --host 0.0.0.0 \
+  --port 8001 \
+  --max_num_tokens 32768
+```
+
+Replace `nvidia/Cosmos3-Nano` with `nvidia/Cosmos3-Super` for Super. On a Slurm
+compute node where `trtllm-serve` stalls at `worker_initialization_wait`,
+prefix the command with `mpirun -np 1 --bind-to none trtllm-llmapi-launch`.
+The [FP8 checkpoint notebook](generator/audiovisual/run_fp8_with_trt_llm.ipynb)
+starts this server and sends image and video requests to both models.
 
 ## Transformers
 
