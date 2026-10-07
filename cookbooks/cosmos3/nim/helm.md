@@ -4,10 +4,8 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Deploy the Cosmos3 Certified NIM with Helm
 
 Use this page to deploy the Cosmos3 Certified NIM on Kubernetes with the shared
-`nim-wfm` Helm chart. It follows the NVIDIA
-[Deploy with Helm](https://docs.nvidia.com/nim/cosmos/latest/helm.html) guide
-with Cosmos3 image and runtime settings. Model selection, hardware floors, and
-verification are the same as in [Deployment](deployment.md).
+`nim-wfm` Helm chart. Model selection, hardware floors, and verification are
+the same as in [Deployment](deployment.md).
 
 ## Prerequisites
 
@@ -37,11 +35,10 @@ kubectl create secret generic ngc-api \
 
 ## Fetch the chart
 
-Choose a `nim-wfm` chart version in the
-[NGC Catalog](https://catalog.ngc.nvidia.com/) and download it:
+This page uses `nim-wfm` chart version 1.3.0:
 
 ```bash
-export NIM_WFM_VERSION='<chart-version>'
+export NIM_WFM_VERSION='1.3.0'
 helm fetch "https://helm.ngc.nvidia.com/nim/charts/nim-wfm-${NIM_WFM_VERSION}.tgz" \
   --username='$oauthtoken' \
   --password="$NGC_API_KEY"
@@ -70,7 +67,9 @@ model:
   nimCache: /opt/nim/.cache
 persistence:
   enabled: true
-  size: <cache-size>
+  size: 200Gi
+sharedMemory:
+  sizeLimit: 16Gi
 resources:
   limits:
     nvidia.com/gpu: 1
@@ -90,18 +89,25 @@ Adjust it for the chosen configuration:
   [Generator configurations](support-matrix.md#generator-configurations). The
   GPU count does not select a GPU type; use `nodeSelector`, `affinity`, or
   `tolerations` to target eligible nodes.
-- **Cache size:** Replace `<cache-size>` with a volume size for the selected
-  model artifacts and materialization. No single floor is published.
+- **Cache size:** The Nano Generator cache uses about 22 GiB after download
+  and materialization; `200Gi` leaves room for other variants and profile
+  changes. No single floor is published, so size the volume for the selected
+  model with headroom.
 - **Memory:** A pod memory limit counts as system memory during profile
   selection. Keep any limit at or above the host RAM value of the selected row.
-- **Shared memory:** The Docker launch allocates 16 GiB of `/dev/shm`. If
-  `helm template` output shows no `/dev/shm` mount, add a memory-backed
-  `emptyDir` through `extraVolumes` and `extraVolumeMounts`.
+- **Shared memory:** The chart mounts a memory-backed `emptyDir` at `/dev/shm`
+  by default. `sharedMemory.sizeLimit: 16Gi` matches the 16 GiB that the Docker
+  launch allocates.
+- **Pod user:** The chart runs the pod as UID and GID 1000 with
+  `fsGroup: 1000` (`podSecurityContext`). The cache volume must be writable by
+  that user; storage that ignores `fsGroup`, such as some NFS exports and
+  `hostPath` directories, needs matching ownership.
 - **Chart-owned settings:** Use `model.nimCache`, `model.ngcAPISecret`,
-  `model.apiPort`, `model.jsonLogging`, and `model.logLevel` instead of
-  `NIM_CACHE_PATH`, `NGC_API_KEY`, `NIM_HTTP_API_PORT`, `NIM_LOGGING_JSONL`,
-  and `NIM_LOG_LEVEL`. Add other [Configuration](configuration.md) variables to
-  `env`.
+  `model.apiPort`, `model.grpcPort`, `model.inferenceProtocol`,
+  `model.jsonLogging`, and `model.logLevel` instead of `NIM_CACHE_PATH`,
+  `NGC_API_KEY`, `NIM_HTTP_API_PORT`, `NIM_GRPC_API_PORT`,
+  `NIM_INFERENCE_PROTOCOL`, `NIM_LOGGING_JSONL`, and `NIM_LOG_LEVEL`. Add other
+  [Configuration](configuration.md) variables to `env`.
 
 To check profile compatibility before a cold download, run the Docker
 [pre-download profile preflight](deployment.md#run-the-pre-download-profile-preflight)
@@ -125,6 +131,48 @@ On DGX Spark/GB10 or Jetson AGX Thor nodes, also set
 `NIM_GPU_MEMORY_UTILIZATION` to `"0.80"` for image-only workloads or `"0.70"`
 for video or mixed-media workloads; see
 [Set the Reasoner memory share](deployment.md#set-the-reasoner-memory-share-on-unified-memory-systems).
+
+### OpenTelemetry
+
+To export traces and metrics over OTLP, add these entries to `env`. The
+endpoint assumes an OpenTelemetry Collector DaemonSet that listens on host
+port 4318; change `OTEL_EXPORTER_OTLP_ENDPOINT` for other collector layouts:
+
+```yaml
+  - name: NIM_ENABLE_OTEL
+    value: "1"
+  - name: OTEL_SERVICE_NAME
+    value: cosmos3
+  - name: OTEL_TRACES_EXPORTER
+    value: otlp
+  - name: OTEL_METRICS_EXPORTER
+    value: otlp
+  - name: HOST_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.hostIP
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: "http://$(HOST_IP):4318"
+```
+
+`HOST_IP` must come before `OTEL_EXPORTER_OTLP_ENDPOINT` so that Kubernetes
+can expand it.
+
+### Other chart features
+
+The chart README documents these optional features; all are off by default:
+
+- **Prometheus metrics:** Set `metrics.serviceMonitor.enabled: true` to create
+  a Prometheus Operator `ServiceMonitor` that scrapes `/v1/metrics` on the
+  `http-api` port. See [Metrics](operations.md#metrics).
+- **Ingress:** `ingress.enabled`, `ingress.className`, `ingress.hosts`, and
+  `ingress.tls`. The NIM does not authenticate requests, so protect any
+  ingress outside the cluster.
+- **Autoscaling:** `autoscaling.enabled` with `minReplicas`, `maxReplicas`, and
+  `metrics`. CPU and memory metrics are of limited use for scaling a NIM; use
+  custom metrics, for example through `prometheus-adapter`. Each new replica
+  must download or mount the model before it becomes ready; see
+  [Storage and scaling](#storage-and-scaling).
 
 ## Install
 
@@ -162,13 +210,20 @@ Confirm that metadata reports `generator` and `/v1/infer`, or `reasoner` and
 
 ## Storage and scaling
 
-With `persistence.enabled` and the default `statefulSet.enabled: true`, each
-replica gets its own persistent volume claim and downloads the model before it
-becomes ready. To share one cache across replicas, use a `ReadWriteMany`
-storage class and set `persistence.accessMode: ReadWriteMany`. With
-`statefulSet.enabled: false` and a `ReadWriteOnce` volume, scaling beyond one
-pod is likely to fail. The chart also supports `nfs` and `hostPath`;
-`hostPath` ties pods to one node and has security implications.
+The chart supports these cache options; use only one:
+
+| Option | Values | Notes |
+| --- | --- | --- |
+| StatefulSet volume claims | `persistence.enabled: true` with the default `statefulSet.enabled: true` | Default. Each replica gets its own claim and downloads the model before it becomes ready |
+| Shared volume claim | `persistence.enabled: true`, `statefulSet.enabled: false`, `persistence.accessMode: ReadWriteMany` | One cache shared by all replicas; needs a `ReadWriteMany` storage class |
+| Existing claim | `persistence.existingClaim: <claim-name>` | Reuse a pre-filled cache. Run one replica unless the claim is `ReadWriteMany` |
+| Direct NFS | `nfs.enabled: true`, `nfs.server`, `nfs.path` | Mount options cannot be set per pod; an NFS-backed claim is usually a better choice |
+| `hostPath` | `hostPath.enabled: true`, `hostPath.path` | Ties pods to one node and has security implications |
+
+With `statefulSet.enabled: false` and a `ReadWriteOnce` volume, scaling or
+rolling upgrades beyond one pod are likely to fail. Use a `ReadWriteMany`
+storage class, manually cloned `ReadOnlyMany` volumes of a pre-filled cache,
+or direct NFS. Without persistence, every pod start downloads the model again.
 
 ## Troubleshooting
 
@@ -176,6 +231,7 @@ pod is likely to fail. The chart also supports `nfs` and `hostPath`;
 | --- | --- |
 | Pod stays `Pending` | Run `kubectl describe pod <pod>` and check `Events` for insufficient GPUs, untolerated taints, or an unbound volume claim |
 | Pod restarts while preparing the model workspace | The startup probe ran out before the download finished; increase `startupProbe.failureThreshold` |
+| Scaling or upgrade fails with `statefulSet.enabled: false` | The cache volume is `ReadWriteOnce`; see [Storage and scaling](#storage-and-scaling) |
 | Profile selection fails | Compare GPU type, count, free memory, and pod memory limit with the [Support matrix](support-matrix.md); see [Troubleshooting](operations.md#troubleshooting) |
 
 ## Remove the deployment
