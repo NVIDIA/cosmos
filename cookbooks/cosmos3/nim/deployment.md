@@ -79,8 +79,8 @@ requires an explicit precision. Nano-DROID currently has BF16 profiles only.
 ## Before you deploy
 
 Verify the host against [Prerequisites](prerequisites.md) and choose a
-compatible configuration from the [Support matrix](support-matrix.md). For the
-current availability of Helm guidance, see [Helm deployment](helm.md).
+compatible configuration from the [Support matrix](support-matrix.md). For a
+Kubernetes deployment, follow [Deploy with Helm](helm.md).
 
 ## Authenticate to NGC
 

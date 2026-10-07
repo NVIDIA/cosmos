@@ -159,7 +159,7 @@ pages and examples as their source of truth and default to read-only assistance.
 - [Deployment](deployment.md)
 - [Configuration](configuration.md)
 - [Support matrix](support-matrix.md)
-- [Helm deployment status](helm.md)
+- [Helm deployment](helm.md)
 - [Bring your own checkpoint](bring-your-own-checkpoint.md)
 
 ### Use the APIs
