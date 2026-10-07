@@ -41,9 +41,9 @@ Cosmos 3 is built on a unified Mixture-of-Transformers (MoT) architecture combin
   </thead>
   <tbody>
     <tr><td align="center">t2v</td><td align="center">Text</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p)</td></tr>
-    <tr><td align="center">t2sv</td><td align="center">Text</td><td align="center">Video with sound<br>(256p, 480p, 720p)</td><td align="center">Video with sound<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
+    <tr><td align="center">t2av</td><td align="center">Text</td><td align="center">Video with audio<br>(256p, 480p, 720p)</td><td align="center">Video with audio<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
     <tr><td align="center">i2v — 1st frame</td><td align="center">Text + image<br>(JPG/PNG/JPEG/WEBP)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p)</td></tr>
-    <tr><td align="center">i2sv</td><td align="center">Text + image<br>(JPG/PNG/JPEG/WEBP)</td><td align="center">Video with sound<br>(256p, 480p, 720p)</td><td align="center">Video with sound<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
+    <tr><td align="center">i2av</td><td align="center">Text + image<br>(JPG/PNG/JPEG/WEBP)</td><td align="center">Video with audio<br>(256p, 480p, 720p)</td><td align="center">Video with audio<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
     <tr><td align="center">v2v — transfer</td><td align="center">Text + MP4 video<br>(edge, blur, depth, segmentation map)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
     <tr><td align="center">v2v — predict</td><td align="center">Text + MP4 video<br>(first 5 frames used, up to ~3 s of conditioning)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
     <tr><td align="center">t2i</td><td align="center">Text string</td><td align="center">Image<br>(256p, 480p, 720p)</td><td align="center">Image<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
@@ -91,4 +91,4 @@ Every workflow has a runnable notebook — see [cookbooks](../../cookbooks/cosmo
 
 ## Limitations
 
-Cosmos 3 can produce artifacts in long, high-resolution, or physically complex outputs: temporal inconsistency, unstable camera/object motion, sound-video misalignment, action-state inconsistency, object morphing, inaccurate 3D structure, implausible dynamics. Physically grounded simulation, safety-critical control, and complex multi-agent behavior require additional validation, guardrails, and system-level safety analysis before deployment.
+Cosmos 3 can produce artifacts in long, high-resolution, or physically complex outputs: temporal inconsistency, unstable camera/object motion, audio-video misalignment, action-state inconsistency, object morphing, inaccurate 3D structure, implausible dynamics. Physically grounded simulation, safety-critical control, and complex multi-agent behavior require additional validation, guardrails, and system-level safety analysis before deployment.
