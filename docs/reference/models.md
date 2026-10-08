@@ -41,12 +41,12 @@ Cosmos 3 is built on a unified Mixture-of-Transformers (MoT) architecture combin
   </thead>
   <tbody>
     <tr><td align="center">t2v</td><td align="center">Text</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p)</td></tr>
-    <tr><td align="center">t2sv</td><td align="center">Text</td><td align="center">Video with sound<br>(256p, 480p, 720p)</td><td align="center">Video with sound<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
+    <tr><td align="center">t2av</td><td align="center">Text</td><td align="center">Video with audio<br>(256p, 480p, 720p)</td><td align="center">Video with audio<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
     <tr><td align="center">i2v — 1st frame</td><td align="center">Text + image<br>(JPG/PNG/JPEG/WEBP)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p)</td></tr>
-    <tr><td align="center">i2sv</td><td align="center">Text + image<br>(JPG/PNG/JPEG/WEBP)</td><td align="center">Video with sound<br>(256p, 480p, 720p)</td><td align="center">Video with sound<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
+    <tr><td align="center">i2av</td><td align="center">Text + image<br>(JPG/PNG/JPEG/WEBP)</td><td align="center">Video with audio<br>(256p, 480p, 720p)</td><td align="center">Video with audio<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
     <tr><td align="center">v2v — transfer</td><td align="center">Text + MP4 video<br>(edge, blur, depth, segmentation map)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
     <tr><td align="center">v2v — predict</td><td align="center">Text + MP4 video<br>(first 5 frames used, up to ~3 s of conditioning)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
-    <tr><td align="center">t2i</td><td align="center">Text string</td><td align="center">Image<br>(256p, 480p, 720p)</td><td align="center">Image<br>(256p, 480p, 720p)</td><td align="center">Not supported</td></tr>
+    <tr><td align="center">t2i</td><td align="center">Text string</td><td align="center">Image<br>(256p, 480p, 720p)</td><td align="center">Image<br>(256p, 480p, 720p)</td><td align="center">Image<br>(256p, 480p)</td></td></tr>
     <tr><td align="center">Visual reasoning</td><td align="center">Text, MP4 video, image<br>(JPG/PNG/JPEG/WEBP)</td><td align="center">Text</td><td align="center">Text</td><td align="center">Text</td></tr>
     <tr><td align="center">Forward dynamics</td><td align="center">Text, image, video, action</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p, 720p)</td><td align="center">Video<br>(256p, 480p)</td></tr>
     <tr><td align="center">Inverse dynamics</td><td align="center">Text, video</td><td align="center">Action</td><td align="center">Action</td><td align="center">Action</td></tr>
@@ -58,7 +58,8 @@ Cosmos 3 is built on a unified Mixture-of-Transformers (MoT) architecture combin
 \* Video conditioning (v2v — predict) uses 5 frames at the matching resolution.\
 \* Action conditioning: camera motion (9D) · AV (9D) · egocentric (57D) · single-arm (10D: DROID/UR/Fractal/Bridge/UMI) · dual-arm (20D) · humanoid (29D: AgiBot)\
 \* Output format: JPG, MP4, AAC-in-MP4 (stereo 48 kHz), JSON actions, text\
-\* Prompt length: < 300 words recommended for world generation
+\* Prompt length: < 300 words recommended for world generation\
+\* Cosmos3-Edge is not recommended for image or video generation.
 
 Every workflow has a runnable notebook — see [cookbooks](../../cookbooks/cosmos3/README.md).
 
