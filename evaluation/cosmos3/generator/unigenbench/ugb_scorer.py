@@ -15,6 +15,7 @@
 import argparse
 import ast
 import difflib
+import hashlib
 import json
 import os.path as osp
 import re
@@ -301,6 +302,93 @@ def split_score_breakdown_by_prefix(score_breakdown: dict) -> tuple[dict, dict]:
     return orig, phi
 
 
+def build_benchmark_samples(
+    benchmark_rows: list[dict],
+    image_folder: Path,
+    extension: str,
+    allow_missing_images: bool = False,
+) -> list[dict[str, Any]]:
+    """Build scorer inputs and reject incomplete benchmark generations."""
+    samples = []
+    missing_paths = []
+    for row in benchmark_rows:
+        index = row.get("index") if row.get("index") is not None else row.get("id")
+        if index is None:
+            raise ValueError("Each benchmark row must define either 'index' or 'id'.")
+
+        prompt = row.get("prompt_en") or row.get("prompt")
+        sub_dims = row.get("sub_dims_en") or row.get("sub_dims")
+        metadata = ast.literal_eval(sub_dims) if isinstance(sub_dims, str) else sub_dims
+        image_path = image_folder / f"{index}_0.{extension}"
+        if not image_path.exists():
+            missing_paths.append(image_path)
+            continue
+
+        samples.append(
+            {
+                "image_path": image_path,
+                "prompt": prompt,
+                "metadata": metadata,
+                "extension": extension,
+                "try_num": 0,
+            }
+        )
+
+    if missing_paths and not allow_missing_images:
+        preview = ", ".join(path.name for path in missing_paths[:5])
+        if len(missing_paths) > 5:
+            preview += ", ..."
+        raise FileNotFoundError(
+            f"Missing {len(missing_paths)} of {len(benchmark_rows)} expected image(s) "
+            f"under {image_folder}: {preview}"
+        )
+
+    return samples
+
+
+def build_run_manifest(
+    benchmark_rows: list[dict], samples: list[dict], judge_model: str, gateway_url: str
+) -> dict[str, Any]:
+    """Identify the inputs and scoring implementation without storing API credentials."""
+    scorer_dir = Path(__file__).resolve().parent
+    return {
+        "schema_version": 1,
+        "judge_model": judge_model,
+        "gateway_url": gateway_url.rstrip("/"),
+        "benchmark_sha256": hashlib.sha256(
+            json.dumps(benchmark_rows, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+        "images_sha256": {
+            sample["image_path"].name: hashlib.sha256(sample["image_path"].read_bytes()).hexdigest()
+            for sample in samples
+        },
+        "scorer_sha256": {
+            filename: hashlib.sha256((scorer_dir / filename).read_text(encoding="utf-8").encode("utf-8")).hexdigest()
+            for filename in ("ugb_scorer.py", "utils.py")
+        },
+        "system_prompt_sha256": hashlib.sha256(SYSTEM_PROMPT.encode("utf-8")).hexdigest(),
+    }
+
+
+def validate_cached_results(
+    score_final: dict, samples: list[dict], result_path: Path, run_manifest: dict
+) -> int:
+    """Reject cached scores from different inputs or a different scoring run."""
+    expected_results = {sample["image_path"].name for sample in samples}
+    cached_results = set(score_final.get("breakdown", {}))
+    if cached_results != expected_results:
+        raise ValueError(
+            f"Existing results at {result_path} cover {len(cached_results)} of "
+            f"{len(expected_results)} currently available image(s); remove the stale result file to rescore."
+        )
+    if score_final.get("run_manifest") != run_manifest:
+        raise ValueError(
+            f"Existing results at {result_path} have a missing or mismatched run manifest; "
+            "remove the stale result file to rescore with the requested inputs and judge."
+        )
+    return len(cached_results)
+
+
 def print_stats_from_json(score_final: dict, input_folder: str, result_path: str) -> None:
     stats = score_final["stats"]
     success_count = score_final.get("success_count", "N/A")
@@ -349,43 +437,35 @@ def main() -> None:
     )
     print(f"\nParams:\n{params_disp}")
 
-    if result_path.exists():
-        print(f"Found existing results at {result_path}, skipping scoring")
-        score_final = json.loads(result_path.read_text())
-        print_stats_from_json(score_final, str(image_folder), str(result_path))
-        return
-
-    benchmark_data = json.loads(prompt_file.read_text())
+    benchmark_data = json.loads(prompt_file.read_text(encoding="utf-8"))
     if isinstance(benchmark_data, dict) and "benchmark" in benchmark_data:
         benchmark_rows = benchmark_data["benchmark"]
     else:
         benchmark_rows = benchmark_data
 
-    samples_todo = []
-    missing_images = 0
-    for row in benchmark_rows:
-        index = row.get("index") or row.get("id")
-        prompt = row.get("prompt_en") or row.get("prompt")
-        sub_dims = row.get("sub_dims_en") or row.get("sub_dims")
-        metadata = ast.literal_eval(sub_dims) if isinstance(sub_dims, str) else sub_dims
-        image_path = image_folder / f"{index}_0.{args.extension}"
-        if not image_path.exists():
-            missing_images += 1
-            continue
-        samples_todo.append(
-            {
-                "image_path": image_path,
-                "prompt": prompt,
-                "metadata": metadata,
-                "extension": args.extension,
-                "try_num": 0,
-            }
-        )
-
-    samples_total = len(samples_todo)
+    samples_todo = build_benchmark_samples(
+        benchmark_rows,
+        image_folder,
+        args.extension,
+        allow_missing_images=args.allow_missing_images,
+    )
+    samples_total = len(benchmark_rows)
+    missing_images = samples_total - len(samples_todo)
     if missing_images:
-        print(f"Missing {missing_images} expected image(s) under {image_folder}")
-    print(f"Total samples: {samples_total}")
+        print(
+            f"Warning: scoring {len(samples_todo)} of {samples_total} benchmark images "
+            "because --allow_missing_images was set"
+        )
+    print(f"Total samples: {len(samples_todo)}/{samples_total}")
+    run_manifest = build_run_manifest(benchmark_rows, samples_todo, args.modelstr, args.gateway_url)
+
+    if result_path.exists():
+        score_final = json.loads(result_path.read_text(encoding="utf-8"))
+        cached_count = validate_cached_results(score_final, samples_todo, result_path, run_manifest)
+        score_final["success_count"] = f"{cached_count}/{samples_total}"
+        print(f"Found complete existing results at {result_path}, skipping scoring")
+        print_stats_from_json(score_final, str(image_folder), str(result_path))
+        return
 
     vlm = GatewayVLM(
         gateway_url=args.gateway_url,
@@ -453,11 +533,12 @@ def main() -> None:
             "all": compute_final_metrics(score_breakdown, verbose=False),
         },
         "judge_model": args.modelstr,
+        "run_manifest": run_manifest,
         "success_count": f"{len(score_breakdown)}/{samples_total}",
         "breakdown": score_breakdown,
     }
 
-    result_path.write_text(json.dumps(score_final, indent=4))
+    result_path.write_text(json.dumps(score_final, indent=4), encoding="utf-8")
     print_stats_from_json(score_final, str(image_folder), str(result_path))
 
 
@@ -473,6 +554,11 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--num_concurrency", type=int, default=128)
     parser.add_argument("--batch_size", type=int, default=1170)
     parser.add_argument("--max_retry", type=int, default=3)
+    parser.add_argument(
+        "--allow_missing_images",
+        action="store_true",
+        help="Score an explicitly incomplete generation for debugging; coverage still uses the full benchmark total.",
+    )
     return parser.parse_args()
 
 
