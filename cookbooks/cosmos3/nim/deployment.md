@@ -1,13 +1,12 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: OpenMDW-1.1 -->
 
-# Deploy the Cosmos3 Certified NIM
+# Deploy the Cosmos3 NIM
 
 Use this page to authenticate to NGC, choose a model, launch Generator or
 Reasoner, and verify the selected service. The commands pin the current 2.0.0
 release image. Use the [Support matrix](support-matrix.md) to choose a
-compatible configuration. For an active container, `/v1/manifest` is the
-authority for available profiles.
+compatible configuration.
 
 ## How selection works
 
@@ -21,81 +20,69 @@ Users normally select a runtime and model, not a profile ID:
 5. The NIM selects the best compatible profile for those choices and the
    visible GPUs.
 
-A profile is the resolved deployment configuration: model artifacts,
-precision, GPU layout, and any required GPU/system-memory residency policy.
-Automatic selection filters on effective system memory and stable total VRAM,
-then takes one snapshot of current free memory on every visible GPU. It prefers
-a compatible profile that avoids offload and makes effective use of the
-available GPUs, but can choose an equivalent lower-memory offload or
-tensor-parallel layout when the preferred layout does not currently fit. On an
-integrated GPU with unified host/device memory, selection reserves host memory
-and uses resident Generator model and guardrail profiles. Startup fails
-if the chosen model cannot run on the host. See [Support
-matrix](support-matrix.md#gpu-architecture-and-topology) for the memory and
-shared-memory rules, then confirm the selected profile in the exact image
-manifest.
+Selection prefers a resident profile that uses the visible GPUs well and can
+fall back to an equivalent lower-memory offload or tensor-parallel layout when
+current free GPU memory is short. If no profile fits, startup fails; free GPU
+memory and restart. See
+[GPU architecture and topology](support-matrix.md#gpu-architecture-and-topology)
+for the memory rules.
 
 ### Select a Generator model
 
 | `NIM_MODEL_VARIANT` | Supported use |
 | --- | --- |
 | `nano` | General-purpose Nano Generator |
-| `nano-droid` | Nano-DROID policy; BF16 only |
+| `nano-droid` | Nano-DROID policy with an action-only response; BF16 only |
 | `super` | General-purpose Super Generator |
 | `super-t2i` | Full-step T2I specialist |
 | `super-t2i-4step` | Four-step T2I specialist |
 | `super-i2v` | Full-step I2V specialist |
 | `super-i2v-4step` | Four-step I2V specialist |
 
-For Generator, `NIM_MODEL_VARIANT` determines Nano versus Super and selects
-an exact general-purpose or specialist model.
-
-Choose the workload objective explicitly:
+Specialist variants accept only their task. Set the workload objective
+explicitly:
 
 | `NIM_PERF_PROFILE` | Optimize for |
 | --- | --- |
 | `latency` | Lower latency for an individual request |
 | `throughput` | Higher aggregate request rate |
 
-The software defaults to `latency` when the selector is omitted.
+The default is `latency`.
 
 ### Select a Reasoner model
 
 Set `NIM_MODEL_TYPE=reasoner` and choose `NIM_MODEL_VARIANT=nano` or `super`.
-Reasoner does not use `NIM_PERF_PROFILE`. Nano and Super Reasoner enable their
-bundled DFlash speculative-decoding drafts by default. Set `NIM_USE_DFLASH=0`
-to run the selected Reasoner target model without DFlash; see
-[Configuration](configuration.md#speculative-decoding).
+Reasoner rejects `NIM_PERF_PROFILE` at startup. DFlash speculative decoding is
+on by default; set `NIM_USE_DFLASH=0` to disable it (see
+[Configuration](configuration.md#speculative-decoding)).
 
 ### Precision selection
 
-Omit `NIM_PRECISION` for normal automatic selection. Generator prefers FP8
-when compatible. Reasoner prefers BF16 on compute capability 8.0 through 8.8,
-FP8 on 8.9 through 9.x, and NVFP4 on 10.0 or newer; selection uses another
-compatible precision when the preferred row is unavailable. Set
-`NIM_PRECISION=bf16`, `fp8`, or another available value only when the workload
-requires an explicit precision. Nano-DROID currently has BF16 profiles only.
+Omit `NIM_PRECISION` normally: Generator prefers FP8 when compatible, and
+Reasoner prefers BF16 on compute capability 8.0 through 8.8, FP8 on 8.9 through
+9.x, and NVFP4 on 10.0 or newer, falling back to another compatible precision.
+Set `NIM_PRECISION=bf16`, `fp8`, or another available value only when the
+workload requires it; Nano-DROID is BF16 only.
 
 ## Before you deploy
 
 Verify the host against [Prerequisites](prerequisites.md) and choose a
-compatible configuration from the [Support matrix](support-matrix.md). For the
-current availability of Helm guidance, see [Helm deployment](helm.md).
+compatible configuration from the [Support matrix](support-matrix.md). For a
+Kubernetes deployment, follow [Deploy with Helm](helm.md).
 
 ## Authenticate to NGC
 
-Create and export `NGC_API_KEY` as described under
-[Network and NGC access](prerequisites.md#network-and-ngc-access). Docker saves
-registry credentials after login. Docker Desktop configures a native credential
-store automatically. Without an available helper, standalone Docker Engine
-stores the credential in a base64-encoded form in `$HOME/.docker/config.json`
-and prints a warning.
+Export `NGC_API_KEY` (not `NGC_TOKEN`) as described under
+[Network and NGC access](prerequisites.md#network-and-ngc-access); never put the
+key in source control. Docker saves the registry login after `docker login`:
+Docker Desktop uses a native credential store, while standalone Docker Engine
+without a helper stores it base64-encoded in `$HOME/.docker/config.json` and
+prints a warning.
 
-For stronger at-rest protection, optionally install and initialize a
-[supported credential helper](https://docs.docker.com/reference/cli/docker/login/#credential-stores),
-ensure its `docker-credential-*` program is on `PATH`, and merge a
-registry-specific entry into `$HOME/.docker/config.json`. For example, an
-initialized `pass` store uses:
+For stronger at-rest protection, configure a
+[supported credential helper](https://docs.docker.com/reference/cli/docker/login/#credential-stores)
+whose `docker-credential-*` program is on `PATH`, for example
+`docker-credential-pass` with this entry in `$HOME/.docker/config.json`:
 
 ```json
 {
@@ -105,23 +92,16 @@ initialized `pass` store uses:
 }
 ```
 
-This example requires `docker-credential-pass` on `PATH`. Use the suffix of
-the helper installed for your platform. If you previously logged in to
-`nvcr.io` without a helper and want to migrate the saved credential, run
-`docker logout nvcr.io` before configuring the helper. Then authenticate in the
-same shell:
+To migrate an existing saved login, run `docker logout nvcr.io` first. Then log
+in with the literal username `$oauthtoken`:
 
 ```bash
 echo "$NGC_API_KEY" \
   | docker login nvcr.io --username '$oauthtoken' --password-stdin
 ```
 
-The literal Docker username is `$oauthtoken`. `NGC_API_KEY` authorizes model
-artifact download inside the container; do not substitute `NGC_TOKEN` or place
-the key in source control. `--password-stdin` keeps the key out of shell history
-and command logs, but it does not encrypt the credential Docker stores after
-login. A credential helper protects that saved credential; without one, use the
-evaluation logout step when you finish.
+`--password-stdin` keeps the key out of shell history but does not encrypt the
+saved credential; without a helper, log out when you finish evaluating.
 
 Pin and pull the current release image:
 
@@ -149,13 +129,11 @@ use:
 export NIM_GPU_MEMORY_UTILIZATION=0.70
 ```
 
-The default `0.93` is not reduced automatically and can leave too little memory
-for the host and media processing. Pass the exported value with
-`-e NIM_GPU_MEMORY_UTILIZATION` in every Reasoner preflight and service-launch
-command on these systems, starting with the first command. Do not set this
-Reasoner-only variable for Generator or as a routine override on a discrete
-GPU. See [Reasoner context and scheduling](configuration.md#context-and-scheduling)
-for the variable contract.
+The `0.93` default is not reduced automatically and can starve the host and
+media processing. Pass `-e NIM_GPU_MEMORY_UTILIZATION` in every Reasoner
+preflight and launch command on these systems. Do not set it for Generator or
+routinely on a discrete GPU; see
+[Reasoner context and scheduling](configuration.md#context-and-scheduling).
 
 ## Run the pre-download profile preflight
 
@@ -179,15 +157,13 @@ docker run --rm \
   '
 ```
 
-Use the runtime, model, precision, performance, offload, profile-selection
-environment, GPU exposure, and container memory limit intended for the real
-deployment. Expose every GPU that deployment will use. For Reasoner, set
-`NIM_MODEL_TYPE=reasoner`, select `nano` or `super`, and omit
-`NIM_PERF_PROFILE`.
+Use the selectors, GPU exposure, and container memory limit of the real
+deployment. For Reasoner, set `NIM_MODEL_TYPE=reasoner`, select `nano` or
+`super`, and omit `NIM_PERF_PROFILE`.
 
-On DGX Spark or Jetson AGX Thor, use the value exported in [Set the Reasoner
-memory share on unified-memory systems](#set-the-reasoner-memory-share-on-unified-memory-systems)
-in the first preflight command. This complete example checks Nano Reasoner:
+On DGX Spark or Jetson AGX Thor, pass the
+[exported memory share](#set-the-reasoner-memory-share-on-unified-memory-systems).
+This example checks Nano Reasoner:
 
 ```bash
 docker run --rm \
@@ -209,18 +185,13 @@ Do not pass `NGC_API_KEY`, `NIM_MODEL_PATH`, or `NIM_DFLASH_MODEL_PATH` to this
 bundled-profile check. Checkpoint-source validation is a separate BYOC step,
 and an `hf://` source can download files.
 
-A successful preflight proves that the image manifest contains a candidate
-profile and that the selectors, effective system-memory floor, GPU compute
-capability, total VRAM, and current free VRAM pass profile selection. For
-Generator, it also reports Transfer VRAM admission in the logs. It does not
-load the model or establish general CPU, host-RAM, disk, shared-memory, driver,
-Docker, Container Toolkit, media, or inference compatibility. Only a successful
-cold start and representative requests establish those later stages.
-
-The preflight writes only inside its temporary container. `--rm` removes that
-container when the command exits; it does not remove the image or model cache.
-If preflight fails, resolve the reported selector or resource issue before
-starting a cold download.
+Preflight success is necessary, not sufficient: it confirms that the image
+has a profile matching the selectors, compute capability, system-memory floor,
+and total and free VRAM (and logs Generator Transfer admission), but it does
+not load the model. Only a cold start and representative requests confirm host
+RAM, disk, shared memory, the driver stack, media, and inference. Preflight
+writes nothing outside its removed container. Resolve any reported failure
+before a cold download.
 
 ## Prepare the model cache
 
@@ -230,16 +201,13 @@ mkdir -p "$LOCAL_NIM_CACHE"
 chmod -R a+rwX "$LOCAL_NIM_CACHE"
 ```
 
-The examples use permissive local-development permissions. In production, use
-an appropriate UID, group, or ACL policy. Keep the cache between runs to avoid
-repeated downloads and materialization.
+These permissions suit local development. The container runs as UID/GID 1000
+(`nvs`); in production grant that UID/GID write access through a group or ACL.
+Keep the cache between runs to avoid repeated downloads.
 
 ## Launch Generator
 
-The local examples publish the selected runtime at `http://localhost:8000`.
-Run one runtime at a time when using this default host port.
-
-This example explicitly chooses the general-purpose Nano model and latency:
+This example runs general-purpose Nano with latency on host port 8000:
 
 ```bash
 docker run -d --name cosmos3-generator \
@@ -257,23 +225,16 @@ docker run -d --name cosmos3-generator \
   "$NIM_IMAGE"
 ```
 
-The command starts the container in the background. Follow startup logs with
-`docker logs -f cosmos3-generator`; press Ctrl+C to stop following logs without
-stopping the container. On a discrete-GPU host, provision at least 40 GiB of
-host RAM if automatic selection chooses a non-offloading Nano profile; the
-16-GiB profile admission check is intentionally lower than that practical
-requirement. Use the separate RAM floor in the support matrix if selection
-chooses an offload profile.
+The container starts in the background. Follow startup logs with
+`docker logs -f <container>` (here `cosmos3-generator`); Ctrl+C stops following
+without stopping the container.
 
-Replace the model and performance objective with values supported by the image.
-Expose the GPU count required by the selected configuration instead of keeping
-`--gpus '"device=0"'` when a multi-GPU configuration is required. Add
-`-e NIM_PRECISION=fp8` only when precision must be pinned.
+Change the model and objective as needed, expose every GPU a multi-GPU
+configuration requires, and add `-e NIM_PRECISION=fp8` only to pin precision.
 
 ## Launch Reasoner
 
-The Reasoner uses the same default host URL as the Generator. If you launched
-Generator above, remove it before reusing host port `8000`:
+Reasoner uses the same host port; remove a running Generator first:
 
 ```bash
 docker rm -f cosmos3-generator
@@ -281,9 +242,7 @@ docker rm -f cosmos3-generator
 
 ### DGX Spark and Jetson AGX Thor
 
-Use Nano and pass the unified-memory share exported before preflight. This
-command is ready for an image-only workload when the exported value is `0.80`,
-or a video or mixed-media workload when it is `0.70`:
+Use Nano and pass the exported unified-memory share (`0.80` or `0.70`):
 
 ```bash
 docker run -d --name cosmos3-reasoner \
@@ -301,18 +260,11 @@ docker run -d --name cosmos3-reasoner \
   "$NIM_IMAGE"
 ```
 
-Do not omit `-e NIM_GPU_MEMORY_UTILIZATION` and rely on the `0.93` default on
-these unified-memory systems. Follow startup logs with
-`docker logs -f cosmos3-reasoner`; press Ctrl+C to stop following logs without
-stopping the container.
-
 ### Discrete GPU example
 
-This example launches the Super FP8 Reasoner on a compatible discrete GPU. The
-one-GPU configuration requires compute capability 8.9 or newer, at least 67
-GiB of total and currently usable VRAM after the Reasoner reserve, and 46 GiB
-of practical host RAM; see the [Reasoner
-configurations](support-matrix.md#reasoner-configurations):
+This example launches Super FP8 Reasoner, which needs compute capability 8.9+,
+67 GiB of usable VRAM, and 46 GiB of host RAM (see
+[Reasoner configurations](support-matrix.md#reasoner-configurations)):
 
 ```bash
 docker run -d --name cosmos3-reasoner \
@@ -330,16 +282,12 @@ docker run -d --name cosmos3-reasoner \
   "$NIM_IMAGE"
 ```
 
-The command pins Super FP8 and uses the DFlash and video-token pruning
-defaults. It starts the Reasoner in the background. Follow startup logs with
-`docker logs -f cosmos3-reasoner`; press Ctrl+C to stop following logs without
-stopping the container. Expose all GPUs required by the selected Reasoner
-configuration. To use another compatible Reasoner configuration, change the
-model and precision selectors together and revalidate representative requests.
+It uses the DFlash and video-token pruning defaults. To use another
+configuration, change the model and precision selectors together and expose
+the GPUs it needs.
 
-Both runtimes listen on container HTTP port `8000`; the Docker mapping chooses
-the host port. To run both containers concurrently, publish one on another
-unused host port and set that client's `NIM_URL` accordingly.
+To run both runtimes concurrently, publish one on another host port and set
+that client's `NIM_URL` accordingly.
 
 ## Wait for readiness
 
@@ -355,8 +303,8 @@ until curl -fsS "$NIM_URL/v1/health/ready" >/dev/null; do
 done
 ```
 
-Cold download, materialization, compilation, model load, and warmup can take
-much longer than HTTP startup. Send inference only after readiness succeeds.
+A cold start (download, materialization, model load, warmup) takes much longer
+than HTTP startup. Send inference only after readiness succeeds.
 
 ## Verify the selection
 
@@ -365,26 +313,51 @@ curl -fsS "$NIM_URL/v1/metadata" | python3 -m json.tool
 curl -fsS "$NIM_URL/v1/manifest" | python3 -m json.tool
 ```
 
-Metadata confirms the selected model and profile. It also reports `model_type`
-and `inference_endpoint`; verify that they identify `generator`
-and `/v1/infer`, or `reasoner` and `/v1/chat/completions`, before sending an
-inference request. This is verification, not a normal profile-selection step.
+Metadata reports the selected model and profile. Confirm that `model_type` and
+`inference_endpoint` are `generator` and `/v1/infer`, or `reasoner` and
+`/v1/chat/completions`, before sending requests.
+
+## Offline and air-gapped deployment
+
+The NIM can start offline from a cache filled by an earlier online start. The
+cache holds only the selected profile's artifacts, so fill it for every
+configuration you will run offline.
+
+1. On a host with NGC access, launch each configuration as shown in
+   [Launch Generator](#launch-generator) or [Launch Reasoner](#launch-reasoner),
+   with the offline host's selectors and GPU exposure, and wait for readiness.
+   Several configurations can share one cache.
+2. Copy the cache with a tool that preserves symbolic links:
+
+   ```bash
+   rsync -a "$LOCAL_NIM_CACHE/" /path/to/offline-cache/
+   ```
+
+   Snapshot files are relative symbolic links into `blobs/`, so tools that
+   dereference links break the cache. On the offline host,
+   `find /path/to/offline-cache -xtype l` must print nothing. Apply the
+   ownership from [Prepare the model cache](#prepare-the-model-cache).
+3. On the offline host, set `LOCAL_NIM_CACHE` to the copy and run the same
+   launch command. Generator can omit `-e NGC_API_KEY`; keep it for Reasoner,
+   whose keyless offline start has not been validated.
+4. For Generator, do not set `NIM_DISABLE_MODEL_DOWNLOAD=1`; startup rejects it
+   because guardrail artifacts must be materialized from the cached files.
+5. [Wait for readiness](#wait-for-readiness). With a complete cache, every
+   artifact logs `Skipping download, using cached copy of file`; the
+   `Downloading manifest profile` line does not indicate network access.
+
+To test a cache on a connected host before moving it, replace `-p 8000:8000`
+with `--network none` and check readiness inside the container:
+
+```bash
+docker exec cosmos3-generator python3 -c \
+  'import urllib.request as u; print(u.urlopen("http://localhost:8000/v1/health/ready").status)'
+```
 
 ## Advanced profile controls
 
-Most deployments should stop at model, optional precision, and Generator
-latency/throughput selection. Use these controls only for a validated need:
-
-| Variable | Use |
-| --- | --- |
-| `NIM_OFFLOAD_MODE` | Request an available lower-memory model offload mode |
-| `NIM_TAGS_SELECTOR` | Filter profiles by exact manifest tags |
-| `NIM_MODEL_PROFILE` | Pin one reviewed profile ID from the exact image |
-
-Exact profile pins and low-level tags reduce portability across hosts and
-releases. If automatic selection fails, first choose a smaller model or
-compatible precision rather than copying a profile ID from another system.
-See [Configuration](configuration.md#advanced-profile-controls) for details.
+Offload modes, tag selectors, and profile-ID pins are for validated needs only;
+see [Configuration](configuration.md#advanced-profile-controls).
 
 ## Docker flag summary
 
@@ -398,21 +371,8 @@ See [Configuration](configuration.md#advanced-profile-controls) for details.
 | `-e NIM_GPU_MEMORY_UTILIZATION=...` | Set the required Reasoner memory share on DGX Spark or Jetson AGX Thor |
 | `-v ...:/opt/nim/.cache` | Persist model artifacts |
 
-GPU counts, compute-capability gates, VRAM floors, and practical host RAM are
-summarized in the [configuration matrix](support-matrix.md). Each participating
-GPU must have enough current free memory at startup, not only enough total
-capacity. On discrete-GPU hosts, non-offloading profiles require 40 GiB for
-Generator Nano, 78 GiB for Generator Super FP8, 112 GiB for Generator Super
-BF16, 24 GiB for Reasoner Nano BF16, 18 GiB for Reasoner Nano FP8 or NVFP4,
-36 GiB for Reasoner Super NVFP4, 46 GiB for Reasoner Super FP8, or 76 GiB for
-Reasoner Super BF16. Their embedded profile
-tags check only 16 GiB so an attempted startup is not blocked; passing that
-admission check does not satisfy the practical requirement. Nano offload
-profiles retain a 64-GiB profile floor, and Super offload profiles retain 150
-GiB. Docker or Kubernetes memory limits count as available system memory.
-Unified-memory systems continue to use the shared-pool table and do not add a
-separate host RAM requirement. Confirm that the selected row and its tags are
-present in the target image before deployment.
+GPU counts, VRAM floors, and host RAM are in the
+[support matrix](support-matrix.md).
 
 ## Next steps
 
@@ -430,7 +390,5 @@ docker rm -f cosmos3-reasoner
 docker logout nvcr.io
 ```
 
-Docker logout removes the saved `nvcr.io` login from the configured credential
-store; it does not revoke the NGC personal key. Deactivate or delete a dedicated
-evaluation key in the NGC user interface when it is no longer needed. The
-persistent model cache remains.
+Logout does not revoke the NGC key; deactivate or delete an evaluation key in
+the NGC user interface. The model cache remains.

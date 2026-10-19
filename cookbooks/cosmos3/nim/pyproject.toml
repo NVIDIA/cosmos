@@ -4,7 +4,7 @@
 [project]
 name = "cosmos3-nim-examples"
 version = "0.1.0"
-description = "Client environment for the Cosmos3 Certified NIM examples"
+description = "Client environment for the Cosmos3 NIM examples"
 requires-python = ">=3.10"
 dependencies = [
   "openai==2.53.0",

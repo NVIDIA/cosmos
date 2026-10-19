@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: OpenMDW-1.1 -->
 
-# Cosmos3 Certified NIM
+# Cosmos3 NIM
 
 Deploy Cosmos3 models for world generation and multimodal reasoning. One image
 contains two runtimes, but each container runs only one:
@@ -12,61 +12,27 @@ contains two runtimes, but each container runs only one:
   Completions and, when enabled, the Responses API.
 
 > Deployment commands pin the current release image,
-> `nvcr.io/nim/nvidia/cosmos3:2.0.0`. The [Support matrix](support-matrix.md)
-> publishes the release profile-selection floors;
-> confirm an available row in the running image's manifest. A matching profile
-> establishes a candidate configuration, while cold start and representative
-> requests establish host and workload compatibility.
+> `nvcr.io/nim/nvidia/cosmos3:2.0.0`; compatible configurations are in the
+> [Support matrix](support-matrix.md).
+
+## Architecture
+
+Cosmos3 is a Mixture-of-Transformers (MoT) world foundation model with two
+jointly trained towers that share latent representations: a **Reasoner**
+(vision-language) tower that grounds the prompt, and a **Generator** (world
+simulator) tower that produces the output, such as video. The Generator runtime
+uses both towers; the Reasoner runtime serves understanding. For details, see
+the
+[Cosmos3 technical report](https://research.nvidia.com/labs/cosmos-lab/cosmos3/technical-report.pdf).
+
+![Cosmos3 Mixture-of-Transformers architecture with Reasoner and Generator towers](../cosmos3-model-architecture.png)
 
 ## Choose what to run
 
-Normal deployment does not require choosing a profile ID. Make a few
-user-facing choices and let the NIM select the best compatible profile for the
-visible GPUs.
-
-1. Choose **Generator** or **Reasoner**.
-2. Choose the model variant.
-3. Optionally pin a precision. Generator prefers FP8 when compatible;
-   Reasoner prefers BF16 on compute capability 8.0 through 8.8, FP8 on 8.9
-   through 9.x, and NVFP4 on 10.0 or newer when the matching profile fits.
-4. For Generator, choose **latency** or **throughput**.
-5. Start the container. The NIM selects a compatible profile for the model,
-   precision preference, performance objective, and host.
-6. For each Generator request, set the explicit top-level `model_mode` for the
-   task.
-
-`NIM_MODEL_VARIANT` chooses the checkpoint at startup; request `model_mode`
-chooses T2I, T2V, I2V, V2V, Transfer, or an Action operation.
-
-### Generator variants
-
-| Variant | Supported use |
-| --- | --- |
-| `nano` | General-purpose generation and compatible Generator tasks |
-| `nano-droid` | DROID policy with an action-only response; BF16 only |
-| `super` | General-purpose generation and compatible Generator tasks |
-| `super-t2i` | Text-to-image only |
-| `super-t2i-4step` | Four-step text-to-image only |
-| `super-i2v` | Image-to-video only |
-| `super-i2v-4step` | Four-step image-to-video only |
-
-Select a Generator model with `NIM_MODEL_VARIANT`. For Generator, the variant
-also determines Nano versus Super. Select `NIM_PERF_PROFILE=latency` to
-prioritize individual request latency or `throughput` to prioritize aggregate
-request rate. Latency is the software default, but make the choice explicit in
-deployment automation.
-
-Reasoner provides `nano` and `super`, also selected with
-`NIM_MODEL_VARIANT`. Reasoner does not use `NIM_PERF_PROFILE`.
-
-If `NIM_PRECISION` is omitted, Generator prefers FP8 when compatible.
-Reasoner derives its preference from GPU compute capability: BF16 for 8.0
-through 8.8, FP8 for 8.9 through 9.x, and NVFP4 for 10.0 or newer. Selection
-uses another compatible precision when the preferred row is unavailable. Pin
-precision only when the workload requires it.
-
-Exact profile IDs, low-level tags, and offload overrides are advanced controls.
-See [Deploy the NIM](deployment.md#advanced-profile-controls).
+Choose a runtime, a model variant (`NIM_MODEL_VARIANT`), optionally a
+precision, and for Generator a latency or throughput objective; the NIM selects
+a compatible profile, as described in
+[How selection works](deployment.md#how-selection-works).
 
 ## Choose a task
 
@@ -84,10 +50,8 @@ See [Deploy the NIM](deployment.md#advanced-profile-controls).
 | Image/video reasoning | Reasoner | Media + text | Text or structured result | [Reasoning](reasoning.md) |
 | Responses API | Reasoner | Responses input | Response object/text | [Reasoning](reasoning.md#use-the-responses-api) |
 
-The public Generator request model does not expose image-to-image or sound
-generation. Local examples publish either selected runtime at
-`http://localhost:8000`; remove the active example container before launching the other
-runtime on the same host port.
+Local examples publish either runtime at `http://localhost:8000`; remove the
+active example container before launching the other runtime on the same port.
 
 ## Get started
 
@@ -124,25 +88,21 @@ uv run python examples/reasoner.py --case image_caption
 1. Verify the GPU host against [Prerequisites](prerequisites.md).
 2. Choose a compatible model and hardware configuration from the
    [Support matrix](support-matrix.md).
-3. For a Reasoner on DGX Spark or Jetson AGX Thor, choose the documented
+3. Follow [Deployment](deployment.md) to authenticate, pull the image, set the
    [unified-memory share](deployment.md#set-the-reasoner-memory-share-on-unified-memory-systems)
-   before the first preflight command.
-4. Follow [Deployment](deployment.md) to authenticate, pull the image, set any
-   required unified-memory share, run the pre-download profile preflight,
-   prepare the cache, and launch either Generator or Reasoner.
-5. Return to [Use an existing NIM endpoint](#use-an-existing-nim-endpoint) to
+   for a Reasoner on DGX Spark or Jetson AGX Thor, run the preflight, and
+   launch Generator or Reasoner.
+4. Return to [Use an existing NIM endpoint](#use-an-existing-nim-endpoint) to
    verify the service and run the first request.
 
-Specialist models accept only their documented task. Use
+Specialist variants accept only their task: run
 [`t2i_4step.py`](examples/t2i_4step.py),
 [`i2v_4step.py`](examples/i2v_4step.py), or the
-[Nano-DROID request](action.md#nano-droid-policy) only after launching the
-matching variant.
+[Nano-DROID request](action.md#nano-droid-policy) only against the matching
+variant. Examples save outputs under the ignored `examples/outputs/` directory.
 
-Generator examples save decoded media and action JSON under
-`examples/outputs/`. The Reasoner task runner prints its final answer and saves
-request metadata, the raw response, final text, and validated JSON for
-structured cases under the same ignored output directory.
+Validate the selected configuration with representative requests before
+production use.
 
 ## AI-assisted usage
 
@@ -159,7 +119,7 @@ pages and examples as their source of truth and default to read-only assistance.
 - [Deployment](deployment.md)
 - [Configuration](configuration.md)
 - [Support matrix](support-matrix.md)
-- [Helm deployment status](helm.md)
+- [Helm deployment](helm.md)
 - [Bring your own checkpoint](bring-your-own-checkpoint.md)
 
 ### Use the APIs
@@ -174,8 +134,10 @@ pages and examples as their source of truth and default to read-only assistance.
 ### Operate
 
 - [Operations and troubleshooting](operations.md)
+- [Monitoring with Prometheus and Grafana](monitoring.md)
 - [Release notes](release-notes.md)
-- [Acknowledgements](acknowledgements.md)
+- [License and notices](license.md)
+- [Acknowledgements](acknowledgements/README.md)
 
 ## Safety, license, and notices
 
@@ -183,8 +145,29 @@ Generator guardrails are enabled by default. Disabling them can remove
 content-policy and face-privacy protections; see
 [Guardrails](operations.md#guardrails).
 
-This cookbook is licensed under the repository
-[LICENSE](../../../LICENSE). The running NIM exposes bundled product license
-information at `/v1/license`. The image also contains product terms, notices,
-component licenses, and the included package-modification source described
-under [Acknowledgements](acknowledgements.md).
+See [License and notices](license.md) for the terms. This cookbook is licensed
+under the repository [LICENSE](../../../LICENSE). The running NIM serves its
+license at `/v1/license`; the image also contains product terms, notices,
+component licenses, and the package-modification source described in
+[Acknowledgements](acknowledgements/README.md).
+
+The NIM is distributed as a container image through the NVIDIA NGC Catalog,
+which publishes a security scan report for each image: a security rating, CVE
+severity by package, and links to CVE details.
+
+## NVIDIA Developer Program
+
+Want to learn more about NIMs? Join the
+[NVIDIA Developer Program](https://developer.nvidia.com/join-nvidia-developer-program)
+to get free access to self-hosting NVIDIA NIMs and microservices on up to 16
+GPUs on any infrastructure: cloud, data center, or personal workstation.
+
+Once you join the free NVIDIA Developer Program, you can access NIMs through the
+[NVIDIA API Catalog](https://build.nvidia.com/explore/discover) at any time. For
+enterprise-grade security, support, and API stability, select the option to
+access NIM through our free 90-day NVIDIA AI Enterprise Trial with a business
+email address.
+
+Refer to the
+[NVIDIA NIM FAQ](https://forums.developer.nvidia.com/t/nvidia-nim-faq/300317)
+for additional information.

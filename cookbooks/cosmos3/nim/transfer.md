@@ -3,18 +3,16 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 
 # Control video generation with Cosmos3 Transfer
 
-Use this page to guide Generator output with edge, blur, depth, segmentation,
-or world-space-map (WSM) video controls. Transfer uses synchronous JSON
-`POST /v1/infer` with `model_mode=video2video` and a top-level `transfer`
-object.
+Guide Generator output with edge, blur, depth, segmentation, or
+world-space-map (WSM) video controls: send `POST /v1/infer` with
+`model_mode=video2video` and a top-level `transfer` object.
 
 > Confirm control and model availability for the selected image in the
 > [Support matrix](support-matrix.md).
 
-See [Deployment](deployment.md) to start a compatible Generator model. Begin
-with one precomputed control, then use derived or multiple controls only when
-the workload requires them. If you are choosing between an ordinary V2V,
-Transfer, or inverse-dynamics request, see
+Start a compatible Generator with [Deployment](deployment.md) and begin with
+one precomputed control. To choose between V2V, Transfer, and inverse
+dynamics, see
 [Choose a video-conditioned workflow](generation.md#choose-a-video-conditioned-workflow).
 
 ## Control types
@@ -27,38 +25,23 @@ Transfer, or inverse-dynamics request, see
 | `seg` | Required | No | None |
 | `wsm` | Required | No | None |
 
-At least one control must be enabled. Precomputed control media uses the same
-base64/data-URL/allowed-public-URL contract as `input_reference`.
+At least one control must be enabled. Control media uses the same
+[media input rules](api-reference.md#media-inputs) as `input_reference`.
 
 ## Run the examples
 
-The script includes five precomputed control cases with matching prompts,
-control media, geometry, and seeds. Run one case at a time so one command does
-not start several expensive generations.
+The script has five precomputed cases with matching prompts, control media,
+geometry, and seeds; run one at a time, as each is an expensive generation.
 
-Transfer is particularly compute-intensive. For practical evaluation
-turnaround, use a high-throughput discrete GPU such as an NVIDIA RTX PRO 6000
-Blackwell with 96 GB, an H100 with 80 GB, or a higher-throughput discrete GPU
-that meets the selected profile's Transfer floor. DGX Spark can satisfy the
-memory floors for compatible profiles, but it is not recommended for Transfer
-because requests can take substantially longer. This operational recommendation
-does not change profile compatibility: continue to check total and currently
-free memory against the [Transfer headroom
-requirements](support-matrix.md#transfer-headroom).
+Transfer is compute-intensive: use a high-throughput discrete GPU such as an
+RTX PRO 6000 Blackwell 96 GB or H100 80 GB. DGX Spark can meet the memory
+floors but is much slower and not recommended. Check memory against
+[Transfer headroom](support-matrix.md#transfer-headroom).
 
-Transfer inference is synchronous. The connection can remain open without a
-response body while the request is running. The example client allows up to 60
-minutes for the request; that timeout is a ceiling, not an expected completion
-time. The Generator backend has a separate 30-minute default. To permit a
-Transfer request to use the full client ceiling, add
-`-e NIM_TRITON_REQUEST_TIMEOUT=3600000000` to the Generator Docker launch
-command and restart the container before inference. The value is in
-microseconds; changing the client does not change the backend setting. See
-[Generator configuration](configuration.md#generator-configuration).
-
-Do not retry only because the connection is quiet. Check the active request
-using the [long-running request
-guidance](operations.md#long-running-requests) first.
+The client allows 60 minutes per request, but the backend defaults to 30. To
+match, add `-e NIM_TRITON_REQUEST_TIMEOUT=3600000000` (microseconds) to the
+Generator launch and restart; see
+[long-running requests](operations.md#long-running-requests).
 
 Install the [client tooling](prerequisites.md#client-tooling). Then, from the
 repository root, enter the cookbook directory before running a case:
@@ -80,15 +63,9 @@ derived case:
 uv run python examples/transfer.py --case derived_edge
 ```
 
-Replace `derived_edge` with `derived_blur` to use a derived blur control.
-
-The script rejects unknown command-line arguments before contacting the
-endpoint. Before loading case media or submitting inference, it requires
-`/v1/metadata` to report the Generator runtime, `/v1/infer`, a selected profile
-ID, and a general-purpose `nano` or `super` variant. This metadata check does
-not establish Transfer headroom; startup evaluates that requirement separately,
-and the service can still reject Transfer as unavailable. The decoded result is
-written to `examples/outputs/transfer_<case>.mp4`.
+Replace `derived_edge` with `derived_blur` to use a derived blur control. The
+script needs a general-purpose `nano` or `super` variant and writes
+`examples/outputs/transfer_<case>.mp4`.
 
 ## Precomputed control
 
@@ -120,8 +97,7 @@ path is not accepted as control media:
 ```
 
 Replace `edge` with `blur`, `depth`, `seg`, or `wsm` and provide the matching
-control. The complete script converts the existing local control video to the
-data URL automatically.
+control.
 
 ## Advanced: derive edge or blur
 
@@ -153,7 +129,7 @@ omit the nested control video:
 ```
 
 `"edge": true` and `"blur": true` select the corresponding derived control
-without an explicit preset; they require `input_reference`. A preset applies
+with preset `medium`; they require `input_reference`. A preset applies
 only to a derived control and cannot accompany nested `video`.
 
 Depth, segmentation, and WSM cannot be derived by the server; supply a
@@ -170,76 +146,55 @@ precomputed control video.
 
 `num_first_chunk_conditional_frames > 0` requires `input_reference`.
 
-Current defaults by family:
+Current defaults by family (explicit valid values override them; recheck on
+another image):
 
-| Request family | Frames | FPS | Guidance | Control guidance |
-| --- | ---: | ---: | ---: | ---: |
-| Edge, blur, depth, or mixed | 121 | 30 | 3.0 | 1.5 |
-| Segmentation-only | 121 | 30 | 3.0 | 2.0 |
-| WSM-only | 101 | 10 | 1.0 | 3.0 |
+| Request family | Frames | FPS | Steps | Guidance | Flow shift | Control guidance |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Edge, blur, depth, or mixed | 121 | 30 | 50 | 3.0 | 10.0 | 1.5 |
+| Segmentation-only | 121 | 30 | 50 | 3.0 | 10.0 | 2.0 |
+| WSM-only | 101 | 10 | 50 | 1.0 | 10.0 | 3.0 |
 
-All current transfer families default to 50 denoising steps and flow shift
-10.0. The comparison script explicitly uses a 121-frame chunk for edge, blur,
-depth, and segmentation, and a 101-frame chunk for the 101-frame WSM case.
-Explicit request values override defaults when valid. These defaults apply to
-the pinned release image; recheck them when moving to another image.
+The example script uses a 121-frame chunk, or 101 for WSM.
 
 ## Advanced multiple controls
 
-The request schema can enable more than one control in the same `transfer`
-object. Current default selection deliberately uses the general edge-family
-defaults for mixed requests rather than combining defaults from each control.
-
-This guide does not validate a multi-control combination. Use one control per
-request unless the exact combination has been validated for the deployment.
-Controls in a multi-control smoke test must be spatially and temporally aligned;
-do not combine unrelated single-control fixtures and interpret the result as a
-quality comparison.
+A `transfer` object can enable several controls; mixed requests use the edge
+family defaults. This guide does not validate any combination, so use one
+control per request unless yours is validated, and only combine controls that
+are spatially and temporally aligned.
 
 ## Transfer VRAM admission
 
-Transfer has a higher peak-memory requirement than ordinary text-to-video on
-the same profile. Startup compares the visible GPU's headroom above the
-selected profile floor with the measured Transfer overhead. A deployment can
-therefore be ready and serve generation without Transfer while rejecting it.
-
-If Transfer is unavailable, use a larger GPU or an available lower-VRAM
-configuration.
-`NIM_ALLOW_UNSAFE_TRANSFER=1` bypasses the admission check, but the request can
-run out of memory and the deployment does not become supported. Do not use the
-override as a normal production setting. See
-[Transfer headroom](support-matrix.md#transfer-headroom).
+A ready deployment can serve generation but reject Transfer when GPU headroom
+is too small; use a larger GPU or lower-VRAM configuration (see
+[Transfer headroom](support-matrix.md#transfer-headroom), including the
+`NIM_ALLOW_UNSAFE_TRANSFER` diagnostic override).
 
 ## Media and output
 
-Control videos and video `input_reference` values accept raw base64, a video
-data URL, or an allowed HTTP(S) URL, with a 100,000,000-character encoded
-ceiling. Prefer data URLs and the included MP4 fixtures; verify any other
-container, codec, or remote-fetch path against the deployed image before
-relying on it.
+Control videos and video `input_reference` values accept up to 100,000,000
+encoded characters; see [media inputs](api-reference.md#media-inputs) for
+formats, codecs, and URL rules.
 
-The response uses the Generator video shape: `b64_video` plus
-`action: null`. The inactive image field is omitted. The public script decodes
-it to `transfer_<case>.mp4`.
+- The source video and each control video must have at least `num_frames`
+  frames (WSM control: `num_frames - 1`).
+- Their aspect ratio must be within 5% of the requested output shape.
+- The decoded source and control videos together are capped at 225,000,000
+  bytes; each single video is also capped at 75,000,000 bytes.
+
+The response is `b64_video` plus `action: null`.
 
 ## Validation and common failures
 
-Transfer rejects:
-
-- an empty `transfer` object;
-- a `model_mode` other than `video2video`;
-- `action_params`;
-- V2V fields `condition_frame_indexes_vision` and `condition_video_keep`;
-- derived edge/blur without `input_reference`;
-- depth/seg/WSM without a nested non-empty control video;
-- a nested precomputed edge/blur video combined with its preset; and
-- chunk/conditioning values that violate their bounds.
+Besides the failures below, Transfer rejects V2V fields
+(`condition_frame_indexes_vision`, `condition_video_keep`) and `action_params`,
+and a nested precomputed edge/blur video combined with its preset.
 
 | Failure | Fix |
 | --- | --- |
 | HTTP 422 says derived control needs `video` | Add top-level source video or provide a nested precomputed edge/blur video |
 | HTTP 422 says control video required | Add nested video for depth, segmentation, or WSM |
-| Unknown field | Remove fields that are not defined in the Transfer request object |
 | Control/output lengths are incompatible | Recheck the output frame count, chunk size, and conditional frame values |
 | Transfer is disabled while T2V works | Selected configuration fits T2V but GPU headroom is below Transfer overhead; use a larger GPU or lower-VRAM configuration |
 
