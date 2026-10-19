@@ -15,6 +15,9 @@ from statistics import fmean
 
 
 RUNNER_VERSION = 2
+# Quick second attempt before recording a video as permanently errored; AMT
+# scoring failures (decoder hiccups, transient CUDA errors) are often transient.
+VIDEO_RETRIES = 1
 
 
 def parse_args() -> argparse.Namespace:
@@ -156,32 +159,50 @@ def worker_main(
                 continue
             if video_path is None:
                 break
-            try:
-                score = float(motion.motion_score(video_path))
+            final_error = ""
+            for _attempt in range(1 + VIDEO_RETRIES):
+                try:
+                    score = float(motion.motion_score(video_path))
+                except Exception:
+                    final_error = traceback.format_exc()
+                    continue
                 records.append({"video_path": video_path, "video_results": score})
                 write_json_atomic(output_path, records)
                 status_queue.put(("done", worker_id, video_path, score))
-            except Exception:
-                status_queue.put(("error", worker_id, video_path, traceback.format_exc()))
+                break
+            else:
+                status_queue.put(("error", worker_id, video_path, final_error))
         status_queue.put(("exit", worker_id, physical_gpu, ""))
     except Exception:
         status_queue.put(("fatal", worker_id, physical_gpu, traceback.format_exc()))
         raise
 
 
-def write_merged_result(*, output_dir: Path, result_file: Path, videos: list[str]) -> float:
+def write_merged_result(
+    *,
+    output_dir: Path,
+    result_file: Path,
+    videos: list[str],
+    require_complete: bool = True,
+) -> tuple[float, list[str]]:
     saved = collect_saved_records(output_dir)
     target = set(videos)
     unexpected = set(saved) - target
     if unexpected:
         raise RuntimeError(f"found {len(unexpected)} results outside the input manifest")
     missing = [video_path for video_path in videos if video_path not in saved]
-    if missing:
+    if missing and require_complete:
         raise RuntimeError(f"missing {len(missing)} motion-smoothness results")
-    ordered = [saved[video_path] for video_path in videos]
+    scored = [video_path for video_path in videos if video_path in saved]
+    if not scored:
+        raise RuntimeError("no motion-smoothness results were computed")
+    ordered = [saved[video_path] for video_path in scored]
     mean_score = fmean(record["video_results"] for record in ordered)
-    write_json_atomic(result_file, {"motion_smoothness": [mean_score, ordered]})
-    return mean_score
+    payload: dict[str, object] = {"motion_smoothness": [mean_score, ordered]}
+    if missing:
+        payload["missing_videos"] = missing
+    write_json_atomic(result_file, payload)
+    return mean_score, missing
 
 
 def main() -> None:
@@ -248,6 +269,7 @@ def main() -> None:
         flush=True,
     )
 
+    run_failed = False
     if pending:
         context = mp.get_context("spawn")
         task_queue = context.Queue()
@@ -314,8 +336,13 @@ def main() -> None:
             for process in workers:
                 process.join()
             bad_exit_codes = [process.exitcode for process in workers if process.exitcode != 0]
-            if bad_exit_codes or failures:
-                raise RuntimeError(f"worker failures={len(failures)} exit_codes={bad_exit_codes}")
+            run_failed = bool(bad_exit_codes or failures)
+            if run_failed:
+                print(
+                    f"workers finished with failures={len(failures)} "
+                    f"exit_codes={bad_exit_codes}; merging partial results",
+                    flush=True,
+                )
         except BaseException:
             for process in workers:
                 if process.is_alive():
@@ -329,11 +356,21 @@ def main() -> None:
             task_queue.close()
             status_queue.close()
 
-    mean_score = write_merged_result(
+    # Persist whatever scored cleanly even when workers failed mid-run; the
+    # missing entries stay discoverable via the result file's "missing_videos".
+    mean_score, missing = write_merged_result(
         output_dir=output_dir,
         result_file=result_file,
         videos=videos,
+        require_complete=not run_failed,
     )
+    if run_failed:
+        print(
+            f"INCOMPLETE run: scored={len(videos) - len(missing)}/{len(videos)}; "
+            f"partial results: {result_file} -- re-invoke the runner to rescore missing videos",
+            flush=True,
+        )
+        sys.exit(1)
     print(f"motion_smoothness {mean_score:.12f}", flush=True)
     print(f"saved {result_file}", flush=True)
 

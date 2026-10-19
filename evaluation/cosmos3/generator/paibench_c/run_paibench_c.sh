@@ -10,11 +10,11 @@
 # automatically on first run.
 #
 # --- Quick start --------------------------------------------------------------
-#   # Smoke-test: 1 task, edge, Cosmos3-Nano
+#   # Default demo: 4 tasks, edge control, Cosmos3-Nano
 #   bash run_paibench_c.sh
 #
-#   # Demo with 4 tasks (default)
-#   bash run_paibench_c.sh
+#   # Minimal smoke: 1 task, edge control
+#   PAIBENCH_C_NUM_SAMPLES=1 bash run_paibench_c.sh
 #
 #   # Full 600-task run, all modalities, Cosmos3-Super
 #   PAIBENCH_C_NUM_SAMPLES=600 \
@@ -704,6 +704,16 @@ unset MPLBACKEND  # prevent Jupyter's inline backend from leaking into subproces
 
 _ckpt_slug="${PAIBENCH_C_CHECKPOINT//\//-}"
 
+# Evaluation shards one torchrun worker per visible GPU. Recompute the real CUDA
+# device list here instead of trusting COSMOS3_NUM_GPUS, so bumping that knob
+# past what CUDA_VISIBLE_DEVICES exports cannot oversubscribe workers below.
+IFS=',' read -r -a _eval_gpu_ids <<< "${CUDA_VISIBLE_DEVICES}"
+_max_eval_gpus=${#_eval_gpu_ids[@]}
+if (( _max_eval_gpus == 0 )); then
+    log "  WARNING: CUDA_VISIBLE_DEVICES exposes no GPUs; capping evaluation at 1 GPU"
+    _max_eval_gpus=1
+fi
+
 # Use a robust python for printing results - prefer cosmos3 venv if functional,
 # fall back to system python3 (only stdlib used).
 _py_for_summary() {
@@ -720,6 +730,10 @@ for _mod in $PAIBENCH_C_MODALITIES; do
     _videos_dir="$_videos_parent/videos"
     _metrics_out="$_videos_parent/metrics.json"
     _eval_ngpu="$(int_min "$PAIBENCH_C_NUM_SAMPLES" "$COSMOS3_NUM_GPUS")"
+    if (( _eval_ngpu > _max_eval_gpus )); then
+        log "  WARNING: clamping evaluation GPUs $_eval_ngpu -> $_max_eval_gpus (visible: $CUDA_VISIBLE_DEVICES)"
+        _eval_ngpu=$_max_eval_gpus
+    fi
 
     # Verify videos exist before launching torchrun to surface errors early.
     if [[ ! -d "$_videos_dir" ]]; then

@@ -57,13 +57,19 @@ class GatewayVLM:
 
     async def query_core(self, request: dict) -> str:
         for attempt in range(self.num_max_retry):
+            if attempt > 0:
+                # Back off briefly before re-issuing so a rate-limited gateway
+                # is not hammered back-to-back.
+                await asyncio.sleep(min(2**attempt, 30))
             try:
 
                 async def stream_response():
                     stream = await self.client.chat.completions.create(**request)
                     result = ""
                     async for chunk in stream:
-                        if chunk.choices[0].delta.content is not None:
+                        # Some gateways emit a terminal usage-only chunk with an
+                        # empty choices list; skipping it keeps the scored text.
+                        if chunk.choices and chunk.choices[0].delta.content is not None:
                             result += chunk.choices[0].delta.content
                     return result
 
@@ -71,15 +77,13 @@ class GatewayVLM:
             except KeyboardInterrupt:
                 raise
             except asyncio.TimeoutError:
-                if attempt == 0 or attempt == self.num_max_retry - 1:
-                    logger.warning(
-                        f"VLM API for {request['model']} timeout (attempt {attempt + 1}/{self.num_max_retry}): exceeded {self.timeout}s"
-                    )
+                logger.warning(
+                    f"VLM API for {request['model']} timeout (attempt {attempt + 1}/{self.num_max_retry}): exceeded {self.timeout}s"
+                )
             except Exception as e:
-                if attempt == 0 or attempt == self.num_max_retry - 1:
-                    logger.warning(
-                        f"VLM API for {request['model']} error (attempt {attempt + 1}/{self.num_max_retry}): {type(e).__name__}: {e}"
-                    )
+                logger.warning(
+                    f"VLM API for {request['model']} error (attempt {attempt + 1}/{self.num_max_retry}): {type(e).__name__}: {e}"
+                )
         logger.warning("VLM query failed after max retries")
         return ""
 
@@ -137,5 +141,14 @@ class GatewayVLM:
         return request
 
     def close(self):
+        # Shut down the underlying HTTP pool before stopping the loop so idle
+        # connections do not linger until interpreter GC (ResourceWarnings).
+        closer = getattr(self.client, "close", None)
+        if closer is not None:
+            future = asyncio.run_coroutine_threadsafe(closer(), self.loop)
+            try:
+                future.result(timeout=10)
+            except Exception as exc:  # best-effort teardown
+                logger.warning(f"VLM client close failed: {type(exc).__name__}: {exc}")
         self.loop.call_soon_threadsafe(self.loop.stop)
         self.thread.join()

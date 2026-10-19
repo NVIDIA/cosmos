@@ -229,6 +229,13 @@ def parse_vlm_response(text: str, testpoints: list[str]) -> Optional[tuple[list[
     return analyses, verdicts
 
 
+def _as_native_list(value: Any) -> list:
+    """Accept both native lists and legacy str(repr(list)) result payloads."""
+    if isinstance(value, list):
+        return value
+    return list(ast.literal_eval(value))
+
+
 def compute_final_metrics(score_breakdown: dict, verbose: bool = True) -> dict:
     big_class_stats = defaultdict(lambda: [0, 0])
     small_class_stats = defaultdict(lambda: [0, 0])
@@ -238,8 +245,8 @@ def compute_final_metrics(score_breakdown: dict, verbose: bool = True) -> dict:
             if verbose:
                 print(f"Skipping {name}: no result")
             continue
-        testpoints = ast.literal_eval(result["testpoints"])
-        verdicts = ast.literal_eval(result["verdicts"])
+        testpoints = _as_native_list(result["testpoints"])
+        verdicts = _as_native_list(result["verdicts"])
 
         for testpoint, verdict in zip(testpoints, verdicts):
             big_class = testpoint.split("-", 1)[0].strip() if "-" in testpoint else testpoint.strip()
@@ -392,11 +399,18 @@ def main() -> None:
         gateway_api=args.gateway_api,
         model_str=args.modelstr,
         num_concurrency=args.num_concurrency,
+        num_max_retry=args.vlm_max_retry,
+        timeout=args.vlm_timeout,
     )
 
     score_breakdown: dict[str, Any] = {}
+    failed_samples: list[str] = []
 
     while samples_todo:
+        # Samples whose retries are exhausted are recorded instead of being
+        # silently dropped, so partial runs stay auditable against total.
+        expired = [s for s in samples_todo if s["try_num"] >= args.max_retry]
+        failed_samples.extend(osp.basename(s["image_path"]) for s in expired)
         samples_todo = [s for s in samples_todo if s["try_num"] < args.max_retry]
         if not samples_todo:
             break
@@ -433,10 +447,12 @@ def main() -> None:
                 samples_error.append(si)
             else:
                 analyses, verdicts = parsed
+                # Store native lists; legacy result files carry str(list) blobs,
+                # which compute_final_metrics still accepts defensively.
                 score_breakdown[name] = {
-                    "testpoints": str(testpoints),
-                    "analyses": str(analyses),
-                    "verdicts": str(verdicts),
+                    "testpoints": list(testpoints),
+                    "analyses": list(analyses),
+                    "verdicts": [bool(v) for v in verdicts],
                     "raw_output": response,
                 }
 
@@ -454,6 +470,7 @@ def main() -> None:
         },
         "judge_model": args.modelstr,
         "success_count": f"{len(score_breakdown)}/{samples_total}",
+        "failed_samples": sorted(set(failed_samples)),
         "breakdown": score_breakdown,
     }
 
@@ -473,6 +490,8 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--num_concurrency", type=int, default=128)
     parser.add_argument("--batch_size", type=int, default=1170)
     parser.add_argument("--max_retry", type=int, default=3)
+    parser.add_argument("--vlm_timeout", type=int, default=300)
+    parser.add_argument("--vlm_max_retry", type=int, default=3)
     return parser.parse_args()
 
 
