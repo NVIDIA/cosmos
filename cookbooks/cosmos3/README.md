@@ -183,10 +183,10 @@ Cosmos3-Edge (Nemotron-dense backbone) in
 [#16773](https://github.com/NVIDIA/TensorRT-LLM/pull/16773).
 These changes are merged on TensorRT-LLM `main`. The Action and Transfer
 notebooks were executed against source revision
-[`bca6761ab84fbcd58fc7f914eade7de48b32e35e`](https://github.com/NVIDIA/TensorRT-LLM/commit/bca6761ab84fbcd58fc7f914eade7de48b32e35e).
+[`cc63e66daf52644f1441e117bb7ba67d20566016`](https://github.com/NVIDIA/TensorRT-LLM/commit/cc63e66daf52644f1441e117bb7ba67d20566016).
 Use that revision to reproduce their request contract, or a newer build with
 the same API.
-The source revision is significant: a package version of `1.3.0rc26` alone
+The source revision is significant: a package version of `1.4.0rc0` alone
 does not establish compatibility with the action image-decoding path.
 
 Install TensorRT-LLM following its upstream documentation.
@@ -204,7 +204,7 @@ git lfs install
 git clone https://github.com/NVIDIA/TensorRT-LLM.git
 cd TensorRT-LLM
 # Source revision used for the Action/Transfer notebook validation below.
-git checkout bca6761ab84fbcd58fc7f914eade7de48b32e35e
+git checkout cc63e66daf52644f1441e117bb7ba67d20566016
 git submodule update --init --recursive
 git lfs pull
 
@@ -232,58 +232,18 @@ Then install the Cosmos3 guardrail package in the same environment unless you
 explicitly disable guardrails before starting the server:
 
 ```bash
-pip install cosmos_guardrail==0.3.0
+pip install cosmos_guardrail==0.3.2
 # On headless servers without libGL.so.1, replace the OpenCV wheel pulled in by
 # cosmos_guardrail with the matching headless build:
 pip uninstall -y opencv-python
 pip install opencv-python-headless==5.0.0.93
 ```
 
-#### Server-side NLTK data setup
-
-With `cosmos_guardrail==0.3.0`, NLTK's path checks can reject tokenizer or
-dictionary files that are symlinks from a Hugging Face snapshot into its
-`blobs/` directory. Prepare a separate copy of the NLTK data as regular files
-**on the server, in the same container and shell used to launch TensorRT-LLM**:
-
-```bash
-export NLTK_DATA="$(mktemp -d "${TMPDIR:-/tmp}/cosmos3-nltk.XXXXXX")"
-python3 - <<'PY'
-import os
-import shutil
-from pathlib import Path
-
-import nltk
-from huggingface_hub import snapshot_download
-
-snapshot = snapshot_download(
-    "nvidia/Cosmos-1.0-Guardrail",
-    revision="cf03c0395fac8c4de386c0bdab12cc4fc8d66362",
-    allow_patterns=["blocklist/**"],
-)
-source = Path(snapshot) / "blocklist" / "nltk_data"
-destination = Path(os.environ["NLTK_DATA"]).resolve()
-shutil.copytree(source, destination, symlinks=False, dirs_exist_ok=True)
-assert not any(path.is_symlink() for path in destination.rglob("*"))
-
-# Check both resource lookups used by the text blocklist before starting a GPU server.
-nltk.data.path[:] = [str(destination)]
-tokens = nltk.word_tokenize("You are an autonomous vehicle planning system.")
-assert nltk.WordNetLemmatizer().lemmatize("vehicles") == "vehicle"
-print("Guardrail NLTK data ready:", destination, tokens)
-PY
-```
-
-Keep `NLTK_DATA` exported when starting the server below. Repeat this setup
-after recreating the container or removing the temporary directory. Running it
-only in the client notebook's environment does not configure a remote server.
-This workaround does not rewrite cached files or symlinks, and keeps NLTK
-path security and `use_guardrails=True` enabled.
-
-The separate `No safety models found, returning safe` warning in guardrail
-0.3.0 refers to its intentionally empty video-content classifier list. Text
-checks and face blurring remain configured; the NLTK workaround does not enable
-video-content classification or suppress that warning.
+`cosmos_guardrail` 0.3.2 copies its NLTK data out of the Hugging Face cache
+on first use, so the server needs no separate NLTK data setup. Its
+`No safety models found, returning safe` warning refers to the intentionally
+empty video-content classifier list; text checks and face blurring remain
+configured.
 
 Set the TensorRT-LLM source root for the shared VisualGen config YAMLs. Run this
 from inside the TensorRT-LLM checkout — the directory the `git clone` above
