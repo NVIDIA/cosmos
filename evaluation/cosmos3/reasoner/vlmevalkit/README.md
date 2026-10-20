@@ -45,6 +45,13 @@ the inputs and reads the outputs.
 
 ## 1. Environment setup
 
+For a Brev VM with a notebook-driven Docker deployment, use the
+[Cosmos3 VANTAGE launchable](launchable/README.md). Its default **public** path
+uses the dataset-linked VANTAGE harness for public data preparation and official
+submission generation. Its separate **internal** path retains this NVIDIA fork
+and the configs below; the two paths do not share prepared dataset roots.
+
+
 Use a clean virtual environment with **Python 3.10+**, run from the **repo root** (the directory that
 holds this README):
 

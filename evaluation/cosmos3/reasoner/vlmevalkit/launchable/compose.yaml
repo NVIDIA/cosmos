@@ -1,0 +1,81 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+name: cosmos3-vantage
+services:
+  cosmos-endpoint:
+    profiles: [local]
+    platform: linux/amd64
+    image: ${VLLM_IMAGE:-vllm/vllm-openai:cosmos3@sha256:db0bb920b0b54e82ea96a98659bbd21921f87d0dcfc86feffdafa2db3f08be55}
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ipc: host
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_HOME: /cache/huggingface
+    volumes:
+      - ${LAUNCHABLE_STATE_DIR:-./state}/cache:/cache
+      - ${LAUNCHABLE_STATE_DIR:-./state}/data:/data:ro
+    # Deliberately no host port: only the evaluator can reach this API.
+    command:
+      - nvidia/Cosmos3-Nano
+      - --revision
+      - e59a53c25979a090fa8706c9acc0c254a6e89b92
+      - --async-scheduling
+      - --allowed-local-media-path
+      - /
+      - --port
+      - '8080'
+      - --max-model-len
+      - '128000'
+      - --tensor-parallel-size
+      - '1'
+      - --gpu-memory-utilization
+      - '0.9'
+      - --enable-chunked-prefill
+      - --mm-processor-cache-gb
+      - '0'
+      - --mm-encoder-tp-mode
+      - data
+      - --media-io-kwargs
+      - '{"video": {"num_frames": -1, "fps": -1}}'
+    healthcheck:
+      test: [CMD, python3, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8080/v1/models', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 120
+      start_period: 60s
+  vantage-eval:
+    platform: linux/amd64
+    build:
+      context: ..
+      dockerfile: launchable/Dockerfile
+      args:
+        COSMOS_COMMIT: ${COSMOS_COMMIT:-unknown}
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:8888:8888'
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      COSMOS_API_BASE: ${COSMOS_API_BASE:-http://cosmos-endpoint:8080/v1/chat/completions}
+      COSMOS_MODEL: ${COSMOS_MODEL:-nvidia/Cosmos3-Nano}
+      COSMOS_API_KEY: ${COSMOS_API_KEY:-EMPTY}
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:?Run bash setup.sh to generate a Jupyter token}
+      LMUData: /data/public/LMUData
+      AWS_CONFIG_FILE: /credentials/aws/config
+      AWS_SHARED_CREDENTIALS_FILE: /credentials/aws/credentials
+    volumes:
+      - ${LAUNCHABLE_STATE_DIR:-./state}/cache:/cache
+      - ${LAUNCHABLE_STATE_DIR:-./state}/data:/data
+      - ${LAUNCHABLE_STATE_DIR:-./state}/results:/results
+      - ${AWS_CREDENTIALS_DIR:-./state/credentials/aws}:/credentials/aws:ro
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8888/login', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
