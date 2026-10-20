@@ -263,13 +263,18 @@ the Cosmos3 VisualGen API schema. The notebook sets request-level
 
 ## TensorRT-LLM Reasoner
 
-OpenAI-compatible **reasoning** server for image and video understanding. Run
-TensorRT-LLM in the prebuilt
-[`nvcr.io/nvidia/tensorrt-llm/release:1.3.0rc22`](https://catalog.ngc.nvidia.com/orgs/nvidia/tensorrt-llm/containers/release)
-container, or follow the
-[TensorRT-LLM Generator source-build instructions](#tensorrt-llm-generator) to
-install TensorRT-LLM from source.
+OpenAI-compatible **reasoning** server for image and video understanding.
 Authenticate with Hugging Face before loading gated checkpoints.
+
+**Cosmos3-Nano** and **Cosmos3-Super** run in the prebuilt
+[`nvcr.io/nvidia/tensorrt-llm/release:1.3.0rc22`](https://catalog.ngc.nvidia.com/orgs/nvidia/tensorrt-llm/containers/release)
+container.
+
+**Cosmos3-Edge** uses `Cosmos3EdgeForConditionalGeneration`. That release image
+does not include the architecture. Install TensorRT-LLM from a checkout that
+includes [PR 20307](https://github.com/NVIDIA/TensorRT-LLM/pull/20307), following
+the [TensorRT-LLM Generator source-build instructions](#tensorrt-llm-generator),
+and run the Edge command below in that environment.
 
 Install headless OpenCV in the environment that runs the server. Cosmos3
 Reasoner uses it to process vision inputs:
@@ -280,8 +285,7 @@ python -m pip install opencv-python-headless
 
 ### Start the server
 
-Run one of these commands inside the release container or activated local
-environment.
+**Cosmos3-Nano** and **Cosmos3-Super** — run inside the release container above.
 
 **Cosmos3-Nano** (single GPU, port 8001):
 
@@ -304,7 +308,8 @@ trtllm-serve nvidia/Cosmos3-Super \
   --max_num_tokens 32768
 ```
 
-**Cosmos3-Edge** (single GPU, port 8001):
+**Cosmos3-Edge** (single GPU, port 8001) — run in the source environment above,
+not in `release:1.3.0rc22`:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 \
