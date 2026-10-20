@@ -1,0 +1,43 @@
+diff --git a/vlmeval/__init__.py b/vlmeval/__init__.py
+--- a/vlmeval/__init__.py
++++ b/vlmeval/__init__.py
+@@ -1,8 +1,4 @@
+-import ssl
+-ssl._create_default_https_context = ssl._create_unverified_context
+-# Temporarily bypass SSL certificate verification to download files from oss.
+-
+ try:
+     import torch
+ except ImportError:
+     pass
+diff --git a/run.py b/run.py
+--- a/run.py
++++ b/run.py
+@@ -301,9 +301,2 @@
+-        if RANK == 0 and hasattr(model, "__dict__"):
+-            config_path = os.path.join(pred_root, "model_config.txt")
+-            with open(config_path, "w") as f:
+-                for k, v in model.__dict__.items():
+-                    f.write(f"{k}:\n{v}\n")
+-                    f.write("-" * 40 + "\n")
+-
+         for _, dataset_name in enumerate(args.data):
+             if WORLD_SIZE > 1:
+diff --git a/vlmeval/api/cosmos_reason.py b/vlmeval/api/cosmos_reason.py
+--- a/vlmeval/api/cosmos_reason.py
++++ b/vlmeval/api/cosmos_reason.py
+@@ -25,3 +25,3 @@
+-def _tensor_video_to_base64(video_tensor, fps, crf=14):
++def _tensor_video_to_base64(video_tensor, fps, crf=0):
+     """Convert (T,C,H,W) RGB tensor to MP4 base64 using ffmpeg."""
+     assert video_tensor.ndim == 4 and video_tensor.shape[1] == 3
+@@ -71,5 +71,7 @@
+     video_url = f"data:video/mp4;base64,{video_base64}"
+     video_kwargs = copy.deepcopy(video_kwargs)
+-    video_kwargs.update(dict(do_sample_frames=False, do_resize=False))
+-    del video_kwargs["fps"]
++    video_kwargs.setdefault("do_sample_frames", False)
++    if isinstance(video_kwargs.get("fps"), list):
++        video_kwargs["fps"] = video_kwargs["fps"][0]
++    video_kwargs.pop("do_resize", None)
+     return video_url, video_kwargs
