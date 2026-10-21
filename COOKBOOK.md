@@ -53,6 +53,7 @@ Maintainer notes (not rendered):
 | **[Action][action]**<br><sub>Forward dynamics, inverse dynamics, policy</sub> | `AV` `ROB` | `S` |
 | **[Transfer][transfer]**<br><sub>Spatial controls: edge, blur, depth, segmentation, world-scenario map, multi-control</sub> | `ANY` `AV` | `S` `M` |
 | **[NIM deployment][nim]**<br><sub>Choose a run time (generation/reasoning), run accelerated inference from one container · [support matrix][nim-matrix]</sub> | `ANY` | `S` `M` |
+| **[Quantization][quantization]**<br><sub>Static FP8 export and serving: Nano/Super video, Super base and 4-step text-to-image/image-to-video</sub> | `ANY` |  |
 
 ## Simulation&nbsp;<a href="#simulation"><img src="assets/brand/badge-new.svg" alt="New"></a>
 
@@ -97,6 +98,7 @@ Maintainer notes (not rendered):
 [transfer]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/transfer/README.md
 [nim]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/nim/README.md
 [nim-matrix]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/nim/support-matrix.md
+[quantization]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/quantization/README.md
 [transfer-auto]: https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cosmos3-nano-transfer-auto
 [try-auto]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/simulation/auto/README.md
 [sim-auto]: https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cosmos3-nano-sim-auto

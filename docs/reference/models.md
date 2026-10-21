@@ -10,6 +10,15 @@ Three base models are the product:
 | [Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) | 16B | Omnimodal world model — understanding, simulation, prediction, action reasoning on a single GPU |
 | [Cosmos3-Super](https://huggingface.co/nvidia/Cosmos3-Super) | 64B | Frontier-scale omnimodal world model |
 
+Published static FP8 checkpoints: [Cosmos3-Nano-FP8](https://huggingface.co/nvidia/Cosmos3-Nano-FP8)
+and [Cosmos3-Super-FP8](https://huggingface.co/nvidia/Cosmos3-Super-FP8).
+Use the [quantization cookbook](../../COOKBOOK.md#inference) to export local FP8
+checkpoints for Nano/Super video and Super base/distilled T2I/I2V. The specialized
+Super examples use locally quantized outputs; published `fp8` revisions are not
+assumed. FP8 weights retain the exported activation policy: the generator can use
+A16 on boundary denoising steps and its reasoner, while standalone reasoner
+inference follows its own backend policy.
+
 Post-trained example checkpoints ([cosmos3-examples](https://huggingface.co/collections/nvidia/cosmos3-examples)) demonstrate what [post-training with Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) can specialize Cosmos for:
 
 | Example checkpoint | Base | Demonstrates |
@@ -90,7 +99,7 @@ The four Cosmos Simulation checkpoints are derived from Cosmos3-Nano and have th
 | Aspect ratios | 16:9, 4:3, 1:1, 3:4, 9:16 (default 16:9) |
 | Frame rates | 10, 16, 24, 30 FPS (default 24) |
 | Frame count | 5–300 (default 189) |
-| Precision | BF16 tested |
+| Precision | BF16; static FP8 for Nano/Super via the quantization cookbook (activation precision follows backend policy) |
 | OS / GPU | Linux; Ampere, Hopper, Blackwell |
 
 \* Cosmos3-Edge supports only 256p and 480p, frame count is 50-150.
