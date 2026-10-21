@@ -10,10 +10,14 @@ Three base models are the product:
 | [Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) | 16B | Omnimodal world model — understanding, simulation, prediction, action reasoning on a single GPU |
 | [Cosmos3-Super](https://huggingface.co/nvidia/Cosmos3-Super) | 64B | Frontier-scale omnimodal world model |
 
-Post-trained example checkpoints ([cosmos3-examples](https://huggingface.co/collections/nvidia/cosmos3-examples)) demonstrate fine-tuning capabilities and are not part of the product line:
+Post-trained example checkpoints ([cosmos3-examples](https://huggingface.co/collections/nvidia/cosmos3-examples)) demonstrate what [post-training with Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) can specialize Cosmos for:
 
 | Example checkpoint | Base | Demonstrates |
 |---|---|---|
+| [Cosmos3-Nano-Sim-Auto&nbsp;<img src="../../assets/brand/badge-new.svg" alt="New" align="absmiddle">](https://huggingface.co/nvidia/Cosmos3-Nano-Sim-Auto) | Nano | Closed-loop driving simulation: multi-view camera video and LiDAR |
+| [Cosmos3-Nano-Transfer-Auto&nbsp;<img src="../../assets/brand/badge-new.svg" alt="New" align="absmiddle">](https://huggingface.co/nvidia/Cosmos3-Nano-Transfer-Auto) | Nano | Multi-view driving video SDG, up to 11 cameras plus LiDAR |
+| [Cosmos3-Nano-Sim-Bimanual&nbsp;<img src="../../assets/brand/badge-new.svg" alt="New" align="absmiddle">](https://huggingface.co/nvidia/Cosmos3-Nano-Sim-Bimanual) | Nano | Closed-loop simulation - action-conditioned auto-regressive roll-out |
+| [Cosmos3-Nano-Sim-Transfer&nbsp;<img src="../../assets/brand/badge-new.svg" alt="New" align="absmiddle">](https://huggingface.co/nvidia/Cosmos3-Nano-Sim-Transfer) | Nano | Auto-regressive transfer with depth, segmentation, edge, and blur controls |
 | [Cosmos3-Super-Text2Image](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image) | Super | Elite quality text-to-image |
 | [Cosmos3-Super-Text2Image-4Step](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image-4Step) | Super | Elite quality text-to-image, 17-25x faster |
 | [Cosmos3-Super-Image2Video](https://huggingface.co/nvidia/Cosmos3-Super-Image2Video) | Super | Elite quality image-to-video |
@@ -25,7 +29,7 @@ Post-trained example checkpoints ([cosmos3-examples](https://huggingface.co/coll
 
 Cosmos 3 is built on a unified Mixture-of-Transformers (MoT) architecture combining an autoregressive transformer (reasoning; causal self-attention, next-token prediction) with a diffusion transformer (generation; full attention over noisy image/video/audio/action tokens). Both modes share transformer weights, multimodal attention layers, and a unified 3D mRoPE that encodes spatial and temporal structure across modalities.
 
-![Cosmos 3 model architecture](https://raw.githubusercontent.com/NVIDIA/cosmos/main/cookbooks/cosmos3/cosmos3-model-architecture.png)
+![Cosmos 3 model architecture](../assets/cosmos3-model-architecture.png)
 
 ## Input / output and workflows
 
@@ -60,7 +64,23 @@ Cosmos 3 is built on a unified Mixture-of-Transformers (MoT) architecture combin
 \* Output format: JPG, MP4, AAC-in-MP4 (stereo 48 kHz), JSON actions, text\
 \* Prompt length: < 300 words recommended for world generation
 
-Every workflow has a runnable notebook — see [cookbooks](../../cookbooks/cosmos3/README.md).
+Every workflow has a runnable notebook — see [cookbooks](https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/README.md).
+
+### Simulation checkpoints
+
+The four Cosmos Simulation checkpoints are derived from Cosmos3-Nano and have their own inputs and outputs. Recipes: [Cookbook → Simulation](../../COOKBOOK.md#simulation).
+
+| Checkpoint | Input | Output |
+|---|---|---|
+| [Cosmos3-Nano-Sim-Auto](https://huggingface.co/nvidia/Cosmos3-Nano-Sim-Auto) | Text + world-scenario map control video (lane lines and object cuboids), one stream per camera view and one for LiDAR | Synchronized multi-view video and LiDAR, generated autoregressively in a closed loop; 10–30 FPS, 480p or 720p |
+| [Cosmos3-Nano-Transfer-Auto](https://huggingface.co/nvidia/Cosmos3-Nano-Transfer-Auto) | Text + world-scenario map control video (lane lines and object cuboids), one stream per camera view and one for LiDAR | Synchronized multi-view video and LiDAR, up to 300 frames; 10–30 FPS, 480p or 720p |
+| [Cosmos3-Nano-Sim-Bimanual](https://huggingface.co/nvidia/Cosmos3-Nano-Sim-Bimanual) | Start image (JPG/PNG/JPEG/WEBP) + per-frame actions and camera movement (JSON); text optional | Video generated frame by frame; up to 901 frames at 30 FPS, 480p |
+| [Cosmos3-Nano-Sim-Transfer](https://huggingface.co/nvidia/Cosmos3-Nano-Sim-Transfer) | Text + simulator-rendered control video: depth, segmentation, edge or blur | Photoreal video aligned to the input geometry; up to 600 frames at 30 FPS, 480p |
+
+\* Camera rigs (Sim-Auto, Transfer-Auto): 1-11 views (not including LiDAR), standard and fisheye; other rigs need post-training.\
+\* Action embodiment (Sim-Bimanual): AgiBot, YAM.\
+\* Sim-Transfer runs up to 8 parallel environments in real time on one GB200.\
+\* Test hardware: H100 and B200. Acceleration engines: PyTorch, vLLM-Omni, FlashDreams (for sim-auto and sim-bimanual), SGLang (coming soon).
 
 ## Generation settings
 

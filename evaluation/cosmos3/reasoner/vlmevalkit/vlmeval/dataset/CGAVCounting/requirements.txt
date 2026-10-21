@@ -1,2 +1,0 @@
-scipy
-word2number
