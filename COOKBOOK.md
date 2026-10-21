@@ -24,7 +24,7 @@ Maintainer notes (not rendered):
   space changes the heading anchor to #simulation- and breaks every link to #simulation.
   README.md and docs/reference/models.md use the same badge; `git grep badge-new.svg` lists every use.
   Remove them all, and this note, once Simulation is no longer new.
-- Recipe links use the commit of [Framework tag `GA-final-2026-10-19` (`be540e4`)][framework-snapshot].
+- Recipe links point at the `main` branch of [Cosmos Framework][framework-main].
 -->
 
 **Jump to:** [Inference](#inference) · [Simulation](#simulation) · [Post-training](#post-training) · [Distillation](#distillation) · [Evaluation](#evaluation)
@@ -90,28 +90,28 @@ Maintainer notes (not rendered):
 
 ---
 
-[framework-snapshot]: https://github.com/NVIDIA/cosmos-framework/commit/be540e4750cb8fe13d297ec0d32ab8909123f26d
-[gen]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/generator/audiovisual/README.md
-[reason]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/reasoner/README.md
-[action]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/generator/action/README.md
-[transfer]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/generator/transfer/README.md
-[nim]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/nim/README.md
-[nim-matrix]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/nim/support-matrix.md
-[transfer-auto]: https://github.com/NVIDIA/cosmos-framework/tree/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cosmos3-nano-transfer-auto
-[try-auto]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/simulation/auto/README.md
-[sim-auto]: https://github.com/NVIDIA/cosmos-framework/tree/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cosmos3-nano-sim-auto
-[sim-bimanual]: https://github.com/NVIDIA/cosmos-framework/tree/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cosmos3-nano-sim-bimanual
-[try-bimanual]: https://github.com/NVIDIA/cosmos-framework/tree/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/simulation/bimanual
-[sim-transfer]: https://github.com/NVIDIA/cosmos-framework/tree/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cosmos3-nano-sim-transfer
-[try-sim-transfer]: https://github.com/NVIDIA/cosmos-framework/tree/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/simulation/transfer
-[ft-gen]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/generator/audiovisual/finetune/README.md
-[ft-reason]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/reasoner/finetune/README.md
-[ft-policy]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/generator/action/finetune/README.md
-[ft-fd]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/generator/action/finetune/action_fd_droid_posttrain.md
-[distill]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/cookbooks/cosmos3/generator/audiovisual/distill/README.md
-[paibench-g]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/evaluation/cosmos3/generator/paibench_g/README.md
-[paibench-c]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/evaluation/cosmos3/generator/paibench_c/README.md
-[physics-iq]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/evaluation/cosmos3/generator/physics_iq/README.md
-[unigenbench]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/evaluation/cosmos3/generator/unigenbench/run_with_cosmos_framework.ipynb
-[rbench]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/evaluation/cosmos3/generator/rbench/README.md
-[vlmevalkit]: https://github.com/NVIDIA/cosmos-framework/blob/be540e4750cb8fe13d297ec0d32ab8909123f26d/.agents/skills/evaluation/cosmos3/reasoner/vlmevalkit/README.md
+[framework-main]: https://github.com/NVIDIA/cosmos-framework/tree/main
+[gen]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/audiovisual/README.md
+[reason]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/reasoner/README.md
+[action]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/action/README.md
+[transfer]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/transfer/README.md
+[nim]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/nim/README.md
+[nim-matrix]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/nim/support-matrix.md
+[transfer-auto]: https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cosmos3-nano-transfer-auto
+[try-auto]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/simulation/auto/README.md
+[sim-auto]: https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cosmos3-nano-sim-auto
+[sim-bimanual]: https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cosmos3-nano-sim-bimanual
+[try-bimanual]: https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cookbooks/cosmos3/simulation/bimanual
+[sim-transfer]: https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cosmos3-nano-sim-transfer
+[try-sim-transfer]: https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cookbooks/cosmos3/simulation/transfer
+[ft-gen]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/audiovisual/finetune/README.md
+[ft-reason]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/reasoner/finetune/README.md
+[ft-policy]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/action/finetune/README.md
+[ft-fd]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/action/finetune/action_fd_droid_posttrain.md
+[distill]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/audiovisual/distill/README.md
+[paibench-g]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/evaluation/cosmos3/generator/paibench_g/README.md
+[paibench-c]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/evaluation/cosmos3/generator/paibench_c/README.md
+[physics-iq]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/evaluation/cosmos3/generator/physics_iq/README.md
+[unigenbench]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/evaluation/cosmos3/generator/unigenbench/run_with_cosmos_framework.ipynb
+[rbench]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/evaluation/cosmos3/generator/rbench/README.md
+[vlmevalkit]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/evaluation/cosmos3/reasoner/vlmevalkit/README.md
