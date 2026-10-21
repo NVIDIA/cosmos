@@ -58,7 +58,7 @@
 
 ## What's new
 
-- **[Oct 2026]**&nbsp;<a href="#whats-new"><img src="assets/brand/badge-new.svg" alt="New" align="absmiddle"></a> [Interactive World Simulation with Cosmos for Physical AI](https://github.com/NVIDIA/cosmos/blob/main/COOKBOOK.md#simulation) - example model checkpoints and training recipes: [HF collection](https://huggingface.co/collections/nvidia/cosmos3-examples) · [Cookbook](COOKBOOK.md#simulation) · [Technical report](https://research.nvidia.com/labs/cosmos-lab/cosmos-simulation/technical-report.pdf) (coming soon) · [Website](https://research.nvidia.com/labs/cosmos-lab/cosmos-simulation/).
+- **[Oct 2026]**&nbsp;<a href="#whats-new"><img src="assets/brand/badge-new.svg" alt="New" align="absmiddle"></a> [Interactive World Simulation with Cosmos for Physical AI](https://github.com/NVIDIA/cosmos/blob/main/COOKBOOK.md#simulation) - example model checkpoints and training recipes: [HF collection](https://huggingface.co/collections/nvidia/cosmos3-examples) · [Cookbook](COOKBOOK.md#simulation) · [Technical report](https://research.nvidia.com/labs/cosmos-lab/cosmos-simulation/technical-report.pdf) · [Website](https://research.nvidia.com/labs/cosmos-lab/cosmos-simulation/).
 - **[Jul 2026]** [Cosmos3-Edge](https://huggingface.co/nvidia/Cosmos3-Edge) released - the 4B tier for on-device, real-time deployment (Jetson AGX Orin / Thor / RTX Pro 6000).
 - **[May 2026]** Cosmos 3 released: [HF collection](https://huggingface.co/collections/nvidia/cosmos3) · [Technical Report](https://research.nvidia.com/labs/cosmos-lab/cosmos3/technical-report.pdf).
 
