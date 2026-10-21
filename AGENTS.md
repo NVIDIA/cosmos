@@ -1,6 +1,6 @@
 # AGENTS.md — Cosmos
 
-This is the landing repository for NVIDIA Cosmos: the README, the [model reference](docs/reference/models.md) and the [Cosmos Cookbook](COOKBOOK.md), an index of agent-runnable recipes. Code, recipes and agent skills live in [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework): read its `AGENTS.md` and `.agents/skills/` before running or changing a recipe.
+This is the landing repository for NVIDIA Cosmos: the README, the [model reference](docs/reference/models.md) and the [Cosmos Cookbook](COOKBOOK.md), an index of agent-runnable recipes. Code, recipes and agent skills live in [Cosmos Framework](https://nvda.ws/4zRE0Md): read its `AGENTS.md` and `.agents/skills/` before running or changing a recipe.
 
 ## Where things go
 

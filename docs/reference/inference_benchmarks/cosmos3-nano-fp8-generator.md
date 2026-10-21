@@ -53,7 +53,7 @@ These measurements establish the reported timing matrix but do not expose every 
 | Inverse dynamics | Observed video | Recovered action trajectory; some serving integrations also return video |
 | Policy | Initial visual observation, instruction, and optional state | Predicted action trajectory and, for general Generator paths, a rollout video |
 
-The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound-producing modes `t2vs`, `v2vs`, and `i2vs`. See the [audiovisual cookbook](https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/audiovisual/README.md) for generation inputs and the [action cookbook](https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/action/README.md) for action representations and output contracts.
+The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound-producing modes `t2vs`, `v2vs`, and `i2vs`. See the [audiovisual cookbook](https://nvda.ws/4z3OmbC) for generation inputs and the [action cookbook](https://nvda.ws/4dUeBsJ) for action representations and output contracts.
 
 ## Primary vision generation
 

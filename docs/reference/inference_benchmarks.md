@@ -1,6 +1,6 @@
 # Inference Benchmarks
 
-> This page is about **speed** (latency, throughput). For **quality** benchmarks (PAIBench, Physics-IQ, VLMEvalKit, ...), see [`evaluation/`](https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/evaluation).
+> This page is about **speed** (latency, throughput). For **quality** benchmarks (PAIBench, Physics-IQ, VLMEvalKit, ...), see [`evaluation/`](https://nvda.ws/3Uho0nx).
 
 These reports collect inference benchmarks for Cosmos3. **Generator** pages measure image, video, audiovisual, and action-generation latency across PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and NIM where results are available. **Reasoner** sections below measure VLM serving and token-generation performance for text, image, and video inputs through vLLM and Hugging Face Transformers.
 

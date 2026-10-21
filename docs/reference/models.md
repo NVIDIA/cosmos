@@ -10,7 +10,7 @@ Three base models are the product:
 | [Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) | 16B | Omnimodal world model — understanding, simulation, prediction, action reasoning on a single GPU |
 | [Cosmos3-Super](https://huggingface.co/nvidia/Cosmos3-Super) | 64B | Frontier-scale omnimodal world model |
 
-Post-trained example checkpoints ([cosmos3-examples](https://huggingface.co/collections/nvidia/cosmos3-examples)) demonstrate what [post-training with Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) can specialize Cosmos for:
+Post-trained example checkpoints ([cosmos3-examples](https://huggingface.co/collections/nvidia/cosmos3-examples)) demonstrate what [post-training with Cosmos Framework](https://nvda.ws/4zRE0Md) can specialize Cosmos for:
 
 | Example checkpoint | Base | Demonstrates |
 |---|---|---|
@@ -64,7 +64,7 @@ Cosmos 3 is built on a unified Mixture-of-Transformers (MoT) architecture combin
 \* Output format: JPG, MP4, AAC-in-MP4 (stereo 48 kHz), JSON actions, text\
 \* Prompt length: < 300 words recommended for world generation
 
-Every workflow has a runnable notebook — see [cookbooks](https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/README.md).
+Every workflow has a runnable notebook — see [cookbooks](https://nvda.ws/4hUq6Tm).
 
 ### Simulation checkpoints
 

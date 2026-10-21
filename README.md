@@ -27,29 +27,29 @@
   <tr>
     <td align="center" width="33%">
       <img src="assets/demos/physics_newton_cradle.gif" alt="Physics-aware generation: Newton's cradle">
-      <sub><a href="https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb"><b>Physics-aware generation</b></a><br>A Newton's cradle in motion: momentum transfer rendered with physical fidelity</sub>
+      <sub><a href="https://nvda.ws/4zM83ov"><b>Physics-aware generation</b></a><br>A Newton's cradle in motion: momentum transfer rendered with physical fidelity</sub>
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/transfer_worldscenario.gif" alt="World-scenario transfer: control layout to photoreal driving video">
-      <sub><a href="https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/transfer/run_video_transfer_with_vllm_omni.ipynb"><b>Transfer</b></a><br>World-scenario control layout → photoreal driving video</sub>
+      <sub><a href="https://nvda.ws/4sm3te7"><b>Transfer</b></a><br>World-scenario control layout → photoreal driving video</sub>
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/policy_screwdriver.gif" alt="Robot policy executing a manipulation task">
-      <sub><a href="https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/action/run_policy_with_vllm_omni.ipynb"><b>Action policy</b></a><br>Policy run: "put the screwdriver and the glove in the purple container"</sub>
+      <sub><a href="https://nvda.ws/4ses7Nz"><b>Action policy</b></a><br>Policy run: "put the screwdriver and the glove in the purple container"</sub>
     </td>
   </tr>
   <tr>
     <td align="center" width="33%">
       <img src="assets/demos/driving_sim_falling_rocks.gif" alt="Driving simulation for autonomous vehicles">
-      <sub><a href="https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/audiovisual/run_with_vllm_omni.ipynb"><b>Simulation</b></a><br>Generate synthetic data and create simulation for autonomous driving</sub>
+      <sub><a href="https://nvda.ws/4zM83ov"><b>Simulation</b></a><br>Generate synthetic data and create simulation for autonomous driving</sub>
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/fd_egocentric_repair_poses.gif" alt="Forward dynamics egocentric rollout">
-      <sub><a href="https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/generator/action/run_fd_with_vllm_omni.ipynb"><b>Action-conditioned World Model</b></a><br>Forward dynamics: egocentric rollout from input camera + hand pose</sub>
+      <sub><a href="https://nvda.ws/4srp0C7"><b>Action-conditioned World Model</b></a><br>Forward dynamics: egocentric rollout from input camera + hand pose</sub>
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/reasoner_driving_hazard.gif" alt="World Reasoner: dashcam hazard anticipation">
-      <sub><a href="https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/reasoner/run_with_vllm.ipynb"><b>World reasoning</b></a><br>Reason in complex real-world scenarios: a rolling ball means a child or pet may follow</sub>
+      <sub><a href="https://nvda.ws/4BlGqEj"><b>World reasoning</b></a><br>Reason in complex real-world scenarios: a rolling ball means a child or pet may follow</sub>
     </td>
   </tr>
 </table>
@@ -77,7 +77,7 @@ One model, two towers:
 
 This repository is the landing repo to start your physical AI journey with Cosmos. Here you can find detailed information on Cosmos models and explore [Cosmos cookbook](COOKBOOK.md) - a set of agent runnable recipes for various objectives and industries.
 
-The recipes are supported by the Cosmos platform, including [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) for training infra (SFT, LoRA, RL, distillation etc.), [Cosmos Curator](https://github.com/NVIDIA/cosmos-curator) for data curation, and [Cosmos Evaluator](https://github.com/NVIDIA/cosmos-evaluator) for model output evaluation.
+The recipes are supported by the Cosmos platform, including [Cosmos Framework](https://nvda.ws/4zRE0Md) for training infra (SFT, LoRA, RL, distillation etc.), [Cosmos Curator](https://github.com/NVIDIA/cosmos-curator) for data curation, and [Cosmos Evaluator](https://github.com/NVIDIA/cosmos-evaluator) for model output evaluation.
 
 ## Find your path
 
@@ -86,10 +86,10 @@ The recipes are supported by the Cosmos platform, including [Cosmos Framework](h
   <tr><td><b>See it work</b> - zero install</td><td><a href="https://build.nvidia.com/nvidia/cosmos3-nano">Video generation</a>, <a href="https://build.nvidia.com/nvidia/cosmos3-nano-reasoner">visual reasoning</a></td><td>1 min</td></tr>
   <tr><td><b>Generate my first video</b></td><td><a href="#generate-your-first-video">Quickstart ↓</a></td><td>10 min</td></tr>
   <tr><td><b>Run generation/reasoning inference</b></td><td><a href="COOKBOOK.md#inference">Inference recipes</a></td><td>10 min</td></tr>
-  <tr><td><b>Serve an OpenAI-compatible API</b></td><td><a href="https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/README.md">Serving guide:</a> vLLM, vLLM-Omni, or NIM</td><td>30 min</td></tr>
+  <tr><td><b>Serve an OpenAI-compatible API</b></td><td><a href="https://nvda.ws/4hUq6Tm">Serving guide:</a> vLLM, vLLM-Omni, or NIM</td><td>30 min</td></tr>
   <tr><td><b>Post-train on my own data:</b> SFT, LoRA, distill</td><td><a href="COOKBOOK.md#post-training">Post-train</a> and <a href="COOKBOOK.md#distillation">distill</a> recipes</td><td>hours</td></tr>
   <tr><td><b>Explore agent-runnable notebooks</b></td><td><a href="COOKBOOK.md">Cookbook</a></td><td>browse</td></tr>
-  <tr><td><b>Evaluate a model</b></td><td><a href="https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/evaluation">Evaluation suites:</a> PAIBench, Physics-IQ, VLMEvalKit</td><td>hours</td></tr>
+  <tr><td><b>Evaluate a model</b></td><td><a href="https://nvda.ws/3Uho0nx">Evaluation suites:</a> PAIBench, Physics-IQ, VLMEvalKit</td><td>hours</td></tr>
   <tr><td><b>Check latency &amp; throughput</b></td><td><a href="docs/reference/inference_benchmarks.md">Performance benchmarks</a></td><td>browse</td></tr>
 </table>
 
@@ -118,7 +118,7 @@ video = pipe(prompt="A mobile robot navigates a warehouse aisle and stops at a s
 export_to_video(video, "first_video.mp4", fps=24)
 ```
 
-First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so long step times are normal. Full options, image/sound modes, and every other backend: [audiovisual cookbooks](https://github.com/NVIDIA/cosmos-framework/tree/main/.agents/skills/cookbooks/cosmos3/generator/audiovisual) · setup issues: [environment setup guide](https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/README.md).
+First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so long step times are normal. Full options, image/sound modes, and every other backend: [audiovisual cookbooks](https://nvda.ws/4dTtwTY) · setup issues: [environment setup guide](https://nvda.ws/4hUq6Tm).
 
 
 ## Models
@@ -131,7 +131,7 @@ First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so lo
 | [Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) | 16B | RTX Pro 6000 / H100 / B200 | Balanced speed and quality; strong base model to post-train |
 | [Cosmos3-Edge](https://huggingface.co/nvidia/Cosmos3-Edge) | 4B | Jetson AGX Orin / Thor / RTX Pro 6000 | Edge deployment; real-time robot policy and visual reasoning |
 
-**Example checkpoints** in the [cosmos3-examples](https://huggingface.co/collections/nvidia/cosmos3-examples) collection are post-trained variants of the base models. They demonstrate what [post-training with Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) can specialize Cosmos for.
+**Example checkpoints** in the [cosmos3-examples](https://huggingface.co/collections/nvidia/cosmos3-examples) collection are post-trained variants of the base models. They demonstrate what [post-training with Cosmos Framework](https://nvda.ws/4zRE0Md) can specialize Cosmos for.
 
 | Example checkpoint | Base | Demonstrates |
 |---|---|---|
@@ -153,19 +153,19 @@ Full I/O specs, generation settings, and supported action embodiments: [model re
 | Project | Purpose |
 |---|---|
 | **Cosmos** | This repo |
-| [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) | Train, optimize, and deploy physical AI models, SFT · LoRA · distillation · RL post-training, for Cosmos and beyond |
+| [Cosmos Framework](https://nvda.ws/4zRE0Md) | Train, optimize, and deploy physical AI models, SFT · LoRA · distillation · RL post-training, for Cosmos and beyond |
 | [Cosmos Curator](https://github.com/NVIDIA/cosmos-curator) | Distributed data curation: processing, annotation, filtering, dedup |
 | [Cosmos Evaluator](https://github.com/NVIDIA/cosmos-evaluator) | Automated evaluation system for world generation & reasoning outputs |
 
-Cosmos 3 runs on Diffusers, Transformers, vLLM, vLLM-Omni, SGLang, TensorRT-LLM, and NIM. Pick a backend in the [environment setup guide](https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/README.md).
+Cosmos 3 runs on Diffusers, Transformers, vLLM, vLLM-Omni, SGLang, TensorRT-LLM, and NIM. Pick a backend in the [environment setup guide](https://nvda.ws/4hUq6Tm).
 
 ## Community & contributing
 
-Questions and ideas → [Discussions](https://github.com/NVIDIA/cosmos/discussions). Bugs → [Issues](https://github.com/NVIDIA/cosmos/issues). Code and recipes → [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework/blob/main/CONTRIBUTING.md).
+Questions and ideas → [Discussions](https://github.com/NVIDIA/cosmos/discussions). Bugs → [Issues](https://github.com/NVIDIA/cosmos/issues). Code and recipes → [Cosmos Framework](https://nvda.ws/4zMXvW8).
 
 ## Limitations & safety
 
-Cosmos 3 can produce artifacts in long, high-resolution, or physically complex outputs (temporal inconsistency, object morphing, implausible dynamics). Safety-critical applications need additional validation and system-level safety analysis. Generation ships with [guardrails](https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/README.md) on by default.
+Cosmos 3 can produce artifacts in long, high-resolution, or physically complex outputs (temporal inconsistency, object morphing, implausible dynamics). Safety-critical applications need additional validation and system-level safety analysis. Generation ships with [guardrails](https://nvda.ws/4hUq6Tm) on by default.
 
 ## Citation & license
 
