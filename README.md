@@ -131,6 +131,12 @@ First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so lo
 | [Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) | 16B | RTX Pro 6000 / H100 / B200 | Balanced speed and quality; strong base model to post-train |
 | [Cosmos3-Edge](https://huggingface.co/nvidia/Cosmos3-Edge) | 4B | Jetson AGX Orin / Thor / RTX Pro 6000 | Edge deployment; real-time robot policy and visual reasoning |
 
+Published static FP8 checkpoints: [Cosmos3-Nano-FP8](https://huggingface.co/nvidia/Cosmos3-Nano-FP8)
+and [Cosmos3-Super-FP8](https://huggingface.co/nvidia/Cosmos3-Super-FP8).
+FP8 reduces weight storage; activation precision depends on the serving backend
+and exported runtime policy. See the [quantization cookbook](COOKBOOK.md#inference)
+for local export and serving, including Super base and distilled T2I/I2V.
+
 **Example checkpoints** in the [cosmos3-examples](https://huggingface.co/collections/nvidia/cosmos3-examples) collection are post-trained variants of the base models. They demonstrate what [post-training with Cosmos Framework](https://nvda.ws/4zRE0Md) can specialize Cosmos for.
 
 | Example checkpoint | Base | Demonstrates |
