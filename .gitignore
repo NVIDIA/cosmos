@@ -176,22 +176,6 @@ secrets.yaml
 # Recipe env files (contain API keys and machine-specific paths)
 **/env.sh
 
-# Cookbook runtime checkouts and generated artifacts
-packages/
-cookbooks/cosmos3/generator/audiovisual/outputs/
-outputs/
-
-# Cosmos3 finetune cookbook runtime artifacts (downloads, converted ckpts, runs)
-cookbooks/cosmos3/generator/audiovisual/finetune/data/
-cookbooks/cosmos3/generator/audiovisual/finetune/checkpoints/
-cookbooks/cosmos3/generator/audiovisual/finetune/outputs/
-cookbooks/cosmos3/generator/action/finetune/data/
-cookbooks/cosmos3/generator/action/finetune/checkpoints/
-cookbooks/cosmos3/generator/action/finetune/outputs/
-cookbooks/cosmos3/reasoner/finetune/data/
-cookbooks/cosmos3/reasoner/finetune/checkpoints/
-cookbooks/cosmos3/reasoner/finetune/outputs/
-
 # Streamlit
 .streamlit/
 

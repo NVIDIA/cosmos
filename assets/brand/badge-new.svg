@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="44" height="20" viewBox="0 0 44 20" role="img" aria-label="New">
+<title>New</title>
+<style>
+  /* A light glint sweeps across the badge, then rests. One cycle = 3.6 s. */
+  .glint { transform: translateX(-20px); animation: glint 3.6s ease-in-out .5s infinite; }
+  @keyframes glint { 0% { transform: translateX(-20px); } 28%, 100% { transform: translateX(64px); } }
+  /* Viewers who ask their OS for less motion get a still badge. */
+  @media (prefers-reduced-motion: reduce) { .glint { animation: none; } }
+</style>
+<defs>
+  <clipPath id="pill"><rect width="44" height="20" rx="10"/></clipPath>
+  <linearGradient id="shine" x1="0" x2="1">
+    <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+    <stop offset=".5" stop-color="#fff" stop-opacity=".85"/>
+    <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+</defs>
+<g clip-path="url(#pill)">
+  <rect width="44" height="20" fill="#76B900"/>
+  <g class="glint"><rect x="-7" y="-2" width="14" height="24" fill="url(#shine)" transform="skewX(-20)"/></g>
+</g>
+<text x="22" y="14" text-anchor="middle" textLength="28" lengthAdjust="spacing" fill="#1A1A1A" font-family="system-ui,-apple-system,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700">NEW</text>
+</svg>
