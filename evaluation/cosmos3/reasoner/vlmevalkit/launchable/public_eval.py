@@ -52,6 +52,8 @@ def _env():
     # Never import the NVIDIA checkout via inherited notebook/container settings.
     env["PYTHONPATH"] = str(_harness())
     env["LMUData"] = str(_lmu())
+    # Public CLI workers are headless; the notebook's inline backend is not installed there.
+    env["MPLBACKEND"] = "Agg"
     env["PRED_FORMAT"] = env.get("PRED_FORMAT") or "tsv"
     # The public runner otherwise silently replaces the explicit --work-dir.
     env.pop("MMEVAL_ROOT", None)
