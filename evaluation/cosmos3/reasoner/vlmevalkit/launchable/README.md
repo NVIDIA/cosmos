@@ -6,7 +6,9 @@ A Jupyter front end for preparing data, checking an OpenAI-compatible video endp
 
 For gated assets, create a **read** token at [Hugging Face token settings](https://huggingface.co/settings/tokens) and supply it as Brev's secret `HF_TOKEN` launch parameter. Full SOT/tracking additionally requires accepting the [PhysicalAI-SmartSpaces access terms](https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces); a token alone does not grant access. The full notebook section prompts privately if that token was not inherited. No internal NVIDIA key is needed for the public workflow.
 
-This directory defines a launchable; it does not itself provision a VM or publish a Brev launchable. A native single-H200 public VQA smoke has produced five real predictions. That does **not** establish Brev notebook readiness, full benchmark scores, or leaderboard parity. Do not assume a sub-hour run or reference-score reproduction.
+This directory defines a launchable; it does not itself provision a VM or publish a Brev launchable. The public five-question VQA notebook passed on a Brev RTX PRO 6000 Blackwell Server Edition at commit `23cfa62968f0a395481b52c4fd91bae9ce1106dd`; a native single-H200 public VQA smoke also passed. Brev validation reused a stopped/resumed VM and retained cache. An uninterrupted fresh-VM cold launch, full benchmark scores, portal acceptance, and leaderboard parity remain unverified. Five predictions are not a benchmark score.
+
+For an existing SSH-accessible host instead of a Brev VM, use the [repeatable LaunchPad setup](launchpad/README.md). It reuses this launchable's serving configuration, evaluator, controller, and native dataset layout.
 
 ## Create the Brev launchable
 
@@ -21,7 +23,7 @@ Use these deployment fields in Brev:
 | Optional secret environment variable | `HF_TOKEN` for gated assets; required with accepted SmartSpaces access for full SOT, not for the default public VQA smoke |
 | Application access | Authenticated/secure Brev link to port **8888**; do not publish the model endpoint |
 | Notebook host binding | `--brev` discovers the private `wt0` mesh IPv4 address; non-Brev setup defaults to `127.0.0.1`, with an explicit private `JUPYTER_BIND_ADDRESS` override available |
-| Conservative starting hardware | One RTX PRO 6000 with **96 GB VRAM**, at least **256 GB disk**; sizing is an unvalidated starting point, not a compatibility guarantee |
+| Observed VQA smoke hardware | One RTX PRO 6000 Blackwell Server Edition with **96 GB VRAM**, **64 GiB RAM**, and **256 GiB disk**; this is not a minimum-size or full-benchmark compatibility guarantee |
 
 Do not select an upstream commit that lacks these files. Local edits are not automatically available to Brev: the deployment branch/commit must include them and be accessible to the VM. No branch is published by setup.
 
@@ -110,7 +112,7 @@ Public mode needs none of this. Internal mode requires authorized access to NVID
 
 Compose mounts that directory read-only at `/credentials/aws` and sets `AWS_CONFIG_FILE=/credentials/aws/config` and `AWS_SHARED_CREDENTIALS_FILE=/credentials/aws/credentials`. An empty default mount grants no access. No `NVDATASET_TENANTID`, `NGC_API_KEY`, or judge API key is needed for these eight VANTAGE tasks. If a different mount was not configured initially, reconfigure it on the VM and recreate the evaluator using setup; changing a notebook variable cannot create a host mount.
 
-A read-only credentials-file mount does **not** make S3 operations read-only: the internal video cache may upload on a miss. Enforce an actual read-only storage policy before invoking the internal CLI directly; a read-only file mount alone is insufficient.
+A read-only credentials-file mount does **not** make S3 operations read-only: the internal video cache may upload on a miss. The [LaunchPad setup](launchpad/README.md) separates authorized preparation from credential-free, network-isolated inference and supports data-only workstation staging when the host cannot reach PDX. Otherwise, enforce an actual read-only storage policy before invoking the internal CLI directly.
 
 Set notebook `SOURCE = "internal"` before preparation/smoke, or use:
 
