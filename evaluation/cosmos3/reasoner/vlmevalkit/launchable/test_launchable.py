@@ -72,6 +72,33 @@ class ArtifactTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "Only completed"):
                         public_eval.export(work)
 
+    def test_internal_predictions_reject_empty_and_failure_markers(self):
+        for value in ("   ", "VIDEO_LOAD_FAILED", "prefix VIDEO_LOAD_FAILED",
+                      "Failed to obtain answer via API.", "null"):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as temp:
+                work = Path(temp)
+                output = work / "cosmos" / "T20261023"
+                output.mkdir(parents=True)
+                (output / "cosmos_VANTAGE_VQA.tsv").write_text(
+                    "index\tprediction\n0\t" + value + "\n")
+                with self.assertRaisesRegex(RuntimeError, "failed/empty"):
+                    launchable.verify_predictions(work, "VANTAGE_VQA")
+
+    def test_internal_smoke_requires_exactly_five_predictions(self):
+        for count in (4, 5, 6):
+            with self.subTest(count=count), tempfile.TemporaryDirectory() as temp:
+                work = Path(temp)
+                output = work / "cosmos" / "T20261023"
+                output.mkdir(parents=True)
+                (output / "cosmos_VANTAGE_VQA.tsv").write_text(
+                    "index\tprediction\n" + "".join(f"{i}\tA\n" for i in range(count)))
+                if count == 5:
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        launchable.verify_predictions(work, "VANTAGE_VQA", expected_rows=5)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "expected 5 predictions"):
+                        launchable.verify_predictions(work, "VANTAGE_VQA", expected_rows=5)
+
 
 if __name__ == "__main__":
     unittest.main()

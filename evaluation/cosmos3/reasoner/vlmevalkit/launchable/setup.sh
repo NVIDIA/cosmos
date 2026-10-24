@@ -4,7 +4,6 @@
 set -euo pipefail
 umask 077
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
-: "${HF_TOKEN:?Supply HF_TOKEN as a secret Brev launch parameter}"
 command -v docker >/dev/null
 command -v python3 >/dev/null
 docker compose version

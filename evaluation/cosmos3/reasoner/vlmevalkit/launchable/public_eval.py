@@ -152,6 +152,8 @@ state_path.write_text(json.dumps(state, indent=2) + "\n")
 def prepare(selected: list[str], revision: str):
     """Materialize only selected task subtrees, using official preparation."""
     _selected(selected)
+    if "VANTAGE_SOT" in selected and not os.environ.get("HF_TOKEN"):
+        raise ValueError("SOT requires HF_TOKEN with accepted nvidia/PhysicalAI-SmartSpaces access terms")
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise ValueError("Use an immutable 40-character HF dataset commit SHA")
     _check_harness()
@@ -224,7 +226,8 @@ if "prediction" not in frame or len(frame) != len(expected):
 def bad(value):
     text = str(value).strip()
     return (value is None or text.lower() in ("", "nan", "none", "null", "<na>")
-            or "failed to obtain answer" in text.lower())
+            or "failed to obtain answer" in text.lower()
+            or "video_load_failed" in text.lower())
 if frame["prediction"].map(bad).any():
     raise RuntimeError("Failed/null native predictions; inspect run.log")
 if "index" not in frame or frame["index"].duplicated().any() or set(map(str, frame["index"])) != set(map(str, expected["index"])):

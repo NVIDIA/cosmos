@@ -98,7 +98,7 @@ def prediction_files(work):
                   and p.stem in {f"cosmos_{bench}" for bench in benchmarks("all")})
 
 
-def verify_predictions(work, bench):
+def verify_predictions(work, bench, expected_rows=None):
     import pandas as pd
 
     files = [p for p in prediction_files(work) if p.stem == f"cosmos_{bench}"]
@@ -114,9 +114,13 @@ def verify_predictions(work, bench):
         frame = pd.read_excel(path)
     if "prediction" not in frame or frame.empty:
         raise RuntimeError(f"{bench}: empty or invalid prediction output")
-    failed = frame["prediction"].isna() | frame["prediction"].astype(str).str.contains(
-        "Failed to obtain answer via API.", regex=False
-    )
+    if expected_rows is not None and len(frame) != expected_rows:
+        raise RuntimeError(f"{bench}: expected {expected_rows} predictions, found {len(frame)}")
+    text = frame["prediction"].astype(str).str.strip().str.lower()
+    failed = (frame["prediction"].isna()
+              | text.isin(("", "nan", "none", "null", "<na>"))
+              | text.str.contains("failed to obtain answer", regex=False)
+              | text.str.contains("video_load_failed", regex=False))
     if failed.any():
         raise RuntimeError(f"{bench}: {int(failed.sum())} failed/empty predictions; inspect the run log")
     print(f"{bench}: {len(frame)} predictions verified", flush=True)
@@ -173,7 +177,7 @@ def run(selected, work, mode, smoke, dry_run, source):
         out.mkdir(parents=True)
         with (out / "run.log").open("w") as log:
             run_command(command, stdout=log, stderr=subprocess.STDOUT)
-        verify_predictions(out, bench)
+        verify_predictions(out, bench, expected_rows=5 if smoke else None)
     if not dry_run:
         record_run(work, selected, mode, smoke)
 

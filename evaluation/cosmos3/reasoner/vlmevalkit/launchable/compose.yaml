@@ -62,6 +62,7 @@ services:
       - '127.0.0.1:8888:8888'
     environment:
       HF_TOKEN: ${HF_TOKEN:-}
+      COSMOS_COMMIT: ${COSMOS_COMMIT:-unknown}
       COSMOS_API_BASE: ${COSMOS_API_BASE:-http://cosmos-endpoint:8080/v1/chat/completions}
       COSMOS_MODEL: ${COSMOS_MODEL:-nvidia/Cosmos3-Nano}
       COSMOS_API_KEY: ${COSMOS_API_KEY:-EMPTY}

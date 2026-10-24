@@ -2,11 +2,11 @@
 
 A Jupyter front end for preparing data, checking an OpenAI-compatible video endpoint, running five real VQA questions, and exporting a full public VANTAGE submission. Notebook cells call `launchable.py`; dataset preparation, inference, and submission conversion stay in the selected upstream harness.
 
-**Default: public data and the official public harness. Only `HF_TOKEN` is required as a launch secret.** No internal AWS, NGC, NVIDIA dataset-service, or API judge credentials are required for the eight VANTAGE tasks. A separately authenticated BYOM endpoint may require its own `COSMOS_API_KEY`.
+**Default: public data and the official public harness. The pinned Nano model and public VQA smoke support anonymous Hugging Face access.** No launch secret is required for that path. No internal AWS, NGC, NVIDIA dataset-service, or API judge credentials are required for the eight VANTAGE tasks. A separately authenticated BYOM endpoint may require its own `COSMOS_API_KEY`.
 
-Create a **read** token at [Hugging Face token settings](https://huggingface.co/settings/tokens) and supply it as Brev's secret `HF_TOKEN` launch parameter. Full tracking also requires accepting the [PhysicalAI-SmartSpaces access terms](https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces). No internal NVIDIA key is needed for the public workflow.
+For gated assets, create a **read** token at [Hugging Face token settings](https://huggingface.co/settings/tokens) and supply it as Brev's secret `HF_TOKEN` launch parameter. Full SOT/tracking additionally requires accepting the [PhysicalAI-SmartSpaces access terms](https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces); a token alone does not grant access. The full notebook section prompts privately if that token was not inherited. No internal NVIDIA key is needed for the public workflow.
 
-This directory defines a launchable; it does not provision a VM or publish a Brev launchable. GPU serving, end-to-end GPU evaluation, runtime, and leaderboard parity are **not yet GPU-verified**. First successful predictions are not a benchmark score. Do not assume a sub-hour run or reference-score reproduction.
+This directory defines a launchable; it does not itself provision a VM or publish a Brev launchable. A native single-H200 public VQA smoke has produced five real predictions. That does **not** establish Brev notebook readiness, full benchmark scores, or leaderboard parity. Do not assume a sub-hour run or reference-score reproduction.
 
 ## Create the Brev launchable
 
@@ -18,7 +18,7 @@ Use these deployment fields in Brev:
 | Deployment source | This Cosmos repository checkout: `https://github.com/NVIDIA/cosmos.git`, on the branch/commit **containing this launchable**; record the exact deployment commit |
 | Setup script command | `bash evaluation/cosmos3/reasoner/vlmevalkit/launchable/setup.sh` from the Cosmos checkout root |
 | Managed Jupyter | **Disabled**; Compose starts Jupyter itself |
-| Secret environment variable | `HF_TOKEN`, with access to the model/data and accepted applicable licenses |
+| Optional secret environment variable | `HF_TOKEN` for gated assets; required with accepted SmartSpaces access for full SOT, not for the default public VQA smoke |
 | Application access | Authenticated/secure Brev link to port **8888**; do not publish the model endpoint |
 | Conservative starting hardware | One RTX PRO 6000 with **96 GB VRAM**, at least **256 GB disk**; sizing is an unvalidated starting point, not a compatibility guarantee |
 
@@ -28,7 +28,7 @@ If Brev presents a setup-script text box, paste the setup command above, not jus
 
 Local serving defaults to `vllm/vllm-openai:cosmos3@sha256:db0bb920b0b54e82ea96a98659bbd21921f87d0dcfc86feffdafa2db3f08be55` (overridable with `VLLM_IMAGE`) and `nvidia/Cosmos3-Nano` at revision `e59a53c25979a090fa8706c9acc0c254a6e89b92`. Both evaluator and serving containers target `linux/amd64`. Confirm the serving image is available to your VM and compatible with its GPU/driver. Disk must accommodate model weights, image layers, downloaded data, extracted media, caches, and results. Public data is roughly 42 GB, with roughly 16 GB more for SOT; headroom and actual resource needs depend on workload. Full SOT preparation also requires access to the SmartSpaces source and acceptance of its license; an HF token alone does not grant that access.
 
-If running setup manually on the VM after injecting `HF_TOKEN` into its environment:
+If running setup manually on the VM (supply `HF_TOKEN` in the environment only when needed for gated assets):
 
 ```bash
 cd /path/to/cosmos/evaluation/cosmos3/reasoner/vlmevalkit/launchable
@@ -51,10 +51,10 @@ The evaluator has **no Docker socket**. Container lifecycle commands belong in t
 
 ## Notebook workflow
 
-1. **Configure:** public source by default, a unique timestamped output directory, and inherited endpoint/model settings. A hidden `getpass` prompt is used only if `HF_TOKEN` was not inherited. Credentials remain in process memory; never save them in cells.
+1. **Configure:** public source by default, a unique timestamped output directory, and inherited endpoint/model settings. The default public VQA smoke does not prompt for an HF token. The opt-in full/SOT section requires an inherited token or a hidden `getpass` prompt; accepted SmartSpaces access is still required. Credentials remain in process memory; never save them in cells.
 2. **Prepare VQA:** use the selected harness's official preparation. Downloads/preparation may be substantial even for a smoke run.
 3. **Check endpoint:** wait for `/v1/models` and verify the configured served model.
-4. **Smoke:** infer exactly five seeded `VANTAGE_VQA` questions. This tests actual data/media/model integration; it is not synthetic and is not a reference score.
+4. **Smoke:** infer exactly five seeded `VANTAGE_VQA` questions. Verification rejects missing/extra rows, empty or whitespace-only answers, API failure markers, and `VIDEO_LOAD_FAILED`. This tests actual data/media/model integration; it is not synthetic and is not a reference score.
 5. **Inspect results:** the helper checks consumer-visible predictions, not just the native harness's exit status. The native harness can catch a dataset failure and still exit zero.
 6. **Full public evaluation:** explicitly set `RUN_FULL = True` before running the full section. Its default is false, so **Run All does not start the full eight-task run**. It prepares all eight tasks and runs inference in a separate fresh directory.
 7. **Export/download:** use the official public packager, then download the generated submission artifact via Jupyter. The notebook does not upload anything. Submit at [vantage-bench.org/submit](https://vantage-bench.org/submit); official scoring can take up to 24 hours.
@@ -106,6 +106,8 @@ The notebook preserves inherited endpoint/model settings. To change only the eva
 Public mode needs none of this. Internal mode requires authorized access to NVIDIA's `team-cosmos` S3 profile. **Configure its AWS credential-directory mount at initial deployment**, not by copying credentials into notebook cells. Set `AWS_CREDENTIALS_DIR` to an existing absolute host directory containing AWS `config` and `credentials` files with the `team-cosmos` profile, or populate the default `state/credentials/aws` securely before setup. Short-lived credentials/SSO sessions must be valid for the duration of preparation. Never commit these files.
 
 Compose mounts that directory read-only at `/credentials/aws` and sets `AWS_CONFIG_FILE=/credentials/aws/config` and `AWS_SHARED_CREDENTIALS_FILE=/credentials/aws/credentials`. An empty default mount grants no access. No `NVDATASET_TENANTID`, `NGC_API_KEY`, or judge API key is needed for these eight VANTAGE tasks. If a different mount was not configured initially, reconfigure it on the VM and recreate the evaluator using setup; changing a notebook variable cannot create a host mount.
+
+A read-only credentials-file mount does **not** make S3 operations read-only: the internal video cache may upload on a miss. Enforce an actual read-only storage policy before invoking the internal CLI directly; a read-only file mount alone is insufficient.
 
 Set notebook `SOURCE = "internal"` before preparation/smoke, or use:
 
