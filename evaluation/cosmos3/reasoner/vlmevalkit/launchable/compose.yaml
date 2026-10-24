@@ -59,7 +59,7 @@ services:
         COSMOS_COMMIT: ${COSMOS_COMMIT:-unknown}
     restart: unless-stopped
     ports:
-      - '127.0.0.1:8888:8888'
+      - '${JUPYTER_BIND_ADDRESS:-127.0.0.1}:8888:8888'
     environment:
       HF_TOKEN: ${HF_TOKEN:-}
       COSMOS_COMMIT: ${COSMOS_COMMIT:-unknown}

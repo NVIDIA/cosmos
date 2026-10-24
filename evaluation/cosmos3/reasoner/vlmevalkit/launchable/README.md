@@ -16,15 +16,16 @@ Use these deployment fields in Brev:
 | --- | --- |
 | Environment | **VM mode**, Linux x86-64, Docker Engine with Compose v2 and NVIDIA Container Toolkit for local serving |
 | Deployment source | This Cosmos repository checkout: `https://github.com/NVIDIA/cosmos.git`, on the branch/commit **containing this launchable**; record the exact deployment commit |
-| Setup script command | `bash evaluation/cosmos3/reasoner/vlmevalkit/launchable/setup.sh` from the Cosmos checkout root |
+| Setup script command | `bash evaluation/cosmos3/reasoner/vlmevalkit/launchable/setup.sh --brev` from the Cosmos checkout root |
 | Managed Jupyter | **Disabled**; Compose starts Jupyter itself |
 | Optional secret environment variable | `HF_TOKEN` for gated assets; required with accepted SmartSpaces access for full SOT, not for the default public VQA smoke |
 | Application access | Authenticated/secure Brev link to port **8888**; do not publish the model endpoint |
+| Notebook host binding | `--brev` discovers the private `wt0` mesh IPv4 address; non-Brev setup defaults to `127.0.0.1`, with an explicit private `JUPYTER_BIND_ADDRESS` override available |
 | Conservative starting hardware | One RTX PRO 6000 with **96 GB VRAM**, at least **256 GB disk**; sizing is an unvalidated starting point, not a compatibility guarantee |
 
 Do not select an upstream commit that lacks these files. Local edits are not automatically available to Brev: the deployment branch/commit must include them and be accessible to the VM. No branch is published by setup.
 
-If Brev presents a setup-script text box, paste the setup command above, not just the filename. It must execute from the cloned Cosmos repository root.
+If Brev presents a setup-script text box, paste the setup command above, not just the filename. It must execute from the cloned Cosmos repository root. Brev's authenticated proxy connects through the VM's private mesh interface, not loopback: `--brev` discovers exactly one global `wt0` IPv4 address in its `100.64.0.0/10` mesh range and fails clearly if unavailable. An explicit private IPv4 `JUPYTER_BIND_ADDRESS` takes precedence. There is no public/wildcard fallback. Do not expose a raw cloud/firewall port for 8888.
 
 Local serving defaults to `vllm/vllm-openai:cosmos3@sha256:db0bb920b0b54e82ea96a98659bbd21921f87d0dcfc86feffdafa2db3f08be55` (overridable with `VLLM_IMAGE`) and `nvidia/Cosmos3-Nano` at revision `e59a53c25979a090fa8706c9acc0c254a6e89b92`. Both evaluator and serving containers target `linux/amd64`. Confirm the serving image is available to your VM and compatible with its GPU/driver. Disk must accommodate model weights, image layers, downloaded data, extracted media, caches, and results. Public data is roughly 42 GB, with roughly 16 GB more for SOT; headroom and actual resource needs depend on workload. Full SOT preparation also requires access to the SmartSpaces source and acceptance of its license; an HF token alone does not grant that access.
 
@@ -32,10 +33,10 @@ If running setup manually on the VM (supply `HF_TOKEN` in the environment only w
 
 ```bash
 cd /path/to/cosmos/evaluation/cosmos3/reasoner/vlmevalkit/launchable
-bash setup.sh
+bash setup.sh --brev
 ```
 
-Setup builds the evaluator, starts Jupyter, and starts the local GPU endpoint unless `COSMOS_API_BASE` was supplied at deployment. It persists a generated Jupyter token in a permission-restricted `.env`; it does not write HF/model credentials there. Use the same environment variables when recreating services. Never paste secrets into the notebook, source files, shell history, or screenshots.
+Setup builds the evaluator, starts Jupyter, and starts the local GPU endpoint unless `COSMOS_API_BASE` was supplied at deployment. It persists a generated Jupyter token and the selected non-secret `JUPYTER_BIND_ADDRESS` in a permission-restricted `.env`; it does not write HF/model credentials there. Later Compose lifecycle commands retain that binding. Use `bash setup.sh` without `--brev` for a non-Brev host/SSH tunnel; its initial default is loopback. Use the same environment variables when recreating services. Never paste secrets into the notebook, source files, shell history, or screenshots.
 
 ### Open Jupyter securely
 
@@ -45,7 +46,7 @@ On the VM, from the launchable directory:
 docker compose exec vantage-eval jupyter server list
 ```
 
-Treat the displayed login token as a secret. Open Brev's secure port-8888 link and authenticate with that token. The host binding is `127.0.0.1:8888`, not a public listener. If your access method requires a local tunnel, forward port 8888 through Brev/SSH rather than rebinding it to `0.0.0.0`. Open `/opt/vlmevalkit/launchable/Evaluate_Cosmos3.ipynb` in Jupyter. Jupyter's file root is `/`, allowing authenticated downloads from `/results`.
+Treat the displayed login token as a secret. Open Brev's secure port-8888 link and authenticate with that token. The default non-Brev host binding is `127.0.0.1:8888` for SSH tunnels. Brev's authenticated proxy instead requires `bash setup.sh --brev` to bind its private mesh IPv4 address; binding only loopback makes that proxy return connection-refused/503. Setup persists the selected address for later Compose commands. Keep 8888 closed on the public cloud firewall, preserve provider login and Jupyter token authentication, and never bind to `0.0.0.0` or a public host address. Open `/opt/vlmevalkit/launchable/Evaluate_Cosmos3.ipynb` in Jupyter. Jupyter's file root is `/`, allowing authenticated downloads from `/results`.
 
 The evaluator has **no Docker socket**. Container lifecycle commands belong in the VM terminal, not notebook cells. The local model endpoint has no host port; only the Compose network can reach it.
 
