@@ -80,7 +80,7 @@ The four Cosmos Simulation checkpoints are derived from Cosmos3-Nano and have th
 \* Camera rigs (Sim-Auto, Transfer-Auto): 1-11 views (not including LiDAR), standard and fisheye; other rigs need post-training.\
 \* Action embodiment (Sim-Bimanual): AgiBot, YAM.\
 \* Sim-Transfer runs up to 8 parallel environments in real time on one GB200.\
-\* Test hardware: H100 and B200. Acceleration engines: PyTorch, vLLM-Omni, FlashDreams (for sim-auto and sim-bimanual), SGLang (coming soon).
+\* Test hardware: H100 and B200. Acceleration engines: PyTorch, vLLM-Omni, FlashDreams (for sim-auto and sim-bimanual), SGLang.
 
 ## Generation settings
 

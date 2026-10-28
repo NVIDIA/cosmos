@@ -188,7 +188,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 <sub>Notes:
 1. All times measured on identical workloads (same seed, sampler settings, prompt).
 2. Multi-GPU configurations use tensor parallelism, except TensorRT-LLM, which may also split across CFG and Ulysses dimensions.
-3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo and are subject to change before GA.
+3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo and are subject to change.
 4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs. Single-GPU and multi-GPU values come from separate campaigns.
 5. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
 6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
