@@ -91,7 +91,7 @@ Maintainer notes (not rendered):
 ---
 
 [framework-main]: https://github.com/NVIDIA/cosmos-framework/tree/main
-[gen]: https://nvda.ws/4z3OmbC
+[gen]: https://nvda.ws/4zd0fw5
 [reason]: https://nvda.ws/4z2ezYl
 [action]: https://nvda.ws/4dUeBsJ
 [transfer]: https://nvda.ws/4emDe1e
