@@ -9,7 +9,7 @@ Start from what you want to achieve. Every recipe here leverages Cosmos to help 
 Maintainer notes (not rendered):
 - Every URL lives once, in the link block at the bottom. To point a recipe at its entry skill in
   NVIDIA/cosmos-framework, change its one line there.
-- Framework links are nvda.ws short links that resolve to `main` of NVIDIA/cosmos-framework.
+- Framework recipe links are nvda.ws short links that resolve to `main` of NVIDIA/cosmos-framework.
 - Replace a recipe's Coming soon label only after its entry files are on NVIDIA/cosmos-framework `main`.
 - One short name per recipe. The section supplies the verb.
 - Industry and GPU-budget codes are the legend's codes, nothing else. Use the same codes in each skill's
