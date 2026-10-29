@@ -25,22 +25,23 @@ Post-trained example checkpoints ([cosmos3-examples](https://huggingface.co/coll
 | [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID) | Nano | Open SOTA DROID robot policy, runs on RTX Pro 6000 |
 | [Cosmos3-Edge-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Edge-Policy-DROID) | Edge | DROID robot policy at edge-deployable scale |
 
-### Quantization
+### Quantized models
 
 Static FP8 checkpoints reduce weight storage. Nano and Super have dedicated FP8
 repositories; the four specialized Super checkpoints are available on the `fp8`
 branch of their model repositories.
 
-| Quantized checkpoint | Base | Demonstrates |
-|---|---|---|
-| [Cosmos3-Nano-FP8](https://huggingface.co/nvidia/Cosmos3-Nano-FP8) | Nano | Omnimodal understanding, generation, and action reasoning with FP8 weights |
-| [Cosmos3-Super-FP8](https://huggingface.co/nvidia/Cosmos3-Super-FP8) | Super | Frontier-scale omnimodal understanding and generation with FP8 weights |
-| [Cosmos3-Super-Text2Image (FP8)](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image/tree/fp8) | Super | Elite quality text-to-image with FP8 weights |
-| [Cosmos3-Super-Text2Image-4Step (FP8)](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image-4Step/tree/fp8) | Super | 4-step text-to-image with FP8 weights |
-| [Cosmos3-Super-Image2Video (FP8)](https://huggingface.co/nvidia/Cosmos3-Super-Image2Video/tree/fp8) | Super | Elite quality image-to-video with FP8 weights |
-| [Cosmos3-Super-Image2Video-4Step (FP8)](https://huggingface.co/nvidia/Cosmos3-Super-Image2Video-4Step/tree/fp8) | Super | 4-step image-to-video with FP8 weights |
+<table>
+  <tr><th>Quantized checkpoint</th><th>Base</th><th>Demonstrates</th></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Nano-FP8">Cosmos3-Nano-FP8</a></td><td>Nano</td><td>Omnimodal understanding, generation, and action reasoning with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-FP8">Cosmos3-Super-FP8</a></td><td>Super</td><td>Frontier-scale omnimodal understanding and generation with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-Text2Image/tree/fp8">Cosmos3-Super-Text2Image (FP8)</a></td><td>Super</td><td>Elite quality text-to-image with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-Text2Image-4Step/tree/fp8">Cosmos3-Super-Text2Image-4Step (FP8)</a></td><td>Super</td><td>4-step text-to-image with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-Image2Video/tree/fp8">Cosmos3-Super-Image2Video (FP8)</a></td><td>Super</td><td>Elite quality image-to-video with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-Image2Video-4Step/tree/fp8">Cosmos3-Super-Image2Video-4Step (FP8)</a></td><td>Super</td><td>4-step image-to-video with FP8 weights</td></tr>
+</table>
 
-See the [quantization cookbook](../../COOKBOOK.md#inference) for local FP8 export
+See the [cookbook](../../COOKBOOK.md#inference) for local FP8 export
 and serving. FP8 weights retain the exported activation policy: the generator can
 use A16 on boundary denoising steps and its reasoner, while standalone reasoner
 inference follows its own backend policy.
