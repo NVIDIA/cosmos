@@ -25,6 +25,27 @@ Post-trained example checkpoints ([cosmos3-examples](https://huggingface.co/coll
 | [Cosmos3-Nano-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Nano-Policy-DROID) | Nano | Open SOTA DROID robot policy, runs on RTX Pro 6000 |
 | [Cosmos3-Edge-Policy-DROID](https://huggingface.co/nvidia/Cosmos3-Edge-Policy-DROID) | Edge | DROID robot policy at edge-deployable scale |
 
+### Quantized models
+
+Static FP8 checkpoints reduce weight storage. Nano and Super have dedicated FP8
+repositories; the four specialized Super checkpoints are available on the `fp8`
+branch of their model repositories.
+
+<table>
+  <tr><th>Quantized checkpoint</th><th>Base</th><th>Demonstrates</th></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Nano-FP8">Cosmos3-Nano-FP8</a></td><td>Nano</td><td>Omnimodal understanding, generation, and action reasoning with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-FP8">Cosmos3-Super-FP8</a></td><td>Super</td><td>Frontier-scale omnimodal understanding and generation with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-Text2Image/tree/fp8">Cosmos3-Super-Text2Image (FP8)</a></td><td>Super</td><td>Elite quality text-to-image with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-Text2Image-4Step/tree/fp8">Cosmos3-Super-Text2Image-4Step (FP8)</a></td><td>Super</td><td>4-step text-to-image with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-Image2Video/tree/fp8">Cosmos3-Super-Image2Video (FP8)</a></td><td>Super</td><td>Elite quality image-to-video with FP8 weights</td></tr>
+  <tr><td nowrap><a href="https://huggingface.co/nvidia/Cosmos3-Super-Image2Video-4Step/tree/fp8">Cosmos3-Super-Image2Video-4Step (FP8)</a></td><td>Super</td><td>4-step image-to-video with FP8 weights</td></tr>
+</table>
+
+See the [cookbook](../../COOKBOOK.md#inference) for local FP8 export
+and serving. FP8 weights retain the exported activation policy: the generator can
+use A16 on boundary denoising steps and its reasoner, while standalone reasoner
+inference follows its own backend policy.
+
 ## Architecture
 
 Cosmos 3 is built on a unified Mixture-of-Transformers (MoT) architecture combining an autoregressive transformer (reasoning; causal self-attention, next-token prediction) with a diffusion transformer (generation; full attention over noisy image/video/audio/action tokens). Both modes share transformer weights, multimodal attention layers, and a unified 3D mRoPE that encodes spatial and temporal structure across modalities.
@@ -90,7 +111,7 @@ The four Cosmos Simulation checkpoints are derived from Cosmos3-Nano and have th
 | Aspect ratios | 16:9, 4:3, 1:1, 3:4, 9:16 (default 16:9) |
 | Frame rates | 10, 16, 24, 30 FPS (default 24) |
 | Frame count | 5–300 (default 189) |
-| Precision | BF16 tested |
+| Precision | BF16; static FP8 for Nano/Super via the quantization cookbook (activation precision follows backend policy) |
 | OS / GPU | Linux; Ampere, Hopper, Blackwell |
 
 \* Cosmos3-Edge supports only 256p and 480p, frame count is 50-150.
