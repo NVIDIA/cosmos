@@ -210,7 +210,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs. Single-GPU and multi-GPU values come from separate campaigns.
 5. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 6. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
-7. NIM numbers are from NIM 2.1.0 using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding.</sub>
+7. NIM numbers are from NIM 2.1.0 using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.</sub>
 
 ## Additional audiovisual generation
 
