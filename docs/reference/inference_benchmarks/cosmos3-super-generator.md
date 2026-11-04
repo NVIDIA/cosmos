@@ -202,6 +202,11 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | Diffusers | 1 | 6.49 | 6.76 | 7.11 |
 |  | TensorRT-LLM | 1 | 2.40 | 2.77 | 5.43 |
 |  | NIM | 1 | 1.39 | 1.44 | 1.49 |
+| **GB300** | PyTorch | — |  |  |  |
+|  | vLLM-Omni | — |  |  |  |
+|  | Diffusers | — |  |  |  |
+|  | TensorRT-LLM | — |  |  |  |
+|  | NIM | 1 | 1.84 | 2.93 | 2.82 |
 
 <sub>Notes:
 1. All times measured on identical workloads (same seed, sampler settings, prompt).
