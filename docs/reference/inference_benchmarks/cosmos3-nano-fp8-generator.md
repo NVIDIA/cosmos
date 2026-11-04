@@ -133,7 +133,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | NIM | 1 | 0.72 | 0.84 | 0.87 |
 | **GB300** | PyTorch\* | 1 |  |  |  |
 |  | Diffusers | 1 |  | 11.79 | 13.19 |
-|  | NIM | 1 |  |  |  |
+|  | NIM | 1 | 1.70 | 1.69 | 1.71 |
 
 <sub>Notes:
 1. All times measured on identical workloads (same seed, sampler settings, prompt).
