@@ -143,7 +143,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 5. Diffusers FP8 was measured on one GPU at 480p and 720p only.
 6. FP8 is faster than BF16 for the PyTorch path throughout. For the Diffusers path it only pays off on long video workloads: short ones are slower in FP8, `t2i` consistently so by roughly a factor of two, which suggests a fixed quantization overhead that the short runs cannot amortize. Compare against the BF16 page before choosing a precision for a short workload.
 7. \* PyTorch values were measured with a different FP8 recipe than the other engines on this page, which run the first and last three denoising steps in W8A16 and the middle steps in W8A8. PyTorch results are therefore optimistic and cannot be compared directly with the other values.
-8. NIM numbers report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.</sub>
+8. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.</sub>
 
 ## Additional audiovisual generation
 
