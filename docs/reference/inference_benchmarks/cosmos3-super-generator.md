@@ -66,7 +66,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 25.39 | 154.25 | 437.57 |
 |  | TensorRT-LLM | 8 | 0.21 | 0.13 | 0.10 |
-|  | NIM | **1** | 15.50 | 151.90 | 597.67 |
+|  | NIM | 8 | 4.15 | 27.18 | 91.15 |
 | **H20** | PyTorch | 8 | 27.72 | 152.46 | 492.41 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 26.66 | 161.49 | 517.37 |
@@ -111,7 +111,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 8 | 11.66 | 80.94 | 240.27 |
 |  | Diffusers | 8 | 26.29 | 156.16 | 540.65 |
 |  | TensorRT-LLM | 8 | 0.19 | 0.13 | 0.09 |
-|  | NIM | **1** | 14.34 | 151.67 | 595.21 |
+|  | NIM | 8 | 4.01 | 27.39 | 91.65 |
 | **H20** | PyTorch | 8 | 28.22 | 153.19 | 491.93 |
 |  | vLLM-Omni | 8 | 19.65 | 148.77 | 488.51 |
 |  | Diffusers | 8 | 27.65 | 165.91 | 530.44 |
@@ -156,7 +156,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 8 | 3.11 | 3.54 | 5.70 |
 |  | Diffusers | 8 | 16.90 | 17.52 | 16.73 |
 |  | TensorRT-LLM | 8 | 0.09 | 0.09 | -0.04 |
-|  | NIM | **1** | 1.11 | 2.03 | 3.49 |
+|  | NIM | 8 | 1.52 | 1.64 | 1.61 |
 | **H20** | PyTorch | 8 | 14.18 | 16.46 | 20.92 |
 |  | vLLM-Omni | 8 | 5.12 | 5.44 | 8.85 |
 |  | Diffusers | 8 | 18.29 | 18.48 | 18.46 |
@@ -202,8 +202,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 7. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.
 8. The 720p i2v cell for vLLM-Omni on H100 80GB HBM3 is empty because the multi-GPU runs for it returned times far below the 480p result, which is not physically plausible; the measurement is being rerun.
-9. In the H200 NVL and H200 141GB HBM3 blocks, the PyTorch rows report eight GPUs while the other engines report one, so PyTorch is not directly comparable with the rest of those blocks.
-10. In the RTX PRO 6000 Blackwell blocks, the NIM rows report one GPU while the other engines report eight, so NIM is not directly comparable with the rest of those blocks.</sub>
+9. In the H200 NVL and H200 141GB HBM3 blocks, the PyTorch rows report eight GPUs while the other engines report one, so PyTorch is not directly comparable with the rest of those blocks.</sub>
 
 ## Additional audiovisual generation
 
