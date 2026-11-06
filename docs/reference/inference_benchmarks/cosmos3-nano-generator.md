@@ -408,7 +408,7 @@ the hint changes how much of the frame the model must synthesise.
 |  | multi_control | PyTorch | 8 |  |  |  |
 |  |  | vLLM-Omni | 8 | 60.40 |  | 2622.35 |
 |  |  | Diffusers | 8 |  |  |  |
-|  |  | TensorRT-LLM | 8 | 0.64 | 0.54 | 0.51 |
+|  |  | TensorRT-LLM | 8 |  |  |  |
 |  |  | NIM | 8 |  |  |  |
 |  | seg | PyTorch | 1 |  |  |  |
 |  |  | vLLM-Omni | 1 | 65.84 | 623.52 | 2341.06 |
