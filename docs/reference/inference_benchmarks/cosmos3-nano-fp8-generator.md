@@ -33,7 +33,7 @@ Empty cells mean that a run has not been completed for that GPU, engine, or reso
 
 ## Benchmark methodology
 
-PyTorch values report average generation latency over datacenter configurations at 1, 4, and 8 GPUs. Diffusers values were measured on a single GPU only and at 480p and 720p only, which is why the 256p column is empty for Diffusers and why its rows are empty wherever a block reports eight GPUs. Neither campaign covered H100 NVL or H200 NVL, so those GPUs are absent from this page. GB300 appears only in the Diffusers campaign. vLLM-Omni, TensorRT-LLM, and NIM have no FP8 results yet. Values are rounded to two decimal places.
+PyTorch values report average generation latency over datacenter configurations at 1, 4, and 8 GPUs. These PyTorch values (marked **PyTorch\*** in the primary vision tables) were measured with a different FP8 recipe than the mixed-step recipe (first and last three denoising steps in W8A16, middle steps in W8A8) used by the other engines, so they are optimistic and cannot be compared directly with the other values. Diffusers values were measured on a single GPU only and at 480p and 720p only, which is why the 256p column is empty for Diffusers and why its rows are empty wherever a block reports eight GPUs. Neither campaign covered H100 NVL or H200 NVL, so those GPUs are absent from this page. NIM values come from a NIM 2.1.0 campaign with FP8 latency profiles, reporting average generation time. GB300 appears only in the Diffusers and NIM campaigns. vLLM-Omni and TensorRT-LLM have no FP8 results yet. Values are rounded to two decimal places.
 
 These measurements establish the reported timing matrix but do not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
 
@@ -61,58 +61,79 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 
 | GPU | Engine | GPUs | 256p | 480p | 720p |
 |---|---|:-:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch | 1 | 4.71 | 47.34 | 173.02 |
+| **RTX PRO 6000 Blackwell** | PyTorch\* | 1 | 4.71 | 47.34 | 173.02 |
 |  | Diffusers | 1 |  |  |  |
-| **H20** | PyTorch | 1 | 11.82 | 112.34 | 427.62 |
+|  | NIM | 1 | 5.06 | 46.32 | 170.57 |
+| **H20** | PyTorch\* | 1 | 11.82 | 112.34 | 427.62 |
 |  | Diffusers | 1 |  |  |  |
-| **H100 80GB HBM3** | PyTorch | 1 | 3.12 | 26.01 | 94.01 |
+|  | NIM | 1 | 11.78 | 86.02 | 282.28 |
+| **H100 80GB HBM3** | PyTorch\* | 1 | 3.12 | 26.01 | 94.01 |
 |  | Diffusers | 1 |  | 69.55 | 237.29 |
-| **H200 141GB HBM3** | PyTorch | 1 | 3.09 | 26.59 | 94.57 |
+|  | NIM | 1 | 3.34 | 24.71 | 86.16 |
+| **H200 141GB HBM3** | PyTorch\* | 1 | 3.09 | 26.59 | 94.57 |
 |  | Diffusers | 1 |  | 68.32 | 237.18 |
-| **B200** | PyTorch | 1 | 1.97 | 14.85 | 51.85 |
+|  | NIM | 1 | 3.15 | 24.62 | 85.55 |
+| **B200** | PyTorch\* | 1 | 1.97 | 14.85 | 51.85 |
 |  | Diffusers | 1 |  | 39.70 | 124.10 |
-| **B300** | PyTorch | 1 | 1.99 | 13.68 | 46.41 |
+|  | NIM | 1 | 2.00 | 13.71 | 49.86 |
+| **B300** | PyTorch\* | 1 | 1.99 | 13.68 | 46.41 |
 |  | Diffusers | 1 |  | 37.61 | 115.14 |
-| **GB300** | PyTorch | 1 |  |  |  |
+|  | NIM | 1 | 1.98 | 13.10 | 45.76 |
+| **GB300** | PyTorch\* | 1 |  |  |  |
 |  | Diffusers | 1 |  | 34.53 | 97.30 |
+|  | NIM | 1 | 2.52 | 11.09 | 39.07 |
 
 ### Image-to-Video (i2v)
 
 | GPU | Engine | GPUs | 256p | 480p | 720p |
 |---|---|:-:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch | 1 | 4.50 | 45.96 | 169.15 |
+| **RTX PRO 6000 Blackwell** | PyTorch\* | 1 | 4.50 | 45.96 | 169.15 |
 |  | Diffusers | 1 |  |  |  |
-| **H20** | PyTorch | 1 | 11.19 | 110.19 | 419.99 |
+|  | NIM | 1 | 4.90 | 46.43 | 171.34 |
+| **H20** | PyTorch\* | 1 | 11.19 | 110.19 | 419.99 |
 |  | Diffusers | 1 |  |  |  |
-| **H100 80GB HBM3** | PyTorch | 1 | 2.96 | 25.04 | 91.65 |
+|  | NIM | 1 | 11.67 | 86.66 | 282.41 |
+| **H100 80GB HBM3** | PyTorch\* | 1 | 2.96 | 25.04 | 91.65 |
 |  | Diffusers | 1 |  | 71.06 | 241.53 |
-| **H200 141GB HBM3** | PyTorch | 1 | 2.94 | 25.56 | 92.44 |
+|  | NIM | 1 | 3.39 | 24.65 | 86.60 |
+| **H200 141GB HBM3** | PyTorch\* | 1 | 2.94 | 25.56 | 92.44 |
 |  | Diffusers | 1 |  | 69.69 | 237.95 |
-| **B200** | PyTorch | 1 | 1.87 | 14.24 | 50.24 |
+|  | NIM | 1 | 3.16 | 24.67 | 87.67 |
+| **B200** | PyTorch\* | 1 | 1.87 | 14.24 | 50.24 |
 |  | Diffusers | 1 |  | 40.69 | 126.07 |
-| **B300** | PyTorch | 1 | 1.78 | 13.08 | 44.94 |
+|  | NIM | 1 | 1.95 | 13.76 | 49.16 |
+| **B300** | PyTorch\* | 1 | 1.78 | 13.08 | 44.94 |
 |  | Diffusers | 1 |  | 38.35 | 117.18 |
-| **GB300** | PyTorch | 1 |  |  |  |
+|  | NIM | 1 | 2.07 | 13.63 | 46.81 |
+| **GB300** | PyTorch\* | 1 |  |  |  |
 |  | Diffusers | 1 |  | 34.96 | 99.37 |
+|  | NIM | 1 | 1.96 | 11.25 | 39.32 |
 
 ### Text-to-Image (t2i)
 
 | GPU | Engine | GPUs | 256p | 480p | 720p |
 |---|---|:-:|---:|---:|---:|
-| **RTX PRO 6000 Blackwell** | PyTorch | 1 | 0.97 | 1.02 | 1.50 |
+| **RTX PRO 6000 Blackwell** | PyTorch\* | 1 | 0.97 | 1.02 | 1.50 |
 |  | Diffusers | 1 |  | 7.29 |  |
-| **H20** | PyTorch | 1 | 1.27 | 1.74 | 3.25 |
+|  | NIM | 1 | 0.72 | 1.00 | 1.48 |
+| **H20** | PyTorch\* | 1 | 1.27 | 1.74 | 3.25 |
 |  | Diffusers | 1 |  |  |  |
-| **H100 80GB HBM3** | PyTorch | 1 | 1.16 | 1.14 | 1.21 |
+|  | NIM | 1 | 1.09 | 1.61 | 2.80 |
+| **H100 80GB HBM3** | PyTorch\* | 1 | 1.16 | 1.14 | 1.21 |
 |  | Diffusers | 1 |  | 7.50 | 7.68 |
-| **H200 141GB HBM3** | PyTorch | 1 | 1.12 | 1.14 | 1.21 |
+|  | NIM | 1 | 1.02 | 1.04 | 1.15 |
+| **H200 141GB HBM3** | PyTorch\* | 1 | 1.12 | 1.14 | 1.21 |
 |  | Diffusers | 1 |  | 7.44 | 7.74 |
-| **B200** | PyTorch | 1 | 0.96 | 0.92 | 0.97 |
+|  | NIM | 1 | 1.02 | 1.05 | 1.08 |
+| **B200** | PyTorch\* | 1 | 0.96 | 0.92 | 0.97 |
 |  | Diffusers | 1 |  | 6.82 | 6.94 |
-| **B300** | PyTorch | 1 | 0.95 | 0.95 | 1.51 |
+|  | NIM | 1 | 0.58 | 0.63 | 0.67 |
+| **B300** | PyTorch\* | 1 | 0.95 | 0.95 | 1.51 |
 |  | Diffusers | 1 |  | 10.28 | 6.71 |
-| **GB300** | PyTorch | 1 |  |  |  |
+|  | NIM | 1 | 0.72 | 0.84 | 0.87 |
+| **GB300** | PyTorch\* | 1 |  |  |  |
 |  | Diffusers | 1 |  | 11.79 | 13.19 |
+|  | NIM | 1 | 1.70 | 1.69 | 1.71 |
 
 <sub>Notes:
 1. All times measured on identical workloads (same seed, sampler settings, prompt).
@@ -120,7 +141,9 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 3. Values are average generation latency in seconds; lower is better.
 4. The **GPUs** column gives the number of GPUs behind every value in that row, and is the same for every engine in a GPU block so the rows can be compared directly.
 5. Diffusers FP8 was measured on one GPU at 480p and 720p only.
-6. FP8 is faster than BF16 for the PyTorch path throughout. For the Diffusers path it only pays off on long video workloads: short ones are slower in FP8, `t2i` consistently so by roughly a factor of two, which suggests a fixed quantization overhead that the short runs cannot amortize. Compare against the BF16 page before choosing a precision for a short workload.</sub>
+6. FP8 is faster than BF16 for the PyTorch path throughout. For the Diffusers path it only pays off on long video workloads: short ones are slower in FP8, `t2i` consistently so by roughly a factor of two, which suggests a fixed quantization overhead that the short runs cannot amortize. Compare against the BF16 page before choosing a precision for a short workload.
+7. \* PyTorch values were measured with a different FP8 recipe than the other engines on this page, which run the first and last three denoising steps in W8A16 and the middle steps in W8A8. PyTorch results are therefore optimistic and cannot be compared directly with the other values.
+8. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.</sub>
 
 ## Additional audiovisual generation
 

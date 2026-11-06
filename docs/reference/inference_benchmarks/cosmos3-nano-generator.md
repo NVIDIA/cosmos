@@ -34,7 +34,7 @@ Empty cells mean that a run has not been completed for that GPU, engine, or reso
 
 ## Benchmark methodology
 
-The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and NIM. Their vLLM-Omni values come from a dedicated vLLM-Omni campaign; the PyTorch and NIM values preserve the previously published campaigns. Those tables use BF16 precision, batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
+The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and NIM. Their vLLM-Omni values come from a dedicated vLLM-Omni campaign; NIM values come from a NIM 2.1.0 campaign; the PyTorch values preserve the previously published campaign. Those tables use BF16 precision (NIM uses its default precision, FP8), batch size 1, and matched prompts, seeds, and sampler settings where documented. Video workloads follow the standard Cosmos3 generation profile of 189 frames at 24 FPS unless a resolution tier limits frame count.
 
 The additional audiovisual and action tables come from NVIDIA internal measurements. PyTorch values are average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) come from a separate vLLM-Omni audiovisual campaign. vLLM-Omni action values were measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. That action sweep did not cover Super on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from separate campaigns: single-GPU runs (all modalities, and video-to-video), 4- and 8-GPU runs, and transfer. vLLM-Omni transfer values come from their own campaign. Where the multi-GPU Diffusers campaign offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. TensorRT-LLM values come from a TensorRT-LLM campaign that sweeps tensor-parallel, CFG-parallel, and Ulysses-parallel splits at each GPU count; the fastest split at the count a row reports is the one published. That campaign covers six GPUs, so the TensorRT-LLM rows for H100 NVL and H200 NVL are empty, and it includes no action workloads. Values are rounded to two decimal places.
 
@@ -66,42 +66,42 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 1 | 10.65 | 105.61 | 371.53 |
 |  | Diffusers | 1 | 11.20 | 112.00 | 392.00 |
 |  | TensorRT-LLM | 1 | 10.27 | 102.55 | 369.78 |
-|  | NIM | 1 | 7.93 | 82.69 | 318.69 |
+|  | NIM | 1 | 5.06 | 46.32 | 170.57 |
 | **H20** | PyTorch | 1 | 30.57 | 257.51 | 931.39 |
 |  | vLLM-Omni | 1 | 28.58 | 256.97 | 929.81 |
 |  | Diffusers | 1 | 30.20 | 258.00 | 926.00 |
 |  | TensorRT-LLM | 1 | 26.92 | 251.79 | 908.90 |
-|  | NIM | 1 | 17.81 | 192.07 | 771.37 |
+|  | NIM | 1 | 11.78 | 86.02 | 282.28 |
 | **H100 NVL** | PyTorch | 1 | 10.03 | 84.12 | 297.27 |
 |  | vLLM-Omni | 1 | 9.25 | 80.75 | 281.99 |
 |  | Diffusers | 1 | 11.00 | 90.00 | 324.20 |
 |  | TensorRT-LLM | — |  |  |  |
-|  | NIM | 1 | 7.09 | 68.01 | 267.73 |
+|  | NIM | — |  |  |  |
 | **H200 NVL** | PyTorch | 1 | 8.17 | 69.79 | 244.39 |
 |  | vLLM-Omni | 1 | 7.44 | 64.58 | 240.05 |
 |  | Diffusers | 1 | 9.00 | 74.00 | 276.20 |
 |  | TensorRT-LLM | — |  |  |  |
-|  | NIM | 1 | 5.87 | 57.10 | 229.63 |
+|  | NIM | — |  |  |  |
 | **H100 80GB HBM3** | PyTorch | 1 | 7.61 | 59.83 | 207.78 |
 |  | vLLM-Omni | 1 | 6.97 | 58.17 | 202.29 |
 |  | Diffusers | 1 | 9.00 | 68.00 | 240.00 |
 |  | TensorRT-LLM | 1 | 6.50 | 60.10 | 223.51 |
-|  | NIM | 1 | 5.72 | 51.73 | 199.46 |
+|  | NIM | 1 | 3.34 | 24.71 | 86.16 |
 | **H200 141GB HBM3** | PyTorch | 1 | 7.53 | 60.18 | 214.28 |
 |  | vLLM-Omni | 1 | 6.79 | 58.14 | 208.36 |
 |  | Diffusers | 1 | 9.00 | 67.00 | 239.60 |
 |  | TensorRT-LLM | 1 | 6.42 | 60.57 | 225.06 |
-|  | NIM | 1 | 5.72 | 51.90 | 200.63 |
+|  | NIM | 1 | 3.15 | 24.62 | 85.55 |
 | **B200** | PyTorch | 1 | 4.56 | 33.20 | 114.85 |
 |  | vLLM-Omni | 1 | 4.03 | 32.04 | 107.79 |
 |  | Diffusers | 1 | 7.00 | 36.80 | 117.00 |
 |  | TensorRT-LLM | 1 | 3.43 | 28.28 | 100.02 |
-|  | NIM | 1 | 3.72 | 26.68 | 93.33 |
+|  | NIM | 1 | 2.00 | 13.71 | 49.86 |
 | **B300** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 1 | 4.46 | 32.18 | 102.10 |
 |  | Diffusers | 1 | 6.40 | 39.32 | 121.74 |
 |  | TensorRT-LLM | 1 | 3.31 | 26.52 | 91.15 |
-|  | NIM | 1 | 4.51 | 27.49 | 90.39 |
+|  | NIM | 1 | 1.98 | 13.10 | 45.76 |
 
 ### Image-to-Video (i2v)
 
@@ -111,42 +111,42 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 1 | 11.04 | 107.77 | 376.44 |
 |  | Diffusers | 1 | 12.00 | 112.00 | 397.00 |
 |  | TensorRT-LLM | 1 | 10.77 | 105.03 | 374.89 |
-|  | NIM | 1 | 8.23 | 84.58 | 326.96 |
+|  | NIM | 1 | 4.90 | 46.43 | 171.34 |
 | **H20** | PyTorch | 1 | 31.36 | 257.10 | 933.07 |
 |  | vLLM-Omni | 1 | 29.50 | 261.56 | 940.16 |
 |  | Diffusers | 1 | 31.00 | 258.00 | 925.00 |
 |  | TensorRT-LLM | 1 | 28.07 | 254.79 | 915.71 |
-|  | NIM | 1 | 18.67 | 195.10 | 774.88 |
+|  | NIM | 1 | 11.67 | 86.66 | 282.41 |
 | **H100 NVL** | PyTorch | 1 | 10.19 | 84.50 | 298.57 |
 |  | vLLM-Omni | 1 | 9.62 | 82.61 | 286.19 |
 |  | Diffusers | 1 | 11.00 | 91.00 | 325.20 |
 |  | TensorRT-LLM | — |  |  |  |
-|  | NIM | 1 | 7.39 | 69.39 | 272.29 |
+|  | NIM | — |  |  |  |
 | **H200 NVL** | PyTorch | 1 | 8.27 | 69.99 | 246.62 |
 |  | vLLM-Omni | 1 | 7.83 | 66.39 | 243.52 |
 |  | Diffusers | 1 | 9.00 | 74.00 | 275.20 |
 |  | TensorRT-LLM | — |  |  |  |
-|  | NIM | 1 | 6.25 | 58.64 | 232.47 |
+|  | NIM | — |  |  |  |
 | **H100 80GB HBM3** | PyTorch | 1 | 7.64 | 59.95 | 207.87 |
 |  | vLLM-Omni | 1 | 7.37 | 59.77 | 205.97 |
 |  | Diffusers | 1 | 9.00 | 68.00 | 239.80 |
 |  | TensorRT-LLM | 1 | 6.90 | 63.24 | 226.15 |
-|  | NIM | 1 | 6.08 | 53.02 | 202.59 |
+|  | NIM | 1 | 3.39 | 24.65 | 86.60 |
 | **H200 141GB HBM3** | PyTorch | 1 | 7.65 | 60.51 | 214.80 |
 |  | vLLM-Omni | 1 | 7.28 | 59.64 | 209.65 |
 |  | Diffusers | 1 | 9.00 | 67.20 | 240.00 |
 |  | TensorRT-LLM | 1 | 6.74 | 63.54 | 231.15 |
-|  | NIM | 1 | 6.04 | 53.25 | 203.66 |
+|  | NIM | 1 | 3.16 | 24.67 | 87.67 |
 | **B200** | PyTorch | 1 | 4.60 | 33.08 | 113.90 |
 |  | vLLM-Omni | 1 | 4.33 | 33.09 | 110.08 |
 |  | Diffusers | 1 | 7.00 | 37.00 | 116.00 |
 |  | TensorRT-LLM | 1 | 3.70 | 29.33 | 102.35 |
-|  | NIM | 1 | 4.05 | 27.72 | 95.57 |
+|  | NIM | 1 | 1.95 | 13.76 | 49.16 |
 | **B300** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 1 | 5.61 | 33.45 | 104.75 |
 |  | Diffusers | 1 | 13.40 | 49.59 | 131.25 |
 |  | TensorRT-LLM | 1 | 3.70 | 27.73 | 93.88 |
-|  | NIM | 1 | 4.50 | 28.90 | 92.59 |
+|  | NIM | 1 | 2.07 | 13.63 | 46.81 |
 
 ### Text-to-Image (t2i)
 
@@ -156,34 +156,42 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 1 | 1.59 | 2.87 | 4.99 |
 |  | Diffusers | 1 | 2.00 | 4.00 | 5.00 |
 |  | TensorRT-LLM | 1 | 1.18 | 2.35 | 4.50 |
+|  | NIM | 1 | 0.72 | 1.00 | 1.48 |
 | **H20** | PyTorch | 1 | 3.06 | 6.51 | 12.31 |
 |  | vLLM-Omni | 1 | 1.73 | 4.92 | 10.73 |
 |  | Diffusers | 1 | 3.00 | 6.00 | 10.00 |
 |  | TensorRT-LLM | 1 | 1.94 | 5.55 | 11.56 |
+|  | NIM | 1 | 1.09 | 1.61 | 2.80 |
 | **H100 NVL** | PyTorch | 1 | 2.77 | 2.83 | 4.21 |
 |  | vLLM-Omni | 1 | 1.55 | 1.92 | 3.43 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 |  | TensorRT-LLM | — |  |  |  |
+|  | NIM | — |  |  |  |
 | **H200 NVL** | PyTorch | 1 | 2.75 | 2.85 | 3.58 |
 |  | vLLM-Omni | 1 | 1.53 | 1.58 | 2.81 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 |  | TensorRT-LLM | — |  |  |  |
+|  | NIM | — |  |  |  |
 | **H100 80GB HBM3** | PyTorch | 1 | 3.01 | 3.01 | 3.45 |
 |  | vLLM-Omni | 1 | 1.61 | 1.53 | 2.61 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 |  | TensorRT-LLM | 1 | 1.02 | 1.30 | 2.63 |
+|  | NIM | 1 | 1.02 | 1.04 | 1.15 |
 | **H200 141GB HBM3** | PyTorch | 1 | 2.96 | 3.04 | 3.28 |
 |  | vLLM-Omni | 1 | 1.57 | 1.52 | 2.60 |
 |  | Diffusers | 1 | 3.00 | 3.00 | 4.00 |
 |  | TensorRT-LLM | 1 | 1.05 | 1.30 | 2.60 |
+|  | NIM | 1 | 1.02 | 1.05 | 1.08 |
 | **B200** | PyTorch | 1 | 2.68 | 2.75 | 2.87 |
 |  | vLLM-Omni | 1 | 1.49 | 1.20 | 1.76 |
 |  | Diffusers | 1 | 3.00 | 3.20 | 3.00 |
 |  | TensorRT-LLM | 1 | 0.86 | 0.88 | 1.40 |
+|  | NIM | 1 | 0.58 | 0.63 | 0.67 |
 | **B300** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 1 | 1.97 | 1.81 | 2.34 |
 |  | Diffusers | 1 | 3.86 | 3.86 | 3.99 |
 |  | TensorRT-LLM | 1 | 1.36 | 1.30 | 1.40 |
+|  | NIM | 1 | 0.72 | 0.84 | 0.87 |
 
 <sub>Notes:
 1. All times measured on identical workloads (same seed, sampler settings, prompt).
@@ -192,7 +200,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs. Single-GPU and multi-GPU values come from separate campaigns.
 5. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 6. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
-7. NIM numbers use latency profiles with FP8 precision and report end-to-end `Request Latency s`, including request processing, video generation, output encoding, and returning the response.</sub>
+7. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.</sub>
 
 ## Additional audiovisual generation
 

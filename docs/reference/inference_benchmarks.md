@@ -8,7 +8,7 @@ Results are published incrementally from NVIDIA internal measurements. **Empty c
 
 ## Generator benchmarks
 
-Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover the quantized Nano and Super checkpoints; every other Generator page reports BF16, except NIM rows, which are FP8.
+Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover the quantized Nano and Super checkpoints; every other Generator page reports BF16, except NIM rows, which are FP8; NIM rows also appear on the FP8 pages.
 
 | Model | Primary vision generation | Additional audiovisual generation | Transfer generation | Action generation |
 |---|---|---|---|---|
