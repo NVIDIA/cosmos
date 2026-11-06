@@ -65,12 +65,12 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 | **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.04 | 118.90 | 427.16 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 25.39 | 154.25 | 437.57 |
-|  | TensorRT-LLM | 8 | 0.21 | 0.13 | 0.10 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | 8 | 4.15 | 27.18 | 91.15 |
 | **H20** | PyTorch | 8 | 27.72 | 152.46 | 492.41 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 26.66 | 161.49 | 517.37 |
-|  | TensorRT-LLM | 8 | 0.06 | 0.01 | 0.01 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | 8 | 6.79 | 51.83 | 191.74 |
 | **H100 NVL** | PyTorch | 8 | 16.83 | 64.14 | 186.19 |
 |  | vLLM-Omni | — |  |  |  |
@@ -85,7 +85,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 | **H100 80GB HBM3** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 19.40 | 56.39 | 174.57 |
-|  | TensorRT-LLM | 8 | 0.04 | 0.02 | 0.04 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | — |  |  |  |
 | **H200 141GB HBM3** | PyTorch | 8 | 11.82 | 41.78 | 123.49 |
 |  | vLLM-Omni | 1 | 25.61 | 219.11 | 769.63 |
@@ -110,12 +110,12 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 | **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.54 | 118.95 | 427.96 |
 |  | vLLM-Omni | 8 | 11.66 | 80.94 | 240.27 |
 |  | Diffusers | 8 | 26.29 | 156.16 | 540.65 |
-|  | TensorRT-LLM | 8 | 0.19 | 0.13 | 0.09 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | 8 | 4.01 | 27.39 | 91.65 |
 | **H20** | PyTorch | 8 | 28.22 | 153.19 | 491.93 |
 |  | vLLM-Omni | 8 | 19.65 | 148.77 | 488.51 |
 |  | Diffusers | 8 | 27.65 | 165.91 | 530.44 |
-|  | TensorRT-LLM | 8 | 0.06 | 0.01 | 0.01 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | 8 | 6.60 | 52.28 | 191.86 |
 | **H100 NVL** | PyTorch | 8 | 16.96 | 64.17 | 186.47 |
 |  | vLLM-Omni | 8 | 8.48 | 59.44 | 212.53 |
@@ -130,7 +130,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 | **H100 80GB HBM3** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 8 | 6.48 | 38.31 |  |
 |  | Diffusers | 8 | 19.98 | 55.63 | 184.81 |
-|  | TensorRT-LLM | 8 | 0.03 | 0.03 | 0.04 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | — |  |  |  |
 | **H200 141GB HBM3** | PyTorch | 8 | 11.80 | 42.10 | 123.57 |
 |  | vLLM-Omni | 1 | 25.47 | 220.70 | 766.33 |
@@ -155,12 +155,12 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 | **RTX PRO 6000 Blackwell** | PyTorch | 8 | 93.18 | 93.39 | 93.47 |
 |  | vLLM-Omni | 8 | 3.11 | 3.54 | 5.70 |
 |  | Diffusers | 8 | 16.90 | 17.52 | 16.73 |
-|  | TensorRT-LLM | 8 | 0.09 | 0.09 | -0.04 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | 8 | 1.52 | 1.64 | 1.61 |
 | **H20** | PyTorch | 8 | 14.18 | 16.46 | 20.92 |
 |  | vLLM-Omni | 8 | 5.12 | 5.44 | 8.85 |
 |  | Diffusers | 8 | 18.29 | 18.48 | 18.46 |
-|  | TensorRT-LLM | 8 | 0.02 | 0.13 | 0.03 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | 8 | 1.01 | 2.27 | 1.93 |
 | **H100 NVL** | PyTorch | 8 | 19.86 | 19.80 | 19.87 |
 |  | vLLM-Omni | 8 | 3.54 | 3.48 | 4.11 |
@@ -175,7 +175,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 | **H100 80GB HBM3** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | 8 | 5.09 | 5.16 | 4.91 |
 |  | Diffusers | 8 | 17.97 | 18.03 | 19.28 |
-|  | TensorRT-LLM | 8 | 0.06 | 0.02 | 0.02 |
+|  | TensorRT-LLM | 8 |  |  |  |
 |  | NIM | — |  |  |  |
 | **H200 141GB HBM3** | PyTorch | 8 | 13.48 | 13.53 | 13.50 |
 |  | vLLM-Omni | 1 | 2.83 | 5.70 | 10.24 |
@@ -215,11 +215,11 @@ A text prompt and source video condition a generated continuation or transformat
 | **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.31 | 118.92 | 427.19 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 28.39 | 158.14 | 545.45 |
-|  | TensorRT-LLM | 8 | 0.21 | 0.13 | 0.10 |
+|  | TensorRT-LLM | 8 |  |  |  |
 | **H20** | PyTorch | 8 | 27.98 | 153.02 | 491.75 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 28.18 | 167.95 | 532.68 |
-|  | TensorRT-LLM | 8 | 0.06 | 0.02 | 0.01 |
+|  | TensorRT-LLM | 8 |  |  |  |
 | **H100 NVL** | PyTorch | 8 | 16.79 | 63.84 | 183.64 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 25.01 | 112.47 | 348.31 |
@@ -231,7 +231,7 @@ A text prompt and source video condition a generated continuation or transformat
 | **H100 80GB HBM3** | PyTorch | — |  |  |  |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 21.61 | 57.74 | 188.43 |
-|  | TensorRT-LLM | 8 | 0.01 | 0.03 | 0.03 |
+|  | TensorRT-LLM | 8 |  |  |  |
 | **H200 141GB HBM3** | PyTorch | 8 | 11.76 | 41.85 | 123.09 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 1 | 41.17 | 269.44 | 916.41 |
@@ -254,11 +254,11 @@ A text prompt produces synchronized video and sound.
 | **RTX PRO 6000 Blackwell** | PyTorch | 8 | 65.79 | 118.87 | 429.78 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | — |  |  |  |
-|  | TensorRT-LLM | 8 | 0.21 | 0.13 | 0.10 |
+|  | TensorRT-LLM | 8 |  |  |  |
 | **H20** | PyTorch | 8 | 27.73 | 152.53 | 492.38 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | — |  |  |  |
-|  | TensorRT-LLM | 8 | 0.05 | 0.01 | 0.01 |
+|  | TensorRT-LLM | 8 |  |  |  |
 | **H100 NVL** | PyTorch | 8 | 16.86 | 64.17 | 183.81 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | — |  |  |  |
@@ -332,11 +332,11 @@ A text prompt and source image produce video with synchronized sound.
 | **RTX PRO 6000 Blackwell** | PyTorch | 8 | 66.27 | 119.05 | 429.26 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | — |  |  |  |
-|  | TensorRT-LLM | 8 | 0.18 | 0.13 | 0.10 |
+|  | TensorRT-LLM | 8 |  |  |  |
 | **H20** | PyTorch | 8 | 28.11 | 153.33 | 493.51 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | — |  |  |  |
-|  | TensorRT-LLM | 8 | 0.05 | 0.01 | 0.01 |
+|  | TensorRT-LLM | 8 |  |  |  |
 | **H100 NVL** | PyTorch | 8 | 16.85 | 64.19 | 186.66 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | — |  |  |  |
@@ -373,62 +373,62 @@ the hint changes how much of the frame the model must synthesise.
 | **RTX PRO 6000 Blackwell** | blur | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.19 | -0.28 | -0.37 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | depth | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.19 | -0.28 | -0.37 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | edge | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.19 | -0.28 | -0.37 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | multi_control | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.19 | -0.32 | -0.40 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | seg | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.19 | -0.28 | -0.37 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | wsm | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.15 | -0.27 | -0.34 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 | **H20** | blur | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.46 | -0.49 | -0.49 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | depth | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.46 | -0.49 | -0.49 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | edge | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.46 | -0.49 | -0.49 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | multi_control | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.47 | -0.49 | -0.50 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | seg | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.46 | 633.73 | -0.49 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 |  | wsm | PyTorch | 4 |  |  |  |
 |  |  | vLLM-Omni | 4 |  |  |  |
 |  |  | Diffusers | 4 |  |  |  |
-|  |  | TensorRT-LLM | 4 | -0.46 | -0.48 | -0.49 |
+|  |  | TensorRT-LLM | 4 |  |  |  |
 |  |  | NIM | 4 |  |  |  |
 | **H100 NVL** | blur | PyTorch | — |  |  |  |
 |  |  | vLLM-Omni | — |  |  |  |
@@ -538,7 +538,7 @@ the hint changes how much of the frame the model must synthesise.
 |  | multi_control | PyTorch | 8 |  |  |  |
 |  |  | vLLM-Omni | 8 | 58.24 |  |  |
 |  |  | Diffusers | 8 |  |  |  |
-|  |  | TensorRT-LLM | 8 | -0.40 | -0.48 | -0.49 |
+|  |  | TensorRT-LLM | 8 |  |  |  |
 |  |  | NIM | 8 |  |  |  |
 |  | seg | PyTorch | 1 |  |  |  |
 |  |  | vLLM-Omni | 1 | 57.91 | 528.52 | 1826.29 |
