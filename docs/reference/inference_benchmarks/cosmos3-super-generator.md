@@ -66,7 +66,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 25.39 | 154.25 | 437.57 |
 |  | TensorRT-LLM | 8 | 0.21 | 0.13 | 0.10 |
-|  | NIM | 8 | TBD | TBD | TBD |
+|  | NIM | 1 | 15.50 | 151.90 | 597.67 |
 | **H20** | PyTorch | 8 | 27.72 | 152.46 | 492.41 |
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 8 | 26.66 | 161.49 | 517.37 |
@@ -111,7 +111,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 8 | 11.66 | 80.94 | 240.27 |
 |  | Diffusers | 8 | 26.29 | 156.16 | 540.65 |
 |  | TensorRT-LLM | 8 | 0.19 | 0.13 | 0.09 |
-|  | NIM | 8 | TBD | TBD | TBD |
+|  | NIM | 1 | 14.34 | 151.67 | 595.21 |
 | **H20** | PyTorch | 8 | 28.22 | 153.19 | 491.93 |
 |  | vLLM-Omni | 8 | 19.65 | 148.77 | 488.51 |
 |  | Diffusers | 8 | 27.65 | 165.91 | 530.44 |
@@ -204,7 +204,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 8. The 720p i2v cell for vLLM-Omni on H100 80GB HBM3 is empty because the multi-GPU runs for it returned times far below the 480p result, which is not physically plausible; the measurement is being rerun.
 9. NIM text-to-image on eight GPUs is slower at 480p than at 720p (H20: 2.27 s vs 1.93 s). The behavior reproduces across NIM campaigns and GPUs, so it reflects current multi-GPU scaling at this resolution rather than measurement noise.
 10. In the H200 NVL and H200 141GB HBM3 blocks, the PyTorch rows report eight GPUs while the other engines report one, so PyTorch is not directly comparable with the rest of those blocks.
-11. In the RTX PRO 6000 Blackwell text-to-image block, the NIM row reports one GPU while the other engines report eight. The NIM text-to-video and image-to-video rows on RTX PRO 6000 Blackwell await an eight-GPU run.</sub>
+11. In the RTX PRO 6000 Blackwell blocks, the NIM rows report one GPU while the other engines report eight, so NIM is not directly comparable with the rest of those blocks.</sub>
 
 ## Additional audiovisual generation
 
