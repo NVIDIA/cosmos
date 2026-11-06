@@ -156,7 +156,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 8 | 3.11 | 3.54 | 5.70 |
 |  | Diffusers | 8 | 16.90 | 17.52 | 16.73 |
 |  | TensorRT-LLM | 8 | 0.09 | 0.09 | -0.04 |
-|  | NIM | 8 | TBD | TBD | TBD |
+|  | NIM | 1 | 1.11 | 2.03 | 3.49 |
 | **H20** | PyTorch | 8 | 14.18 | 16.46 | 20.92 |
 |  | vLLM-Omni | 8 | 5.12 | 5.44 | 8.85 |
 |  | Diffusers | 8 | 18.29 | 18.48 | 18.46 |
@@ -203,7 +203,8 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 7. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.
 8. The 720p i2v cell for vLLM-Omni on H100 80GB HBM3 is empty because the multi-GPU runs for it returned times far below the 480p result, which is not physically plausible; the measurement is being rerun.
 9. NIM text-to-image on eight GPUs is slower at 480p than at 720p (H20: 2.27 s vs 1.93 s). The behavior reproduces across NIM campaigns and GPUs, so it reflects current multi-GPU scaling at this resolution rather than measurement noise.
-10. In the H200 NVL and H200 141GB HBM3 blocks, the PyTorch rows report eight GPUs while the other engines report one, so PyTorch is not directly comparable with the rest of those blocks.</sub>
+10. In the H200 NVL and H200 141GB HBM3 blocks, the PyTorch rows report eight GPUs while the other engines report one, so PyTorch is not directly comparable with the rest of those blocks.
+11. In the RTX PRO 6000 Blackwell text-to-image block, the NIM row reports one GPU while the other engines report eight. The NIM text-to-video and image-to-video rows on RTX PRO 6000 Blackwell await an eight-GPU run.</sub>
 
 ## Additional audiovisual generation
 

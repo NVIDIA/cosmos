@@ -63,7 +63,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch\* | 1 | 15.27 | 154.79 | 589.57 |
 |  | Diffusers | 1 |  | 386.15 |  |
-|  | NIM | 1 | TBD | TBD | TBD |
+|  | NIM | 1 | 15.50 | 151.90 | 597.67 |
 | **H20** | PyTorch\* | 1 | 37.03 | 381.98 | 1505.14 |
 |  | Diffusers | 1 |  |  |  |
 |  | NIM | 1 |  |  |  |
@@ -89,7 +89,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch\* | 1 | 15.21 | 154.24 | 587.19 |
 |  | Diffusers | 1 |  |  |  |
-|  | NIM | 1 | TBD | TBD | TBD |
+|  | NIM | 1 | 14.34 | 151.67 | 595.21 |
 | **H20** | PyTorch\* | 1 | 37.09 | 380.01 | 1501.45 |
 |  | Diffusers | 1 |  |  |  |
 |  | NIM | 1 |  |  |  |
@@ -115,7 +115,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |---|---|:-:|---:|---:|---:|
 | **RTX PRO 6000 Blackwell** | PyTorch\* | 1 | 1.75 | 2.76 | 5.13 |
 |  | Diffusers | 1 |  |  |  |
-|  | NIM | 1 | TBD | TBD | TBD |
+|  | NIM | 1 | 1.11 | 2.03 | 3.49 |
 | **H20** | PyTorch\* | 1 | 2.33 | 5.73 | 12.01 |
 |  | Diffusers | 1 |  |  |  |
 |  | NIM | 1 |  |  |  |

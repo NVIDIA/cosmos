@@ -66,7 +66,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 1 | 10.65 | 105.61 | 371.53 |
 |  | Diffusers | 1 | 11.20 | 112.00 | 392.00 |
 |  | TensorRT-LLM | 1 | 10.27 | 102.55 | 369.78 |
-|  | NIM | 1 | TBD | TBD | TBD |
+|  | NIM | 1 | 5.06 | 46.32 | 170.57 |
 | **H20** | PyTorch | 1 | 30.57 | 257.51 | 931.39 |
 |  | vLLM-Omni | 1 | 28.58 | 256.97 | 929.81 |
 |  | Diffusers | 1 | 30.20 | 258.00 | 926.00 |
@@ -111,7 +111,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 1 | 11.04 | 107.77 | 376.44 |
 |  | Diffusers | 1 | 12.00 | 112.00 | 397.00 |
 |  | TensorRT-LLM | 1 | 10.77 | 105.03 | 374.89 |
-|  | NIM | 1 | TBD | TBD | TBD |
+|  | NIM | 1 | 4.90 | 46.43 | 171.34 |
 | **H20** | PyTorch | 1 | 31.36 | 257.10 | 933.07 |
 |  | vLLM-Omni | 1 | 29.50 | 261.56 | 940.16 |
 |  | Diffusers | 1 | 31.00 | 258.00 | 925.00 |
@@ -156,7 +156,7 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | vLLM-Omni | 1 | 1.59 | 2.87 | 4.99 |
 |  | Diffusers | 1 | 2.00 | 4.00 | 5.00 |
 |  | TensorRT-LLM | 1 | 1.18 | 2.35 | 4.50 |
-|  | NIM | 1 | TBD | TBD | TBD |
+|  | NIM | 1 | 0.72 | 1.00 | 1.48 |
 | **H20** | PyTorch | 1 | 3.06 | 6.51 | 12.31 |
 |  | vLLM-Omni | 1 | 1.73 | 4.92 | 10.73 |
 |  | Diffusers | 1 | 3.00 | 6.00 | 10.00 |
