@@ -202,9 +202,8 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 7. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.
 8. The 720p i2v cell for vLLM-Omni on H100 80GB HBM3 is empty because the multi-GPU runs for it returned times far below the 480p result, which is not physically plausible; the measurement is being rerun.
-9. NIM text-to-image on eight GPUs is slower at 480p than at 720p (H20: 2.27 s vs 1.93 s). The behavior reproduces across NIM campaigns and GPUs, so it reflects current multi-GPU scaling at this resolution rather than measurement noise.
-10. In the H200 NVL and H200 141GB HBM3 blocks, the PyTorch rows report eight GPUs while the other engines report one, so PyTorch is not directly comparable with the rest of those blocks.
-11. In the RTX PRO 6000 Blackwell blocks, the NIM rows report one GPU while the other engines report eight, so NIM is not directly comparable with the rest of those blocks.</sub>
+9. In the H200 NVL and H200 141GB HBM3 blocks, the PyTorch rows report eight GPUs while the other engines report one, so PyTorch is not directly comparable with the rest of those blocks.
+10. In the RTX PRO 6000 Blackwell blocks, the NIM rows report one GPU while the other engines report eight, so NIM is not directly comparable with the rest of those blocks.</sub>
 
 ## Additional audiovisual generation
 
