@@ -50,7 +50,7 @@ Maintainer notes (not rendered):
 | **[Action][action]**<br><sub>Forward dynamics, inverse dynamics, policy</sub> | `AV` `ROB` | `S` |
 | **[Transfer][transfer]**<br><sub>Spatial controls: edge, blur, depth, segmentation, world-scenario map, multi-control</sub> | `ANY` `AV` | `S` `M` |
 | **[NIM deployment][nim]**<br><sub>Choose a run time (generation/reasoning), run accelerated inference from one container · [support matrix][nim-matrix]</sub> | `ANY` | `S` `M` |
-| **[Quantized (FP8)][quantization]**<br><sub>Static FP8 export and serving: Nano/Super video, Super base and 4-step text-to-image/image-to-video</sub> | `ANY` | `S` `M` |
+| **[Quantization][quantization]**<br><sub>Static FP8 export and serving: Nano/Super video, Super base and 4-step text-to-image/image-to-video</sub> | `ANY` | `S` `M` |
 
 ## Simulation&nbsp;<a href="#simulation"><img src="assets/brand/badge-new.svg" alt="New"></a>
 
@@ -95,7 +95,8 @@ Maintainer notes (not rendered):
 [transfer]: https://nvda.ws/4emDe1e
 [nim]: https://nvda.ws/4iztHGw
 [nim-matrix]: https://nvda.ws/3U5M3G0
-[quantization]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/quantization/README.md
+<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-quantization/SKILL.md once the skill is on cosmos-framework main -->
+[quantization]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-quantization/SKILL.md
 [transfer-auto]: https://nvda.ws/4yzgXVk
 [try-auto]: https://nvda.ws/4iz2Iek
 [sim-auto]: https://nvda.ws/4BjzZBt
