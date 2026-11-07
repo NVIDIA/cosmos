@@ -47,7 +47,7 @@ Maintainer notes (not rendered):
 | --- | :-: | :-: |
 | **[Generation][gen]**<br><sub>Text-to-image, text-to-video, image-to-video, video-to-video, with optional audio</sub> | `ANY` | `S` `M` |
 | **[Reasoning][reason]**<br><sub>Captioning, VQA, grounding, temporal localization, physical plausibility</sub> | `ANY` `INFRA` | `S` `M` |
-| **[Action][action]**<br><sub>Forward dynamics, inverse dynamics, policy</sub> | `AV` `ROB` | `S` |
+| **[Action Policy][action]**<br><sub>Forward dynamics, inverse dynamics, policy</sub> | `AV` `ROB` | `S` |
 | **[Transfer][transfer]**<br><sub>Spatial controls: edge, blur, depth, segmentation, world-scenario map, multi-control</sub> | `ANY` `AV` | `S` `M` |
 | **[NIM deployment][nim]**<br><sub>Choose a run time (generation/reasoning), run accelerated inference from one container · [support matrix][nim-matrix]</sub> | `ANY` | `S` `M` |
 | **[Quantized (FP8)][quantization]**<br><sub>Static FP8 export and serving: Nano/Super video, Super base and 4-step text-to-image/image-to-video</sub> | `ANY` | `S` `M` |
@@ -91,7 +91,8 @@ Maintainer notes (not rendered):
 [framework-main]: https://github.com/NVIDIA/cosmos-framework/tree/main
 [gen]: https://nvda.ws/4zd0fw5
 [reason]: https://nvda.ws/4z2ezYl
-[action]: https://nvda.ws/4dUeBsJ
+<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-action/SKILL.md once the skill is on cosmos-framework main -->
+[action]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-action/SKILL.md
 [transfer]: https://nvda.ws/4emDe1e
 [nim]: https://nvda.ws/4iztHGw
 [nim-matrix]: https://nvda.ws/3U5M3G0
