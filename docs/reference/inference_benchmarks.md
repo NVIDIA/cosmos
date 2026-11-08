@@ -2,21 +2,30 @@
 
 > This page is about **speed** (latency, throughput). For **quality** benchmarks (PAIBench, Physics-IQ, VLMEvalKit, ...), see [`evaluation/`](https://nvda.ws/3Uho0nx).
 
-These reports collect inference benchmarks for Cosmos3. **Generator** pages measure image, video, audiovisual, and action-generation latency across PyTorch, vLLM-Omni, Diffusers, TensorRT-LLM, and NIM where results are available. **Reasoner** sections below measure VLM serving and token-generation performance for text, image, and video inputs through vLLM and Hugging Face Transformers.
+These reports collect inference benchmarks for Cosmos3. **Generator** pages measure image, video, audiovisual, and action-generation latency across PyTorch, vLLM-Omni, Diffusers, SGLang, TensorRT-LLM, and NIM where results are available. **Reasoner** sections below measure VLM serving and token-generation performance for text, image, and video inputs through vLLM and Hugging Face Transformers, with separate NIM serving sections.
 
-Results are published incrementally from NVIDIA internal measurements. **Empty cells mean that combination has not been measured yet** — not that it is unsupported. See each model page or section for workload details and data-source definitions.
+Results are published incrementally from NVIDIA internal measurements. **Empty cells have no validated measurement at the stated configuration**. A run may be unmeasured, unsuccessful, or awaiting validation; blanks do not establish lack of support. See each model page or section for workload details and data-source definitions.
 
 ## Generator benchmarks
 
-Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover the quantized Nano and Super checkpoints; every other Generator page reports BF16, except NIM rows, which are FP8; NIM rows also appear on the FP8 pages.
+Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover Edge, Nano, and Super; every other Generator page reports BF16, except NIM rows, which are FP8; NIM rows also appear on the FP8 pages.
 
 | Model | Primary vision generation | Additional audiovisual generation | Transfer generation | Action generation |
 |---|---|---|---|---|
-| Cosmos3-Edge | [t2v, i2v, t2i](inference_benchmarks/cosmos3-edge-generator.md#text-to-video-t2v) | [v2v](inference_benchmarks/cosmos3-edge-generator.md#video-to-video-v2v) | Not reported | Not reported |
-| Cosmos3-Nano | [t2v, i2v, t2i](inference_benchmarks/cosmos3-nano-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-nano-generator.md#additional-audiovisual-generation) | [blur, depth, edge, seg, wsm](inference_benchmarks/cosmos3-nano-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-nano-generator.md#action-generation) |
-| Cosmos3-Super | [t2v, i2v, t2i](inference_benchmarks/cosmos3-super-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-super-generator.md#additional-audiovisual-generation) | [blur, depth, edge, seg, wsm](inference_benchmarks/cosmos3-super-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-super-generator.md#action-generation) |
+| Cosmos3-Edge | [t2v, i2v, t2i](inference_benchmarks/cosmos3-edge-generator.md#text-to-video-t2v) | [v2v](inference_benchmarks/cosmos3-edge-generator.md#video-to-video-v2v) | Not reported | [Forward and inverse dynamics](inference_benchmarks/cosmos3-edge-generator.md#forward-dynamics--autonomous-vehicle-av) |
+| Cosmos3-Nano | [t2v, i2v, t2i](inference_benchmarks/cosmos3-nano-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-nano-generator.md#additional-audiovisual-generation) | [blur, depth, edge, multi_control, seg, wsm](inference_benchmarks/cosmos3-nano-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-nano-generator.md#action-generation) |
+| Cosmos3-Super | [t2v, i2v, t2i](inference_benchmarks/cosmos3-super-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-super-generator.md#additional-audiovisual-generation) | [blur, depth, edge, multi_control, seg, wsm](inference_benchmarks/cosmos3-super-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-super-generator.md#action-generation) |
+| Cosmos3-Edge-FP8 | [t2v, i2v, t2i](inference_benchmarks/cosmos3-edge-fp8-generator.md#text-to-video-t2v) | Not reported | Not reported | [Base Edge with DROID inputs](inference_benchmarks/cosmos3-edge-fp8-generator.md#policy--base-edge-with-droid-inputs) |
 | Cosmos3-Nano-FP8 | [t2v, i2v, t2i](inference_benchmarks/cosmos3-nano-fp8-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-nano-fp8-generator.md#additional-audiovisual-generation) | [blur, depth, edge, multi_control, seg, wsm](inference_benchmarks/cosmos3-nano-fp8-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-nano-fp8-generator.md#action-generation) |
 | Cosmos3-Super-FP8 | [t2v, i2v, t2i](inference_benchmarks/cosmos3-super-fp8-generator.md#primary-vision-generation) | [v2v, t2av, v2av, i2av](inference_benchmarks/cosmos3-super-fp8-generator.md#additional-audiovisual-generation) | [blur, depth, edge, multi_control, seg, wsm](inference_benchmarks/cosmos3-super-fp8-generator.md#transfer-generation) | [Forward dynamics, inverse dynamics, policy](inference_benchmarks/cosmos3-super-fp8-generator.md#action-generation) |
+
+## FP8 Reasoner benchmarks
+
+- [Cosmos3-Edge-FP8 Reasoner](inference_benchmarks/cosmos3-edge-fp8-reasoner.md): datacenter, enterprise, and embedded vLLM serving, plus embedded NIM.
+- [Cosmos3-Nano-FP8 Reasoner](inference_benchmarks/cosmos3-nano-fp8-reasoner.md): measured datacenter, enterprise, and GB300 vLLM serving, plus datacenter NIM.
+- [Cosmos3-Super-FP8 Reasoner](inference_benchmarks/cosmos3-super-fp8-reasoner.md): validated enterprise vLLM serving and datacenter NIM; other vLLM source tables remain incomplete.
+
+See [measurement settings and reproduction limits](inference_benchmarks/benchmark_methodology.md) and [coverage and validation notes](inference_benchmarks/benchmark_update_notes.md).
 
 ## Reasoner benchmarks
 
@@ -46,7 +55,7 @@ Generator results are organized by model so future checkpoints can be added with
 
 These tables report **Cosmos3-Edge** reasoner serving performance through **vLLM**. Unlike the Generator benchmarks, Reasoner workloads produce autoregressively generated text and measure time to first token (TTFT), end-to-end request latency, request throughput, and output-token throughput. Lower is better for latency metrics; higher is better for throughput.
 
-All vLLM runs use the **`nvidia/Cosmos3-Edge`** checkpoint with one GPU. Metrics were collected at client-side concurrency levels of 1, 64, 128, and 256. Each GPU section contains four workload tables that vary input sequence length, output sequence length, and video frame rate.
+All vLLM runs use the **`nvidia/Cosmos3-Edge`** checkpoint with one GPU. Reported client-side concurrency includes 1, 64, 128, 256, and 512 where measured. Each GPU section contains four workload tables that vary input sequence length, output sequence length, and video frame rate.
 
 ### RTX PRO 4500 Blackwell Server Edition
 
@@ -94,43 +103,43 @@ All vLLM runs use the **`nvidia/Cosmos3-Edge`** checkpoint with one GPU. Metrics
 
 #### Input 50 / Output 1 / Video 1 FPS
 
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) | 141.99 | 3213.91 | 5384.51 | 10792.72 |
-| Request Latency (ms) | 141.99 | 3213.91 | 5384.51 | 10792.72 |
-| Request Count (requests) | 50 | 320 | 254 | 512 |
-| Request Throughput (Req/s) | 6.96 | 18.00 | 17.95 | 17.89 |
-| Output Token Throughput (Tok/s) | 6.96 | 18.00 | 17.95 | 17.89 |
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 141.99 | 3213.91 | 5384.51 | 10792.72 | 21563.00 |
+| Request Latency (ms) | 141.99 | 3213.91 | 5384.51 | 10792.72 | 21563.00 |
+| Request Count (requests) | 50 | 320 | 254 | 512 | 1021 |
+| Request Throughput (Req/s) | 6.96 | 18.00 | 17.95 | 17.89 | 18.00 |
+| Output Token Throughput (Tok/s) | 6.96 | 18.00 | 17.95 | 17.89 | 18.00 |
 
 #### Input 50 / Output 1 / Video 2 FPS
 
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) | 239.86 | 7483.22 | 12552.69 | 25259.11 |
-| Request Latency (ms) | 239.86 | 7483.22 | 12552.69 | 25259.11 |
-| Request Count (requests) | 49 | 303 | 249 | 491 |
-| Request Throughput (Req/s) | 4.06 | 7.28 | 7.49 | 7.34 |
-| Output Token Throughput (Tok/s) | 4.06 | 7.28 | 7.49 | 7.34 |
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 239.86 | 7483.22 | 12552.69 | 25259.11 | 50200.00 |
+| Request Latency (ms) | 239.86 | 7483.22 | 12552.69 | 25259.11 | 50200.00 |
+| Request Count (requests) | 49 | 303 | 249 | 491 | 1001 |
+| Request Throughput (Req/s) | 4.06 | 7.28 | 7.49 | 7.34 | 7.00 |
+| Output Token Throughput (Tok/s) | 4.06 | 7.28 | 7.49 | 7.34 | 7.00 |
 
 #### Input 50 / Output 100 / Video 1 FPS
 
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) | 138.74 | 943.46 | 2680.17 | 11599.63 |
-| Request Latency (ms) | 503.44 | 6188.90 | 13022.07 | 26388.89 |
-| Request Count (requests) | 50 | 320 | 256 | 512 |
-| Request Throughput (Req/s) | 1.98 | 10.27 | 9.57 | 8.95 |
-| Output Token Throughput (Tok/s) | 197.75 | 1026.14 | 956.47 | 893.91 |
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 138.74 | 943.46 | 2680.17 | 11599.63 | 33747.00 |
+| Request Latency (ms) | 503.44 | 6188.90 | 13022.07 | 26388.89 | 49865.00 |
+| Request Count (requests) | 50 | 320 | 256 | 512 | 1024 |
+| Request Throughput (Req/s) | 1.98 | 10.27 | 9.57 | 8.95 | 9.00 |
+| Output Token Throughput (Tok/s) | 197.75 | 1026.14 | 956.47 | 893.91 | 874.00 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) | 239.24 | 1798.96 | 11644.84 | 33293.32 |
-| Request Latency (ms) | 638.71 | 13599.89 | 26299.90 | 49165.91 |
-| Request Count (requests) | 50 | 320 | 256 | 512 |
-| Request Throughput (Req/s) | 1.56 | 4.66 | 4.50 | 4.45 |
-| Output Token Throughput (Tok/s) | 155.93 | 465.28 | 449.57 | 444.17 |
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 239.24 | 1798.96 | 11644.84 | 33293.32 |  |
+| Request Latency (ms) | 638.71 | 13599.89 | 26299.90 | 49165.91 |  |
+| Request Count (requests) | 50 | 320 | 256 | 512 |  |
+| Request Throughput (Req/s) | 1.56 | 4.66 | 4.50 | 4.45 |  |
+| Output Token Throughput (Tok/s) | 155.93 | 465.28 | 449.57 | 444.17 |  |
 
 ### Embedded-Platform Eager Transformers
 
@@ -160,6 +169,165 @@ These preliminary measurements use raw Hugging Face Transformers in eager mode r
 3. **Request Throughput** is completed requests per second. **Output Token Throughput** is generated tokens per second. For Output 1 workloads, the two throughput values match.
 4. Concurrency is the number of simultaneous client requests, not tensor-parallel GPU count.
 5. Embedded-platform measurements use Hugging Face Transformers in eager mode and should not be compared directly with the vLLM serving results.</sub>
+
+### Additional vLLM platforms
+
+All rows below use one GPU or integrated platform. The Thor sweep uses 30-second clips and includes concurrency 512. It is distinct from the eager Transformers measurements above. Some datacenter single-token runs returned empty replies; their metrics cover successful requests only. The request-count row reports that population.
+
+
+#### Jetson AGX Thor T5000
+
+##### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 288.75 | 14195.91 | 23837.41 | 47334.98 | 94526.27 |
+| Request Latency (ms) | 288.75 | 14195.91 | 23837.41 | 47334.98 | 94526.27 |
+| Request Count (requests) | 50 | 318 | 256 | 510 | 1020 |
+| Request Throughput (Req/s) | 3.44 | 4.04 | 4.06 | 4.06 | 4.06 |
+| Output Token Throughput (Tok/s) | 3.44 | 4.04 | 4.06 | 4.06 | 4.06 |
+
+##### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 677.09 | 35687.27 | 59813.27 | 118294.89 | 238880.58 |
+| Request Latency (ms) | 677.09 | 35687.27 | 59813.27 | 118294.89 | 238880.58 |
+| Request Count (requests) | 48 | 307 | 250 | 493 | 999 |
+| Request Throughput (Req/s) | 1.41 | 1.56 | 1.58 | 1.57 | 1.57 |
+| Output Token Throughput (Tok/s) | 1.41 | 1.56 | 1.58 | 1.57 | 1.57 |
+
+##### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 313.81 | 13366.42 | 42898.12 | 103311.97 | 223203.00 |
+| Request Latency (ms) | 2092.70 | 38491.65 | 67472.81 | 129103.94 | 249444.88 |
+| Request Count (requests) | 50 | 320 | 256 | 512 | 1024 |
+| Request Throughput (Req/s) | 0.48 | 1.61 | 1.63 | 1.60 | 1.60 |
+| Output Token Throughput (Tok/s) | 47.66 | 161.29 | 162.59 | 160.27 | 160.06 |
+
+##### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 698.21 | 48414.18 | 101434.45 | 217653.16 | 455876.44 |
+| Request Latency (ms) | 2645.76 | 74381.09 | 127061.99 | 243616.75 | 482342.10 |
+| Request Count (requests) | 50 | 320 | 256 | 512 | 1024 |
+| Request Throughput (Req/s) | 0.38 | 0.81 | 0.82 | 0.82 | 0.81 |
+| Output Token Throughput (Tok/s) | 37.73 | 81.19 | 81.60 | 82.09 | 81.22 |
+
+
+#### DGX Spark
+
+##### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 |
+|---|---:|---:|---:|
+| Time To First Token (ms) | 279.00 | 14820.00 | 24621.00 |
+| Request Latency (ms) | 279.00 | 14820.00 | 24621.00 |
+| Request Count (requests) | 50 | 320 | 256 |
+| Request Throughput (Req/s) | 4.00 | 4.00 | 4.00 |
+| Output Token Throughput (Tok/s) | 4.00 | 4.00 | 4.00 |
+
+##### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 |
+|---|---:|---:|---:|
+| Time To First Token (ms) | 612.00 |  |  |
+| Request Latency (ms) | 612.00 |  |  |
+| Request Count (requests) | 49 |  |  |
+| Request Throughput (Req/s) | 2.00 |  |  |
+| Output Token Throughput (Tok/s) | 2.00 |  |  |
+
+##### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 |
+|---|---:|---:|---:|
+| Time To First Token (ms) | 287.00 | 15857.00 | 50679.00 |
+| Request Latency (ms) | 2431.00 | 45968.00 | 79918.00 |
+| Request Count (requests) | 50 | 320 | 256 |
+| Request Throughput (Req/s) |  | 1.00 | 1.00 |
+| Output Token Throughput (Tok/s) | 41.00 | 135.00 | 137.00 |
+
+
+#### H100 80GB HBM3
+
+##### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 115.00 | 1650.00 | 2748.00 | 5448.00 | 11000.00 |
+| Request Latency (ms) | 115.00 | 1650.00 | 2748.00 | 5448.00 | 11000.00 |
+| Request Count (requests) | 50 | 320 | 256 | 510 | 1023 |
+| Request Throughput (Req/s) | 9.00 | 35.00 | 35.00 | 35.00 | 35.00 |
+
+##### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 180.00 | 3738.00 | 6120.00 | 12411.00 | 24639.00 |
+| Request Latency (ms) | 180.00 | 3738.00 | 6120.00 | 12411.00 | 24639.00 |
+| Request Count (requests) | 47 | 308 | 249 | 494 | 997 |
+| Request Throughput (Req/s) | 5.00 | 15.00 | 15.00 | 15.00 | 15.00 |
+
+##### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 117.00 | 684.00 | 1331.00 | 5797.00 | 14926.00 |
+| Request Latency (ms) | 371.00 | 3141.00 | 5932.00 | 10996.00 | 20346.00 |
+| Request Count (requests) | 50 | 320 | 256 | 512 | 1024 |
+| Request Throughput (Req/s) | 3.00 | 20.00 | 21.00 | 21.00 | 21.00 |
+
+### Embedded NIM serving (BF16)
+
+These measurements use NIM 2.1.0, one integrated platform, 50 input text tokens, a 30-second H.264/mp4 video at the stated FPS, and the requested output length. The H.264 workload uses NVDEC; the separately labelled VP9 workload uses CPU decoding through OpenCV. Only passed runs are included; failed configurations remain blank. The runtime is distinct from the vLLM and eager Transformers tables.
+
+
+**VP9 / CPU decoding**
+
+#### Jetson AGX Orin 64GB
+
+##### Input 50 / Output 1 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) |  | 2352.84 | 4659.36 | 9007.14 |  |
+| Request Latency (ms) |  | 2352.84 | 4659.36 | 9007.14 |  |
+| Request Count (requests) |  | 50 | 80 | 160 |  |
+| Request Throughput (Req/s) |  | 3.28 | 3.24 | 3.31 |  |
+| Output Token Throughput (Tok/s) |  | 3.28 | 3.24 | 3.31 |  |
+
+##### Input 50 / Output 1 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) |  |  | 9612.18 | 19010.66 |  |
+| Request Latency (ms) |  |  | 9612.18 | 19010.66 |  |
+| Request Count (requests) |  |  | 80 | 160 |  |
+| Request Throughput (Req/s) |  |  | 1.55 | 1.55 |  |
+| Output Token Throughput (Tok/s) |  |  | 1.55 | 1.55 |  |
+
+##### Input 50 / Output 100 / Video 1 FPS
+
+| Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 338.40 | 2124.69 | 3914.35 | 5872.41 | 9683.59 |
+| Request Latency (ms) | 2629.93 | 5601.70 | 9421.50 | 16638.29 | 31147.10 |
+| Request Count (requests) | 50 | 50 | 80 | 160 | 320 |
+| Request Throughput (Req/s) | 0.38 | 1.34 | 1.69 | 1.92 | 2.05 |
+| Output Token Throughput (Tok/s) | 37.94 | 133.85 | 168.52 | 191.99 | 205.00 |
+
+##### Input 50 / Output 100 / Video 2 FPS
+
+| Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
+|---|---:|---:|---:|---:|---:|
+| Time To First Token (ms) | 682.71 | 3975.87 | 6704.01 | 10241.72 | 14299.57 |
+| Request Latency (ms) | 3101.96 | 9264.64 | 16849.51 | 32159.30 | 63084.09 |
+| Request Count (requests) | 50 | 50 | 80 | 160 | 320 |
+| Request Throughput (Req/s) | 0.32 | 0.82 | 0.95 | 0.99 | 1.00 |
+| Output Token Throughput (Tok/s) | 32.16 | 82.00 | 94.42 | 99.39 | 99.62 |
 
 ## Cosmos3-Nano Reasoner
 
@@ -815,3 +983,5 @@ All runs use the **`nvidia/Cosmos3-Super`** checkpoint. Metrics are collected wi
 3. **Time To First Token (TTFT)** measures latency until the first output token is emitted. **Request Latency** is end-to-end time per request. For single-token outputs (Output 1), TTFT and request latency are identical.
 4. **Request Throughput** is completed requests per second. **Output Token Throughput** is generated tokens per second (for Output 1 workloads, the two throughputs match).
 5. Concurrency is the number of simultaneous client requests issued by AIPerf, not tensor-parallel GPU count.</sub>
+
+The Nano/B300 Input 50 / Output 1 / Video 1 FPS / Concurrency 256 values remain as previously published. A source-table discrepancy in request accounting remains under review; see [coverage and validation notes](inference_benchmarks/benchmark_update_notes.md).
