@@ -979,5 +979,3 @@ All runs use the **`nvidia/Cosmos3-Super`** checkpoint. Metrics are collected wi
 3. **Time To First Token (TTFT)** measures latency until the first output token is emitted. **Request Latency** is end-to-end time per request. For single-token outputs (Output 1), TTFT and request latency are identical.
 4. **Request Throughput** is completed requests per second. **Output Token Throughput** is generated tokens per second (for Output 1 workloads, the two throughputs match).
 5. Concurrency is the number of simultaneous client requests issued by AIPerf, not tensor-parallel GPU count.</sub>
-
-The Nano/B300 Input 50 / Output 1 / Video 1 FPS / Concurrency 256 values remain as previously published. A source-table discrepancy in request accounting remains under review; see [coverage and validation notes](inference_benchmarks/benchmark_update_notes.md).
