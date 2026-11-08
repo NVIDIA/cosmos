@@ -10,6 +10,17 @@ Every row reports one GPU configuration, named in the **GPUs** column, and all t
 
 Empty cells have no publishable measurement at the stated configuration. They can reflect an unmeasured workload, an unsuccessful run, or a measurement awaiting validation; they do not establish lack of support.
 
+## Known anomalies and measurement gaps
+
+- Super B300 video-to-video at 720p takes 384.10 s in Diffusers versus 55.19 s in vLLM-Omni (6.96×). Confirm frame/step budgets, attention paths, and timing boundaries before treating this as an engine speedup.
+
+- GB300 vLLM-Omni t2i takes 20.95 s at 480p and 12.36 s at 720p, a resolution reversal that needs a matched warmup/step/kernel rerun. Source agreement alone does not resolve the performance anomaly.
+- PyTorch FP8 uses a different quantization recipe, and NIM/vLLM-Omni image profiles use different denoising-step budgets. Do not treat the resulting latency ratios as controlled runtime speedups.
+- Some H100/H20 single-GPU FP8 workloads ran out of memory, and some H20 SGLang runs timed out. Two-GPU alternatives remain excluded under the selected publication policy; missing cells are not unsupported combinations.
+- PyTorch multi-control compilation failed on datacenter Blackwell GPUs. FP8 Policy-DROID was not measured in these sweeps. SGLang's inverse-camera labels need embodiment confirmation before comparison with inverse-robot rows.
+
+See the [anomaly review](benchmark_anomaly_review.md) for the complete comparison rules and coverage status.
+
 ## Table of Contents
 
 - [Benchmark methodology](#benchmark-methodology)
@@ -36,7 +47,7 @@ Empty cells have no publishable measurement at the stated configuration. They ca
 
 ## Benchmark methodology
 
-PyTorch values report average generation latency. The PyTorch FP8 recipe differs from the mixed-step recipe used by other engines, so those values are not directly comparable; primary rows retain the **PyTorch\*** marker. Diffusers, vLLM-Omni, and SGLang include measured 480p and 720p vision, audiovisual, and transfer workloads, including multi-GPU configurations where available. Action values are included only when the embodiment is identified. NIM rows use FP8 latency profiles and are duplicated on the corresponding base-model page. GB300 and enterprise platforms appear where measured. No TensorRT-LLM FP8 measurements are included. Values are rounded to two decimal places. See the linked measurement settings for attention backends, parallel splits, and reproduction limits.
+PyTorch values report average generation latency. The PyTorch FP8 recipe differs from the mixed-step recipe used by other engines, so those values are not directly comparable; primary rows retain the **PyTorch\*** marker. Diffusers, vLLM-Omni, and SGLang include measured 480p and 720p vision, audiovisual, and transfer workloads, including multi-GPU configurations where available. Action values are included only when the embodiment is identified. NIM rows use FP8 latency profiles. The base-model page may select a different GPU count; compare only matching configurations. GB300 and enterprise platforms appear where measured. No TensorRT-LLM FP8 measurements are included. Values are rounded to two decimal places. See the linked measurement settings for attention backends, parallel splits, and reproduction limits.
 
 These measurements establish the reported timing matrix but do not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
 
@@ -175,14 +186,14 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | SGLang | 1 |  | 2.91 | 3.05 |
 
 <sub>Notes:
-1. All times measured on identical workloads (same seed, sampler settings, prompt).
-2. Multi-GPU configurations use tensor parallelism.
+1. Measurements come from separate campaigns; identical prompt, seed, step budget, and timing boundaries are not established across engines. See the measurement settings before comparing rows.
+2. Multi-GPU layouts use the recorded tensor, CFG, context, Ring, or Ulysses splits; GPU count alone does not specify the layout.
 3. Values are average generation latency in seconds; lower is better.
 4. The **GPUs** column gives the number of GPUs behind every value in that row; check it before comparing engines.
 5. Diffusers FP8 was measured at 480p and 720p; the GPUs column distinguishes single- and multi-GPU results.
 6. FP8 is faster than BF16 for the PyTorch path throughout. For the Diffusers path it only pays off on long video workloads: short ones are slower in FP8, `t2i` consistently so by roughly a factor of two, which suggests a fixed quantization overhead that the short runs cannot amortize. Compare against the BF16 page before choosing a precision for a short workload.
 7. \* PyTorch values were measured with a different FP8 recipe than the other engines on this page, which run the first and last three denoising steps in W8A16 and the middle steps in W8A8. PyTorch results are therefore optimistic and cannot be compared directly with the other values.
-8. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.</sub>
+8. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) and report average generation time, excluding request processing and output encoding; step budgets and other workload differences still limit comparisons with other backends.</sub>
 
 ## Additional audiovisual generation
 
@@ -216,6 +227,8 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | Diffusers | 1 |  | 109.88 | 325.10 |
 |  | vLLM-Omni | 1 |  | 17.62 | 47.55 |
 |  | SGLang | 1 |  | 89.32 | 287.23 |
+| **DGX Spark** | PyTorch | 1 | 127.70 | 1291.00 | 4886.80 |
+| **DGX Station** | PyTorch | 1 | 7.30 | 66.40 | 242.80 |
 
 ### Text-to-Audio-and-Video (t2av)
 
@@ -461,8 +474,8 @@ the hint changes how much of the frame the model must synthesise.
 |  |  | Diffusers | 1 |  | 134.03 | 365.92 |
 |  |  | vLLM-Omni | 1 |  | 77.12 | 268.45 |
 |  |  | SGLang | 1 |  | 94.33 | 310.54 |
-| **DGX Spark** | edge | PyTorch | 1 | 129.30 | 128.70 | 128.50 |
-| **DGX Station** | edge | PyTorch | 1 | 7.10 | 7.10 | 7.10 |
+| **DGX Spark** | edge | PyTorch | 1 | 445.80 | 3247.40 | 12642.00 |
+| **DGX Station** | edge | PyTorch | 1 | 26.00 | 169.60 | 625.50 |
 
 <sub>Transfer notes:
 1. Control hints follow the `extra_params` names: `blur`, `depth`, `edge`, `multi_control`, `seg`, and `wsm`. `multi_control` combines several hints in one request.

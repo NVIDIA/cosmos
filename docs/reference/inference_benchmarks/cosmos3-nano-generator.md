@@ -10,6 +10,15 @@ Every row reports one GPU configuration, named in the **GPUs** column, and all t
 
 Empty cells have no publishable measurement at the stated configuration. They can reflect an unmeasured workload, an unsuccessful run, or a measurement awaiting validation; they do not establish lack of support.
 
+## Known anomalies and measurement gaps
+
+- **B300 Diffusers action results need review.** At 256p, robot forward dynamics takes 22.65 s on B300 versus 2.00 s on B200 (11.33×). B300 was rerun with PyTorch 2.12.0/CUDA 13 while the other GPU results come from the earlier environment. These measurements do not establish a controlled GPU ranking.
+- The native PyTorch campaign failed to initialize its CUTLASS kernel on B300. Its blank B300 cells reflect that measured software failure, rather than a claim that the GPU is unsupported.
+- The vLLM-Omni transfer sweep used different source assets for some blur retries (4:3 versus 16:9). Payloads are not fully matched across every transfer row.
+- NIM on DGX Spark and RTX PRO 5000 uses **NIM 2.0.0 / FP8**. Video uses 189 frames at 24 FPS, 35 steps, guidance 6; AV actions use 61 frames at 10 FPS, 30 steps, guidance 1. Transfer uses 25 frames, 50 steps, and hint-specific guidance. Its 736×544 blur result is excluded from the fixed resolution columns.
+
+See the [anomaly review](benchmark_anomaly_review.md) for the full comparison rules and unresolved cases.
+
 ## Table of Contents
 
 - [Benchmark methodology](#benchmark-methodology)
@@ -36,7 +45,7 @@ Empty cells have no publishable measurement at the stated configuration. They ca
 
 ## Benchmark methodology
 
-The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, SGLang, TensorRT-LLM, and NIM where measurements are available. Their vLLM-Omni values come from a dedicated vLLM-Omni campaign; NIM values come from a NIM 2.1.0 campaign; the PyTorch values preserve the previously published campaign. Those tables use BF16 precision (NIM uses its default precision, FP8), batch size 1, with prompt, seed, and sampler details retained only where documented. Recorded primary video workloads use 189 frames at 24 FPS. The separate SGLang tables do not retain a complete frame/step budget and software build alongside the measured values; see the reproduction limits before comparing them.
+The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, SGLang, TensorRT-LLM, and NIM where measurements are available. Their vLLM-Omni values come from a dedicated vLLM-Omni campaign; NIM values use the measured 2.1.0 latency profiles, with separately identified 2.0.0 enterprise measurements; the PyTorch values preserve the previously published campaign. Those tables use BF16 precision (NIM uses its default precision, FP8), batch size 1, with prompt, seed, and sampler details retained only where documented. Recorded primary video workloads use 189 frames at 24 FPS. The separate SGLang tables do not retain a complete frame/step budget and software build alongside the measured values; see the reproduction limits before comparing them.
 
 The additional audiovisual and action tables come from NVIDIA internal measurements. PyTorch values are average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) come from a separate vLLM-Omni audiovisual campaign. vLLM-Omni action values were measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. That action sweep did not cover Super on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from separate campaigns: single-GPU runs (all modalities, and video-to-video), 4- and 8-GPU runs, and transfer. vLLM-Omni transfer values come from their own campaign. Where the multi-GPU Diffusers campaign offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. TensorRT-LLM values come from a TensorRT-LLM campaign that sweeps tensor-parallel, CFG-parallel, and Ulysses-parallel splits at each GPU count; the fastest split at the count a row reports is the one published. That campaign covers six GPUs, so the TensorRT-LLM rows for H100 NVL and H200 NVL are empty, and it includes no action workloads. Values are rounded to two decimal places.
 
@@ -110,6 +119,8 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | TensorRT-LLM | 1 | 3.31 | 26.52 | 91.15 |
 |  | NIM | 1 | 1.98 | 13.10 | 45.76 |
 |  | SGLang | 1 | 3.33 | 27.13 | 93.10 |
+| **DGX Spark** | NIM | 1 | 36.78 | 358.61 | 1360.13 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 13.15 | 143.06 | 557.53 |
 
 ### Image-to-Video (i2v)
 
@@ -161,6 +172,8 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | TensorRT-LLM | 1 | 3.70 | 27.73 | 93.88 |
 |  | NIM | 1 | 2.07 | 13.63 | 46.81 |
 |  | SGLang | 1 | 3.43 | 27.30 | 93.22 |
+| **DGX Spark** | NIM | 1 | 36.57 | 354.86 | 1350.29 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 13.24 | 143.25 | 557.87 |
 
 ### Text-to-Image (t2i)
 
@@ -212,15 +225,17 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | TensorRT-LLM | 1 | 1.36 | 1.30 | 1.40 |
 |  | NIM | 1 | 0.72 | 0.84 | 0.87 |
 |  | SGLang | 1 | 3.04 | 3.12 | 1.80 |
+| **DGX Spark** | NIM | 1 | 2.34 | 3.87 | 7.47 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 1.63 | 2.08 | 3.45 |
 
 <sub>Notes:
-1. All times measured on identical workloads (same seed, sampler settings, prompt).
-2. Multi-GPU configurations use tensor parallelism, except TensorRT-LLM, which may also split across CFG and Ulysses dimensions.
+1. Measurements come from separate campaigns; identical prompt, seed, step budget, and timing boundaries are not established across engines. See the measurement settings before comparing rows.
+2. Multi-GPU parallelism is runtime-specific and can split across tensor, CFG, context, Ring, or Ulysses dimensions; see the recorded settings.
 3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo and are subject to change; the H100 NVL values in particular are preliminary.
 4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs. Single-GPU and multi-GPU values come from separate campaigns.
 5. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
 6. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
-7. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.</sub>
+7. NIM numbers use NIM 2.0.0 on DGX Spark and RTX PRO 5000, and NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) on the other displayed platforms using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding; step budgets and other workload differences still limit comparisons with other backends.</sub>
 
 ## Additional audiovisual generation
 
@@ -268,6 +283,8 @@ A text prompt and source video condition a generated continuation or transformat
 |  | Diffusers | 1 | 16.14 | 50.74 | 131.11 |
 |  | TensorRT-LLM | 1 | 3.44 | 26.63 | 91.40 |
 |  | SGLang | 1 | 7.47 | 32.48 | 97.20 |
+| **DGX Spark** | NIM | 1 | 37.20 | 360.62 | 1371.19 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 13.58 | 143.11 | 557.23 |
 
 ### Text-to-Audio-and-Video (t2av)
 
@@ -682,9 +699,17 @@ the hint changes how much of the frame the model must synthesise.
 |  |  | TensorRT-LLM | 1 | 4.23 | 30.44 | 101.17 |
 |  |  | NIM | 1 |  |  |  |
 |  |  | SGLang | 1 |  | 31.42 | 101.11 |
+| **DGX Spark** | depth | NIM | 1 |  | 118.52 |  |
+| **DGX Spark** | edge | NIM | 1 |  | 114.30 |  |
+| **DGX Spark** | seg | NIM | 1 |  | 116.26 |  |
+| **DGX Spark** | wsm | NIM | 1 |  | 71.25 |  |
+| **RTX PRO 5000 Blackwell 72GB** | depth | NIM | 1 |  | 46.93 |  |
+| **RTX PRO 5000 Blackwell 72GB** | edge | NIM | 1 |  | 45.56 |  |
+| **RTX PRO 5000 Blackwell 72GB** | seg | NIM | 1 |  | 46.29 |  |
+| **RTX PRO 5000 Blackwell 72GB** | wsm | NIM | 1 |  | 28.19 |  |
 
 <sub>Transfer notes:
-1. Values are average generation latency in seconds; lower is better. Diffusers, vLLM-Omni, and TensorRT-LLM numbers come from separate per-backend campaigns.
+1. Values are generation latency in seconds; lower is better. Diffusers, vLLM-Omni, and TensorRT-LLM numbers come from separate campaigns; some Diffusers single-GPU modality values report the best run.
 2. The **GPUs** column gives the number of GPUs behind every value in that row; check it before comparing engines.
 3. PyTorch and NIM have no transfer coverage yet; those rows are unmeasured, not unsupported.
 4. Control hints follow the vLLM-Omni `extra_params` names: `blur`, `depth`, `edge`, `multi_control`, `seg`, and `wsm`. `multi_control` combines several hints in one request.</sub>
@@ -735,6 +760,8 @@ Forward dynamics is reported separately for AV, camera, and robot inputs. Invers
 |  | Diffusers | 1 | 20.87 | 24.49 | 26.44 |
 |  | TensorRT-LLM | — |  |  |  |
 |  | SGLang | 1 | 0.72 | 3.34 | 8.98 |
+| **DGX Spark** | NIM | 1 | 5.98 | 41.33 | 119.42 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 2.24 | 15.28 | 46.28 |
 
 ### Forward Dynamics — Camera
 
@@ -864,6 +891,8 @@ Forward dynamics is reported separately for AV, camera, and robot inputs. Invers
 |  | Diffusers | 1 | 8.76 | 17.79 | 17.99 |
 |  | TensorRT-LLM | — |  |  |  |
 |  | SGLang | 1 | 3.38 | 3.50 | 3.50 |
+| **DGX Spark** | NIM | 1 | 6.94 | 45.62 | 128.84 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 3.11 | 17.24 | 49.90 |
 
 ### Inverse Dynamics — Robot
 
@@ -944,6 +973,8 @@ Forward dynamics is reported separately for AV, camera, and robot inputs. Invers
 |  | vLLM-Omni | — |  |  |  |
 |  | Diffusers | 1 | 13.11 | 18.21 | 16.49 |
 |  | TensorRT-LLM | — |  |  |  |
+| **DGX Spark** | NIM | 1 | 6.06 | 41.52 | 119.82 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 2.28 | 15.34 | 46.40 |
 
 ### Policy — Robot
 

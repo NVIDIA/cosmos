@@ -8,7 +8,7 @@ Results are published incrementally from NVIDIA internal measurements. **Empty c
 
 ## Generator benchmarks
 
-Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover Edge, Nano, and Super; every other Generator page reports BF16, except NIM rows, which are FP8; NIM rows also appear on the FP8 pages.
+Generator results are organized by model so future checkpoints can be added without expanding this page into another wall of tables. Use the section links for modality-oriented navigation. The FP8 pages cover Edge, Nano, and Super; every other Generator page reports BF16, except NIM rows, which are FP8. The FP8 pages can select different GPU counts, so compare only matching configurations.
 
 | Model | Primary vision generation | Additional audiovisual generation | Transfer generation | Action generation |
 |---|---|---|---|---|
@@ -23,9 +23,9 @@ Generator results are organized by model so future checkpoints can be added with
 
 - [Cosmos3-Edge-FP8 Reasoner](inference_benchmarks/cosmos3-edge-fp8-reasoner.md): datacenter, enterprise, and embedded vLLM serving, plus embedded NIM.
 - [Cosmos3-Nano-FP8 Reasoner](inference_benchmarks/cosmos3-nano-fp8-reasoner.md): measured datacenter, enterprise, and GB300 vLLM serving, plus datacenter NIM.
-- [Cosmos3-Super-FP8 Reasoner](inference_benchmarks/cosmos3-super-fp8-reasoner.md): validated enterprise vLLM serving and datacenter NIM; other vLLM source tables remain incomplete.
+- [Cosmos3-Super-FP8 Reasoner](inference_benchmarks/cosmos3-super-fp8-reasoner.md): datacenter NIM; vLLM measurements remain withheld pending source-label validation and complete tables.
 
-See [measurement settings and reproduction limits](inference_benchmarks/benchmark_methodology.md) and [coverage and validation notes](inference_benchmarks/benchmark_update_notes.md).
+See [measurement settings and reproduction limits](inference_benchmarks/benchmark_methodology.md), [coverage and validation notes](inference_benchmarks/benchmark_update_notes.md), and the [anomaly review](inference_benchmarks/benchmark_anomaly_review.md).
 
 ## Reasoner benchmarks
 
@@ -282,7 +282,7 @@ All rows below use one GPU or integrated platform. The Thor sweep uses 30-second
 
 ### Embedded NIM serving (BF16)
 
-These measurements use NIM 2.1.0, one integrated platform, 50 input text tokens, a 30-second H.264/mp4 video at the stated FPS, and the requested output length. The H.264 workload uses NVDEC; the separately labelled VP9 workload uses CPU decoding through OpenCV. Only passed runs are included; failed configurations remain blank. The runtime is distinct from the vLLM and eager Transformers tables.
+These measurements use NIM 2.1.0, video-token pruning rate 0.6 (`vidcom2`), memory utilization 0.7, maximum batched tokens 24,300, one integrated platform, 50 input text tokens, a 30-second H.264/mp4 video at the stated FPS, and the requested output length. The H.264 workload uses NVDEC; the separately labelled VP9 workload uses CPU decoding through OpenCV. Only passed runs are included; failed configurations remain blank. The runtime is distinct from the vLLM and eager Transformers tables.
 
 
 **VP9 / CPU decoding**

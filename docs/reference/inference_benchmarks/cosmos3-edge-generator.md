@@ -10,6 +10,14 @@ Cosmos3-Edge supports **256p and 480p**, so 480p is its highest resolution. Ever
 
 The historical PyTorch and vLLM-Omni video benchmarks generate **121 frames**. The SGLang sweep does not retain its full frame/step budget alongside the scalar timings. The datacenter vLLM-Omni, PyTorch, Diffusers, SGLang, and TensorRT-LLM values report generation latency. Historical embedded vLLM-Omni rows use end-to-end latency and are not directly comparable to generation-only timings.
 
+## Known anomalies and measurement gaps
+
+- PyTorch B300 t2i is 3.14 s at 256p and 1.93 s at 480p. This small-workload resolution reversal is source-matching but unexplained; repeat measurements are needed before treating it as expected scaling.
+- Diffusers enterprise timings remain withheld where generation/diffusion labels conflict. The datacenter Diffusers measurements and the SGLang sweep do not share a fully pinned workload/build record with every other engine.
+- Runtime ratios are not controlled comparisons when one row reports historical end-to-end timing and another reports generation-only time.
+
+See the [anomaly review](benchmark_anomaly_review.md) for additional cross-runtime and coverage findings.
+
 ## Table of Contents
 
 - [Text-to-Image (t2i)](#text-to-image-t2i)

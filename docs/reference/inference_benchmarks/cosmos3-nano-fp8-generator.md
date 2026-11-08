@@ -10,6 +10,18 @@ Every row reports one GPU configuration, named in the **GPUs** column, and all t
 
 Empty cells have no publishable measurement at the stated configuration. They can reflect an unmeasured workload, an unsuccessful run, or a measurement awaiting validation; they do not establish lack of support.
 
+## Known anomalies and measurement gaps
+
+- Nano B300 video-to-video at 720p takes 118.73 s in Diffusers versus 15.44 s in vLLM-Omni (7.69×). Confirm frame/step budgets, attention paths, and timing boundaries before treating this as an engine speedup.
+
+- **Resolution reversal:** GB300 vLLM-Omni t2i takes 12.27 s at 480p and 6.89 s at 720p. At 480p, B300 takes 5.11 s, making GB300 2.40× slower in this measurement. These source-matching values require warmup, step-budget, kernel, and host profiling; a larger platform does not guarantee lower latency for this small workload.
+- PyTorch FP8 uses a different precision recipe from the other engines. NIM image measurements use 35 denoising steps, while the recorded vLLM-Omni image profile uses 50. These rows are not controlled precision/runtime comparisons.
+- PyTorch multi-control runs on datacenter Blackwell GPUs failed in TorchInductor dynamic-shape attention compilation. Blank cells are not zero-time results.
+- NIM on DGX Spark and RTX PRO 5000 uses **NIM 2.0.0**: 189-frame/24-FPS video with 35 steps and guidance 6; 61-frame/10-FPS AV actions with 30 steps and guidance 1; 25-frame transfer workloads with 50 steps. Transfer blur uses 736×544 and remains excluded from the fixed resolution columns. Other displayed NIM primary results use the separately measured latency profiles.
+- SGLang's inverse-camera label is retained as recorded and must not be merged with inverse-robot measurements without embodiment confirmation. The enterprise Nano FP8 campaign with inconsistent runtime identification also reported thermal throttling and DGX Station regressions; those timings remain withheld.
+
+See the [anomaly review](benchmark_anomaly_review.md) for remaining source and coverage gaps.
+
 ## Table of Contents
 
 - [Benchmark methodology](#benchmark-methodology)
@@ -36,7 +48,7 @@ Empty cells have no publishable measurement at the stated configuration. They ca
 
 ## Benchmark methodology
 
-PyTorch values report average generation latency. The PyTorch FP8 recipe differs from the mixed-step recipe used by other engines, so those values are not directly comparable; primary rows retain the **PyTorch\*** marker. Diffusers, vLLM-Omni, and SGLang include measured 480p and 720p vision, audiovisual, and transfer workloads, including multi-GPU configurations where available. Action values are included only when the embodiment is identified. NIM rows use FP8 latency profiles and are duplicated on the corresponding base-model page. GB300 and enterprise platforms appear where measured. No TensorRT-LLM FP8 measurements are included. Values are rounded to two decimal places. See the linked measurement settings for attention backends, parallel splits, and reproduction limits.
+PyTorch values report average generation latency. The PyTorch FP8 recipe differs from the mixed-step recipe used by other engines, so those values are not directly comparable; primary rows retain the **PyTorch\*** marker. Diffusers, vLLM-Omni, and SGLang include measured 480p and 720p vision, audiovisual, and transfer workloads, including multi-GPU configurations where available. Action values are included only when the embodiment is identified. NIM rows use FP8 latency profiles. The base-model page may select a different GPU count; compare only matching configurations. GB300 and enterprise platforms appear where measured. No TensorRT-LLM FP8 measurements are included. Values are rounded to two decimal places. See the linked measurement settings for attention backends, parallel splits, and reproduction limits.
 
 These measurements establish the reported timing matrix but do not expose every prompt and action payload in this repository. The linked public recipes explain modality behavior and provide representative payloads; their example-specific frame counts and action chunk sizes should not be treated as the exact internal benchmark inputs.
 
@@ -99,6 +111,11 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | NIM | 1 | 2.52 | 11.09 | 39.07 |
 |  | vLLM-Omni | 1 |  | 18.93 | 67.68 |
 |  | SGLang | 1 |  | 22.78 | 77.94 |
+| **DGX Spark** | NIM | 1 | 36.78 | 358.61 | 1360.13 |
+|  | Diffusers | 1 |  | 522.73 | 1730.23 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 13.15 | 143.06 | 557.53 |
+|  | Diffusers | 1 |  | 198.30 | 692.91 |
+| **DGX Station** | Diffusers | 1 |  | 33.86 | 102.37 |
 
 ### Image-to-Video (i2v)
 
@@ -139,6 +156,11 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | NIM | 1 | 1.96 | 11.25 | 39.32 |
 |  | vLLM-Omni | 1 |  | 18.80 | 67.61 |
 |  | SGLang | 1 |  | 22.92 | 77.57 |
+| **DGX Spark** | NIM | 1 | 36.57 | 354.86 | 1350.29 |
+|  | Diffusers | 1 |  | 533.41 | 1739.15 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 13.24 | 143.25 | 557.87 |
+|  | Diffusers | 1 |  | 201.55 | 700.33 |
+| **DGX Station** | Diffusers | 1 |  | 34.50 | 104.17 |
 
 ### Text-to-Image (t2i)
 
@@ -179,16 +201,21 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | NIM | 1 | 1.70 | 1.69 | 1.71 |
 |  | vLLM-Omni | 1 |  | 12.27 | 6.89 |
 |  | SGLang | 1 |  | 1.67 | 1.74 |
+| **DGX Spark** | NIM | 1 | 2.34 | 3.87 | 7.47 |
+|  | Diffusers | 1 |  | 32.73 | 40.74 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 1.63 | 2.08 | 3.45 |
+|  | Diffusers | 1 |  | 9.79 | 11.46 |
+| **DGX Station** | Diffusers | 1 |  | 9.68 | 9.66 |
 
 <sub>Notes:
-1. All times measured on identical workloads (same seed, sampler settings, prompt).
-2. Multi-GPU configurations use tensor parallelism.
+1. Measurements come from separate campaigns; identical prompt, seed, step budget, and timing boundaries are not established across engines. See the measurement settings before comparing rows.
+2. Multi-GPU layouts use the recorded tensor, CFG, context, Ring, or Ulysses splits; GPU count alone does not specify the layout.
 3. Values are average generation latency in seconds; lower is better.
 4. The **GPUs** column gives the number of GPUs behind every value in that row; check it before comparing engines.
 5. Diffusers FP8 was measured at 480p and 720p; the GPUs column distinguishes single- and multi-GPU results.
 6. FP8 is faster than BF16 for the PyTorch path throughout. For the Diffusers path it only pays off on long video workloads: short ones are slower in FP8, `t2i` consistently so by roughly a factor of two, which suggests a fixed quantization overhead that the short runs cannot amortize. Compare against the BF16 page before choosing a precision for a short workload.
 7. \* PyTorch values were measured with a different FP8 recipe than the other engines on this page, which run the first and last three denoising steps in W8A16 and the middle steps in W8A8. PyTorch results are therefore optimistic and cannot be compared directly with the other values.
-8. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.</sub>
+8. NIM numbers use NIM 2.0.0 on DGX Spark and RTX PRO 5000, and NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) on the other displayed platforms and report average generation time, excluding request processing and output encoding; step budgets and other workload differences still limit comparisons with other backends.</sub>
 
 ## Additional audiovisual generation
 
@@ -224,6 +251,13 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | Diffusers | 1 |  | 35.97 | 100.27 |
 |  | vLLM-Omni | 1 |  | 6.83 | 13.60 |
 |  | SGLang | 1 |  | 26.44 | 81.94 |
+| **DGX Spark** | NIM | 1 | 37.20 | 360.62 | 1371.19 |
+|  | Diffusers | 1 |  | 530.90 | 1751.65 |
+|  | PyTorch | 1 | 38.40 | 375.00 | 1393.20 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 13.58 | 143.11 | 557.23 |
+|  | Diffusers | 1 |  | 202.54 | 700.88 |
+| **DGX Station** | Diffusers | 1 |  | 35.20 | 104.94 |
+|  | PyTorch | 1 | 2.50 | 19.50 | 70.30 |
 
 ### Text-to-Audio-and-Video (t2av)
 
@@ -257,6 +291,9 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | Diffusers | 1 |  | 34.89 | 100.22 |
 |  | vLLM-Omni | 1 |  | 19.00 | 70.86 |
 |  | SGLang | 1 |  | 23.44 | 78.95 |
+| **DGX Spark** | Diffusers | 1 |  | 531.97 | 1742.20 |
+| **DGX Station** | Diffusers | 1 |  | 34.70 | 103.12 |
+| **RTX PRO 5000 Blackwell 72GB** | Diffusers | 1 |  | 205.63 | 697.97 |
 
 ### Video-to-Audio-and-Video (v2av)
 
@@ -276,6 +313,9 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | Diffusers | 1 |  | 39.94 | 120.27 |
 | **GB300** | PyTorch | 1 |  |  |  |
 |  | Diffusers | 1 |  | 36.41 | 101.35 |
+| **DGX Spark** | Diffusers | 1 |  | 538.48 | 1750.77 |
+| **DGX Station** | Diffusers | 1 |  | 35.95 | 105.87 |
+| **RTX PRO 5000 Blackwell 72GB** | Diffusers | 1 |  | 209.92 | 706.11 |
 
 ### Image-to-Audio-and-Video (i2av)
 
@@ -309,6 +349,9 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | Diffusers | 1 |  | 36.51 | 101.85 |
 |  | vLLM-Omni | 1 |  | 18.93 | 68.67 |
 |  | SGLang | 1 |  | 23.21 | 79.21 |
+| **DGX Spark** | Diffusers | 1 |  | 546.37 | 1769.13 |
+| **DGX Station** | Diffusers | 1 |  | 36.14 | 105.17 |
+| **RTX PRO 5000 Blackwell 72GB** | Diffusers | 1 |  | 208.98 | 705.77 |
 
 ## Transfer generation
 
@@ -486,23 +529,31 @@ the hint changes how much of the frame the model must synthesise.
 |  |  | Diffusers | 1 |  | 42.26 | 110.70 |
 |  |  | vLLM-Omni | 1 |  | 23.99 | 77.77 |
 |  |  | SGLang | 1 |  | 25.07 | 84.15 |
-| **DGX Spark** | blur | Diffusers | 1 |  | 1284.48 |  |
-| **DGX Spark** | depth | Diffusers | 1 |  | 1340.97 |  |
+| **DGX Spark** | blur | Diffusers | 1 |  | 1284.48 | 4269.37 |
+| **DGX Spark** | depth | Diffusers | 1 |  | 1340.97 | 4346.09 |
+|  | depth | NIM | 1 |  | 118.52 |  |
 | **DGX Spark** | edge | PyTorch | 1 | 118.90 | 903.10 | 3632.50 |
-|  | edge | Diffusers | 1 |  | 1286.19 |  |
-| **DGX Spark** | seg | Diffusers | 1 |  | 1296.84 |  |
-| **DGX Spark** | wsm | Diffusers | 1 |  | 632.78 |  |
-| **DGX Station** | blur | Diffusers | 1 |  | 81.03 |  |
-| **DGX Station** | depth | Diffusers | 1 |  | 84.35 |  |
+|  | edge | Diffusers | 1 |  | 1286.19 | 4263.48 |
+|  | edge | NIM | 1 |  | 114.30 |  |
+| **DGX Spark** | seg | Diffusers | 1 |  | 1296.84 | 4285.75 |
+|  | seg | NIM | 1 |  | 116.26 |  |
+| **DGX Spark** | wsm | Diffusers | 1 |  | 632.78 | 1933.05 |
+|  | wsm | NIM | 1 |  | 71.25 |  |
+| **DGX Station** | blur | Diffusers | 1 |  | 81.03 | 246.79 |
+| **DGX Station** | depth | Diffusers | 1 |  | 84.35 | 250.34 |
 | **DGX Station** | edge | PyTorch | 1 | 12.30 | 48.90 | 178.40 |
-|  | edge | Diffusers | 1 |  | 81.33 |  |
-| **DGX Station** | seg | Diffusers | 1 |  | 82.17 |  |
-| **DGX Station** | wsm | Diffusers | 1 |  | 41.86 |  |
-| **RTX PRO 5000 Blackwell 72GB** | blur | Diffusers | 1 |  | 496.50 |  |
-| **RTX PRO 5000 Blackwell 72GB** | depth | Diffusers | 1 |  | 516.83 |  |
-| **RTX PRO 5000 Blackwell 72GB** | edge | Diffusers | 1 |  | 498.43 |  |
-| **RTX PRO 5000 Blackwell 72GB** | seg | Diffusers | 1 |  | 502.19 |  |
-| **RTX PRO 5000 Blackwell 72GB** | wsm | Diffusers | 1 |  | 239.88 |  |
+|  | edge | Diffusers | 1 |  | 81.33 | 246.52 |
+| **DGX Station** | seg | Diffusers | 1 |  | 82.17 | 247.90 |
+| **DGX Station** | wsm | Diffusers | 1 |  | 41.86 | 114.47 |
+| **RTX PRO 5000 Blackwell 72GB** | blur | Diffusers | 1 |  | 496.50 | 1751.76 |
+| **RTX PRO 5000 Blackwell 72GB** | depth | Diffusers | 1 |  | 516.83 | 1780.13 |
+|  | depth | NIM | 1 |  | 46.93 |  |
+| **RTX PRO 5000 Blackwell 72GB** | edge | Diffusers | 1 |  | 498.43 | 1754.28 |
+|  | edge | NIM | 1 |  | 45.56 |  |
+| **RTX PRO 5000 Blackwell 72GB** | seg | Diffusers | 1 |  | 502.19 | 1758.95 |
+|  | seg | NIM | 1 |  | 46.29 |  |
+| **RTX PRO 5000 Blackwell 72GB** | wsm | Diffusers | 1 |  | 239.88 | 774.30 |
+|  | wsm | NIM | 1 |  | 28.19 |  |
 
 <sub>Transfer notes:
 1. Control hints follow the `extra_params` names: `blur`, `depth`, `edge`, `multi_control`, `seg`, and `wsm`. `multi_control` combines several hints in one request.
@@ -536,6 +587,11 @@ the hint changes how much of the frame the model must synthesise.
 | **GB300** | PyTorch | 1 |  |  |  |
 |  | Diffusers | 1 |  | 7.71 | 7.64 |
 |  | SGLang | 1 |  | 2.78 | 7.52 |
+| **DGX Spark** | NIM | 1 | 5.98 | 41.33 | 119.42 |
+|  | Diffusers | 1 |  | 80.13 | 84.19 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 2.24 | 15.28 | 46.28 |
+|  | Diffusers | 1 |  | 26.74 | 27.98 |
+| **DGX Station** | Diffusers | 1 |  | 7.04 | 7.31 |
 
 ### Forward Dynamics — Camera
 
@@ -579,6 +635,9 @@ the hint changes how much of the frame the model must synthesise.
 |  | Diffusers | 1 |  | 3.78 | 5.98 |
 | **GB300** | PyTorch | 1 |  |  |  |
 |  | Diffusers | 1 |  | 5.70 | 6.32 |
+| **DGX Spark** | Diffusers | 1 |  | 26.28 | 27.98 |
+| **DGX Station** | Diffusers | 1 |  | 5.20 | 5.22 |
+| **RTX PRO 5000 Blackwell 72GB** | Diffusers | 1 |  | 7.83 | 8.28 |
 
 ### Inverse Dynamics — Autonomous Vehicle (AV)
 
@@ -605,6 +664,11 @@ the hint changes how much of the frame the model must synthesise.
 | **GB300** | PyTorch | 1 |  |  |  |
 |  | Diffusers | 1 |  | 7.85 | 7.88 |
 |  | SGLang | 1 |  | 2.49 | 7.20 |
+| **DGX Spark** | NIM | 1 | 6.94 | 45.62 | 128.84 |
+|  | Diffusers | 1 |  | 79.53 | 83.68 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 3.11 | 17.24 | 49.90 |
+|  | Diffusers | 1 |  | 26.57 | 27.88 |
+| **DGX Station** | Diffusers | 1 |  | 6.99 | 7.32 |
 
 ### Inverse Dynamics — Robot
 
@@ -624,6 +688,9 @@ the hint changes how much of the frame the model must synthesise.
 |  | Diffusers | 1 |  | 5.91 | 6.03 |
 | **GB300** | PyTorch | 1 |  |  |  |
 |  | Diffusers | 1 |  | 6.57 | 6.08 |
+| **DGX Spark** | Diffusers | 1 |  | 26.40 | 28.00 |
+| **DGX Station** | Diffusers | 1 |  | 5.22 | 5.39 |
+| **RTX PRO 5000 Blackwell 72GB** | Diffusers | 1 |  | 7.82 | 8.28 |
 
 ### Policy — Autonomous Vehicle (AV)
 
@@ -641,6 +708,8 @@ the hint changes how much of the frame the model must synthesise.
 |  | Diffusers | 1 |  |  |  |
 | **B300** | PyTorch | 1 | 2.14 | 2.13 | 2.16 |
 |  | Diffusers | 1 |  |  |  |
+| **DGX Spark** | NIM | 1 | 6.06 | 41.52 | 119.82 |
+| **RTX PRO 5000 Blackwell 72GB** | NIM | 1 | 2.28 | 15.34 | 46.40 |
 
 ### Policy — Robot
 

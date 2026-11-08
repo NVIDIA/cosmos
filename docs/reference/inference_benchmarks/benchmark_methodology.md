@@ -29,13 +29,15 @@ Generation time includes the runtime's measured generation path, including decod
 
 The FP8 mixed-step recipe retains the first and last three denoising steps in higher precision. Precision labels describe weights and the recorded compute recipe, not necessarily the KV cache, every layer, or every denoising step. On hardware without native FP8 compute, a weight-only path can be used; the Edge FP8 Reasoner page identifies that case.
 
+NIM 2.0.0 Nano measurements on DGX Spark and RTX PRO 5000 are separate from the other displayed NIM latency profiles. They use FP8, 189-frame video at 24 FPS with 35 steps and guidance 6, and 61-frame AV actions at 10 FPS with 30 steps and guidance 1. Transfer uses 25 frames and 50 steps: ordinary controls use 30 FPS and guidance 3; WSM uses 10 FPS and guidance 1. Hint guidance is 1.5 for edge/depth, 2 for segmentation, and 3 for WSM. Blur uses 736×544 and is excluded from the existing resolution columns.
+
 ## Reasoner workload and timing
 
 The vLLM tables report AIPerf serving metrics. Concurrency counts simultaneous client requests; it is not tensor parallelism. TTFT is time to first output token, request latency is end-to-end request time, request throughput counts completed requests per second, and output throughput counts generated output tokens per second. Request count identifies the population used by the measurement. Some additional platform tables retain rounded source values; trailing zeros do not add measurement accuracy.
 
 The FP8 video-serving workload uses 50 text input tokens plus one 374×374, 30-second synthetic video at 1 or 2 FPS, and requests 1 or 100 output tokens. The Edge embedded vLLM page supplies memory-utilization settings, runtime versions, kernel overrides, and common serving arguments. It distinguishes native Thor FP8 computation from Orin weight-only computation and identifies T3000 emulation.
 
-NIM measurements are separate sections. The Edge NIM 2.1.0 H.264 workload uses NVDEC; its VP9 workload is labelled separately and uses CPU decoding through OpenCV. Nano/Super NIM measurements use two 10-second video workloads with pruning and caches disabled; their input/output token counts and frame rates are stated with the tables. Eager Transformers measurements are a third, separate timing protocol.
+NIM measurements are separate sections. The Edge NIM 2.1.0 H.264 workload uses NVDEC; its VP9 workload is labelled separately and uses CPU decoding through OpenCV. Edge NIM uses video-token pruning 0.6 with `vidcom2`, GPU memory utilization 0.7, and a maximum batched-token budget of 24,300. Its FPS label alone does not imply the same input work as vLLM. Embedded Thor can also drop the last video frame and reduce its visual-token budget at higher FPS. Nano/Super NIM measurements use two 10-second video workloads with pruning and caches disabled; their input/output token counts and frame rates are stated with the tables. Eager Transformers measurements are a third, separate timing protocol.
 
 Some single-token serving runs returned empty replies. Where successful-request metrics are retained, the text explicitly says so; those metrics do not establish a zero-error serving rate. Failed NIM Edge runs are excluded. Never combine successful-request throughput with a different request population.
 
@@ -44,3 +46,5 @@ Some single-token serving runs returned empty replies. Where successful-request 
 Exact prompts, seeds, action payloads, runtime builds, and warmup/repetition counts were not retained with every historical measurement. The newer SGLang and Nano/Super FP8 vLLM-Omni tables do not provide a complete pinned software environment. Multi-GPU split selection can vary by workload and resolution. These gaps prevent an exact replay of every table cell, and measurements must not be presented as a controlled cross-runtime ranking.
 
 Use the public [audiovisual cookbook](https://nvda.ws/4zd0fw5), [action cookbook](https://nvda.ws/4dUeBsJ), and linked model recipes for representative requests. Their sample-specific frame counts and action chunks do not establish the exact benchmark payload. No missing setting or timing is reconstructed from a recipe, a speedup summary, or a different model.
+
+See the [anomaly review](benchmark_anomaly_review.md) for source-matching performance reversals, withheld inconsistent serving values, failures, and remaining campaign coverage.

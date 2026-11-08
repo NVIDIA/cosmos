@@ -2,55 +2,19 @@
 
 [Back to the inference benchmark index](../inference_benchmarks.md)
 
-These tables measure text output through **vLLM** and, in separate sections, **NIM**, with FP8 weights. Latencies are milliseconds; request and output-token throughput are per second. Lower latency and higher throughput are better. Each system uses **one GPU or one integrated platform**; concurrency is the number of simultaneous client requests.
+The published tables below measure text output through **NIM** with FP8 weights. The separate vLLM results are withheld pending validation. Latencies are milliseconds; request and output-token throughput are per second. Lower latency and higher throughput are better. Each system uses **one GPU or one integrated platform**; concurrency is the number of simultaneous client requests.
 
-The vLLM workload uses 50 text input tokens and one 374×374, 30-second synthetic video: 30 frames at 1 FPS or 60 frames at 2 FPS. Requested output length is 1 or 100 tokens. KV-cache precision is separate from model-weight precision. Blank cells have no validated published measurement and must not be read as lack of support.
+The withheld vLLM workload was labelled as 50 text input tokens and one 374×374, 30-second synthetic video: 30 frames at 1 FPS or 60 frames at 2 FPS. Requested output length is 1 or 100 tokens. KV-cache precision is separate from model-weight precision. Blank cells have no validated published measurement and must not be read as lack of support.
 
 See [measurement settings and reproduction limits](benchmark_methodology.md). Displayed values retain the source's available precision; trailing zeros do not imply additional measurement accuracy.
 
-The synthetic-video workload is served with AIPerf. Exact runtime builds and complete prompt payloads were not retained with every measurement; these results describe the recorded configuration rather than a fully pinned reproduction environment. Some Super single-token runs returned empty replies with the `qwen3` parser, and some H20 runs timed out. Missing results are left blank. Where single-token metrics are available despite empty replies, they describe the successful requests shown by the request-count row and do not establish a zero-error serving rate.
+Serving measurements use AIPerf. Exact runtime builds and complete prompt payloads were not retained with every measurement; these results describe the recorded configuration rather than a fully pinned reproduction environment. Some Super single-token runs returned empty replies with the `qwen3` parser, and some H20 runs timed out. Missing results are left blank. Where single-token metrics are available despite empty replies, they describe the successful requests shown by the request-count row and do not establish a zero-error serving rate.
 
-## Enterprise
+## vLLM measurements awaiting validation
 
-### DGX Spark
+The enterprise vLLM block is withheld because its workload labels, request counts, and output-token rates are inconsistent. Some rows labelled output length 1 have output-token throughput approximately 100 times request throughput, indicating that the displayed output/concurrency labels cannot be trusted. Relabelling them from timing ratios would be speculation. Corrected request-level results are required before these values can be restored.
 
-#### Input 50 / Output 1 / Video 1 FPS
-
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) | 1245.10 | 2464.60 |  |  |
-| Request Latency (ms) | 1245.10 | 2464.60 |  |  |
-| Request Count (requests) | 50 | 50 |  |  |
-| Request Throughput (Req/s) | 0.80 | 0.40 |  |  |
-| Output Token Throughput (Tok/s) | 0.80 | 0.40 |  |  |
-
-
-### DGX Station
-
-#### Input 50 / Output 1 / Video 1 FPS
-
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 155.80 | 124.90 | 2077.10 |
-| Request Latency (ms) |  | 155.80 | 940.20 | 5422.40 |
-| Request Count (requests) |  | 50 | 50 | 320 |
-| Request Throughput (Req/s) |  | 6.40 | 1.10 | 11.80 |
-| Output Token Throughput (Tok/s) |  | 6.40 | 106.10 | 1176.90 |
-
-#### Input 50 / Output 1 / Video 2 FPS
-
-| Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
-|---|---:|---:|---:|---:|
-| Time To First Token (ms) | 2994.40 | 4941.50 | 157.30 | 2250.40 |
-| Request Latency (ms) | 10001.80 | 18874.80 | 989.60 | 10069.90 |
-| Request Count (requests) | 256 | 512 | 50 | 320 |
-| Request Throughput (Req/s) | 12.70 | 13.40 | 1.00 | 6.30 |
-| Output Token Throughput (Tok/s) | 1272.40 | 1344.40 | 100.80 | 633.80 |
-
-
-The available datacenter and GB300 tables do not yet expose every model/workload combination. Unavailable source cells have not been reconstructed from speedup summaries or other models.
-
-
+Complete validated datacenter and GB300 vLLM tables are also unavailable. The NIM results below use a separate, documented workload.
 
 ## NIM serving
 

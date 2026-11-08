@@ -10,6 +10,10 @@ See [measurement settings and reproduction limits](benchmark_methodology.md). Di
 
 The synthetic-video workload is served with AIPerf. Exact runtime builds and complete prompt payloads were not retained with every measurement; these results describe the recorded configuration rather than a fully pinned reproduction environment. Some Super single-token runs returned empty replies with the `qwen3` parser, and some H20 runs timed out. Missing results are left blank. Where single-token metrics are available despite empty replies, they describe the successful requests shown by the request-count row and do not establish a zero-error serving rate.
 
+## Known anomalies and comparison limits
+
+NIM RTX PRO 6000 Blackwell, input 100 / output 1 / video 4 FPS, rises from 3.94 to 8.37 requests/s at concurrency 128 to 256 after a near plateau at concurrency 64 to 128. Request latency falls from 26,336.40 to 24,627.21 ms. These source-matching values need scheduling, batch-composition, and run-duration checks; doubling concurrency alone does not establish an erroneous result. Separate NIM Reasoner profiles and some datacenter/GB300 source grids remain incomplete. See the [anomaly review](benchmark_anomaly_review.md).
+
 ## Datacenter
 
 ### B200

@@ -10,6 +10,16 @@ Every row reports one GPU configuration, named in the **GPUs** column, and all t
 
 Empty cells have no publishable measurement at the stated configuration. They can reflect an unmeasured workload, an unsuccessful run, or a measurement awaiting validation; they do not establish lack of support.
 
+## Known anomalies and measurement gaps
+
+- **Large unexplained runtime gap:** on 8× RTX PRO 6000 at 256p, PyTorch t2i is 93.18 s versus 3.11 s for vLLM-Omni (29.96×). Both values match their recorded timing tables. Matching input, sampler, software, and sharding traces are needed before attributing this gap to the runtime alone.
+- **B300 Diffusers actions need review.** Robot forward dynamics at 256p is 22.21 s on B300 versus 3.00 s on B200 (7.40×); B300 uses a separate PyTorch 2.12.0/CUDA 13 rerun.
+- The native PyTorch sweep had B300 CUTLASS initialization failures and Super/H100 SXM NCCL failures. Those blanks have known software-failure causes.
+- The vLLM-Omni 8× H200 SXM, 720p i2av timing reported as 7 s was explicitly invalidated after an out-of-memory failure; it is not used. TensorRT-LLM also failed on several H200 SXM 720p video/audio workloads and multi-control parallel splits. Diffusers TP1/CP8 on H200 had 720p video/audio memory failures. These failures are specific to the named runtime and split.
+- Some single-GPU NIM H100 results use offload. They cannot fill an eight-GPU cell or establish a comparison against resident-only execution. Transfer blur retries also use different source aspect ratios in some vLLM-Omni runs.
+
+See the [anomaly review](benchmark_anomaly_review.md) before ranking runtimes or GPUs.
+
 ## Table of Contents
 
 - [Benchmark methodology](#benchmark-methodology)
@@ -36,7 +46,7 @@ Empty cells have no publishable measurement at the stated configuration. They ca
 
 ## Benchmark methodology
 
-The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, SGLang, TensorRT-LLM, and NIM where measurements are available. Their vLLM-Omni values come from a dedicated vLLM-Omni campaign; NIM values come from a NIM 2.1.0 campaign; the PyTorch values preserve the previously published campaign. Those tables use BF16 precision (NIM uses its default precision, FP8), batch size 1, with prompt, seed, and sampler details retained only where documented. Recorded primary video workloads use 189 frames at 24 FPS. The separate SGLang tables do not retain a complete frame/step budget and software build alongside the measured values; see the reproduction limits before comparing them.
+The primary t2v, i2v, and t2i tables cover PyTorch, vLLM-Omni, Diffusers, SGLang, TensorRT-LLM, and NIM where measurements are available. Their vLLM-Omni values come from a dedicated vLLM-Omni campaign; NIM values use the measured 2.1.0 latency profiles, with separately identified 2.0.0 enterprise measurements; the PyTorch values preserve the previously published campaign. Those tables use BF16 precision (NIM uses its default precision, FP8), batch size 1, with prompt, seed, and sampler details retained only where documented. Recorded primary video workloads use 189 frames at 24 FPS. The separate SGLang tables do not retain a complete frame/step budget and software build alongside the measured values; see the reproduction limits before comparing them.
 
 The additional audiovisual and action tables come from NVIDIA internal measurements. PyTorch values are average generation (sampling) latency from the native OSS path, using **CUDA Graphs disabled** and the **latency** automatic-sharding preset. vLLM-Omni values for text-to-audio-and-video (`t2av`/`t2vs`) and image-to-audio-and-video (`i2av`/`i2vs`) come from a separate vLLM-Omni audiovisual campaign. vLLM-Omni action values were measured with the `vllm/vllm-omni:cosmos3` image and the official action cookbook samples; `DIFFUSION_ATTENTION_BACKEND=TORCH_SDPA` was not set. Forward-dynamics cells are the mean of `av_forward`, `av_left`, and `av_right`; inverse-dynamics cells are the mean of `av_inverse_0` and `av_inverse_1`. That action sweep covers 1, 2, and 4 GPUs only, because its 8-GPU Ulysses runs failed a sequence-length divisibility check; those rows therefore report the single-GPU configuration. Policy-DROID is a separate checkpoint and was measured only at 480p on one GPU. That action sweep did not cover Super on H20, H100 NVL, or H100 80GB HBM3. Diffusers values come from separate campaigns: single-GPU runs (all modalities, and video-to-video), 4- and 8-GPU runs, and transfer. vLLM-Omni transfer values come from their own campaign. Where the multi-GPU Diffusers campaign offers several tensor- and context-parallel splits at the same GPU count, the fastest is published. Its 1-GPU numbers are not used, because that sweep ran a different denoising-step budget than the single-GPU reports. TensorRT-LLM values come from a TensorRT-LLM campaign that sweeps tensor-parallel, CFG-parallel, and Ulysses-parallel splits at each GPU count; the fastest split at the count a row reports is the one published. That campaign covers six GPUs, so the TensorRT-LLM rows for H100 NVL and H200 NVL are empty, and it includes no action workloads. Values are rounded to two decimal places.
 
@@ -214,13 +224,13 @@ The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same
 |  | SGLang | 1 | 4.18 | 3.75 | 5.55 |
 
 <sub>Notes:
-1. All times measured on identical workloads (same seed, sampler settings, prompt).
-2. Multi-GPU configurations use tensor parallelism, except TensorRT-LLM, which may also split across CFG and Ulysses dimensions.
+1. Measurements come from separate campaigns; identical prompt, seed, step budget, and timing boundaries are not established across engines. See the measurement settings before comparing rows.
+2. Multi-GPU parallelism is runtime-specific and can split across tensor, CFG, context, Ring, or Ulysses dimensions; see the recorded settings.
 3. vLLM-Omni numbers are for the upcoming public release in the vLLM-Omni repo and are subject to change.
 4. Diffusers numbers use the HuggingFace `diffusers` integration without custom CUDA graphs. Single-GPU and multi-GPU values come from separate campaigns.
 5. At 256p, multi-GPU configurations on B300 may underperform single-GPU because of small-workload tensor-parallel overhead, so single-GPU is the recommended deployment at this resolution.
 6. PyTorch numbers report average generation (sampling) time from OSS inference benchmarking.
-7. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding, to be comparable with the other, non-serving backends.
+7. NIM numbers are from NIM 2.1.0 (`nvcr.io/nim/nvidia/cosmos3:2.1.0`) using latency profiles with FP8 precision, and report average generation time, excluding request processing and output encoding; step budgets and other workload differences still limit comparisons with other backends.
 8. The 720p i2v cell for vLLM-Omni on H100 80GB HBM3 is empty because the multi-GPU runs for it returned times far below the 480p result, which is not physically plausible; the measurement is being rerun.
 9. In the H200 NVL and H200 141GB HBM3 blocks, PyTorch reports eight GPUs, several engines report one, and SGLang reports eight on H200 141GB HBM3. Compare engines only after checking the count and workload.</sub>
 
@@ -686,7 +696,7 @@ the hint changes how much of the frame the model must synthesise.
 |  |  | SGLang | 1 |  | 112.59 | 374.89 |
 
 <sub>Transfer notes:
-1. Values are average generation latency in seconds; lower is better. Diffusers, vLLM-Omni, and TensorRT-LLM numbers come from separate per-backend campaigns.
+1. Values are generation latency in seconds; lower is better. Diffusers, vLLM-Omni, and TensorRT-LLM numbers come from separate campaigns; some Diffusers single-GPU modality values report the best run.
 2. The **GPUs** column gives the number of GPUs behind every value in that row; check it before comparing engines.
 3. PyTorch and NIM have no transfer coverage yet; those rows are unmeasured, not unsupported.
 4. Control hints follow the vLLM-Omni `extra_params` names: `blur`, `depth`, `edge`, `multi_control`, `seg`, and `wsm`. `multi_control` combines several hints in one request.</sub>

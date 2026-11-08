@@ -14,6 +14,15 @@ On Thor, set `VLLM_DISABLED_KERNELS=FlashInferFP8ScaledMMLinearKernel` and `VLLM
 
 **Successful-request accounting:** some single-token runs returned empty replies. Their metrics summarize requests that completed with content; the request-count row records that population. Those rows do not establish a zero-error serving rate. Output-100 runs and single-token runs must be considered separately.
 
+## Known anomalies and comparison limits
+
+- The DGX Spark vLLM output-100 / 1-FPS throughput jump from 85.40 Tok/s at concurrency 128 to 170.30 Tok/s at concurrency 256 was reproduced in the measured campaign. It is retained as an unexplained scaling discontinuity, not smoothed away.
+- Edge NIM uses video-token pruning rate **0.6** with `vidcom2`, GPU memory utilization **0.7**, and maximum batched tokens **24,300**. This changes the vision workload relative to vLLM and is a confounder in runtime speedup claims.
+- Thor NIM's decode path drops the last frame; at 8 FPS it decodes 239 of 240 submitted frames and reduces the per-frame spatial budget. VP9/CPU decoding is separately labelled. Nominal video FPS alone does not establish identical processed token counts.
+- Some errored NIM runs have valid-request-only metrics in the source. This page keeps passed runs only, so those cells are deliberately withheld rather than unmeasured.
+
+See the [anomaly review](benchmark_anomaly_review.md).
+
 ## Datacenter
 
 ### H100 80GB HBM3
