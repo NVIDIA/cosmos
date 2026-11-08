@@ -12,7 +12,7 @@ Runtime presence does not imply every modality or configuration was measured. So
 
 ## Publication criteria
 
-Only results that pass source and measurement validation are published. Results awaiting validation are left blank, including affected comparison sets whose workload parity or measurements remain unresolved. Blank cells can also represent an unmeasured or unsuccessful configuration; they do not establish lack of support. No missing value is inferred from another runtime, GPU, precision, or resolution.
+Publication is based on source reconciliation and workload validity. Source-verified results retain their measured performance, including differences among runtimes, GPUs, precisions, and resolutions. Results with unresolved source verification, request accounting, or workload definitions are left blank. Blank cells can also represent an unmeasured or unsuccessful configuration; they do not establish lack of support. No missing value is inferred from another runtime, GPU, precision, or resolution.
 
 The existing GPU-count and resolution columns are retained. New Generator results follow the current 1-or-8 GPU selection; measurements available only at two GPUs are omitted. Previously published configurations retain their recorded GPU counts where validated. Results measured at a different GPU count are never substituted into a cell. Measurements at other canvas dimensions are not relabelled to fit an existing resolution tier.
 

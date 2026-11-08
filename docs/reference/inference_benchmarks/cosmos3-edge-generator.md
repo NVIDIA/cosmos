@@ -22,44 +22,44 @@ The historical PyTorch and vLLM-Omni video benchmarks generate **121 frames**. T
 
 | GPU or Platform | Engine | GPUs | 256p | 480p |
 |---|---|:-:|---:|---:|
-| **B200 SXM 192 GB** | PyTorch | 1 |  |  |
+| **B200 SXM 192 GB** | PyTorch | 1 | 1.93 | 1.96 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  |  |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
-| **B300** | PyTorch | 1 |  |  |
+|  | TensorRT-LLM | 1 | 0.52 | 0.53 |
+|  | Diffusers | 1 | 2.60 | 2.62 |
+|  | SGLang | 1 | 0.65 | 0.64 |
+| **B300** | PyTorch | 1 | 3.14 | 1.93 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  |  |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
-| **H200 SXM 141 GB** | PyTorch | 1 |  |  |
+|  | TensorRT-LLM | 1 | 0.81 | 0.82 |
+|  | Diffusers | 1 | 2.57 | 2.61 |
+|  | SGLang | 1 | 1.04 | 1.07 |
+| **H200 SXM 141 GB** | PyTorch | 1 | 2.43 | 2.52 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  |  |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
+|  | TensorRT-LLM | 1 | 0.58 | 0.58 |
+|  | Diffusers | 1 | 2.76 | 2.80 |
+|  | SGLang | 1 | 0.89 | 0.75 |
 | **H200 NVL** | PyTorch | 1 | 2.23 | 2.32 |
 |  | vLLM-Omni | — |  |  |
 |  | TensorRT-LLM | — |  |  |
-|  | Diffusers | 1 |  |  |
-| **H100 SXM 80 GB** | PyTorch | 1 |  |  |
+|  | Diffusers | 1 | 2.93 | 2.58 |
+| **H100 SXM 80 GB** | PyTorch | 1 | 2.43 | 2.47 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  |  |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
+|  | TensorRT-LLM | 1 | 0.58 | 0.59 |
+|  | Diffusers | 1 | 2.77 | 2.74 |
+|  | SGLang | 1 | 0.74 | 0.73 |
 | **H100 NVL 96 GB** | PyTorch | 1 | 2.59 | 2.47 |
 |  | vLLM-Omni | — |  |  |
 |  | TensorRT-LLM | — |  |  |
-|  | Diffusers | 1 |  | 2.66 |
-| **H20 SXM 96 GB** | PyTorch | 1 |  |  |
+|  | Diffusers | 1 | 2.60 | 2.66 |
+| **H20 SXM 96 GB** | PyTorch | 1 | 4.37 | 4.89 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  |  |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
-| **RTX PRO 6000 Blackwell Server Edition** | PyTorch | 1 |  |  |
+|  | TensorRT-LLM | 1 | 0.79 | 1.43 |
+|  | Diffusers | 1 | 2.86 | 2.96 |
+|  | SGLang | 1 | 0.79 | 0.98 |
+| **RTX PRO 6000 Blackwell Server Edition** | PyTorch | 1 | 2.40 | 2.63 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  |  |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
+|  | TensorRT-LLM | 1 | 0.57 | 0.66 |
+|  | Diffusers | 1 | 2.60 | 2.64 |
+|  | SGLang | 1 | 0.67 | 0.65 |
 | **DGX Station** | PyTorch | 1 | 3.45 | 3.32 |
 |  | vLLM-Omni | — |  |  |
 |  | TensorRT-LLM | — |  |  |
@@ -80,34 +80,34 @@ The historical PyTorch and vLLM-Omni video benchmarks generate **121 frames**. T
 
 | GPU or Platform | Engine | GPUs | 256p | 480p |
 |---|---|:-:|---:|---:|
-| **B200 SXM 192 GB** | PyTorch | 1 |  | 7.83 |
-|  | vLLM-Omni | 1 |  |  |
-|  | TensorRT-LLM | 1 |  | 7.84 |
-|  | Diffusers | 1 |  | 13.12 |
-|  | SGLang | 1 |  | 6.66 |
-| **B300** | PyTorch | 1 |  | 7.09 |
-|  | vLLM-Omni | 1 |  |  |
-|  | TensorRT-LLM | 1 |  | 7.22 |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
+| **B200 SXM 192 GB** | PyTorch | 1 | 1.90 | 7.83 |
+|  | vLLM-Omni | 1 | 2.00 | 7.04 |
+|  | TensorRT-LLM | 1 | 1.05 | 7.84 |
+|  | Diffusers | 1 | 3.14 | 13.12 |
+|  | SGLang | 1 | 0.98 | 6.66 |
+| **B300** | PyTorch | 1 | 2.74 | 7.09 |
+|  | vLLM-Omni | 1 | 4.03 | 8.68 |
+|  | TensorRT-LLM | 1 | 1.00 | 7.22 |
+|  | Diffusers | 1 | 4.30 | 12.26 |
+|  | SGLang | 1 | 1.31 | 5.47 |
 | **H200 SXM 141 GB** | PyTorch | 1 | 2.66 | 12.81 |
-|  | vLLM-Omni | 1 |  | 13.11 |
-|  | TensorRT-LLM | 1 |  | 14.89 |
-|  | Diffusers | 1 |  | 20.80 |
-|  | SGLang | 1 |  | 10.59 |
+|  | vLLM-Omni | 1 | 2.10 | 13.11 |
+|  | TensorRT-LLM | 1 | 1.77 | 14.89 |
+|  | Diffusers | 1 | 3.62 | 20.80 |
+|  | SGLang | 1 | 1.34 | 10.59 |
 | **H200 NVL** | PyTorch | 1 | 2.88 | 14.49 |
 |  | vLLM-Omni | 1 | 2.05 | 14.11 |
 |  | TensorRT-LLM | — |  |  |
 |  | Diffusers | 1 | 3.91 | 22.81 |
 | **H100 SXM 80 GB** | PyTorch | 1 | 2.75 | 13.25 |
-|  | vLLM-Omni | 1 |  | 13.30 |
-|  | TensorRT-LLM | 1 |  | 15.09 |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
+|  | vLLM-Omni | 1 | 2.14 | 13.30 |
+|  | TensorRT-LLM | 1 | 1.83 | 15.09 |
+|  | Diffusers | 1 | 3.85 | 21.72 |
+|  | SGLang | 1 | 1.40 | 10.69 |
 | **H100 NVL 96 GB** | PyTorch | 1 | 3.35 | 17.12 |
-|  | vLLM-Omni | 1 |  | 17.29 |
+|  | vLLM-Omni | 1 | 2.05 | 17.29 |
 |  | TensorRT-LLM | — |  |  |
-|  | Diffusers | 1 |  | 26.90 |
+|  | Diffusers | 1 | 4.12 | 26.90 |
 | **H20 SXM 96 GB** | PyTorch | 1 | 10.51 | 54.60 |
 |  | vLLM-Omni | 1 | 5.73 | 53.98 |
 |  | TensorRT-LLM | 1 | 6.91 | 59.19 |
@@ -138,34 +138,34 @@ The historical PyTorch and vLLM-Omni video benchmarks generate **121 frames**. T
 
 | GPU or Platform | Engine | GPUs | 256p | 480p |
 |---|---|:-:|---:|---:|
-| **B200 SXM 192 GB** | PyTorch | 1 |  | 7.45 |
-|  | vLLM-Omni | 1 |  |  |
-|  | TensorRT-LLM | 1 |  | 8.55 |
-|  | Diffusers | 1 |  | 13.49 |
-|  | SGLang | 1 |  | 6.78 |
-| **B300** | PyTorch | 1 |  | 6.84 |
-|  | vLLM-Omni | 1 |  |  |
-|  | TensorRT-LLM | 1 |  | 8.04 |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
+| **B200 SXM 192 GB** | PyTorch | 1 | 1.80 | 7.45 |
+|  | vLLM-Omni | 1 | 2.00 | 7.09 |
+|  | TensorRT-LLM | 1 | 1.23 | 8.55 |
+|  | Diffusers | 1 | 3.19 | 13.49 |
+|  | SGLang | 1 | 1.05 | 6.78 |
+| **B300** | PyTorch | 1 | 2.65 | 6.84 |
+|  | vLLM-Omni | 1 | 2.53 | 8.74 |
+|  | TensorRT-LLM | 1 | 1.42 | 8.04 |
+|  | Diffusers | 1 | 5.07 | 12.77 |
+|  | SGLang | 1 | 1.06 | 5.61 |
 | **H200 SXM 141 GB** | PyTorch | 1 | 2.59 | 12.31 |
-|  | vLLM-Omni | 1 |  | 13.13 |
+|  | vLLM-Omni | 1 | 2.09 | 13.13 |
 |  | TensorRT-LLM | 1 | 1.99 | 15.89 |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
+|  | Diffusers | 1 | 3.89 | 21.58 |
+|  | SGLang | 1 | 1.44 | 10.72 |
 | **H200 NVL** | PyTorch | 1 | 2.83 | 14.07 |
-|  | vLLM-Omni | 1 |  | 14.15 |
+|  | vLLM-Omni | 1 | 2.05 | 14.15 |
 |  | TensorRT-LLM | — |  |  |
-|  | Diffusers | 1 |  | 23.13 |
+|  | Diffusers | 1 | 4.17 | 23.13 |
 | **H100 SXM 80 GB** | PyTorch | 1 | 2.71 | 12.68 |
-|  | vLLM-Omni | 1 |  | 13.33 |
-|  | TensorRT-LLM | 1 |  | 15.95 |
-|  | Diffusers | 1 |  |  |
-|  | SGLang | 1 |  |  |
+|  | vLLM-Omni | 1 | 2.18 | 13.33 |
+|  | TensorRT-LLM | 1 | 2.08 | 15.95 |
+|  | Diffusers | 1 | 4.30 | 22.66 |
+|  | SGLang | 1 | 1.49 | 10.84 |
 | **H100 NVL 96 GB** | PyTorch | 1 | 3.31 | 16.42 |
-|  | vLLM-Omni | 1 |  | 17.33 |
+|  | vLLM-Omni | 1 | 2.09 | 17.33 |
 |  | TensorRT-LLM | — |  |  |
-|  | Diffusers | 1 |  | 27.94 |
+|  | Diffusers | 1 | 4.41 | 27.94 |
 | **H20 SXM 96 GB** | PyTorch | 1 | 10.49 | 52.83 |
 |  | vLLM-Omni | 1 | 5.75 | 53.94 |
 |  | TensorRT-LLM | 1 | 7.50 | 62.08 |
@@ -196,26 +196,26 @@ The historical PyTorch and vLLM-Omni video benchmarks generate **121 frames**. T
 
 | GPU or Platform | Engine | GPUs | 256p | 480p |
 |---|---|:-:|---:|---:|
-| **B200 SXM 192 GB** | PyTorch | 1 |  | 7.28 |
+| **B200 SXM 192 GB** | PyTorch | 1 | 1.83 | 7.28 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  | 7.94 |
-|  | Diffusers | 1 |  | 14.25 |
-| **B300** | PyTorch | 1 |  |  |
+|  | TensorRT-LLM | 1 | 1.15 | 7.94 |
+|  | Diffusers | 1 | 3.70 | 14.25 |
+| **B300** | PyTorch | 1 | 2.66 | 6.60 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  | 7.35 |
-|  | Diffusers | 1 |  |  |
+|  | TensorRT-LLM | 1 | 1.24 | 7.35 |
+|  | Diffusers | 1 | 5.57 | 14.15 |
 | **H200 SXM 141 GB** | PyTorch | 1 | 2.57 | 11.95 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  | 15.09 |
-|  | Diffusers | 1 |  | 22.42 |
+|  | TensorRT-LLM | 1 | 1.91 | 15.09 |
+|  | Diffusers | 1 | 4.22 | 22.42 |
 | **H200 NVL** | PyTorch | 1 | 2.71 | 13.53 |
 |  | vLLM-Omni | — |  |  |
 |  | TensorRT-LLM | — |  |  |
 |  | Diffusers | 1 | 4.49 | 23.96 |
 | **H100 SXM 80 GB** | PyTorch | 1 | 2.68 | 12.32 |
 |  | vLLM-Omni | — |  |  |
-|  | TensorRT-LLM | 1 |  | 15.28 |
-|  | Diffusers | 1 |  | 23.52 |
+|  | TensorRT-LLM | 1 | 1.95 | 15.28 |
+|  | Diffusers | 1 | 4.39 | 23.52 |
 | **H100 NVL 96 GB** | PyTorch | 1 | 2.99 | 15.91 |
 |  | vLLM-Omni | — |  |  |
 |  | TensorRT-LLM | — |  |  |
@@ -270,22 +270,22 @@ The historical PyTorch and vLLM-Omni video benchmarks generate **121 frames**. T
 
 | GPU | Engine | GPUs | 256p | 480p |
 |---|---|:-:|---:|---:|
-| **B200** | SGLang | 1 |  | 1.56 |
-| **B300** | SGLang | 1 |  | 1.40 |
-| **H100 80GB HBM3** | SGLang | 1 |  | 2.58 |
+| **B200** | SGLang | 1 | 0.50 | 1.56 |
+| **B300** | SGLang | 1 | 0.75 | 1.40 |
+| **H100 80GB HBM3** | SGLang | 1 | 0.51 | 2.58 |
 | **H20** | SGLang | 1 | 1.57 | 10.05 |
-| **H200 141GB HBM3** | SGLang | 1 |  | 2.50 |
+| **H200 141GB HBM3** | SGLang | 1 | 0.51 | 2.50 |
 | **RTX PRO 6000 Blackwell** | SGLang | 1 | 0.69 | 4.41 |
 
 ### Forward Dynamics — Robot
 
 | GPU | Engine | GPUs | 256p | 480p |
 |---|---|:-:|---:|---:|
-| **B200** | SGLang | 1 |  |  |
-| **B300** | SGLang | 1 | 0.34 |  |
-| **H100 80GB HBM3** | SGLang | 1 |  |  |
+| **B200** | SGLang | 1 | 0.39 | 0.48 |
+| **B300** | SGLang | 1 | 0.34 | 0.67 |
+| **H100 80GB HBM3** | SGLang | 1 | 0.34 | 0.60 |
 | **H20** | SGLang | 1 | 0.48 | 2.30 |
-| **H200 141GB HBM3** | SGLang | 1 |  |  |
+| **H200 141GB HBM3** | SGLang | 1 | 0.33 | 0.59 |
 | **RTX PRO 6000 Blackwell** | SGLang | 1 | 0.31 | 1.05 |
 
 ### Inverse Dynamics — Autonomous Vehicle (AV)
@@ -303,9 +303,9 @@ The historical PyTorch and vLLM-Omni video benchmarks generate **121 frames**. T
 
 | GPU | Engine | GPUs | 256p | 480p |
 |---|---|:-:|---:|---:|
-| **B200** | SGLang | 1 |  | 1.02 |
-| **B300** | SGLang | 1 |  |  |
-| **H100 80GB HBM3** | SGLang | 1 |  | 1.19 |
+| **B200** | SGLang | 1 | 1.08 | 1.02 |
+| **B300** | SGLang | 1 | 1.29 | 0.96 |
+| **H100 80GB HBM3** | SGLang | 1 | 1.20 | 1.19 |
 | **H20** | SGLang | 1 | 3.93 | 3.94 |
-| **H200 141GB HBM3** | SGLang | 1 |  | 1.17 |
+| **H200 141GB HBM3** | SGLang | 1 | 1.16 | 1.17 |
 | **RTX PRO 6000 Blackwell** | SGLang | 1 | 1.90 | 1.90 |

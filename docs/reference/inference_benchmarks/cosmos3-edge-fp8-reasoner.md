@@ -40,19 +40,19 @@ On Thor, set `VLLM_DISABLED_KERNELS=FlashInferFP8ScaledMMLinearKernel` and `VLLM
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 108.10 |  |  | 4593.92 |
-| Request Latency (ms) | 317.74 |  |  | 8953.01 |
-| Request Throughput (Req/s) | 3.13 |  |  | 25.55 |
-| Output Token Throughput (Tok/s) | 312.64 |  |  | 2553.81 |
+| Time To First Token (ms) | 108.10 | 559.24 | 1043.72 | 4593.92 |
+| Request Latency (ms) | 317.74 | 2563.08 | 4864.05 | 8953.01 |
+| Request Throughput (Req/s) | 3.13 | 24.66 | 25.36 | 25.55 |
+| Output Token Throughput (Tok/s) | 312.64 | 2464.50 | 2533.25 | 2553.81 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 164.03 |  | 5005.28 | 13111.67 |
-| Request Latency (ms) | 393.74 |  | 9762.12 | 18118.99 |
-| Request Throughput (Req/s) | 2.52 |  | 11.77 | 11.79 |
-| Output Token Throughput (Tok/s) | 252.34 |  | 1176.52 | 1178.38 |
+| Time To First Token (ms) | 164.03 | 855.47 | 5005.28 | 13111.67 |
+| Request Latency (ms) | 393.74 | 5381.15 | 9762.12 | 18118.99 |
+| Request Throughput (Req/s) | 2.52 | 11.73 | 11.77 | 11.79 |
+| Output Token Throughput (Tok/s) | 252.34 | 1173.02 | 1176.52 | 1178.38 |
 
 ### H200 141GB HBM3
 
@@ -78,19 +78,19 @@ On Thor, set `VLLM_DISABLED_KERNELS=FlashInferFP8ScaledMMLinearKernel` and `VLLM
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 102.99 |  |  | 3386.64 |
-| Request Latency (ms) | 290.79 |  |  | 8610.34 |
-| Request Throughput (Req/s) | 3.41 |  |  | 27.71 |
-| Output Token Throughput (Tok/s) | 341.18 |  |  | 2769.39 |
+| Time To First Token (ms) | 102.99 | 661.99 | 1143.81 | 3386.64 |
+| Request Latency (ms) | 290.79 | 2300.87 | 4457.08 | 8610.34 |
+| Request Throughput (Req/s) | 3.41 | 27.51 | 27.80 | 27.71 |
+| Output Token Throughput (Tok/s) | 341.18 | 2749.96 | 2777.34 | 2769.39 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 160.58 |  | 3803.04 | 11292.26 |
-| Request Latency (ms) | 363.42 |  | 9551.40 | 17654.95 |
-| Request Throughput (Req/s) | 2.73 |  | 12.58 | 12.57 |
-| Output Token Throughput (Tok/s) | 273.38 |  | 1256.96 | 1256.31 |
+| Time To First Token (ms) | 160.58 | 954.63 | 3803.04 | 11292.26 |
+| Request Latency (ms) | 363.42 | 4835.77 | 9551.40 | 17654.95 |
+| Request Throughput (Req/s) | 2.73 | 13.08 | 12.58 | 12.57 |
+| Output Token Throughput (Tok/s) | 273.38 | 1307.27 | 1256.96 | 1256.31 |
 
 ### H20
 
@@ -238,21 +238,21 @@ On Thor, set `VLLM_DISABLED_KERNELS=FlashInferFP8ScaledMMLinearKernel` and `VLLM
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 213.17 | 25008.31 |  |  |
-| Request Latency (ms) | 1437.40 | 74826.95 |  |  |
-| Request Count (requests) | 50 | 320 |  |  |
-| Request Throughput (Req/s) | 0.69 | 0.84 |  |  |
-| Output Token Throughput (Tok/s) | 69.46 | 83.67 |  |  |
+| Time To First Token (ms) | 213.17 | 25008.31 | 80650.64 | 97058.95 |
+| Request Latency (ms) | 1437.40 | 74826.95 | 129088.36 | 121437.58 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.69 | 0.84 | 0.85 | 1.70 |
+| Output Token Throughput (Tok/s) | 69.46 | 83.67 | 85.44 | 170.26 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 467.30 |  |  | 209086.41 |
-| Request Latency (ms) | 1874.14 |  |  | 234143.61 |
-| Request Count (requests) | 50 |  |  | 512 |
-| Request Throughput (Req/s) | 0.53 |  |  | 0.85 |
-| Output Token Throughput (Tok/s) | 53.29 |  |  | 85.39 |
+| Time To First Token (ms) | 467.30 | 82773.04 | 96353.83 | 209086.41 |
+| Request Latency (ms) | 1874.14 | 127891.29 | 120942.90 | 234143.61 |
+| Request Count (requests) | 50 | 320 | 256 | 512 |
+| Request Throughput (Req/s) | 0.53 | 0.47 | 0.86 | 0.85 |
+| Output Token Throughput (Tok/s) | 53.29 | 47.43 | 85.65 | 85.39 |
 
 ### DGX Station
 
@@ -346,41 +346,41 @@ On Thor, set `VLLM_DISABLED_KERNELS=FlashInferFP8ScaledMMLinearKernel` and `VLLM
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 9650.28 | 16055.54 | 31976.86 | 63704.48 |
-| Request Latency (ms) |  | 9650.28 | 16055.54 | 31976.86 | 63704.48 |
-| Request Count (requests) |  | 319 | 255 | 510 | 1021 |
-| Request Throughput (Req/s) |  | 5.99 | 5.99 | 6.00 | 6.03 |
-| Output Token Throughput (Tok/s) |  | 5.99 | 5.99 | 6.00 | 6.03 |
+| Time To First Token (ms) | 193.78 | 9650.28 | 16055.54 | 31976.86 | 63704.48 |
+| Request Latency (ms) | 193.78 | 9650.28 | 16055.54 | 31976.86 | 63704.48 |
+| Request Count (requests) | 50 | 319 | 255 | 510 | 1021 |
+| Request Throughput (Req/s) | 5.12 | 5.99 | 5.99 | 6.00 | 6.03 |
+| Output Token Throughput (Tok/s) | 5.12 | 5.99 | 5.99 | 6.00 | 6.03 |
 
 #### Input 50 / Output 1 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 25910.62 | 42817.44 | 86059.36 | 170667.61 |
-| Request Latency (ms) |  | 25910.62 | 42817.44 | 86059.36 | 170667.61 |
-| Request Count (requests) |  | 306 | 251 | 501 | 983 |
-| Request Throughput (Req/s) |  | 2.15 | 2.20 | 2.20 | 2.17 |
-| Output Token Throughput (Tok/s) |  | 2.15 | 2.20 | 2.20 | 2.17 |
+| Time To First Token (ms) | 479.97 | 25910.62 | 42817.44 | 86059.36 | 170667.61 |
+| Request Latency (ms) | 479.97 | 25910.62 | 42817.44 | 86059.36 | 170667.61 |
+| Request Count (requests) | 48 | 306 | 251 | 501 | 983 |
+| Request Throughput (Req/s) | 1.99 | 2.15 | 2.20 | 2.20 | 2.17 |
+| Output Token Throughput (Tok/s) | 1.99 | 2.15 | 2.20 | 2.20 | 2.17 |
 
 #### Input 50 / Output 100 / Video 1 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  | 36606.36 | 87705.16 | 191782.51 |
-| Request Latency (ms) |  |  | 57856.45 | 109724.99 | 214373.25 |
-| Request Count (requests) |  |  | 256 | 512 | 1024 |
-| Request Throughput (Req/s) |  |  | 1.89 | 1.88 | 1.86 |
-| Output Token Throughput (Tok/s) |  |  | 189.19 | 188.20 | 186.20 |
+| Time To First Token (ms) | 205.66 | 11256.59 | 36606.36 | 87705.16 | 191782.51 |
+| Request Latency (ms) | 1300.70 | 32729.19 | 57856.45 | 109724.99 | 214373.25 |
+| Request Count (requests) | 50 | 320 | 256 | 512 | 1024 |
+| Request Throughput (Req/s) | 0.77 | 1.90 | 1.89 | 1.88 | 1.86 |
+| Output Token Throughput (Tok/s) | 76.69 | 189.72 | 189.19 | 188.20 | 186.20 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  | 86630.36 | 188991.84 | 394208.55 |
-| Request Latency (ms) |  |  | 108646.98 | 211607.53 | 417127.17 |
-| Request Count (requests) |  |  | 256 | 512 | 1024 |
-| Request Throughput (Req/s) |  |  | 0.95 | 0.94 | 0.94 |
-| Output Token Throughput (Tok/s) |  |  | 95.20 | 94.37 | 93.86 |
+| Time To First Token (ms) | 497.48 | 41910.55 | 86630.36 | 188991.84 | 394208.55 |
+| Request Latency (ms) | 1808.68 | 64489.49 | 108646.98 | 211607.53 | 417127.17 |
+| Request Count (requests) | 50 | 320 | 256 | 512 | 1024 |
+| Request Throughput (Req/s) | 0.55 | 0.94 | 0.95 | 0.94 | 0.94 |
+| Output Token Throughput (Tok/s) | 55.17 | 93.62 | 95.20 | 94.37 | 93.86 |
 
 ### Jetson AGX Thor T3000 (emulated)
 
@@ -388,41 +388,41 @@ On Thor, set `VLLM_DISABLED_KERNELS=FlashInferFP8ScaledMMLinearKernel` and `VLLM
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 19670.29 | 32707.28 | 65389.65 | 130786.58 |
-| Request Latency (ms) |  | 19670.29 | 32707.28 | 65389.65 | 130786.58 |
-| Request Count (requests) |  | 320 | 252 | 511 | 1023 |
-| Request Throughput (Req/s) |  | 2.94 | 2.89 | 2.94 | 2.94 |
-| Output Token Throughput (Tok/s) |  | 2.94 | 2.89 | 2.94 | 2.94 |
+| Time To First Token (ms) | 371.62 | 19670.29 | 32707.28 | 65389.65 | 130786.58 |
+| Request Latency (ms) | 371.62 | 19670.29 | 32707.28 | 65389.65 | 130786.58 |
+| Request Count (requests) | 50 | 320 | 252 | 511 | 1023 |
+| Request Throughput (Req/s) | 2.68 | 2.94 | 2.89 | 2.94 | 2.94 |
+| Output Token Throughput (Tok/s) | 2.68 | 2.94 | 2.89 | 2.94 | 2.94 |
 
 #### Input 50 / Output 1 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 54576.02 | 91001.12 | 181486.26 | 361954.79 |
-| Request Latency (ms) |  | 54576.02 | 91001.12 | 181486.26 | 361954.79 |
-| Request Count (requests) |  | 305 | 255 | 493 | 989 |
-| Request Throughput (Req/s) |  | 1.01 | 1.06 | 1.02 | 1.02 |
-| Output Token Throughput (Tok/s) |  | 1.01 | 1.06 | 1.02 | 1.02 |
+| Time To First Token (ms) | 998.11 | 54576.02 | 91001.12 | 181486.26 | 361954.79 |
+| Request Latency (ms) | 998.11 | 54576.02 | 91001.12 | 181486.26 | 361954.79 |
+| Request Count (requests) | 48 | 305 | 255 | 493 | 989 |
+| Request Throughput (Req/s) | 0.96 | 1.01 | 1.06 | 1.02 | 1.02 |
+| Output Token Throughput (Tok/s) | 0.96 | 1.01 | 1.06 | 1.02 | 1.02 |
 
 #### Input 50 / Output 100 / Video 1 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  | 64521.15 | 134795.05 | 262205.23 |
-| Request Latency (ms) |  |  | 73344.69 | 143703.49 | 271132.01 |
-| Request Count (requests) |  |  | 256 | 512 | 1024 |
-| Request Throughput (Req/s) |  |  | 1.37 | 1.37 | 1.43 |
-| Output Token Throughput (Tok/s) |  |  | 136.90 | 136.75 | 143.24 |
+| Time To First Token (ms) | 384.30 | 34144.26 | 64521.15 | 134795.05 | 262205.23 |
+| Request Latency (ms) | 1605.57 | 43033.59 | 73344.69 | 143703.49 | 271132.01 |
+| Request Count (requests) | 50 | 320 | 256 | 512 | 1024 |
+| Request Throughput (Req/s) | 0.62 | 1.38 | 1.37 | 1.37 | 1.43 |
+| Output Token Throughput (Tok/s) | 62.16 | 137.81 | 136.90 | 136.75 | 143.24 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 | Concurrency 512 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  | 170350.59 | 320286.27 | 647204.40 |
-| Request Latency (ms) |  |  | 180553.54 | 330749.34 | 657701.63 |
-| Request Count (requests) |  |  | 256 | 512 | 1024 |
-| Request Throughput (Req/s) |  |  | 0.54 | 0.59 | 0.59 |
-| Output Token Throughput (Tok/s) |  |  | 54.30 | 58.71 | 58.69 |
+| Time To First Token (ms) | 1006.76 | 89091.45 | 170350.59 | 320286.27 | 647204.40 |
+| Request Latency (ms) | 2441.39 | 99508.17 | 180553.54 | 330749.34 | 657701.63 |
+| Request Count (requests) | 50 | 320 | 256 | 512 | 1024 |
+| Request Throughput (Req/s) | 0.41 | 0.59 | 0.54 | 0.59 | 0.59 |
+| Output Token Throughput (Tok/s) | 40.84 | 58.78 | 54.30 | 58.71 | 58.69 |
 
 ## NIM serving
 
@@ -438,21 +438,21 @@ Edge NIM uses video-token pruning 0.6 with `vidcom2`, GPU memory utilization 0.7
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  |  | 2233.34 |  |
-| Request Latency (ms) |  |  |  | 2233.34 |  |
-| Request Count (requests) |  |  |  | 160 |  |
-| Request Throughput (Req/s) |  |  |  | 12.99 |  |
-| Output Token Throughput (Tok/s) |  |  |  | 12.99 |  |
+| Time To First Token (ms) | 76.19 |  |  | 2233.34 |  |
+| Request Latency (ms) | 76.19 |  |  | 2233.34 |  |
+| Request Count (requests) | 50 |  |  | 160 |  |
+| Request Throughput (Req/s) | 12.91 |  |  | 12.99 |  |
+| Output Token Throughput (Tok/s) | 12.91 |  |  | 12.99 |  |
 
 #### Input 50 / Output 1 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  |  | 5074.28 |  |
-| Request Latency (ms) |  |  |  | 5074.28 |  |
-| Request Count (requests) |  |  |  | 160 |  |
-| Request Throughput (Req/s) |  |  |  | 5.71 |  |
-| Output Token Throughput (Tok/s) |  |  |  | 5.71 |  |
+| Time To First Token (ms) | 165.62 |  |  | 5074.28 |  |
+| Request Latency (ms) | 165.62 |  |  | 5074.28 |  |
+| Request Count (requests) | 50 |  |  | 160 |  |
+| Request Throughput (Req/s) | 5.99 |  |  | 5.71 |  |
+| Output Token Throughput (Tok/s) | 5.99 |  |  | 5.71 |  |
 
 #### Input 50 / Output 1 / Video 4 FPS
 
@@ -478,21 +478,21 @@ Edge NIM uses video-token pruning 0.6 with `vidcom2`, GPU memory utilization 0.7
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 323.11 | 471.69 | 678.22 |  |
-| Request Latency (ms) |  | 1985.76 | 3006.12 | 4922.50 |  |
-| Request Count (requests) |  | 50 | 80 | 160 |  |
-| Request Throughput (Req/s) |  | 3.77 | 5.25 | 6.38 |  |
-| Output Token Throughput (Tok/s) |  | 376.63 | 524.47 | 637.99 |  |
+| Time To First Token (ms) | 95.68 | 323.11 | 471.69 | 678.22 | 1184.78 |
+| Request Latency (ms) | 1111.99 | 1985.76 | 3006.12 | 4922.50 | 8908.84 |
+| Request Count (requests) | 50 | 50 | 80 | 160 | 320 |
+| Request Throughput (Req/s) | 0.90 | 3.77 | 5.25 | 6.38 | 7.01 |
+| Output Token Throughput (Tok/s) | 89.74 | 376.63 | 524.47 | 637.99 | 701.04 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 863.43 | 1162.61 | 1433.59 |  |
-| Request Latency (ms) |  | 3145.99 | 5367.14 | 9608.24 |  |
-| Request Count (requests) |  | 50 | 80 | 160 |  |
-| Request Throughput (Req/s) |  | 2.41 | 2.95 | 3.29 |  |
-| Output Token Throughput (Tok/s) |  | 240.64 | 295.29 | 328.59 |  |
+| Time To First Token (ms) | 176.95 | 863.43 | 1162.61 | 1433.59 | 2193.61 |
+| Request Latency (ms) | 1286.02 | 3145.99 | 5367.14 | 9608.24 | 18044.57 |
+| Request Count (requests) | 50 | 50 | 80 | 160 | 320 |
+| Request Throughput (Req/s) | 0.78 | 2.41 | 2.95 | 3.29 | 3.50 |
+| Output Token Throughput (Tok/s) | 77.49 | 240.64 | 295.29 | 328.59 | 349.02 |
 
 #### Input 50 / Output 100 / Video 4 FPS
 
@@ -520,41 +520,41 @@ Edge NIM uses video-token pruning 0.6 with `vidcom2`, GPU memory utilization 0.7
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 1072.71 |  |  |  |
-| Request Latency (ms) |  | 1072.71 |  |  |  |
-| Request Count (requests) |  | 50 |  |  |  |
-| Request Throughput (Req/s) |  | 7.02 |  |  |  |
-| Output Token Throughput (Tok/s) |  | 7.02 |  |  |  |
+| Time To First Token (ms) | 144.11 | 1072.71 |  |  |  |
+| Request Latency (ms) | 144.11 | 1072.71 |  |  |  |
+| Request Count (requests) | 50 | 50 |  |  |  |
+| Request Throughput (Req/s) | 6.87 | 7.02 |  |  |  |
+| Output Token Throughput (Tok/s) | 6.87 | 7.02 |  |  |  |
 
 #### Input 50 / Output 1 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 2537.75 | 4952.81 | 9881.43 |  |
-| Request Latency (ms) |  | 2537.75 | 4952.81 | 9881.43 |  |
-| Request Count (requests) |  | 50 | 80 | 160 |  |
-| Request Throughput (Req/s) |  | 3.02 | 3.05 | 3.06 |  |
-| Output Token Throughput (Tok/s) |  | 3.02 | 3.05 | 3.06 |  |
+| Time To First Token (ms) | 312.42 | 2537.75 | 4952.81 | 9881.43 |  |
+| Request Latency (ms) | 312.42 | 2537.75 | 4952.81 | 9881.43 |  |
+| Request Count (requests) | 50 | 50 | 80 | 160 |  |
+| Request Throughput (Req/s) | 3.18 | 3.02 | 3.05 | 3.06 |  |
+| Output Token Throughput (Tok/s) | 3.18 | 3.02 | 3.05 | 3.06 |  |
 
 #### Input 50 / Output 100 / Video 1 FPS
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 675.64 | 1021.08 | 1250.40 |  |
-| Request Latency (ms) |  | 2858.19 | 4645.11 | 8232.13 |  |
-| Request Count (requests) |  | 50 | 80 | 160 |  |
-| Request Throughput (Req/s) |  | 2.63 | 3.42 | 3.86 |  |
-| Output Token Throughput (Tok/s) |  | 262.71 | 340.32 | 385.42 |  |
+| Time To First Token (ms) | 157.40 | 675.64 | 1021.08 | 1250.40 | 1946.60 |
+| Request Latency (ms) | 1308.63 | 2858.19 | 4645.11 | 8232.13 | 15262.21 |
+| Request Count (requests) | 50 | 50 | 80 | 160 | 320 |
+| Request Throughput (Req/s) | 0.76 | 2.63 | 3.42 | 3.86 | 4.14 |
+| Output Token Throughput (Tok/s) | 76.23 | 262.71 | 340.32 | 385.42 | 413.97 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 |
 |---|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  | 1704.44 | 3098.06 | 5407.81 |  |
-| Request Latency (ms) |  | 5030.09 | 8627.49 | 16200.44 |  |
-| Request Count (requests) |  | 50 | 80 | 160 |  |
-| Request Throughput (Req/s) |  | 1.52 | 1.85 | 1.97 |  |
-| Output Token Throughput (Tok/s) |  | 152.04 | 184.85 | 196.89 |  |
+| Time To First Token (ms) | 315.79 | 1704.44 | 3098.06 | 5407.81 | 16577.08 |
+| Request Latency (ms) | 1542.82 | 5030.09 | 8627.49 | 16200.44 | 31336.51 |
+| Request Count (requests) | 50 | 50 | 80 | 160 | 320 |
+| Request Throughput (Req/s) | 0.65 | 1.52 | 1.85 | 1.97 | 1.96 |
+| Output Token Throughput (Tok/s) | 64.67 | 152.04 | 184.85 | 196.89 | 195.81 |
 
 **VP9 / CPU decoding**
 
@@ -564,8 +564,8 @@ Edge NIM uses video-token pruning 0.6 with `vidcom2`, GPU memory utilization 0.7
 
 | Metric | Concurrency 1 |
 |---|---:|
-| Time To First Token (ms) |  |
-| Request Latency (ms) |  |
-| Request Count (requests) |  |
-| Request Throughput (Req/s) |  |
-| Output Token Throughput (Tok/s) |  |
+| Time To First Token (ms) | 88.96 |
+| Request Latency (ms) | 1127.42 |
+| Request Count (requests) | 50 |
+| Request Throughput (Req/s) | 0.89 |
+| Output Token Throughput (Tok/s) | 88.50 |

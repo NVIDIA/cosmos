@@ -20,21 +20,21 @@ These FP8 measurements use NIM 1.7.1.rc3 with one GPU, two synthetic-video workl
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Time To First Token (ms) | 717.91 | 3271.66 | 4834.25 |  |  |  |  |
-| Request Latency (ms) | 717.91 | 3271.66 | 4834.25 |  |  |  |  |
-| Request Count (requests) | 10 | 16 | 32 |  |  |  |  |
-| Request Throughput (Req/s) | 1.38 | 2.30 | 3.00 |  |  |  |  |
-| Output Token Throughput (Tok/s) | 1.38 | 2.30 | 3.00 |  |  |  |  |
+| Time To First Token (ms) | 717.91 | 3271.66 | 4834.25 | 8260.48 | 11860.95 | 20177.71 | 36242.77 |
+| Request Latency (ms) | 717.91 | 3271.66 | 4834.25 | 8260.48 | 11860.95 | 20177.71 | 36242.77 |
+| Request Count (requests) | 10 | 16 | 32 | 64 | 128 | 256 | 512 |
+| Request Throughput (Req/s) | 1.38 | 2.30 | 3.00 | 3.38 | 4.46 | 5.07 | 5.76 |
+| Output Token Throughput (Tok/s) | 1.38 | 2.30 | 3.00 | 3.38 | 4.46 | 5.07 | 5.76 |
 
 #### Input 1000 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  | 7884.78 |  |  |  |  |
-| Request Latency (ms) |  |  | 11966.28 |  |  |  |  |
-| Request Count (requests) |  |  | 32 |  |  |  |  |
-| Request Throughput (Req/s) |  |  | 1.22 |  |  |  |  |
-| Output Token Throughput (Tok/s) |  |  | 121.51 |  |  |  |  |
+| Time To First Token (ms) | 1484.46 | 7051.90 | 7884.78 | 15238.11 | 18531.09 | 45256.75 | 110709.69 |
+| Request Latency (ms) | 2359.79 | 9127.30 | 11966.28 | 21313.92 | 38159.22 | 67382.83 | 134538.04 |
+| Request Count (requests) | 10 | 16 | 32 | 64 | 128 | 256 | 512 |
+| Request Throughput (Req/s) | 0.42 | 0.82 | 1.22 | 1.33 | 1.64 | 1.72 | 1.62 |
+| Output Token Throughput (Tok/s) | 42.34 | 81.59 | 121.51 | 132.61 | 164.02 | 172.30 | 161.97 |
 
 ### B200
 
@@ -42,21 +42,21 @@ These FP8 measurements use NIM 1.7.1.rc3 with one GPU, two synthetic-video workl
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Time To First Token (ms) | 690.47 | 3285.86 | 4713.28 |  |  |  |  |
-| Request Latency (ms) | 690.47 | 3285.86 | 4713.28 |  |  |  |  |
-| Request Count (requests) | 10 | 16 | 32 |  |  |  |  |
-| Request Throughput (Req/s) | 1.44 | 2.28 | 3.04 |  |  |  |  |
-| Output Token Throughput (Tok/s) | 1.44 | 2.28 | 3.04 |  |  |  |  |
+| Time To First Token (ms) | 690.47 | 3285.86 | 4713.28 | 7088.39 | 11281.23 | 19871.81 | 32118.96 |
+| Request Latency (ms) | 690.47 | 3285.86 | 4713.28 | 7088.39 | 11281.23 | 19871.81 | 32118.96 |
+| Request Count (requests) | 10 | 16 | 32 | 64 | 128 | 256 | 512 |
+| Request Throughput (Req/s) | 1.44 | 2.28 | 3.04 | 3.87 | 4.69 | 5.40 | 6.32 |
+| Output Token Throughput (Tok/s) | 1.44 | 2.28 | 3.04 | 3.87 | 4.69 | 5.40 | 6.32 |
 
 #### Input 1000 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Time To First Token (ms) |  |  | 7777.64 |  |  |  |  |
-| Request Latency (ms) |  |  | 12336.80 |  |  |  |  |
-| Request Count (requests) |  |  | 32 |  |  |  |  |
-| Request Throughput (Req/s) |  |  | 1.26 |  |  |  |  |
-| Output Token Throughput (Tok/s) |  |  | 126.01 |  |  |  |  |
+| Time To First Token (ms) | 1215.21 | 4825.43 | 7777.64 | 11782.63 | 16265.18 | 43080.33 | 94536.64 |
+| Request Latency (ms) | 2098.06 | 7465.19 | 12336.80 | 19662.59 | 37720.93 | 67499.72 | 120061.04 |
+| Request Count (requests) | 10 | 16 | 32 | 64 | 128 | 256 | 512 |
+| Request Throughput (Req/s) | 0.48 | 1.07 | 1.26 | 1.52 | 1.66 | 1.72 | 1.79 |
+| Output Token Throughput (Tok/s) | 47.61 | 106.69 | 126.01 | 152.39 | 166.16 | 171.83 | 178.60 |
 
 ### H100 80GB HBM3
 
@@ -64,11 +64,11 @@ These FP8 measurements use NIM 1.7.1.rc3 with one GPU, two synthetic-video workl
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Time To First Token (ms) | 955.50 | 4473.73 | 6576.63 | 11108.36 |  |  |  |
-| Request Latency (ms) | 955.50 | 4473.73 | 6576.63 | 11108.36 |  |  |  |
-| Request Count (requests) | 10 | 16 | 32 | 64 |  |  |  |
-| Request Throughput (Req/s) | 1.04 | 1.62 | 2.09 | 2.37 |  |  |  |
-| Output Token Throughput (Tok/s) | 1.04 | 1.62 | 2.09 | 2.37 |  |  |  |
+| Time To First Token (ms) | 955.50 | 4473.73 | 6576.63 | 11108.36 | 17727.46 | 25757.25 | 41005.96 |
+| Request Latency (ms) | 955.50 | 4473.73 | 6576.63 | 11108.36 | 17727.46 | 25757.25 | 41005.96 |
+| Request Count (requests) | 10 | 16 | 32 | 64 | 128 | 256 | 512 |
+| Request Throughput (Req/s) | 1.04 | 1.62 | 2.09 | 2.37 | 3.16 | 4.18 | 5.02 |
+| Output Token Throughput (Tok/s) | 1.04 | 1.62 | 2.09 | 2.37 | 3.16 | 4.18 | 5.02 |
 
 #### Input 1000 / Output 100 / Video 2 FPS
 
@@ -108,11 +108,11 @@ These FP8 measurements use NIM 1.7.1.rc3 with one GPU, two synthetic-video workl
 
 | Metric | Concurrency 1 | Concurrency 8 | Concurrency 16 | Concurrency 32 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Time To First Token (ms) | 885.15 | 4646.18 | 6663.79 | 10561.10 |  |  |  |
-| Request Latency (ms) | 885.15 | 4646.18 | 6663.79 | 10561.10 |  |  |  |
-| Request Count (requests) | 10 | 16 | 32 | 64 |  |  |  |
-| Request Throughput (Req/s) | 1.12 | 1.58 | 2.08 | 2.49 |  |  |  |
-| Output Token Throughput (Tok/s) | 1.12 | 1.58 | 2.08 | 2.49 |  |  |  |
+| Time To First Token (ms) | 885.15 | 4646.18 | 6663.79 | 10561.10 | 18917.34 | 33237.00 | 48397.58 |
+| Request Latency (ms) | 885.15 | 4646.18 | 6663.79 | 10561.10 | 18917.34 | 33237.00 | 48397.58 |
+| Request Count (requests) | 10 | 16 | 32 | 64 | 128 | 256 | 512 |
+| Request Throughput (Req/s) | 1.12 | 1.58 | 2.08 | 2.49 | 2.71 | 3.30 | 4.41 |
+| Output Token Throughput (Tok/s) | 1.12 | 1.58 | 2.08 | 2.49 | 2.71 | 3.30 | 4.41 |
 
 #### Input 1000 / Output 100 / Video 2 FPS
 

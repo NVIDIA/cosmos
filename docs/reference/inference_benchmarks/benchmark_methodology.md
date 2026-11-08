@@ -49,4 +49,4 @@ Use the public [audiovisual cookbook](https://nvda.ws/4zd0fw5), [action cookbook
 
 ## Publication criteria
 
-Only results that pass source and measurement validation are published. Measurements awaiting validation remain blank, including affected comparison sets when their workload parity or results are unresolved. No value is inferred or adjusted to match an expected runtime, precision, GPU, or resolution ranking.
+Publication is based on source reconciliation and workload validity. Source-verified measurements retain their measured performance, including differences among runtimes and platforms. Results with unresolved source verification, request accounting, or workload definitions remain blank. No value is inferred or adjusted to match an expected runtime, precision, GPU, or resolution ranking.

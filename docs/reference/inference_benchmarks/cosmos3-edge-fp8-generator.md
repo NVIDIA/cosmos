@@ -51,11 +51,11 @@ See [measurement settings and reproduction limits](benchmark_methodology.md). Em
 |---|---|:-:|---:|---:|
 | **H100 80GB HBM3** | vLLM-Omni | 1 |  | 1.41 |
 | **H200 141GB HBM3** | vLLM-Omni | 1 |  | 1.42 |
-| **RTX PRO 6000 Blackwell** | vLLM-Omni | 1 |  |  |
+| **RTX PRO 6000 Blackwell** | vLLM-Omni | 1 |  | 4.10 |
 | **H20** | vLLM-Omni | 1 |  | 1.47 |
 | **DGX Station** | vLLM-Omni | 1 |  | 2.58 |
 | **DGX Spark** | vLLM-Omni | 1 |  | 2.83 |
-| **RTX PRO 5000 Blackwell 72GB** | vLLM-Omni | 1 |  |  |
+| **RTX PRO 5000 Blackwell 72GB** | vLLM-Omni | 1 |  | 5.79 |
 | **Jetson AGX Thor T5000** | vLLM-Omni | 1 |  | 4.58 |
 | **Jetson AGX Thor T5000 as T3000** | vLLM-Omni | 1 |  | 5.89 |
 
