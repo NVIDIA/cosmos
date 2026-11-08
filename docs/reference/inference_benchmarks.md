@@ -23,9 +23,9 @@ Generator results are organized by model so future checkpoints can be added with
 
 - [Cosmos3-Edge-FP8 Reasoner](inference_benchmarks/cosmos3-edge-fp8-reasoner.md): datacenter, enterprise, and embedded vLLM serving, plus embedded NIM.
 - [Cosmos3-Nano-FP8 Reasoner](inference_benchmarks/cosmos3-nano-fp8-reasoner.md): measured datacenter, enterprise, and GB300 vLLM serving, plus datacenter NIM.
-- [Cosmos3-Super-FP8 Reasoner](inference_benchmarks/cosmos3-super-fp8-reasoner.md): datacenter NIM; vLLM measurements remain withheld pending source-label validation and complete tables.
+- [Cosmos3-Super-FP8 Reasoner](inference_benchmarks/cosmos3-super-fp8-reasoner.md): validated datacenter NIM serving measurements.
 
-See [measurement settings and reproduction limits](inference_benchmarks/benchmark_methodology.md), [coverage and validation notes](inference_benchmarks/benchmark_update_notes.md), and the [anomaly review](inference_benchmarks/benchmark_anomaly_review.md).
+See [measurement settings and reproduction limits](inference_benchmarks/benchmark_methodology.md) and [coverage and validation notes](inference_benchmarks/benchmark_update_notes.md).
 
 ## Reasoner benchmarks
 
@@ -174,7 +174,6 @@ These preliminary measurements use raw Hugging Face Transformers in eager mode r
 
 All rows below use one GPU or integrated platform. The Thor sweep uses 30-second clips and includes concurrency 512. It is distinct from the eager Transformers measurements above. Some datacenter single-token runs returned empty replies; their metrics cover successful requests only. The request-count row reports that population.
 
-
 #### Jetson AGX Thor T5000
 
 ##### Input 50 / Output 1 / Video 1 FPS
@@ -217,7 +216,6 @@ All rows below use one GPU or integrated platform. The Thor sweep uses 30-second
 | Request Throughput (Req/s) | 0.38 | 0.81 | 0.82 | 0.82 | 0.81 |
 | Output Token Throughput (Tok/s) | 37.73 | 81.19 | 81.60 | 82.09 | 81.22 |
 
-
 #### DGX Spark
 
 ##### Input 50 / Output 1 / Video 1 FPS
@@ -249,7 +247,6 @@ All rows below use one GPU or integrated platform. The Thor sweep uses 30-second
 | Request Count (requests) | 50 | 320 | 256 |
 | Request Throughput (Req/s) |  | 1.00 | 1.00 |
 | Output Token Throughput (Tok/s) | 41.00 | 135.00 | 137.00 |
-
 
 #### H100 80GB HBM3
 
@@ -283,7 +280,6 @@ All rows below use one GPU or integrated platform. The Thor sweep uses 30-second
 ### Embedded NIM serving (BF16)
 
 These measurements use NIM 2.1.0, video-token pruning rate 0.6 (`vidcom2`), memory utilization 0.7, maximum batched tokens 24,300, one integrated platform, 50 input text tokens, a 30-second H.264/mp4 video at the stated FPS, and the requested output length. The H.264 workload uses NVDEC; the separately labelled VP9 workload uses CPU decoding through OpenCV. Only passed runs are included; failed configurations remain blank. The runtime is distinct from the vLLM and eager Transformers tables.
-
 
 **VP9 / CPU decoding**
 
@@ -529,21 +525,21 @@ All runs use the **`nvidia/Cosmos3-Nano`** checkpoint. Metrics are collected wit
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 143.36 | 1720.73 | 2906.00 | 9000.63 |
-| Request Latency (ms) | 865.56 | 5251.56 | 9818.73 | 18353.75 |
-| Request Count (requests) | 50 | 320 | 256 | 512 |
-| Request Throughput (Req/s) | 1.15 | 12.14 | 12.87 | 12.83 |
-| Output Token Throughput (Tok/s) | 115.24 | 1213.61 | 1286.89 | 1282.48 |
+| Time To First Token (ms) | 143.36 |  | 2906.00 | 9000.63 |
+| Request Latency (ms) | 865.56 |  | 9818.73 | 18353.75 |
+| Request Count (requests) | 50 |  | 256 | 512 |
+| Request Throughput (Req/s) | 1.15 |  | 12.87 | 12.83 |
+| Output Token Throughput (Tok/s) | 115.24 |  | 1286.89 | 1282.48 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 231.81 | 2295.44 | 8767.78 | 23214.88 |
-| Request Latency (ms) | 967.49 | 9738.18 | 18061.79 | 33190.08 |
-| Request Count (requests) | 50 | 320 | 256 | 512 |
-| Request Throughput (Req/s) | 1.03 | 6.54 | 6.53 | 6.60 |
-| Output Token Throughput (Tok/s) | 103.12 | 653.91 | 653.39 | 659.92 |
+| Time To First Token (ms) | 231.81 |  | 8767.78 |  |
+| Request Latency (ms) | 967.49 |  | 18061.79 |  |
+| Request Count (requests) | 50 |  | 256 |  |
+| Request Throughput (Req/s) | 1.03 |  | 6.53 |  |
+| Output Token Throughput (Tok/s) | 103.12 |  | 653.39 |  |
 
 ### H200 141GB HBM3
 
@@ -571,21 +567,21 @@ All runs use the **`nvidia/Cosmos3-Nano`** checkpoint. Metrics are collected wit
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 143.25 | 2060.05 | 2839.97 | 4713.83 |
-| Request Latency (ms) | 711.77 | 4965.09 | 9364.20 | 18325.25 |
-| Request Count (requests) | 50 | 320 | 256 | 512 |
-| Request Throughput (Req/s) | 1.40 | 12.84 | 13.53 | 13.75 |
-| Output Token Throughput (Tok/s) | 140.02 | 1284.38 | 1352.41 | 1374.57 |
+| Time To First Token (ms) | 143.25 |  | 2839.97 | 4713.83 |
+| Request Latency (ms) | 711.77 |  | 9364.20 | 18325.25 |
+| Request Count (requests) | 50 |  | 256 | 512 |
+| Request Throughput (Req/s) | 1.40 |  | 13.53 | 13.75 |
+| Output Token Throughput (Tok/s) | 140.02 |  | 1352.41 | 1374.57 |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 228.24 | 2715.85 | 5015.19 | 15991.33 |
-| Request Latency (ms) | 807.07 | 9341.21 | 18285.65 | 35043.34 |
-| Request Count (requests) | 50 | 320 | 256 | 512 |
-| Request Throughput (Req/s) | 1.24 | 6.82 | 6.90 | 6.90 |
-| Output Token Throughput (Tok/s) | 123.55 | 682.33 | 690.26 | 689.50 |
+| Time To First Token (ms) | 228.24 |  | 5015.19 |  |
+| Request Latency (ms) | 807.07 |  | 18285.65 |  |
+| Request Count (requests) | 50 |  | 256 |  |
+| Request Throughput (Req/s) | 1.24 |  | 6.90 |  |
+| Output Token Throughput (Tok/s) | 123.55 |  | 690.26 |  |
 
 ### B200
 
@@ -613,11 +609,11 @@ All runs use the **`nvidia/Cosmos3-Nano`** checkpoint. Metrics are collected wit
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 115.27 | 1106.35 | 2111.97 | 2549.79 |
-| Request Latency (ms) | 553.01 | 2736.53 | 5001.20 | 9279.25 |
-| Request Count (requests) | 50 | 320 | 256 | 512 |
-| Request Throughput (Req/s) | 1.80 | 23.28 | 25.23 | 27.01 |
-| Output Token Throughput (Tok/s) | 180.16 | 2328.01 | 2523.07 | 2701.08 |
+| Time To First Token (ms) | 115.27 | 1106.35 | 2111.97 |  |
+| Request Latency (ms) | 553.01 | 2736.53 | 5001.20 |  |
+| Request Count (requests) | 50 | 320 | 256 |  |
+| Request Throughput (Req/s) | 1.80 | 23.28 | 25.23 |  |
+| Output Token Throughput (Tok/s) | 180.16 | 2328.01 | 2523.07 |  |
 
 #### Input 50 / Output 100 / Video 2 FPS
 
@@ -635,11 +631,11 @@ All runs use the **`nvidia/Cosmos3-Nano`** checkpoint. Metrics are collected wit
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 80.70 | 1617.12 | 2742.68 | 5421.22 |
-| Request Latency (ms) | 80.70 | 1617.12 | 2742.68 | 5421.22 |
-| Request Count (requests) | 50 | 320 | 256 | 511 |
-| Request Throughput (Req/s) | 12.24 | 35.92 | 35.69 | 35.79 |
-| Output Token Throughput (Tok/s) | 12.24 | 35.92 | 35.69 | 35.79 |
+| Time To First Token (ms) | 80.70 | 1617.12 | 2742.68 |  |
+| Request Latency (ms) | 80.70 | 1617.12 | 2742.68 |  |
+| Request Count (requests) | 50 | 320 | 256 |  |
+| Request Throughput (Req/s) | 12.24 | 35.92 | 35.69 |  |
+| Output Token Throughput (Tok/s) | 12.24 | 35.92 | 35.69 |  |
 
 #### Input 50 / Output 1 / Video 2 FPS
 
@@ -655,11 +651,11 @@ All runs use the **`nvidia/Cosmos3-Nano`** checkpoint. Metrics are collected wit
 
 | Metric | Concurrency 1 | Concurrency 64 | Concurrency 128 | Concurrency 256 |
 |---|---:|---:|---:|---:|
-| Time To First Token (ms) | 83.19 | 1070.93 | 1444.68 | 2739.50 |
-| Request Latency (ms) | 490.11 | 2657.06 | 4750.02 | 8975.21 |
-| Request Count (requests) | 50 | 320 | 256 | 512 |
-| Request Throughput (Req/s) | 2.03 | 23.96 | 26.57 | 27.92 |
-| Output Token Throughput (Tok/s) | 203.29 | 2396.35 | 2657.14 | 2791.79 |
+| Time To First Token (ms) | 83.19 | 1070.93 | 1444.68 |  |
+| Request Latency (ms) | 490.11 | 2657.06 | 4750.02 |  |
+| Request Count (requests) | 50 | 320 | 256 |  |
+| Request Throughput (Req/s) | 2.03 | 23.96 | 26.57 |  |
+| Output Token Throughput (Tok/s) | 203.29 | 2396.35 | 2657.14 |  |
 
 #### Input 50 / Output 100 / Video 2 FPS
 

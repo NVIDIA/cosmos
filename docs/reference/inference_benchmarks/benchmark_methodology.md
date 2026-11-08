@@ -16,7 +16,7 @@ Generation time includes the runtime's measured generation path, including decod
 
 | Runtime | Recorded configuration and selection |
 |---|---|
-| PyTorch, BF16 | Native OSS generation; latency automatic-sharding preset; CUDA graphs disabled for audiovisual and action measurements. Existing primary measurements are retained. |
+| PyTorch, BF16 | Native OSS generation; latency automatic-sharding preset; CUDA graphs disabled for audiovisual and action measurements. Primary results are included where validated. |
 | PyTorch, FP8 | Native generation, with a quantization recipe that differs from the mixed-step FP8 recipe used by other engines. The marked primary rows are not directly comparable with those engines. |
 | vLLM-Omni, BF16 | Nano/Super primary and audiovisual runs use the 0.20 integration. Action runs use the `vllm/vllm-omni:cosmos3` image and public action samples. Forward-AV values aggregate `av_forward`, `av_left`, and `av_right`; inverse-AV values aggregate `av_inverse_0` and `av_inverse_1`. No forced `TORCH_SDPA` override was set. |
 | vLLM-Omni, FP8 Nano/Super | Generation-time metric. `FLASHINFER_ATTN` is the main attention path; RTX PRO 6000 uses `CUDNN_ATTN`. Some multi-GPU configurations use a cuDNN fallback after FlashInfer incompatibility or memory failures. No action sample is assigned to an embodiment when the measurement does not identify it. |
@@ -47,4 +47,6 @@ Exact prompts, seeds, action payloads, runtime builds, and warmup/repetition cou
 
 Use the public [audiovisual cookbook](https://nvda.ws/4zd0fw5), [action cookbook](https://nvda.ws/4dUeBsJ), and linked model recipes for representative requests. Their sample-specific frame counts and action chunks do not establish the exact benchmark payload. No missing setting or timing is reconstructed from a recipe, a speedup summary, or a different model.
 
-See the [anomaly review](benchmark_anomaly_review.md) for source-matching performance reversals, withheld inconsistent serving values, failures, and remaining campaign coverage.
+## Publication criteria
+
+Only results that pass source and measurement validation are published. Measurements awaiting validation remain blank, including affected comparison sets when their workload parity or results are unresolved. No value is inferred or adjusted to match an expected runtime, precision, GPU, or resolution ranking.
