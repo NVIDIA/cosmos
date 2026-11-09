@@ -702,7 +702,7 @@ the hint changes how much of the frame the model must synthesise.
 <sub>Transfer notes:
 1. Values are generation latency in seconds; lower is better. Diffusers, vLLM-Omni, and TensorRT-LLM numbers come from separate campaigns; some Diffusers single-GPU modality values report the best run.
 2. The **GPUs** column gives the number of GPUs behind every value in that row; check it before comparing engines.
-3. PyTorch and NIM have no transfer coverage yet; those rows are unmeasured, not unsupported.
+3. PyTorch transfer results are included where measured. Published NIM transfer results use FP8 NIM 2.0.0 on DGX Spark and RTX PRO 5000 Blackwell 72GB; see the measurement settings for their workload definitions.
 4. Control hints follow the vLLM-Omni `extra_params` names: `blur`, `depth`, `edge`, `multi_control`, `seg`, and `wsm`. `multi_control` combines several hints in one request.</sub>
 
 ## Action generation

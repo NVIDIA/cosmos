@@ -248,10 +248,10 @@ The historical PyTorch and vLLM-Omni video benchmarks generate **121 frames**. T
 1. The **GPUs** column gives the number of GPUs behind every value in that row. All current measurements use one GPU or one integrated computing platform.
 2. Values are average end-to-end or generation latency in seconds; lower is better.
 3. TensorRT-LLM values come from a TensorRT-LLM campaign that covers the six datacenter GPUs only; the DGX and Jetson platforms were not part of that campaign.
-4. vLLM-Omni and PyTorch were measured for i2v only, so their rows are empty in the other three sections.
+4. PyTorch results cover t2i, t2v, i2v, and v2v. vLLM-Omni results cover t2v and i2v where measured; blank cells have no validated published result.
 5. Video measurements generate **121 output frames**.
 6. PyTorch values report average generation latency rather than diffusion-only latency.
-7. Diffusers and NIM have no Cosmos3-Edge coverage yet, so they are not listed.</sub>
+7. Diffusers results cover t2i, t2v, i2v, and v2v on the measured datacenter GPUs. No NIM Generator results are published on this page.</sub>
 
 ## Action generation
 
