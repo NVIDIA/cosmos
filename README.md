@@ -31,7 +31,7 @@
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/transfer_worldscenario.gif" alt="World-scenario transfer: control layout to photoreal driving video">
-      <sub><a href="https://nvda.ws/4sm3te7"><b>Transfer</b></a><br>World-scenario control layout → photoreal driving video</sub>
+      <sub><a href="https://nvda.ws/4sM8jBr"><b>Transfer</b></a><br>World-scenario control layout → photoreal driving video</sub>
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/policy_screwdriver.gif" alt="Robot policy executing a manipulation task">
