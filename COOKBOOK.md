@@ -100,7 +100,7 @@ Maintainer notes (not rendered):
 [transfer]: https://nvda.ws/4emDe1e
 [nim]: https://nvda.ws/4iztHGw
 [nim-matrix]: https://nvda.ws/3U5M3G0
-[quantization]: https://nvda.ws/4zwUnxL
+[quantization]: https://nvda.ws/4zcsEl5
 [transfer-auto]: https://nvda.ws/4yzgXVk
 [try-auto]: https://nvda.ws/4iz2Iek
 [sim-auto]: https://nvda.ws/4BjzZBt
