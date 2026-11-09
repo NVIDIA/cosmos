@@ -93,8 +93,7 @@ Maintainer notes (not rendered):
 [reason]: https://nvda.ws/4z2ezYl
 [action]: https://nvda.ws/4dUeBsJ
 [transfer]: https://nvda.ws/4emDe1e
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-nim/SKILL.md once the skill is on cosmos-framework main -->
-[nim]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-nim/SKILL.md
+[nim]: https://nvda.ws/3WU5suo
 [nim-matrix]: https://nvda.ws/3U5M3G0
 [quantization]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/quantization/README.md
 [transfer-auto]: https://nvda.ws/4yzgXVk
