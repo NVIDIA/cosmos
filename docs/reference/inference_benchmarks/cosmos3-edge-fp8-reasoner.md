@@ -12,7 +12,7 @@ Datacenter runs use vLLM 0.28.0. Enterprise measurements cover RTX PRO 5000, DGX
 
 On Thor, set `VLLM_DISABLED_KERNELS=FlashInferFP8ScaledMMLinearKernel` and `VLLM_USE_FLASHINFER_SAMPLER=0` to select the measured CUTLASS FP8 path. Orin uses weight-only W8A16. GPU memory utilization is 0.7 on Orin, 0.6 on T5000, and 0.5 on the T3000 emulation. The embedded vLLM serving arguments are `--dtype auto --kv-cache-dtype auto --tensor-parallel-size 1 --max-model-len 16384 --reasoning-parser qwen3 --trust-remote-code --no-enable-prefix-caching --limit-mm-per-prompt '{"video": 1}' --media-io-kwargs '{"video":{"num_frames": -1}}'`.
 
-**Successful-request accounting:** some single-token runs returned empty replies. Their metrics summarize requests that completed with content; the request-count row records that population. Those rows do not establish a zero-error serving rate. Output-100 runs and single-token runs must be considered separately.
+**Request accounting:** where shown, request-count rows reproduce the benchmark-reported count. Successful-request counts are not separately reported in the datacenter tables.
 
 ## Datacenter
 
