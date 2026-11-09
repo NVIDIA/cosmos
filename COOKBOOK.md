@@ -24,7 +24,7 @@ Maintainer notes (not rendered):
 - Recipe links point at the `main` branch of [Cosmos Framework][framework-main].
 -->
 
-**Jump to:** [Inference](#inference) · [Simulation](#simulation) · [Post-training](#post-training) · [Distillation](#distillation) · [Evaluation](#evaluation)
+**Jump to:** [Inference](#inference) · [Simulation](#simulation) · [Post-training](#post-training) · [Distillation](#distillation) · [Quantization](#quantization) · [Evaluation](#evaluation)
 
 <details>
 <summary>Legend: industry and GPU-budget codes</summary>
