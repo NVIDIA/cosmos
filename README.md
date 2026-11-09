@@ -35,7 +35,7 @@
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/policy_screwdriver.gif" alt="Robot policy executing a manipulation task">
-      <sub><a href="https://nvda.ws/4ses7Nz"><b>Action policy</b></a><br>Policy run: "put the screwdriver and the glove in the purple container"</sub>
+      <sub><a href="https://nvda.ws/4CbbSFV"><b>Action policy</b></a><br>Policy run: "put the screwdriver and the glove in the purple container"</sub>
     </td>
   </tr>
   <tr>
@@ -45,7 +45,7 @@
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/fd_egocentric_repair_poses.gif" alt="Forward dynamics egocentric rollout">
-      <sub><a href="https://nvda.ws/4srp0C7"><b>Action-conditioned World Model</b></a><br>Forward dynamics: egocentric rollout from input camera + hand pose</sub>
+      <sub><a href="https://nvda.ws/4AjVK2R"><b>Action-conditioned World Model</b></a><br>Forward dynamics: egocentric rollout from input camera + hand pose</sub>
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/reasoner_driving_hazard.gif" alt="World Reasoner: dashcam hazard anticipation">
