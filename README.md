@@ -49,7 +49,7 @@
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/reasoner_driving_hazard.gif" alt="World Reasoner: dashcam hazard anticipation">
-      <sub><a href="https://nvda.ws/4BlGqEj"><b>World reasoning</b></a><br>Reason in complex real-world scenarios: a rolling ball means a child or pet may follow</sub>
+      <sub><a href="https://nvda.ws/4kFUrXs"><b>World reasoning</b></a><br>Reason in complex real-world scenarios: a rolling ball means a child or pet may follow</sub>
     </td>
   </tr>
 </table>
