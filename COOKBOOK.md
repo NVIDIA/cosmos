@@ -46,7 +46,7 @@ Maintainer notes (not rendered):
 | Recipe | Industry | GPU budget |
 | --- | :-: | :-: |
 | **[Generation][gen]**<br><sub>Text-to-image, text-to-video, image-to-video, video-to-video, with optional audio</sub> | `ANY` | `S` `M` |
-| **[Reasoning][reason]**<br><sub>Captioning, VQA, grounding, temporal localization, physical plausibility</sub> | `ANY` `INFRA` | `S` `M` |
+| **[Visual Reasoning][reason]**<br><sub>Captioning, VQA, grounding, temporal localization, physical plausibility</sub> | `ANY` `INFRA` | `S` `M` |
 | **[Action][action]**<br><sub>Forward dynamics, inverse dynamics, policy</sub> | `AV` `ROB` | `S` |
 | **[Transfer][transfer]**<br><sub>Spatial controls: edge, blur, depth, segmentation, world-scenario map, multi-control</sub> | `ANY` `AV` | `S` `M` |
 | **[NIM deployment][nim]**<br><sub>Choose a run time (generation/reasoning), run accelerated inference from one container · [support matrix][nim-matrix]</sub> | `ANY` | `S` `M` |
@@ -95,7 +95,7 @@ Maintainer notes (not rendered):
 
 [framework-main]: https://github.com/NVIDIA/cosmos-framework/tree/main
 [gen]: https://nvda.ws/4iGZxA5
-[reason]: https://nvda.ws/4z2ezYl
+[reason]: https://nvda.ws/4sZUgbF
 [action]: https://nvda.ws/4dUeBsJ
 [transfer]: https://nvda.ws/4emDe1e
 [nim]: https://nvda.ws/4iztHGw
