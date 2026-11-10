@@ -4,7 +4,7 @@ SPDX-License-Identifier: OpenMDW-1.1 -->
 # Cosmos Developer Index
 
 <!-- INTRO:START -->
-**A head start for whatever world you’re building.** Train and run your world models faster with NVIDIA and NVLabs technology for video world models—from datasets and training libraries to fast inference runtimes and new research methods. Cosmos is an open platform that gives you a foundation to build on. Grab a useful component, accelerate your current pipeline, or build something new with Cosmos models. Take as much or as little as you need. **Explore 37 projects and 9 dataset highlights by capability below.**
+**A head start for whatever world you’re building.** Train and run your world models faster with NVIDIA and NVLabs technology for video world models—from datasets and training libraries to fast inference runtimes and new research methods. Cosmos is an open platform that gives you a foundation to build on. Grab a useful component, accelerate your current pipeline, or build something new with Cosmos models. Take as much or as little as you need. **Explore 36 projects and 9 dataset highlights by capability below.**
 <!-- INTRO:END -->
 
 Jump to: [Data](#data--curate-and-reconstruct) · [Train](#train--start-with-cosmos-or-adapt-your-own-model) · [Accelerate](#accelerate--generate-faster) · [Deploy](#deploy--act-and-ship-safely) · [Dataset highlights](#dataset-highlights)
@@ -50,8 +50,7 @@ Results reported by the project teams for the stated workloads. Follow the sourc
 | Project | What you can do | Research |
 |---|---|---|
 | [Cosmos 3](https://github.com/NVIDIA/cosmos) | Start from Cosmos world models with supported video generation and action-conditioned physical-AI capabilities. | [Paper](https://arxiv.org/abs/2606.02800) |
-| [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) | Train and serve supported Cosmos world models with distributed training, dataset adapters, and model-specific inference paths. |  |
-| [Cosmos-RL](https://github.com/nvidia-cosmos/cosmos-rl) | Fine-tune supported image and video diffusion models with SFT or reward-based post-training. **Limited maintenance.** |  |
+| [Cosmos Framework](https://github.com/NVIDIA/cosmos-framework) | Train, post-train, and serve supported Cosmos world models with distributed training, dataset adapters, and model-specific inference paths. |  |
 | [Transformer Engine](https://github.com/NVIDIA/TransformerEngine) | Use mixed-precision transformer layers and fused attention in supported video-training paths such as Wan and LongLive. |  |
 | [Cosmos-Dreams / OmniDreams](https://github.com/nv-tlabs/omni-dreams) | Post-train a driving world model with student initialization, teacher fine-tuning, and self-forcing distillation recipes. |  |
 | [LidarVerse](https://github.com/nv-tlabs/lidarverse) | Generate, forecast, and resimulate LiDAR sequences with a Cosmos-Predict2-derived diffusion model and released PAI fine-tuning recipes. | [Paper](https://arxiv.org/abs/2610.19201) |
