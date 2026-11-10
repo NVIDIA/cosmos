@@ -118,7 +118,7 @@ video = pipe(prompt="A mobile robot navigates a warehouse aisle and stops at a s
 export_to_video(video, "first_video.mp4", fps=24)
 ```
 
-First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so long step times are normal. Full options, image/sound modes, and every other backend: [audiovisual cookbooks](https://nvda.ws/4zd0fw5) · setup issues: [environment setup guide](https://nvda.ws/4hUq6Tm).
+First run downloads the 16B checkpoint; diffusion steps are compute-heavy, so long step times are normal. Full options, image/sound modes, and every other backend: [audiovisual cookbooks](https://nvda.ws/4iGZxA5) · setup issues: [environment setup guide](https://nvda.ws/4hUq6Tm).
 
 
 ## Models
