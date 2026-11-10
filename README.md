@@ -27,7 +27,7 @@
   <tr>
     <td align="center" width="33%">
       <img src="assets/demos/physics_newton_cradle.gif" alt="Physics-aware generation: Newton's cradle">
-      <sub><a href="https://nvda.ws/48tob2l"><b>Physics-aware generation</b></a><br>A Newton's cradle in motion: momentum transfer rendered with physical fidelity</sub>
+      <sub><a href="https://nvda.ws/3UT6QNl"><b>Physics-aware generation</b></a><br>A Newton's cradle in motion: momentum transfer rendered with physical fidelity</sub>
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/transfer_worldscenario.gif" alt="World-scenario transfer: control layout to photoreal driving video">
@@ -41,7 +41,7 @@
   <tr>
     <td align="center" width="33%">
       <img src="assets/demos/driving_sim_falling_rocks.gif" alt="Driving simulation for autonomous vehicles">
-      <sub><a href="https://nvda.ws/48tob2l"><b>Simulation</b></a><br>Generate synthetic data and create simulation for autonomous driving</sub>
+      <sub><a href="https://nvda.ws/3UT6QNl"><b>Simulation</b></a><br>Generate synthetic data and create simulation for autonomous driving</sub>
     </td>
     <td align="center" width="33%">
       <img src="assets/demos/fd_egocentric_repair_poses.gif" alt="Forward dynamics egocentric rollout">
