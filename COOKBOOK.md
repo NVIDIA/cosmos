@@ -98,7 +98,7 @@ Maintainer notes (not rendered):
 [reason]: https://nvda.ws/4sZUgbF
 [action]: https://nvda.ws/4dUeBsJ
 [transfer]: https://nvda.ws/4emDe1e
-[nim]: https://nvda.ws/4iztHGw
+[nim]: https://nvda.ws/3WU5suo
 [nim-matrix]: https://nvda.ws/3U5M3G0
 [quantization]: https://nvda.ws/4zcsEl5
 [transfer-auto]: https://nvda.ws/4yzgXVk
