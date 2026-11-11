@@ -24,7 +24,7 @@ Maintainer notes (not rendered):
 - Recipe links point at the `main` branch of [Cosmos Framework][framework-main].
 -->
 
-**Jump to:** [Inference](#inference) · [Simulation](#simulation) · [Post-training](#post-training) · [Distillation](#distillation) · [Evaluation](#evaluation)
+**Jump to:** [Inference](#inference) · [Simulation](#simulation) · [Post-training](#post-training) · [Distillation](#distillation) · [Quantization](#quantization) · [Evaluation](#evaluation)
 
 <details>
 <summary>Legend: industry and GPU-budget codes</summary>
@@ -46,11 +46,10 @@ Maintainer notes (not rendered):
 | Recipe | Industry | GPU budget |
 | --- | :-: | :-: |
 | **[Generation][gen]**<br><sub>Text-to-image, text-to-video, image-to-video, video-to-video, with optional audio</sub> | `ANY` | `S` `M` |
-| **[Reasoning][reason]**<br><sub>Captioning, VQA, grounding, temporal localization, physical plausibility</sub> | `ANY` `INFRA` | `S` `M` |
+| **[Visual Reasoning][reason]**<br><sub>Captioning, VQA, grounding, temporal localization, physical plausibility</sub> | `ANY` `INFRA` | `S` `M` |
 | **[Action Policy][action]**<br><sub>Forward dynamics, inverse dynamics, policy</sub> | `AV` `ROB` | `S` |
 | **[Transfer][transfer]**<br><sub>Spatial controls: edge, blur, depth, segmentation, world-scenario map, multi-control</sub> | `ANY` `AV` | `S` `M` |
 | **[NIM deployment][nim]**<br><sub>Choose a run time (generation/reasoning), run accelerated inference from one container · [support matrix][nim-matrix]</sub> | `ANY` | `S` `M` |
-| **[Quantized (FP8)][quantization]**<br><sub>Static FP8 export and serving: Nano/Super video, Super base and 4-step text-to-image/image-to-video</sub> | `ANY` | `S` `M` |
 
 ## Simulation&nbsp;<a href="#simulation"><img src="assets/brand/badge-new.svg" alt="New"></a>
 
@@ -79,6 +78,12 @@ Maintainer notes (not rendered):
 | --- | :-: | :-: |
 | **[4-step students][distill]**<br><sub>4-step distillation guide, text-to-image, image-to-video</sub> | `ANY` | `L` |
 
+## Quantization
+
+| Recipe | Industry | GPU budget |
+| --- | :-: | :-: |
+| **[Quantization][quantization]**<br><sub>Static FP8 export and serving: Nano/Super video, Super base and 4-step text-to-image/image-to-video</sub> | `ANY` | `S` `M` |
+
 ## Evaluation
 
 | Benchmarks | Industry | GPU budget |
@@ -89,13 +94,13 @@ Maintainer notes (not rendered):
 ---
 
 [framework-main]: https://github.com/NVIDIA/cosmos-framework/tree/main
-[gen]: https://nvda.ws/4zd0fw5
-[reason]: https://nvda.ws/4z2ezYl
+[gen]: https://nvda.ws/4iGZxA5
+[reason]: https://nvda.ws/4sZUgbF
 [action]: https://nvda.ws/487IcM4
 [transfer]: https://nvda.ws/4emDe1e
-[nim]: https://nvda.ws/4iztHGw
+[nim]: https://nvda.ws/3WU5suo
 [nim-matrix]: https://nvda.ws/3U5M3G0
-[quantization]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cookbooks/cosmos3/quantization/README.md
+[quantization]: https://nvda.ws/4zcsEl5
 [transfer-auto]: https://nvda.ws/4yzgXVk
 [try-auto]: https://nvda.ws/4iz2Iek
 [sim-auto]: https://nvda.ws/4BjzZBt
