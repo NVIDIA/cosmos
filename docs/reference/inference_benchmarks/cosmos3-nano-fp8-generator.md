@@ -56,7 +56,7 @@ These measurements establish the reported timing matrix but do not expose every 
 | Inverse dynamics | Observed video | Recovered action trajectory; some serving integrations also return video |
 | Policy | Initial visual observation, instruction, and optional state | Predicted action trajectory and, for general Generator paths, a rollout video |
 
-The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound-producing modes `t2vs`, `v2vs`, and `i2vs`. See the [audiovisual cookbook](https://nvda.ws/4iGZxA5) for generation inputs and the [action cookbook](https://nvda.ws/4dUeBsJ) for action representations and output contracts.
+The benchmark uses `t2av`, `v2av`, and `i2av`; some public recipes call the same sound-producing modes `t2vs`, `v2vs`, and `i2vs`. See the [audiovisual cookbook](https://nvda.ws/4iGZxA5) for generation inputs and the [action cookbook](https://nvda.ws/487IcM4) for action representations and output contracts.
 
 ## Primary vision generation
 

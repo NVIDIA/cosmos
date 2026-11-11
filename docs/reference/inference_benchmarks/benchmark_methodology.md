@@ -45,7 +45,7 @@ Some single-token serving runs returned empty replies. Where successful-request 
 
 Exact prompts, seeds, action payloads, runtime builds, and warmup/repetition counts were not retained with every historical measurement. The newer SGLang and Nano/Super FP8 vLLM-Omni tables do not provide a complete pinned software environment. Multi-GPU split selection can vary by workload and resolution. These gaps prevent an exact replay of every table cell, and measurements must not be presented as a controlled cross-runtime ranking.
 
-Use the public [audiovisual cookbook](https://nvda.ws/4iGZxA5), [action cookbook](https://nvda.ws/4dUeBsJ), and linked model recipes for representative requests. Their sample-specific frame counts and action chunks do not establish the exact benchmark payload. No missing setting or timing is reconstructed from a recipe, a speedup summary, or a different model.
+Use the public [audiovisual cookbook](https://nvda.ws/4iGZxA5), [action cookbook](https://nvda.ws/487IcM4), and linked model recipes for representative requests. Their sample-specific frame counts and action chunks do not establish the exact benchmark payload. No missing setting or timing is reconstructed from a recipe, a speedup summary, or a different model.
 
 ## Publication criteria
 
