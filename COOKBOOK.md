@@ -101,22 +101,14 @@ Maintainer notes (not rendered):
 [nim]: https://nvda.ws/3WU5suo
 [nim-matrix]: https://nvda.ws/3U5M3G0
 [quantization]: https://nvda.ws/4zcsEl5
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-post-train-simulation-auto/SKILL.md#fine-tune-transfer-auto once the skill is on cosmos-framework main -->
-[transfer-auto]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-post-train-simulation-auto/SKILL.md#fine-tune-transfer-auto
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-simulation-auto/SKILL.md#transfer-auto once the skill is on cosmos-framework main -->
-[try-transfer-auto]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-simulation-auto/SKILL.md#transfer-auto
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-post-train-simulation-auto/SKILL.md#distill-sim-auto once the skill is on cosmos-framework main -->
-[sim-auto]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-post-train-simulation-auto/SKILL.md#distill-sim-auto
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-simulation-auto/SKILL.md#sim-auto once the skill is on cosmos-framework main -->
-[try-sim-auto]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-simulation-auto/SKILL.md#sim-auto
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-post-train-simulation-bimanual/SKILL.md once the skill is on cosmos-framework main -->
-[sim-bimanual]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-post-train-simulation-bimanual/SKILL.md
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-simulation-bimanual/SKILL.md once the skill is on cosmos-framework main -->
-[try-bimanual]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-simulation-bimanual/SKILL.md
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-post-train-simulation-transfer/SKILL.md once the skill is on cosmos-framework main -->
-[sim-transfer]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-post-train-simulation-transfer/SKILL.md
-<!-- TODO: replace with the nvda.ws short link for https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-simulation-transfer/SKILL.md once the skill is on cosmos-framework main -->
-[try-sim-transfer]: https://github.com/NVIDIA/cosmos-framework/blob/main/.agents/skills/cosmos3-inference-simulation-transfer/SKILL.md
+[transfer-auto]: https://nvda.ws/4eDpIqn
+[try-transfer-auto]: https://nvda.ws/4kTOKVZ
+[sim-auto]: https://nvda.ws/4CaY524
+[try-sim-auto]: https://nvda.ws/4zWk8YQ
+[sim-bimanual]: https://nvda.ws/4t3wkE9
+[try-bimanual]: https://nvda.ws/3Xc5spI
+[sim-transfer]: https://nvda.ws/4j1EsAB
+[try-sim-transfer]: https://nvda.ws/4C7KmJb
 [ft-gen]: https://nvda.ws/4idFCsq
 [ft-reason]: https://nvda.ws/4zCYwji
 [ft-policy]: https://nvda.ws/4yAmivs
