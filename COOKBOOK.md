@@ -55,8 +55,8 @@ Maintainer notes (not rendered):
 
 | Recipe | Industry | GPU budget |
 | --- | :-: | :-: |
-| **[Multi-view multi-sensor driving SDG][transfer-auto]**<br><sub>Fine-tune Cosmos on driving data for multi-view + LiDAR joint generation · [Try example checkpoint][try-auto]</sub> | `AV` | `L` |
-| **[Autoregressive driving simulation][sim-auto]**<br><sub>Build autoregressive multi-view driving simulator · [Try example checkpoint][try-auto]</sub> | `AV` | `M` |
+| **[Multi-view multi-sensor driving SDG][transfer-auto]**<br><sub>Fine-tune Cosmos on driving data for multi-view + LiDAR joint generation · [Try example checkpoint][try-transfer-auto]</sub> | `AV` | `L` |
+| **[Autoregressive driving simulation][sim-auto]**<br><sub>Build autoregressive multi-view driving simulator · [Try example checkpoint][try-sim-auto]</sub> | `AV` | `M` |
 | **[Autoregressive bimanual simulation][sim-bimanual]**<br><sub>Build interactive neural simulator for robot policy· [Try example checkpoint][try-bimanual]</sub> | `ROB` | `M` |
 | **[Autoregressive sim-to-real transfer][sim-transfer]**<br><sub>Build autoregressive sim-to-real transfer model · [Try example checkpoint][try-sim-transfer]</sub> | `ROB` | `M` |
 | **Surgical simulation**<br><sub>*Coming soon*</sub> | `MED` |  |
@@ -102,12 +102,13 @@ Maintainer notes (not rendered):
 [nim-matrix]: https://nvda.ws/3U5M3G0
 [quantization]: https://nvda.ws/4zcsEl5
 [transfer-auto]: https://nvda.ws/4yzgXVk
-[try-auto]: https://nvda.ws/4iz2Iek
+[try-transfer-auto]: https://nvda.ws/4kTOKVZ
 [sim-auto]: https://nvda.ws/4BjzZBt
+[try-sim-auto]: https://nvda.ws/4zWk8YQ
 [sim-bimanual]: https://nvda.ws/4hYEJFc
-[try-bimanual]: https://nvda.ws/4yCZHP1
+[try-bimanual]: https://nvda.ws/3Xc5spI
 [sim-transfer]: https://nvda.ws/4sgWzqt
-[try-sim-transfer]: https://nvda.ws/47xlyMI
+[try-sim-transfer]: https://nvda.ws/4C7KmJb
 [ft-gen]: https://nvda.ws/4idFCsq
 [ft-reason]: https://nvda.ws/4zCYwji
 [ft-policy]: https://nvda.ws/4yAmivs
